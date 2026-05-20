@@ -167,17 +167,27 @@ describe('generateVariation', () => {
             }),
           }
         } else {
-          // Pass 2: correct answer derivation
+          // Pass 2: correct answer derivation (per-block format)
           return {
             text: JSON.stringify({
-              solution: { type: 'rich_text', format: 'md-math-v1', value: '3+3=6', mediaIds: [] },
-              fullSolution: {
-                type: 'rich_text',
-                format: 'md-math-v1',
-                value: 'Step 1: add 3+3=6',
-                mediaIds: [],
-              },
-              answer: { correctOptionIds: ['a'] },
+              blocks: [
+                {
+                  id: 'block-1',
+                  solution: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: '3+3=6',
+                    mediaIds: [],
+                  },
+                  fullSolution: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'Step 1: add 3+3=6',
+                    mediaIds: [],
+                  },
+                  answer: { correctOptionIds: ['a'] },
+                },
+              ],
             }),
           }
         }
@@ -258,17 +268,27 @@ describe('generateVariation', () => {
           }),
         }
       } else {
-        // Pass 2: correct answer derivation
+        // Pass 2: correct answer derivation (per-block format)
         return {
           text: JSON.stringify({
-            solution: { type: 'rich_text', format: 'md-math-v1', value: '5+5=10', mediaIds: [] },
-            fullSolution: {
-              type: 'rich_text',
-              format: 'md-math-v1',
-              value: 'Step 1: add 5+5=10',
-              mediaIds: [],
-            },
-            answer: { correctOptionIds: ['a'] },
+            blocks: [
+              {
+                id: 'block-1',
+                solution: {
+                  type: 'rich_text',
+                  format: 'md-math-v1',
+                  value: '5+5=10',
+                  mediaIds: [],
+                },
+                fullSolution: {
+                  type: 'rich_text',
+                  format: 'md-math-v1',
+                  value: 'Step 1: add 5+5=10',
+                  mediaIds: [],
+                },
+                answer: { correctOptionIds: ['a'] },
+              },
+            ],
           }),
         }
       }
@@ -337,12 +357,22 @@ describe('generateVariation', () => {
           }),
         }
       } else {
-        // Pass 2
+        // Pass 2 (per-block format)
         return {
           text: JSON.stringify({
-            solution: { type: 'rich_text', format: 'md-math-v1', value: '3+3=6', mediaIds: [] },
-            fullSolution: { type: 'rich_text', format: 'md-math-v1', value: '3+3=6', mediaIds: [] },
-            answer: { correctOptionIds: ['a'] },
+            blocks: [
+              {
+                id: 'block-1',
+                solution: { type: 'rich_text', format: 'md-math-v1', value: '3+3=6', mediaIds: [] },
+                fullSolution: {
+                  type: 'rich_text',
+                  format: 'md-math-v1',
+                  value: '3+3=6',
+                  mediaIds: [],
+                },
+                answer: { correctOptionIds: ['a'] },
+              },
+            ],
           }),
         }
       }
@@ -420,9 +450,19 @@ describe('generateVariation', () => {
       } else {
         return {
           text: JSON.stringify({
-            solution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
-            fullSolution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
-            answer: { correctOptionIds: ['b'] },
+            blocks: [
+              {
+                id: 'block-1',
+                solution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
+                fullSolution: {
+                  type: 'rich_text',
+                  format: 'md-math-v1',
+                  value: '2+2=4',
+                  mediaIds: [],
+                },
+                answer: { correctOptionIds: ['b'] },
+              },
+            ],
           }),
         }
       }
@@ -503,14 +543,19 @@ describe('generateVariation', () => {
       } else {
         return {
           text: JSON.stringify({
-            solution: { type: 'rich_text', format: 'md-math-v1', value: 'x=2', mediaIds: [] },
-            fullSolution: {
-              type: 'rich_text',
-              format: 'md-math-v1',
-              value: '3x+6=12 → x=2',
-              mediaIds: [],
-            },
-            answer: { correctOptionIds: ['b'] },
+            blocks: [
+              {
+                id: 'block-1',
+                solution: { type: 'rich_text', format: 'md-math-v1', value: 'x=2', mediaIds: [] },
+                fullSolution: {
+                  type: 'rich_text',
+                  format: 'md-math-v1',
+                  value: '3x+6=12 → x=2',
+                  mediaIds: [],
+                },
+                answer: { correctOptionIds: ['b'] },
+              },
+            ],
           }),
         }
       }
@@ -621,14 +666,24 @@ describe('generateVariation', () => {
       } else {
         return {
           text: JSON.stringify({
-            solution: { type: 'rich_text', format: 'md-math-v1', value: '5+5=10', mediaIds: [] },
-            fullSolution: {
-              type: 'rich_text',
-              format: 'md-math-v1',
-              value: '5+5=10',
-              mediaIds: [],
-            },
-            answer: { correctOptionIds: ['a'] },
+            blocks: [
+              {
+                id: 'block-1',
+                solution: {
+                  type: 'rich_text',
+                  format: 'md-math-v1',
+                  value: '5+5=10',
+                  mediaIds: [],
+                },
+                fullSolution: {
+                  type: 'rich_text',
+                  format: 'md-math-v1',
+                  value: '5+5=10',
+                  mediaIds: [],
+                },
+                answer: { correctOptionIds: ['a'] },
+              },
+            ],
           }),
         }
       }
@@ -707,9 +762,19 @@ describe('generateVariation', () => {
       return {
         text: '',
         output: {
-          solution: { type: 'rich_text', format: 'md-math-v1', value: '4+4=8', mediaIds: [] },
-          fullSolution: { type: 'rich_text', format: 'md-math-v1', value: '4+4=8', mediaIds: [] },
-          answer: { correctOptionIds: ['a'] },
+          blocks: [
+            {
+              id: 'block-1',
+              solution: { type: 'rich_text', format: 'md-math-v1', value: '4+4=8', mediaIds: [] },
+              fullSolution: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: '4+4=8',
+                mediaIds: [],
+              },
+              answer: { correctOptionIds: ['a'] },
+            },
+          ],
         },
       }
     })
@@ -756,9 +821,14 @@ describe('generateVariation', () => {
       }
       return {
         text: JSON.stringify({
-          solution: { type: 'rich_text', format: 'md-math-v1', value: 's', mediaIds: [] },
-          fullSolution: { type: 'rich_text', format: 'md-math-v1', value: 'fs', mediaIds: [] },
-          answer: { correctOptionIds: ['a'] },
+          blocks: [
+            {
+              id: 'block-1',
+              solution: { type: 'rich_text', format: 'md-math-v1', value: 's', mediaIds: [] },
+              fullSolution: { type: 'rich_text', format: 'md-math-v1', value: 'fs', mediaIds: [] },
+              answer: { correctOptionIds: ['a'] },
+            },
+          ],
         }),
       }
     })
@@ -818,9 +888,19 @@ describe('generateVariation', () => {
         }
         return {
           text: JSON.stringify({
-            solution: { type: 'rich_text', format: 'md-math-v1', value: 's', mediaIds: [] },
-            fullSolution: { type: 'rich_text', format: 'md-math-v1', value: 'fs', mediaIds: [] },
-            answer: { correctOptionIds: ['a'] },
+            blocks: [
+              {
+                id: 'block-1',
+                solution: { type: 'rich_text', format: 'md-math-v1', value: 's', mediaIds: [] },
+                fullSolution: {
+                  type: 'rich_text',
+                  format: 'md-math-v1',
+                  value: 'fs',
+                  mediaIds: [],
+                },
+                answer: { correctOptionIds: ['a'] },
+              },
+            ],
           }),
         }
       },
@@ -881,14 +961,23 @@ describe('generateVariation', () => {
       } else {
         return {
           text: JSON.stringify({
-            solution: { type: 'rich_text', format: 'md-math-v1', value: '7+7=14', mediaIds: [] },
-            fullSolution: {
-              type: 'rich_text',
-              format: 'md-math-v1',
-              value: '7+7=14',
-              mediaIds: [],
-            },
-            answer: { correctOptionIds: ['a'] },
+            blocks: [
+              {
+                id: 'block-1',
+                solution: {
+                  type: 'rich_text',
+                  format: 'md-math-v1',
+                  value: '7+7=14',
+                  mediaIds: [],
+                },
+                fullSolution: {
+                  type: 'rich_text',
+                  format: 'md-math-v1',
+                  value: '7+7=14',
+                  mediaIds: [],
+                },
+              },
+            ],
           }),
         }
       }
@@ -905,5 +994,503 @@ describe('generateVariation', () => {
       prompt: { value: string }
     }
     expect(resultBlock.prompt.value).toBe('What is $7+7$?')
+  })
+
+  // ── Per-block pass-2 tests ─────────────────────────────────────────────────
+
+  it('given 3 question blocks and 3 per-block patches, each block receives its own solution', async () => {
+    mockGenerateChatCompletion.mockImplementation(async () => {
+      const callCount = mockGenerateChatCompletion.mock.calls.length
+
+      if (callCount === 1) {
+        return {
+          text: JSON.stringify({
+            content: {
+              blocks: [
+                {
+                  id: 'q1',
+                  type: 'question_select',
+                  variant: 'mcq',
+                  prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Q1', mediaIds: [] },
+                  answer: { options: [], correctOptionIds: ['a'] },
+                },
+                {
+                  id: 'q2',
+                  type: 'question_select',
+                  variant: 'mcq',
+                  prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Q2', mediaIds: [] },
+                  answer: { options: [], correctOptionIds: ['a'] },
+                  solution: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'orig-sol',
+                    mediaIds: [],
+                  },
+                },
+                {
+                  id: 'q3',
+                  type: 'question_free_response',
+                  prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Q3', mediaIds: [] },
+                  answer: { type: 'free_response', rubric: 'x', acceptedPatterns: [] },
+                },
+              ],
+            },
+          }),
+        }
+      }
+      // Pass 2: per-block patches, one per question block
+      return {
+        text: JSON.stringify({
+          blocks: [
+            {
+              id: 'q1',
+              solution: { type: 'rich_text', format: 'md-math-v1', value: 'sol-q1', mediaIds: [] },
+              fullSolution: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: 'full-q1',
+                mediaIds: [],
+              },
+              answer: { correctOptionIds: ['b'] },
+            },
+            {
+              id: 'q2',
+              solution: { type: 'rich_text', format: 'md-math-v1', value: 'sol-q2', mediaIds: [] },
+              fullSolution: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: 'full-q2',
+                mediaIds: [],
+              },
+              answer: { correctOptionIds: ['c'] },
+            },
+            {
+              id: 'q3',
+              solution: { type: 'rich_text', format: 'md-math-v1', value: 'sol-q3', mediaIds: [] },
+              fullSolution: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: 'full-q3',
+                mediaIds: [],
+              },
+            },
+          ],
+        }),
+      }
+    })
+
+    const exercise = makeMockExercise('ex-multi-block')
+    exercise.content = {
+      blocks: [
+        {
+          id: 'q1',
+          type: 'question_select',
+          variant: 'mcq',
+          prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Q1', mediaIds: [] },
+          answer: { options: [], correctOptionIds: ['a'] },
+        },
+        {
+          id: 'q2',
+          type: 'question_select',
+          variant: 'mcq',
+          prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Q2', mediaIds: [] },
+          answer: { options: [], correctOptionIds: ['a'] },
+        },
+        {
+          id: 'q3',
+          type: 'question_free_response',
+          prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Q3', mediaIds: [] },
+          answer: { type: 'free_response', rubric: 'x', acceptedPatterns: [] },
+        },
+      ],
+    } as Exercise['content']
+
+    const result = await generateVariation(
+      { exercise, level: 'deep', subject: 'mixed' },
+      mockPayload,
+    )
+
+    const blocks = (result.exercise.content as { blocks: unknown[] }).blocks as Array<{
+      id: string
+      solution?: { value: string }
+      fullSolution?: { value: string }
+      answer?: { correctOptionIds: string[] }
+    }>
+
+    const q1 = blocks.find((b) => b.id === 'q1')!
+    const q2 = blocks.find((b) => b.id === 'q2')!
+    const q3 = blocks.find((b) => b.id === 'q3')!
+
+    expect(q1.solution?.value).toBe('sol-q1')
+    expect(q1.fullSolution?.value).toBe('full-q1')
+    expect(q1.answer?.correctOptionIds).toEqual(['b'])
+
+    expect(q2.solution?.value).toBe('sol-q2')
+    expect(q2.fullSolution?.value).toBe('full-q2')
+    expect(q2.answer?.correctOptionIds).toEqual(['c'])
+
+    expect(q3.solution?.value).toBe('sol-q3')
+    expect(q3.fullSolution?.value).toBe('full-q3')
+  })
+
+  it('given 3 question blocks and 2 per-block patches, unmatched block has no solution set (no smearing)', async () => {
+    mockGenerateChatCompletion.mockImplementation(async () => {
+      const callCount = mockGenerateChatCompletion.mock.calls.length
+
+      if (callCount === 1) {
+        return {
+          text: JSON.stringify({
+            content: {
+              blocks: [
+                {
+                  id: 'q1',
+                  type: 'question_select',
+                  variant: 'mcq',
+                  prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Q1', mediaIds: [] },
+                  answer: { options: [], correctOptionIds: ['a'] },
+                  solution: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'orig-sol',
+                    mediaIds: [],
+                  },
+                },
+                {
+                  id: 'q2',
+                  type: 'question_select',
+                  variant: 'mcq',
+                  prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Q2', mediaIds: [] },
+                  answer: { options: [], correctOptionIds: ['a'] },
+                  solution: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'orig-sol',
+                    mediaIds: [],
+                  },
+                },
+                {
+                  id: 'q3',
+                  type: 'question_select',
+                  variant: 'mcq',
+                  prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Q3', mediaIds: [] },
+                  answer: { options: [], correctOptionIds: ['a'] },
+                  solution: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'orig-sol',
+                    mediaIds: [],
+                  },
+                },
+              ],
+            },
+          }),
+        }
+      }
+      // Pass 2: only 2 patches (q1 and q3), q2 has no patch
+      return {
+        text: JSON.stringify({
+          blocks: [
+            {
+              id: 'q1',
+              solution: { type: 'rich_text', format: 'md-math-v1', value: 'sol-q1', mediaIds: [] },
+              fullSolution: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: 'full-q1',
+                mediaIds: [],
+              },
+              answer: { correctOptionIds: ['b'] },
+            },
+            {
+              id: 'q3',
+              solution: { type: 'rich_text', format: 'md-math-v1', value: 'sol-q3', mediaIds: [] },
+              fullSolution: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: 'full-q3',
+                mediaIds: [],
+              },
+              answer: { correctOptionIds: ['c'] },
+            },
+          ],
+        }),
+      }
+    })
+
+    const exercise = makeMockExercise('ex-partial-patch')
+    exercise.content = {
+      blocks: [
+        {
+          id: 'q1',
+          type: 'question_select',
+          variant: 'mcq',
+          prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Q1', mediaIds: [] },
+          answer: { options: [], correctOptionIds: ['a'] },
+          solution: { type: 'rich_text', format: 'md-math-v1', value: 'orig-sol', mediaIds: [] },
+        },
+        {
+          id: 'q2',
+          type: 'question_select',
+          variant: 'mcq',
+          prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Q2', mediaIds: [] },
+          answer: { options: [], correctOptionIds: ['a'] },
+          solution: { type: 'rich_text', format: 'md-math-v1', value: 'orig-sol', mediaIds: [] },
+        },
+        {
+          id: 'q3',
+          type: 'question_select',
+          variant: 'mcq',
+          prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Q3', mediaIds: [] },
+          answer: { options: [], correctOptionIds: ['a'] },
+          solution: { type: 'rich_text', format: 'md-math-v1', value: 'orig-sol', mediaIds: [] },
+        },
+      ],
+    } as Exercise['content']
+
+    const result = await generateVariation(
+      { exercise, level: 'deep', subject: 'mixed' },
+      mockPayload,
+    )
+
+    const blocks = (result.exercise.content as { blocks: unknown[] }).blocks as Array<{
+      id: string
+      solution?: { value: string }
+      fullSolution?: { value: string }
+      answer?: { correctOptionIds: string[] }
+    }>
+
+    const q1 = blocks.find((b) => b.id === 'q1')!
+    const q2 = blocks.find((b) => b.id === 'q2')!
+    const q3 = blocks.find((b) => b.id === 'q3')!
+
+    // q1 and q3 get their patches applied
+    expect(q1.solution?.value).toBe('sol-q1')
+    expect(q3.solution?.value).toBe('sol-q3')
+
+    // q2 has NO patch — solution must NOT be smeared from pass-2
+    // It should retain its original pass-1 value (or be undefined if pass-1 didn't set it)
+    expect(q2.solution?.value).toBe('orig-sol')
+  })
+
+  it('extractPass2Patch handles structured output in per-block format', async () => {
+    mockGenerateChatCompletion.mockImplementation(async () => {
+      const callCount = mockGenerateChatCompletion.mock.calls.length
+
+      if (callCount === 1) {
+        return {
+          text: JSON.stringify({
+            content: {
+              blocks: [
+                {
+                  id: 'block-1',
+                  type: 'question_select',
+                  variant: 'mcq',
+                  prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Q1', mediaIds: [] },
+                  answer: { options: [], correctOptionIds: ['a'] },
+                },
+              ],
+            },
+          }),
+        }
+      }
+      // Structured output path: Genkit parsed per-block response into result.output
+      return {
+        text: '',
+        output: {
+          blocks: [
+            {
+              id: 'block-1',
+              solution: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: 'structured-sol',
+                mediaIds: [],
+              },
+              fullSolution: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: 'structured-full',
+                mediaIds: [],
+              },
+              answer: { correctOptionIds: ['b'] },
+            },
+          ],
+        },
+      }
+    })
+
+    const exercise = makeMockExercise('ex-structured-output')
+    const result = await generateVariation(
+      { exercise, level: 'medium', subject: 'algebra' },
+      mockPayload,
+    )
+
+    const block = (result.exercise.content as { blocks: unknown[] }).blocks[0] as {
+      solution?: { value: string }
+      answer?: { correctOptionIds: string[] }
+    }
+    expect(block.solution?.value).toBe('structured-sol')
+    expect(block.answer?.correctOptionIds).toEqual(['b'])
+  })
+
+  it('extractPass2Patch handles text-fallback in per-block format', async () => {
+    mockGenerateChatCompletion.mockImplementation(async () => {
+      const callCount = mockGenerateChatCompletion.mock.calls.length
+
+      if (callCount === 1) {
+        return {
+          text: JSON.stringify({
+            content: {
+              blocks: [
+                {
+                  id: 'block-1',
+                  type: 'question_select',
+                  variant: 'mcq',
+                  prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Q1', mediaIds: [] },
+                  answer: { options: [], correctOptionIds: ['a'] },
+                },
+              ],
+            },
+          }),
+        }
+      }
+      // Text fallback path: no structured output, text contains per-block JSON
+      return {
+        text: JSON.stringify({
+          blocks: [
+            {
+              id: 'block-1',
+              solution: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: 'text-fallback-sol',
+                mediaIds: [],
+              },
+              fullSolution: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: 'text-fallback-full',
+                mediaIds: [],
+              },
+              answer: { correctOptionIds: ['c'] },
+            },
+          ],
+        }),
+      }
+    })
+
+    const exercise = makeMockExercise('ex-text-fallback-per-block')
+    const result = await generateVariation(
+      { exercise, level: 'light', subject: 'algebra' },
+      mockPayload,
+    )
+
+    const block = (result.exercise.content as { blocks: unknown[] }).blocks[0] as {
+      solution?: { value: string }
+      answer?: { correctOptionIds: string[] }
+    }
+    expect(block.solution?.value).toBe('text-fallback-sol')
+    expect(block.answer?.correctOptionIds).toEqual(['c'])
+  })
+
+  it('non-question blocks are untouched by pass-2 merge', async () => {
+    mockGenerateChatCompletion.mockImplementation(async () => {
+      const callCount = mockGenerateChatCompletion.mock.calls.length
+
+      if (callCount === 1) {
+        return {
+          text: JSON.stringify({
+            content: {
+              blocks: [
+                {
+                  id: 'rt1',
+                  type: 'rich_text',
+                  prompt: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'Intro text',
+                    mediaIds: [],
+                  },
+                },
+                {
+                  id: 'q1',
+                  type: 'question_select',
+                  variant: 'mcq',
+                  prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Q1', mediaIds: [] },
+                  answer: { options: [], correctOptionIds: ['a'] },
+                },
+                {
+                  id: 'svg1',
+                  type: 'svg',
+                  content: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: '<svg/>',
+                    mediaIds: [],
+                  },
+                },
+              ],
+            },
+          }),
+        }
+      }
+      return {
+        text: JSON.stringify({
+          blocks: [
+            {
+              id: 'q1',
+              solution: { type: 'rich_text', format: 'md-math-v1', value: 'sol-q1', mediaIds: [] },
+              fullSolution: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: 'full-q1',
+                mediaIds: [],
+              },
+              answer: { correctOptionIds: ['b'] },
+            },
+          ],
+        }),
+      }
+    })
+
+    const exercise = makeMockExercise('ex-non-question')
+    exercise.content = {
+      blocks: [
+        {
+          id: 'rt1',
+          type: 'rich_text',
+          prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Intro text', mediaIds: [] },
+        },
+        {
+          id: 'q1',
+          type: 'question_select',
+          variant: 'mcq',
+          prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Q1', mediaIds: [] },
+          answer: { options: [], correctOptionIds: ['a'] },
+        },
+        {
+          id: 'svg1',
+          type: 'svg',
+          content: { type: 'rich_text', format: 'md-math-v1', value: '<svg/>', mediaIds: [] },
+        },
+      ],
+    } as Exercise['content']
+
+    const result = await generateVariation(
+      { exercise, level: 'deep', subject: 'mixed' },
+      mockPayload,
+    )
+
+    const blocks = (result.exercise.content as { blocks: unknown[] }).blocks as Array<{
+      id: string
+      type: string
+    }>
+
+    const rt1 = blocks.find((b) => b.id === 'rt1')!
+    const svg1 = blocks.find((b) => b.id === 'svg1')!
+
+    expect(rt1.type).toBe('rich_text')
+    expect(svg1.type).toBe('svg')
+    // q1 gets the patch applied (tested by other tests)
   })
 })
