@@ -29,6 +29,18 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 JOBS_DIR = REPO_ROOT / ".kody" / "jobs"
 MEMORY_DIR = REPO_ROOT / ".kody" / "memory"
 STATE_PATH = JOBS_DIR / "job-gap-scan.state.json"
+KODY_CONFIG_PATH = REPO_ROOT / "kody.config.json"
+
+
+def operator_handle() -> str | None:
+    """Read github.operator from kody.config.json. Returns None if missing
+    or unparseable so the job still posts (just without inbox routing)."""
+    try:
+        raw = json.loads(KODY_CONFIG_PATH.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+    operator = raw.get("github", {}).get("operator")
+    return operator if isinstance(operator, str) and operator else None
 
 PROPOSAL_LABEL = "kody:ceo-proposal"
 CADENCE_DAYS = 0  # Engine schedules via every: 24h in the job markdown.
@@ -326,8 +338,10 @@ def build_issue_body(cand: Candidate) -> str:
     score_row = (
         f"| 1 | {cand.title} | {cand.risk} | {cand.effort} | {cand.value} | {cand.roi} |"
     )
+    operator = operator_handle()
+    mention_prefix = f"@{operator} " if operator else ""
     return (
-        f"{cand.headline}\n\n"
+        f"{mention_prefix}{cand.headline}\n\n"
         "## Why now\n\n"
         f"{cand.why_now}\n\n"
         "## Scoring\n\n"
@@ -390,9 +404,15 @@ def commit_state(slug: str) -> bool:
     ).stdout.strip()
     if not status:
         return False
-    msg = f"chore(jobs): job-gap-scan proposed {slug}"
+    # Sentence-case subject + a non-empty body so the repo's commitlint
+    # (subject-case + body-empty rules) accepts the auto-commit.
+    subject = f"chore(jobs): Record job-gap-scan proposal for {slug}"
+    body = (
+        f"Bumps .kody/jobs/job-gap-scan.state.json after proposing "
+        f"`{slug}` (see `kody:ceo-proposal` issue)."
+    )
     commit_result = subprocess.run(
-        ["git", "-C", str(REPO_ROOT), "commit", "-m", msg],
+        ["git", "-C", str(REPO_ROOT), "commit", "-m", subject, "-m", body],
         capture_output=True,
         text=True,
     )
