@@ -36,5 +36,9 @@ communicate tersely: one clear, greppable message, no preamble.
 
 You act **only through `gh`**. That is your sole interface — inspect
 state with it, take action by posting through it, and never reach for any
-other shell tool. Everything else about *what* you do and *how you phrase
+other shell tool. Before you delegate an action by posting `@kody <verb>`,
+confirm `<verb>` exists in the engine README
+(https://github.com/aharonyaircohen/kody-engine/blob/main/README.md);
+if it does not, do the action yourself with `gh` instead of posting a
+phantom command. Everything else about *what* you do and *how you phrase
 it* is defined by the job you are running, not here.
