@@ -81,8 +81,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <head>
         <InitTheme />
-        <link href="/favicon.ico" rel="icon" sizes="32x32" />
-        <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
+        {/* Brand theme colors injected as CSS variables */}
+        <style>{`:root {
+          --brand-primary-light: ${getBrand().config.themeColor.light};
+          --brand-primary-dark:  ${getBrand().config.themeColor.dark};
+        }`}</style>
       </head>
       <body>
         <I18nProvider locale={locale} messages={messages}>
@@ -122,7 +125,6 @@ export async function generateMetadata(): Promise<Metadata> {
   const b = getBrand().config
   return {
     metadataBase: new URL(b.host),
-    manifest: '/manifest.json', // dynamic in Phase 3
     title: { default: b.defaultTitle, template: b.titleTemplate },
     description: b.description,
     keywords: b.keywords,
@@ -150,16 +152,17 @@ export async function generateMetadata(): Promise<Metadata> {
     icons: {
       icon: '/favicon.svg',
       shortcut: '/favicon.ico',
-      apple: '/favicon.svg',
+      apple: '/apple-icon.png',
     },
   }
 }
 
-export const viewport: Viewport = {
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#91262C' },
-    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
-  ],
+export async function generateViewport(): Promise<Viewport> {
+  const b = getBrand().config
+  return {
+    themeColor: [
+      { media: '(prefers-color-scheme: light)', color: b.themeColor.light },
+      { media: '(prefers-color-scheme: dark)', color: b.themeColor.dark },
+    ],
+  }
 }
-// TODO (brand-bundle Phase 3): themeColor in viewport should be read from getBrand().config.themeColor
-// when Next.js supports async viewport exports or multi-brand static generation.

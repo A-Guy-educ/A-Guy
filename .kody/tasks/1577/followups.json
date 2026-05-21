@@ -1,0 +1,8 @@
+[
+  {
+    "title": "apple-touch-icon.png in brand bundle",
+    "body": "The apple-icon.png route currently falls back to favicon.svg since no dedicated apple-touch-icon file exists in the brand bundle. Create a proper apple-touch-icon.png asset and add it to src/brands/aguy/assets/",
+    "rationale": "The manifest references a dedicated apple-touch-icon; the current SVG fallback may not render correctly as a PNG on iOS home screens",
+    "priority": "low"
+  }
+]
