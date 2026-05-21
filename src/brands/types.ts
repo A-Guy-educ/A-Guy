@@ -29,11 +29,13 @@ export interface BrandConfig {
   appleWebApp: { title: string }
 }
 
+export interface BrandMessages {
+  en: Record<string, unknown>
+  he: Record<string, unknown>
+}
+
 export interface Brand {
   config: BrandConfig
   Logo: ComponentType<SVGProps<SVGSVGElement>>
-  // Future phases will extend this with:
-  // pages: { LandingPage: ComponentType; StartPage: ComponentType }
-  // components: { CourseCard: ComponentType }
-  // messages: { en: Record<string, string>; he: Record<string, string> }
+  messages: BrandMessages
 }

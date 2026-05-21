@@ -43,12 +43,15 @@ const stixTwoText = STIX_Two_Text({
 })
 
 async function getMessages(locale: string) {
-  try {
-    return (await import(`../../../src/i18n/${locale}.json`, { with: { type: 'json' } })).default
-  } catch {
-    return (await import(`../../../src/i18n/${defaultLocale}.json`, { with: { type: 'json' } }))
-      .default
-  }
+  const base = await import(`../../../src/i18n/${locale}.json`, { with: { type: 'json' } })
+    .then((m) => m.default)
+    .catch(() =>
+      import(`../../../src/i18n/${defaultLocale}.json`, { with: { type: 'json' } }).then(
+        (m) => m.default,
+      ),
+    )
+  const brand = getBrand().messages[locale as 'en' | 'he'] ?? {}
+  return { ...base, ...brand }
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

@@ -51,7 +51,6 @@
     }
   },
   "home": {
-    "title": "דף הבית - A-Guy",
     "description": "המורה הדיגיטלי שלך - לימוד, תרגול, שאלות ומבחנים"
   },
   "common": {
@@ -132,17 +131,14 @@
       }
     },
     "login": {
-      "title": "ברוכים הבאים ל-A-Guy",
       "subtitle": "התחבר כדי להמשיך ללמוד",
       "headingBold": "שלום,",
       "headingRest": "מוכנים להצליח?",
-      "heroSubtitle": "A-Guy המורה הפרטי שלכם",
       "quickLogin": "כניסה מהירה",
       "freeRegistration": "הרשמה ללא עלות",
       "secureAccess": "גישה מהירה ומאובטחת.",
       "oneClickEntry": "בלחיצה אחת אתם בפנים.",
       "needHelp": "זקוקים לעזרה?",
-      "googleOnlyMessage": "A-Guy תומך כרגע באימות Google לחוויה מהירה ומאובטחת יותר.",
       "email": "אימייל",
       "emailPlaceholder": "you@example.com",
       "password": "סיסמה",
@@ -505,7 +501,6 @@
     "statusInProgress": "בתהליך",
     "statusNotStarted": "לא התחלת",
     "moreCourses": "קורסים נוספים",
-    "platformName": "Aguy Learning Platform",
     "loading": "טוען...",
     "deleteConversation": "מחק שיחה",
     "deleteConfirm": "האם אתה בטוח שברצונך למחוק שיחה זו?"
@@ -649,7 +644,6 @@
       "questionnaire572Description": "וקטורים, מרוכבים ולוגריתמים"
     },
     "footer": {
-      "platform": "A-Guy Learning Platform",
       "terms": "תנאי שימוש",
       "privacy": "מדיניות פרטיות",
       "contact": "צור קשר"
