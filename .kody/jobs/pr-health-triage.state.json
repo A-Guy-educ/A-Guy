@@ -1,26 +1,26 @@
 {
   "version": 1,
-  "rev": 2,
+  "rev": 5,
   "cursor": "idle",
   "data": {
     "prs": {
       "1285": {
-        "fp": "sync|2026-05-20T20:53:27Z",
+        "fp": "sync|2026-05-21T10:58:18Z",
         "stage": "sync-auto",
-        "lastActAt": "2026-05-21T10:49:39Z"
+        "lastActAt": "2026-05-21T14:26:46Z"
       },
       "1377": {
-        "fp": "sync|2026-05-20T20:51:39Z",
+        "fp": "sync|2026-05-21T10:58:29Z",
         "stage": "sync-auto",
-        "lastActAt": "2026-05-21T10:49:42Z"
+        "lastActAt": "2026-05-21T14:26:51Z"
       },
       "1405": {
-        "fp": "sync|2026-05-21T09:38:40Z",
+        "fp": "sync|2026-05-21T10:58:20Z",
         "stage": "sync-auto",
-        "lastActAt": "2026-05-21T10:49:45Z"
+        "lastActAt": "2026-05-21T14:26:54Z"
       },
       "1406": {
-        "fp": "sync|2026-05-20T20:48:23Z",
+        "fp": "sync|2026-05-21T10:58:25Z",
         "stage": "sync-auto",
         "lastActAt": "2026-05-21T10:49:48Z"
       },
@@ -28,6 +28,36 @@
         "fp": "sync|2026-05-20T20:45:51Z",
         "stage": "sync-auto",
         "lastActAt": "2026-05-21T10:49:51Z"
+      },
+      "1483": {
+        "fp": "sync|2026-05-20T21:17:48Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T12:05:13Z"
+      },
+      "1511": {
+        "fp": "sync|2026-05-20T20:42:02Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T12:05:16Z"
+      },
+      "1524": {
+        "fp": "sync|2026-05-20T20:42:42Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T12:05:19Z"
+      },
+      "1525": {
+        "fp": "sync|2026-05-20T20:42:06Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T12:05:22Z"
+      },
+      "1547": {
+        "fp": "sync|2026-05-20T20:39:54Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T12:05:25Z"
+      },
+      "1564": {
+        "fp": "fix-ci|2026-05-21T13:16:14Z",
+        "stage": "fix-ci-recommended",
+        "lastActAt": "2026-05-21T14:27:17Z"
       },
       "1566": {
         "fp": "sync|2026-05-20T20:27:41Z",
@@ -40,17 +70,37 @@
         "lastActAt": "2026-05-21T09:31:12Z"
       },
       "1573": {
-        "fp": "sync|2026-05-20T20:26:56Z",
+        "fp": "sync|2026-05-21T09:40:10Z",
         "stage": "sync-auto",
-        "lastActAt": "2026-05-21T09:31:15Z"
+        "lastActAt": "2026-05-21T13:28:34Z"
+      },
+      "1574": {
+        "fp": "sync|2026-05-20T21:04:42Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T13:28:40Z"
+      },
+      "1584": {
+        "fp": "sync|2026-05-20T21:04:27Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T13:28:43Z"
+      },
+      "1586": {
+        "fp": "sync|2026-05-20T21:05:17Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T13:28:47Z"
       },
       "1588": {
-        "fp": "sync|2026-05-20T20:25:51Z",
+        "fp": "sync|2026-05-21T09:38:48Z",
         "stage": "sync-auto",
-        "lastActAt": "2026-05-21T09:31:20Z"
+        "lastActAt": "2026-05-21T13:28:58Z"
+      },
+      "1591": {
+        "fp": "sync|2026-05-20T20:26:04Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T14:27:26Z"
       }
     },
-    "lastFiredAt": "2026-05-21T10:50:29.056Z"
+    "lastFiredAt": "2026-05-21T14:28:18.926Z"
   },
   "done": false
 }
