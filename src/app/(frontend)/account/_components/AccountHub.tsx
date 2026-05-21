@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
 import type { User } from '@/payload-types'
 import { useTranslations } from '@/ui/web/providers/I18n'
-import { BarChart3 } from 'lucide-react'
+import { BarChart3, Brain } from 'lucide-react'
 import {
   Accordion,
   AccordionContent,
@@ -13,11 +13,12 @@ import {
   AccordionTrigger,
 } from '@/ui/web/components/accordion'
 import { DetailsSection } from './DetailsSection'
+import { MemorySection } from './MemorySection'
 import { PreferencesSection } from './PreferencesSection'
 import { TeachersProfileSection } from './TeachersProfileSection'
 import { SelectedCourseCard } from './SelectedCourseCard'
 
-const VALID_SECTIONS = ['details', 'courses', 'preferences', 'teachers-profile'] as const
+const VALID_SECTIONS = ['details', 'courses', 'preferences', 'teachers-profile', 'memory'] as const
 type ValidSection = (typeof VALID_SECTIONS)[number]
 
 function isValidSection(section: string | undefined): section is ValidSection {
@@ -64,6 +65,14 @@ export function AccountHub({ user, initialSection }: AccountHubProps) {
         {t('myProgressAndStats')}
       </SystemLink>
 
+      <SystemLink
+        href="/account/memory"
+        className="flex items-center gap-2 text-body-sm font-bold text-primary px-4 py-2 hover:bg-muted/50 rounded-lg transition-all duration-normal w-full"
+      >
+        <Brain className="w-4 h-4" />
+        {t('sectionMemory')}
+      </SystemLink>
+
       <Accordion
         type="single"
         collapsible
@@ -89,6 +98,11 @@ export function AccountHub({ user, initialSection }: AccountHubProps) {
         <AccordionItem value="teachers-profile">
           <AccordionTrigger className="ps-4">{t('sectionTeachersProfile')}</AccordionTrigger>
           <AccordionContent className="px-4">{<TeachersProfileSection />}</AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="memory">
+          <AccordionTrigger className="ps-4">{t('sectionMemory')}</AccordionTrigger>
+          <AccordionContent className="px-4">{<MemorySection user={user} />}</AccordionContent>
         </AccordionItem>
       </Accordion>
     </div>
