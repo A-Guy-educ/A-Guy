@@ -30,6 +30,6 @@
     "stateBackend": "local-file"
   },
   "jobs": {
-    "stateBackend": "local-file"
+    "stateBackend": "contents-api"
   }
 }
