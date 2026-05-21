@@ -19,6 +19,7 @@ import { auditRoleChange } from './hooks/auditRoleChange-hook'
 import { createUserSettings } from './hooks/createUserSettings-hook'
 import { ensureRoleOnSignup } from './hooks/ensureRoleOnSignup-hook'
 import { preventLastAdminDemotion } from './hooks/preventLastAdminDemotion-hook'
+import { optionalTenantField } from '../../fields/tenant'
 import { ACCOUNT_ROLE_LABEL, AccountRole } from './roles'
 
 export const Users: CollectionConfig = {
@@ -68,6 +69,8 @@ export const Users: CollectionConfig = {
         position: 'sidebar',
       },
     },
+    // Tenant
+    optionalTenantField,
     // OAuth fields
     {
       name: 'googleSub',
