@@ -121,7 +121,7 @@ beforeAll(async () => {
         courseEntitlements: spec.courses.map((c) => ({
           course: c,
           grantMethod: 'admin',
-          transactionId: 'test-transaction',
+          transactionId: `tx-test-${c}`,
         })),
       } as any,
       overrideAccess: true,

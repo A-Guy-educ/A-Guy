@@ -76,7 +76,7 @@ const createUserWithEntitlements = async (email: string, courseIds: string[]): P
       courseEntitlements: courseIds.map((id) => ({
         course: id,
         grantMethod: 'admin',
-        transactionId: 'test-transaction',
+        transactionId: `tx-test-${id}`,
       })),
     } as any,
     overrideAccess: true,
