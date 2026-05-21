@@ -266,6 +266,7 @@ async function appendOutputExercise(
 /** Shape of an exercise from the exercises collection. */
 export type ExerciseDoc = {
   id: string
+  title?: string
   content?: { blocks?: ContentBlock[] }
 }
 

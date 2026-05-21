@@ -17,7 +17,7 @@ import type { VariationStrategy, VariationResult } from './types'
 import { ScriptVariationStrategy } from './script-strategy'
 
 /** AI variation strategy — calls generateVariation with two-pass approach. */
-class AiVariationStrategy implements VariationStrategy {
+export class AiVariationStrategy implements VariationStrategy {
   constructor(private readonly payload: Payload) {
     this.payload = payload
   }
@@ -57,6 +57,8 @@ export class RouterStrategy implements VariationStrategy {
   constructor(
     private readonly payload: Payload,
     private readonly scriptStrategy = new ScriptVariationStrategy(),
+    private readonly aiStrategyFactory: (payload: Payload) => VariationStrategy = (p) =>
+      new AiVariationStrategy(p),
   ) {}
 
   async apply(
@@ -78,7 +80,7 @@ export class RouterStrategy implements VariationStrategy {
     }
 
     // medium/deep, or light with needsAiFallback → AI
-    const aiStrategy = new AiVariationStrategy(this.payload)
+    const aiStrategy = this.aiStrategyFactory(this.payload)
     return aiStrategy.apply(exercise, level, subject)
   }
 }

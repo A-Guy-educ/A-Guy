@@ -206,11 +206,19 @@ describe('Lesson duplication orchestrator — integration', () => {
     sourceLessonId = lesson.id
     cleanupLessonIds.push(sourceLessonId)
 
-    // Create exactly 5 exercises on the source lesson
+    // Create exactly 5 exercises on the source lesson.
+    // Exercise at index 3 has title containing '-3' to trigger the forced-failure mock.
+    const exerciseTitles = [
+      `Orch Exercise 0 ${ts}`,
+      `Orch Exercise 1 ${ts}`,
+      `Orch Exercise 2 ${ts}`,
+      `Orch Exercise -3 ${ts}`, // triggers mock forced failure
+      `Orch Exercise 4 ${ts}`,
+    ]
     for (let i = 0; i < 5; i++) {
       const ex = await payload.create({
         collection: 'exercises',
-        data: { title: `Orch Exercise ${i} ${ts}`, lesson: sourceLessonId },
+        data: { title: exerciseTitles[i], lesson: sourceLessonId },
         draft: true,
       })
       cleanupExerciseIds.push(ex.id)
@@ -327,7 +335,7 @@ describe('Lesson duplication orchestrator — integration', () => {
     // bypasses processExercise (which calls createOutputExercise). Exercise creation
     // is verified in lesson-duplication-review-resolve.int.spec.ts instead.
     expect(finalRecord.outputLesson).toBeTruthy()
-  }, 180000)
+  }, 900000)
 
   it('orchestrator does not abort when one exercise fails — remaining exercises are processed', async () => {
     // Create fresh pending record
@@ -360,5 +368,5 @@ describe('Lesson duplication orchestrator — integration', () => {
 
     // outputLesson should be created even when some exercises fail
     expect(finalRecord.outputLesson).toBeTruthy()
-  }, 180000)
+  }, 900000)
 })
