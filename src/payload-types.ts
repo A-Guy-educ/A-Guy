@@ -93,6 +93,7 @@ export interface Config {
     teacher_profiles: TeacherProfile;
     user_settings: UserSetting;
     'exercise-assets': ExerciseAsset;
+    'exercise-generations': ExerciseGeneration;
     users: User;
     'user-progress': UserProgress;
     'user-stats': UserStat;
@@ -145,6 +146,7 @@ export interface Config {
     teacher_profiles: TeacherProfilesSelect<false> | TeacherProfilesSelect<true>;
     user_settings: UserSettingsSelect<false> | UserSettingsSelect<true>;
     'exercise-assets': ExerciseAssetsSelect<false> | ExerciseAssetsSelect<true>;
+    'exercise-generations': ExerciseGenerationsSelect<false> | ExerciseGenerationsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'user-progress': UserProgressSelect<false> | UserProgressSelect<true>;
     'user-stats': UserStatsSelect<false> | UserStatsSelect<true>;
@@ -2500,6 +2502,85 @@ export interface ExerciseAsset {
   focalY?: number | null;
 }
 /**
+ * Job records for the AI exercise generation pipeline. Use the review screen at /admin/exercise-generations/<id> to manage failures.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "exercise-generations".
+ */
+export interface ExerciseGeneration {
+  id: string;
+  /**
+   * Lesson to add exercises to.
+   */
+  lesson: string | Lesson;
+  /**
+   * User-provided prompt for generating exercises.
+   */
+  prompt: string;
+  /**
+   * Number of exercises to generate.
+   */
+  maxCount: number;
+  /**
+   * Difficulty level for generated exercises.
+   */
+  difficultyLevel: 'easy' | 'medium' | 'hard';
+  /**
+   * Job status managed by the pipeline.
+   */
+  status: 'pending' | 'running' | 'succeeded' | 'failed' | 'needs_review';
+  /**
+   * Blocking failures — these exercises were not generated successfully.
+   */
+  failures?:
+    | {
+        exerciseRef?: string | null;
+        sectionIndex?: number | null;
+        code: string;
+        message: string;
+        suggestedAction?: ('skip' | 'regenerate' | 'keep') | null;
+        resolved?: boolean | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Maps generated exercise IDs to their positions.
+   */
+  outputExercises?:
+    | {
+        exerciseId: string;
+        position: number;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Total input tokens consumed across all LLM calls.
+   */
+  aiTokensInput?: number | null;
+  /**
+   * Total output tokens generated across all LLM calls.
+   */
+  aiTokensOutput?: number | null;
+  /**
+   * Estimated USD cost of all LLM calls.
+   */
+  aiCostUsd?: number | null;
+  /**
+   * Wall-clock duration of the generation run in milliseconds.
+   */
+  runDurationMs?: number | null;
+  /**
+   * Number of consecutive cron ticks that claimed this record without producing any new exercises. Reset to 0 when output grows. Auto-fails at ≥ 5.
+   */
+  claimAttempts?: number | null;
+  /**
+   * User who created this document
+   */
+  createdBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "user-progress".
  */
@@ -3312,6 +3393,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'exercise-assets';
         value: string | ExerciseAsset;
+      } | null)
+    | ({
+        relationTo: 'exercise-generations';
+        value: string | ExerciseGeneration;
       } | null)
     | ({
         relationTo: 'users';
@@ -4153,6 +4238,43 @@ export interface ExerciseAssetsSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "exercise-generations_select".
+ */
+export interface ExerciseGenerationsSelect<T extends boolean = true> {
+  lesson?: T;
+  prompt?: T;
+  maxCount?: T;
+  difficultyLevel?: T;
+  status?: T;
+  failures?:
+    | T
+    | {
+        exerciseRef?: T;
+        sectionIndex?: T;
+        code?: T;
+        message?: T;
+        suggestedAction?: T;
+        resolved?: T;
+        id?: T;
+      };
+  outputExercises?:
+    | T
+    | {
+        exerciseId?: T;
+        position?: T;
+        id?: T;
+      };
+  aiTokensInput?: T;
+  aiTokensOutput?: T;
+  aiCostUsd?: T;
+  runDurationMs?: T;
+  claimAttempts?: T;
+  createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

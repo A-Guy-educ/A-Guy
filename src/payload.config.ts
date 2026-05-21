@@ -20,6 +20,7 @@ import { ContextExtractions } from '@/server/payload/collections/ContextExtracti
 import { Conversations } from '@/server/payload/collections/Conversations'
 import { Courses } from '@/server/payload/collections/Courses'
 import { ExerciseAssets } from '@/server/payload/collections/ExerciseAssets'
+import { ExerciseGenerations } from '@/server/payload/collections/ExerciseGenerations'
 import { Exercises } from '@/server/payload/collections/Exercises'
 import { ExtractionLogs } from '@/server/payload/collections/ExtractionLogs'
 import { FormulaSheets } from '@/server/payload/collections/FormulaSheets'
@@ -52,6 +53,7 @@ import { importExerciseFromLesson } from '@/server/payload/endpoints/exercises/i
 import { translateContentEndpoint } from '@/server/payload/endpoints/translation/translate-content'
 import { cascadeDeleteEndpoint } from '@/server/payload/endpoints/cascade-delete'
 import { duplicateLessonEndpoint } from '@/server/payload/endpoints/lessons/duplicate'
+import { generateExercisesEndpoint } from '@/server/payload/endpoints/lessons/generate-exercises'
 import { exportLessonEndpoint } from '@/server/payload/endpoints/lessons/export'
 import { defaultLexical } from '@/server/payload/fields/defaultLexical'
 import { lessonDuplicationTask } from '@/server/payload/jobs/lesson-duplication-task'
@@ -113,6 +115,7 @@ export default buildConfig({
       beforeNavLinks: [
         '@/ui/admin/PdfConversion/SidebarLink',
         '@/ui/admin/LessonDuplicationReview/SidebarLink',
+        '@/ui/admin/ExerciseGenerationReview/SidebarLink#ExerciseGenerationReviewSidebarLink',
       ],
       afterNavLinks: ['@/ui/admin/UserEmail'],
     },
@@ -206,6 +209,7 @@ export default buildConfig({
     TeacherProfiles,
     UserSettings,
     ExerciseAssets,
+    ExerciseGenerations,
     Users,
     UserProgress,
     UserStats,
@@ -270,6 +274,11 @@ export default buildConfig({
       path: '/lessons/:id/duplicate-variation',
       method: 'post',
       handler: (req: PayloadRequest) => duplicateLessonEndpoint(req),
+    },
+    {
+      path: '/lessons/:id/generate-exercises',
+      method: 'post',
+      handler: (req: PayloadRequest) => generateExercisesEndpoint(req),
     },
     {
       path: '/lessons/:id/export',
