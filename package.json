@@ -3,6 +3,7 @@
   "version": "0.25.8",
   "description": "Website template for Payload",
   "license": "MIT",
+  "packageManager": "pnpm@10.33.0",
   "type": "module",
   "scripts": {
     "kody": "npx @kody-ade/kody-engine serve",
@@ -238,6 +239,5 @@
     "overrides": {
       "@modelcontextprotocol/sdk": ">=1.25.2"
     }
-  },
-  "packageManager": "pnpm@10.33.0"
+  }
 }

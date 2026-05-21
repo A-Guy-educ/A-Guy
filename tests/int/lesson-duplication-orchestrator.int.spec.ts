@@ -136,6 +136,7 @@ describe('Lesson duplication orchestrator — integration', () => {
   const cleanupExerciseIds: string[] = []
   const cleanupDuplicationIds: string[] = []
 
+  // Reset the generateVariation call counter before each test so the 3rd call always throws
   beforeEach(() => {
     h.vgCallCount = 0
   })
@@ -301,7 +302,7 @@ describe('Lesson duplication orchestrator — integration', () => {
 
     expect(record.status).toBe('pending')
 
-    // Run orchestrator (mocked runStrategy forces failure on exercise containing '-3')
+    // Run orchestrator (mocked generateVariation forces failure on the 3rd exercise)
     try {
       await runDuplicationOrchestrator(record.id, payload)
     } catch {
@@ -315,17 +316,17 @@ describe('Lesson duplication orchestrator — integration', () => {
     // Final status must be needs_review (not succeeded, not failed)
     expect(finalRecord.status).toBe('needs_review')
 
-    // At least one failure entry expected (exercise containing '-3' threw in runStrategy)
-    // Note: the exact count depends on exercise ID strings; we check ≥1 to be robust
+    // At least one failure entry expected (3rd exercise threw in generateVariation mock)
+    // Note: the exact count depends on exercise order; we check ≥1 to be robust
     expect(finalRecord.failures).toBeDefined()
     expect(finalRecord.failures.length).toBeGreaterThanOrEqual(1)
     expect(finalRecord.failures[0].code).toBe('GENERATION_FAILED')
     expect(finalRecord.failures[0].suggestedAction).toBe('skip')
 
     // After orchestrator runs, outputLesson should be created
-    // Note: outputExercises remain empty in this test because the runStrategy mock
-    // bypasses processExercise (which calls createOutputExercise). Exercise creation
-    // is verified in lesson-duplication-review-resolve.int.spec.ts instead.
+    // Note: outputExercises remain empty in this test because generateVariation
+    // throws before exercise creation. Exercise creation is verified in
+    // lesson-duplication-review-resolve.int.spec.ts instead.
     expect(finalRecord.outputLesson).toBeTruthy()
   }, 180000)
 
