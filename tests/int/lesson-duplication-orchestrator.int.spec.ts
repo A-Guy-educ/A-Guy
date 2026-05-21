@@ -108,6 +108,17 @@ vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
   ),
 }))
 
+// Also mock generateVariation so AiVariationStrategy (reached via RouterStrategy when
+// level='medium' in the mock) never makes real LLM calls.
+vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
+  generateVariation: vi.fn().mockResolvedValue({
+    exercise: {
+      id: 'mock-variation',
+      content: { blocks: [] },
+    },
+  }),
+}))
+
 async function ensureDefaultTenant(payload: Payload): Promise<string> {
   const slug = getDefaultTenantSlug()
   const existing = await payload.find({
