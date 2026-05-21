@@ -20,6 +20,35 @@ graduated in the trust ledger — dispatch it. The CTO persona defines only
 *who* runs this; all authority, scope limits, and comment formats below
 belong to **this job**.
 
+## Tick procedure — REQUIRED (fully scripted)
+
+This tick is **fully scripted**. The script
+[pr-health-triage-tick.py](.kody/scripts/pr-health-triage-tick.py) is the
+**single source of truth** for which PRs are candidates, which repair each
+needs, what comments to post, and the next state.
+
+Prose-driven iteration silently dropped the dedup ledger here: across a
+heavy multi-PR tick the model intermittently failed to emit the closing
+`kody-job-next-state` block, so state never persisted and every
+recommendation re-fired. The script removes that failure mode.
+
+You **MUST**:
+
+1. Run exactly: `python3 .kody/scripts/pr-health-triage-tick.py`
+2. Emit the script's stdout **verbatim** — the markdown summary table and
+   the `kody-job-next-state` fenced block at the end. Do not summarise,
+   reorder, or add commentary.
+
+You **MUST NOT**:
+
+- Call `gh pr list`, `gh issue list`, or `gh api` yourself.
+- Decide repairs, post comments, or mutate state outside the script.
+- Use any prior knowledge of PR numbers. The script's output is your only
+  data source for this tick.
+
+Everything below documents *what the script does* — it is reference, not a
+second set of instructions to execute by hand.
+
 ## Authority — the trust ledger
 
 This job is **advisory by default**. Authority over each verb is governed
