@@ -2,7 +2,7 @@ import '@/infra/config/server-init'
 
 import { getSystemLocale } from '@/i18n/server-locale'
 import { SystemParams } from '@/infra/config/system-params'
-import type { Exercise, FormulaSheet, Media } from '@/payload-types'
+import type { ContentPage, Exercise, FormulaSheet, Media } from '@/payload-types'
 import { resolveAccessType } from '@/server/constants/access-types'
 import { RenderBlocks } from '@/server/payload/blocks/RenderBlocks'
 import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
@@ -230,6 +230,20 @@ export default async function LessonPage({ params }: LessonPageProps) {
       }
     }
 
+    // Resolve intro content page
+    const introContentPage =
+      lesson.introContentPage && typeof lesson.introContentPage === 'object'
+        ? (lesson.introContentPage as ContentPage)
+        : null
+    const hasIntroContent = Boolean(introContentPage?.body?.length)
+    const introContentBody =
+      hasIntroContent && introContentPage?.body ? (
+        <RenderBlocks
+          blocks={introContentPage.body}
+          defaultSpacing={introContentPage.defaultBlockSpacing}
+        />
+      ) : null
+
     // Multi-tab view: show up to 3 tabs (Media / PDF / Interactive) whenever
     // the lesson has at least one exercise with renderable blocks. Media tab
     // only appears when validFiles is non-empty.
@@ -252,7 +266,14 @@ export default async function LessonPage({ params }: LessonPageProps) {
         analyticsContentType: 'blocks',
         backUrl: '/study',
         exercises: dualModeExercises,
-        interactive: { kind: 'blocks', blocks: resolvedBlocks, contentPageBodies, validFiles },
+        interactive: {
+          kind: 'blocks',
+          blocks: resolvedBlocks,
+          contentPageBodies,
+          validFiles,
+          introContentBody,
+          hasIntroContent,
+        },
         validFiles,
         mediaMap,
         chatLessonId: lesson.id,
@@ -288,6 +309,8 @@ export default async function LessonPage({ params }: LessonPageProps) {
           chatLessonId={lesson.id}
           showChat={showChat}
           formulaSheet={formulaSheet}
+          introContentBody={introContentBody}
+          hasIntroContent={hasIntroContent}
         />
       </AccessGateProvider>
     )

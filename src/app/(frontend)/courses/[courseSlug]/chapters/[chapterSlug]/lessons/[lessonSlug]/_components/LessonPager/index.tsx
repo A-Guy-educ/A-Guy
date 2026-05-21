@@ -60,6 +60,10 @@ interface LessonPagerProps {
    * inside individual exercises (used by the dual-mode lesson view where LaTeX lives
    * at the lesson level). */
   hideLatexBlocks?: boolean
+  /** Pre-rendered intro content page body */
+  introContentBody?: React.ReactNode | null
+  /** Whether the lesson has intro content to display */
+  hasIntroContent?: boolean
 }
 
 export function LessonPager({
@@ -78,6 +82,8 @@ export function LessonPager({
   formulaSheet,
   headerSlot,
   hideLatexBlocks,
+  introContentBody,
+  hasIntroContent,
 }: LessonPagerProps) {
   const t = useTranslations('courses')
   const {
@@ -97,6 +103,7 @@ export function LessonPager({
     chapterSlug,
     lessonSlug,
     hasPdfFiles: (validFiles?.length ?? 0) > 0,
+    hasIntroContent,
   })
 
   const [showConfetti, setShowConfetti] = useState(false)
@@ -623,6 +630,40 @@ export function LessonPager({
                 >
                   <ArrowRight className="w-4 h-4 rtl:rotate-0 ltr:rotate-180" />
                   {t('exercisesPagerPrev')}
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+          {pageState.type === 'introContent' && (
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="space-y-8"
+            >
+              <header className="text-center">
+                <span className="inline-block px-4 py-1.5 bg-muted text-muted-foreground rounded-full text-label tracking-[0.2em] uppercase mb-5 border border-border/40">
+                  {t('exercisesPagerIntro')}
+                </span>
+                <h1 className="text-heading-xl md:text-display-sm font-bold leading-tight text-foreground mb-2">
+                  {lessonTitle}
+                </h1>
+                <div className="w-12 h-0.5 bg-primary mx-auto rounded-full" />
+              </header>
+
+              {introContentBody && (
+                <div className="bg-card rounded-3xl p-card-padding-lg md:p-10 border border-border/60 shadow-card-hover shadow-muted/50">
+                  <div className="prose prose-lg max-w-none dark:prose-invert leading-relaxed">
+                    {introContentBody}
+                  </div>
+                </div>
+              )}
+
+              <div className="text-center">
+                <Button onClick={handleNext} size="lg" className="px-10 rounded-xl cursor-pointer">
+                  {t('exercisesPagerContinueToExercises')}
+                  <ChevronLeft className="w-5 h-5 ms-2 rtl:rotate-0 ltr:rotate-180" />
                 </Button>
               </div>
             </motion.div>

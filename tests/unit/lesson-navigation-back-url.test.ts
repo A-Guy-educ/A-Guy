@@ -42,21 +42,18 @@ describe('Lesson Navigation backUrl Fix (Issue #851)', () => {
     expect(content).not.toContain('const backUrl = `/courses/${courseSlug}`')
   })
 
-  it('complete page should navigate to /study (not course or lesson page)', () => {
+  it('complete page should navigate to chapter page (not /study)', () => {
     const completePagePath = path.join(
       process.cwd(),
       'src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/complete/page.tsx',
     )
     const content = fs.readFileSync(completePagePath, 'utf-8')
 
-    expect(content).toContain("const backUrl = '/study'")
-    expect(content).not.toContain(
-      'const backUrl = `/courses/${courseSlug}/chapters/${chapterSlug}/lessons/${lessonSlug}`',
-    )
-    expect(content).not.toContain('const backUrl = `/courses/${courseSlug}`')
+    expect(content).toContain('const backUrl = `/courses/${courseSlug}/chapters/${chapterSlug}`')
+    expect(content).not.toContain("const backUrl = '/study'")
   })
 
-  it('all three lesson navigation pages should use consistent /study URL', () => {
+  it('lesson and exercise pages should navigate to /study (not course page)', () => {
     const basePath =
       'src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]'
 
@@ -65,15 +62,10 @@ describe('Lesson Navigation backUrl Fix (Issue #851)', () => {
       path.join(process.cwd(), `${basePath}/exercises/[exerciseSlug]/page.tsx`),
       'utf-8',
     )
-    const completePage = fs.readFileSync(
-      path.join(process.cwd(), `${basePath}/complete/page.tsx`),
-      'utf-8',
-    )
 
     const studyUrlPattern = "const backUrl = '/study'"
 
     expect(lessonPage).toContain(studyUrlPattern)
     expect(exercisePage).toContain(studyUrlPattern)
-    expect(completePage).toContain(studyUrlPattern)
   })
 })

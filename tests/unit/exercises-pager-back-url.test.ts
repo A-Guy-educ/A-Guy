@@ -56,21 +56,26 @@ describe('Expected backUrl behavior', () => {
     expect(backUrl).toBe('/study')
   })
 
-  it('complete page: backUrl should be /study', () => {
-    const backUrl = '/study'
-    expect(backUrl).toBe('/study')
+  it('complete page: backUrl should be chapter page URL', () => {
+    const backUrl = '/courses/math-101/chapters/chapter-1'
+    expect(backUrl).not.toBe('/study')
+    expect(backUrl).toContain('/courses/')
   })
 })
 
-describe('Verify all entry points use consistent /study URL', () => {
-  it('all entry points should use the same /study URL', () => {
+describe('Verify entry points use correct URLs', () => {
+  it('lesson and exercise pages should use /study URL', () => {
     const lessonPageBackUrl = '/study'
     const exercisePageBackUrl = '/study'
-    const completePageBackUrl = '/study'
 
     expect(lessonPageBackUrl).toBe(exercisePageBackUrl)
-    expect(exercisePageBackUrl).toBe(completePageBackUrl)
-    expect(lessonPageBackUrl).toBe(completePageBackUrl)
+    expect(lessonPageBackUrl).toBe('/study')
+  })
+
+  it('complete page should use chapter page URL', () => {
+    const completePageBackUrl = '/courses/math-101/chapters/chapter-1'
+    expect(completePageBackUrl).not.toBe('/study')
+    expect(completePageBackUrl).toContain('/chapters/')
   })
 })
 
@@ -118,7 +123,7 @@ describe('Source code verification for backUrl fix', () => {
     expect(hasCoursePageBackUrl).toBe(false)
   })
 
-  it('should read complete page and verify backUrl points to /study', async () => {
+  it('should read complete page and verify backUrl points to chapter page', async () => {
     const fs = await import('fs')
     const path = await import('path')
 
@@ -131,10 +136,12 @@ describe('Source code verification for backUrl fix', () => {
 
     const content = fs.readFileSync(completePagePath, 'utf-8')
 
+    const hasChapterBackUrl = content.includes(
+      'const backUrl = `/courses/${courseSlug}/chapters/${chapterSlug}`',
+    )
     const hasStudyBackUrl = content.includes("const backUrl = '/study'")
-    const hasCoursePageBackUrl = content.includes('const backUrl = `/courses/${courseSlug}`')
 
-    expect(hasStudyBackUrl).toBe(true)
-    expect(hasCoursePageBackUrl).toBe(false)
+    expect(hasChapterBackUrl).toBe(true)
+    expect(hasStudyBackUrl).toBe(false)
   })
 })

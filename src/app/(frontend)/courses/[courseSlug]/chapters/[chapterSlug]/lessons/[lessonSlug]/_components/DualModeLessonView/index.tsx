@@ -31,6 +31,8 @@ type InteractiveSource =
       blocks: ResolvedLessonBlock[]
       contentPageBodies?: Record<string, React.ReactNode>
       validFiles?: MediaType[]
+      introContentBody?: React.ReactNode | null
+      hasIntroContent?: boolean
     }
   | { kind: 'exercises'; exercises: Exercise[] }
 
@@ -222,6 +224,8 @@ export function DualModeLessonView(props: DualModeLessonViewProps) {
           formulaSheet={formulaSheet}
           headerSlot={tabBar}
           hideLatexBlocks
+          introContentBody={interactive.introContentBody}
+          hasIntroContent={interactive.hasIntroContent}
         />
       </section>
     )

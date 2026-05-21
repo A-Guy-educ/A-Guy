@@ -59,6 +59,7 @@ import { pdfToExercisesTask } from '@/server/payload/jobs/pdf-to-exercises-task'
 import { pdfToExercisesV2Task } from '@/server/payload/jobs/pdf-to-exercises-v2-task'
 import type { JobDocument } from '@/server/payload/jobs/types'
 import { runBackfillOnInit } from '@/server/payload/migrations/backfillAdminTitle'
+import { runBackfillOnInit as runBackfillLessonIntroContentPagesOnInit } from '@/server/payload/migrations/backfillLessonIntroContentPages'
 import { runLocalizeTeacherProfilesOnInit } from '@/server/payload/migrations/localize-teacher-profiles'
 import { runPopulateLessonBlocksOnInit } from '@/server/payload/migrations/populateLessonBlocks'
 import { plugins } from '@/server/payload/plugins'
@@ -392,6 +393,7 @@ export default buildConfig({
     }
 
     await runBackfillOnInit(payload)
+    await runBackfillLessonIntroContentPagesOnInit(payload)
     await runPopulateLessonBlocksOnInit(payload)
     await runLocalizeTeacherProfilesOnInit(payload)
     await seedTeacherProfiles(payload)
