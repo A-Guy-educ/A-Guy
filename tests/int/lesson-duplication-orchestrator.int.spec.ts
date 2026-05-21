@@ -331,6 +331,8 @@ describe('Lesson duplication orchestrator — integration', () => {
 
   it('orchestrator does not abort when one exercise fails — remaining exercises are processed', async () => {
     // Create fresh pending record
+    // Use level='medium' — the mock for runStrategy forces a failure on exercise
+    // containing '-3', and the orchestrator correctly reaches 'needs_review'.
     const record = await payload.create({
       collection: 'lesson-duplications',
       data: { sourceLesson: sourceLessonId, level: 'medium', status: 'pending' },

@@ -171,14 +171,27 @@ function replaceNumber(text: string, originalStr: string, newStr: string): strin
 
 /**
  * Apply a number replacement map to all text in `texts`.
- * Returns new strings with replacements applied.
+ * Uses a two-pass approach with temporary markers to avoid sequential-replacement
+ * collisions (e.g. 5→4, 4→5 would corrupt to 5→5→5 if done sequentially).
  */
 function applyReplacementsToTexts(texts: string[], numberMap: Map<string, string>): string[] {
   return texts.map((text) => {
+    // Pass 1: replace each original number with a unique temporary marker
     let result = text
+    let markerIndex = 0
+    const markerToReplacement: Map<string, string> = new Map()
     for (const [original, replacement] of numberMap) {
-      result = replaceNumber(result, original, replacement)
+      if (original === replacement) continue
+      const marker = `__R${markerIndex++}__`
+      markerToReplacement.set(marker, replacement)
+      result = replaceNumber(result, original, marker)
     }
+
+    // Pass 2: replace each marker with its target value
+    for (const [marker, replacement] of markerToReplacement) {
+      result = replaceNumber(result, marker, replacement)
+    }
+
     return result
   })
 }
