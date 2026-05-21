@@ -2,8 +2,14 @@ import { startMongoContainer, stopMongoContainer } from '@/infra/utils/test/mong
 import { mediaExpiryCleanupEndpoint } from '@/server/payload/endpoints/cron/media-expiry'
 import type { Payload, PayloadRequest } from 'payload'
 import { getPayload } from 'payload'
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createTestUser } from '../factories/user.factory'
+
+// Mock Vercel Blob so tests run without real credentials
+vi.mock('@vercel/blob', () => ({
+  put: vi.fn().mockResolvedValue({ url: 'https://example.com/test.jpg', pathname: 'test.jpg' }),
+  del: vi.fn().mockResolvedValue(undefined),
+}))
 
 let payload: Payload
 let originalDatabaseUrl: string | undefined
