@@ -19,6 +19,35 @@ import config from '@payload-config'
 import { cancelPayPalOrder, createPayPalOrder } from '@/lib/payment/paypal'
 import { cancelStripeCheckout, createStripeCheckout } from '@/lib/payment/stripe'
 
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Extracts the tenant ID from a relationship field value.
+ * The value can be a string ID or an object with an id property.
+ */
+function extractTenantId(tenantValue: unknown): string | null {
+  if (!tenantValue) return null
+  if (typeof tenantValue === 'string') return tenantValue
+  if (typeof tenantValue === 'object' && tenantValue !== null && 'id' in tenantValue) {
+    return (tenantValue as { id: string }).id
+  }
+  return null
+}
+
+/**
+ * Checks if the user has super-admin privileges (for cross-tenant access).
+ * Returns true if the user's role includes 'super-admin'.
+ */
+function isSuperAdmin(user: { roles?: unknown } | null): boolean {
+  if (!user?.roles) return false
+  if (Array.isArray(user.roles)) {
+    return user.roles.includes('super-admin')
+  }
+  return false
+}
+
 // MongoDB ObjectId: 24 hex characters
 const objectIdRegex = /^[0-9a-fA-F]{24}$/
 
@@ -74,6 +103,20 @@ export async function POST(request: NextRequest) {
 
   if (!product) {
     return NextResponse.json({ success: false, error: 'product_not_found' }, { status: 404 })
+  }
+
+  // --- Tenant Isolation Check (Product) ---
+  // A product with no tenant (null) is a global/legacy product — accessible to all.
+  // A product with a tenant can only be purchased by users in the same tenant.
+  // Super-admin users bypass this check.
+  if (!isSuperAdmin(user as { roles?: unknown } | null)) {
+    const productTenantId = extractTenantId((product as { tenant?: unknown }).tenant)
+    const userTenantId = extractTenantId((user as { tenant?: unknown })?.tenant)
+
+    if (productTenantId !== null && userTenantId !== null && productTenantId !== userTenantId) {
+      // Product belongs to a different tenant — pretend it doesn't exist
+      return NextResponse.json({ success: false, error: 'product_not_found' }, { status: 404 })
+    }
   }
 
   // Check if product is active
@@ -204,6 +247,20 @@ export async function POST(request: NextRequest) {
     // Check maxUses (0 = unlimited)
     if ((coupon.maxUses ?? 0) > 0 && (coupon.usesCount ?? 0) >= (coupon.maxUses ?? 0)) {
       return NextResponse.json({ success: false, error: 'invalid_coupon' }, { status: 400 })
+    }
+
+    // --- Tenant Isolation Check (Coupon) ---
+    // A coupon with no tenant (null) is global — usable by all.
+    // A coupon with a tenant can only be used by users in the same tenant.
+    // Super-admin users bypass this check.
+    if (!isSuperAdmin(user as { roles?: unknown } | null)) {
+      const couponTenantId = extractTenantId((coupon as { tenant?: unknown }).tenant)
+      const userTenantId = extractTenantId((user as { tenant?: unknown })?.tenant)
+
+      if (couponTenantId !== null && userTenantId !== null && couponTenantId !== userTenantId) {
+        // Coupon belongs to a different tenant — treat as invalid
+        return NextResponse.json({ success: false, error: 'invalid_coupon' }, { status: 400 })
+      }
     }
 
     // Check applicableProducts
