@@ -1,7 +1,8 @@
 {
   "version": 1,
+  "managed": true,
   "state": "active",
+  "lastDispatchedIssue": 1575,
   "startedAt": "2026-05-21T13:05:00.239Z",
-  "updatedAt": "2026-05-21T13:05:00.239Z",
-  "managed": true
+  "updatedAt": "2026-05-21T13:07:05Z"
 }
