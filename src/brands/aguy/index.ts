@@ -8,7 +8,9 @@
 
 import type { Brand } from '../types'
 import { aguyConfig } from './config'
+import { Logo } from './components/Logo'
 
 export const aguyBrand: Brand = {
   config: aguyConfig,
+  Logo,
 }

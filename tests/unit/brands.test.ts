@@ -67,4 +67,11 @@ describe('getBrand', () => {
     process.env.NEXT_PUBLIC_BRAND = 'aguy'
     expect(getBrandSlug()).toBe('aguy')
   })
+
+  it('getBrand().Logo is a React component', () => {
+    delete process.env.NEXT_PUBLIC_BRAND
+    const brand = getBrand()
+    expect(brand.Logo).toBeDefined()
+    expect(typeof brand.Logo).toBe('function')
+  })
 })

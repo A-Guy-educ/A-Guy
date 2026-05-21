@@ -1,3 +1,5 @@
+import type { ComponentType, SVGProps } from 'react'
+
 /**
  * Brand Bundle Types
  *
@@ -29,8 +31,8 @@ export interface BrandConfig {
 
 export interface Brand {
   config: BrandConfig
+  Logo: ComponentType<SVGProps<SVGSVGElement>>
   // Future phases will extend this with:
-  // Logo: ComponentType
   // pages: { LandingPage: ComponentType; StartPage: ComponentType }
   // components: { CourseCard: ComponentType }
   // messages: { en: Record<string, string>; he: Record<string, string> }
