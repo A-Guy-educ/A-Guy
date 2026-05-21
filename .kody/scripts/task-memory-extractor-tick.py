@@ -41,6 +41,21 @@ def log(msg: str) -> None:
     print(f"[task-memory-extractor] {msg}", file=sys.stderr)
 
 
+def normalise_confidence(raw) -> str:
+    """Accept either a string enum or a 0-1 number — LLMs emit both shapes."""
+    if isinstance(raw, bool):  # avoid bool being treated as int
+        return "low"
+    if isinstance(raw, (int, float)):
+        if raw >= 0.7:
+            return "high"
+        if raw >= 0.4:
+            return "medium"
+        return "low"
+    if isinstance(raw, str):
+        return raw.strip().lower() or "low"
+    return "low"
+
+
 def is_valid(rec: dict) -> str | None:
     for key in ("type", "name"):
         if key not in rec or not rec[key]:
@@ -52,9 +67,9 @@ def is_valid(rec: dict) -> str | None:
         return f"invalid type {rec['type']!r}"
     if rec["name"].lower() in RESERVED_NAMES:
         return f"reserved name {rec['name']!r}"
-    conf = rec.get("confidence", "").lower()
-    if conf and conf not in VALID_CONFIDENCE:
-        return f"invalid confidence {conf!r}"
+    conf = normalise_confidence(rec.get("confidence"))
+    if conf not in VALID_CONFIDENCE:
+        return f"invalid confidence {rec.get('confidence')!r}"
     return None
 
 
@@ -190,7 +205,7 @@ def main() -> int:
                 log(f"task {task_dir.name}: skip rec ({err})")
                 skipped_invalid += 1
                 continue
-            confidence = (rec.get("confidence") or "low").lower()
+            confidence = normalise_confidence(rec.get("confidence"))
             if confidence == "low":
                 skipped_low += 1
                 continue

@@ -14,6 +14,7 @@ import type { CollectionConfig } from 'payload'
 
 import { adminOnly } from '../access/adminOnly'
 import { createdByField } from '../fields/createdBy'
+import { optionalTenantField } from '../fields/tenant'
 
 export const Coupons: CollectionConfig = {
   slug: 'coupons',
@@ -68,6 +69,8 @@ export const Coupons: CollectionConfig = {
     ],
   },
   fields: [
+    // Tenant (optional - null/empty means global/legacy coupon accessible to all)
+    optionalTenantField,
     {
       name: 'code',
       type: 'text',
