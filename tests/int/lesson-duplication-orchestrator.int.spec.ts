@@ -301,7 +301,7 @@ describe('Lesson duplication orchestrator — integration', () => {
 
     expect(record.status).toBe('pending')
 
-    // Run orchestrator (mocked runStrategy forces failure on exercise containing '-3')
+    // Run orchestrator (mocked generateVariation forces failure on 3rd exercise)
     try {
       await runDuplicationOrchestrator(record.id, payload)
     } catch {

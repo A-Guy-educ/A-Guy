@@ -529,7 +529,7 @@ export interface RunOptions {
    * Absolute wall-clock deadline (Date.now() ms). The orchestrator returns
    * `in_progress` as soon as the remaining time is too short to fit another
    * exercise — leaving the record in `running` so the next cron tick picks
-   * up where this one left off. Default: no deadline (process all).
+   * up where it left off. Default: no deadline (process all).
    */
   deadlineMs?: number
 }
