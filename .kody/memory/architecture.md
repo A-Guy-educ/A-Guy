@@ -1,3 +1,4 @@
+
 # Architecture
 
 ## Tech Stack
@@ -30,6 +31,14 @@ src/
 3. **Auth**: OAuth (Google) → Session management → Access control
 4. **Vector Search**: Content embeddings → MongoDB Atlas vector index → Memory recall
 
+## Security
+
+### Content Security Policy
+
+CSP is configured per route in `next.config.js` using Next.js `headers()`. Each route group (general, /admin) has its own CSP directives. The Vercel feedback widget (`https://vercel.live/_next-live/feedback/feedback.js`) requires `vercel.live` in both `script-src` and `connect-src` for any route that hosts it — notably `/admin` routes.
+
+Refer to `tests/int/csp-vercel-feedback-admin.int.spec.ts` for coverage of this requirement.
+
 ## Key Services
 
 - **Exercise Conversion**: PDF → structured exercises (with idempotency)
@@ -39,3 +48,4 @@ src/
 - **AI Documentation Pipeline**: Automated generation of doc chunks, pattern indexes, and route maps for AI context (scripts: `ai:generate-docs`, `ai:generate-patterns`, `ai:generate-all-indexes`)
 
 Refer to [AGENTS.md](./AGENTS.md) for Payload-specific patterns and [CLAUDE.md](./CLAUDE.md) for development commands.
+
