@@ -1,0 +1,151 @@
+{
+  "version": 1,
+  "rev": 10,
+  "cursor": "idle",
+  "data": {
+    "prs": {
+      "1285": {
+        "fp": "sync|2026-05-21T14:33:57Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T18:23:32Z"
+      },
+      "1377": {
+        "fp": "sync|2026-05-21T14:37:13Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T18:23:35Z"
+      },
+      "1405": {
+        "fp": "sync|2026-05-21T14:33:25Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T18:23:38Z"
+      },
+      "1406": {
+        "fp": "sync|2026-05-21T14:32:53Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T18:23:41Z"
+      },
+      "1480": {
+        "fp": "sync|2026-05-20T20:45:51Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T10:49:51Z"
+      },
+      "1483": {
+        "fp": "sync|2026-05-20T21:17:48Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T12:05:13Z"
+      },
+      "1511": {
+        "fp": "sync|2026-05-20T20:42:02Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T12:05:16Z"
+      },
+      "1524": {
+        "fp": "sync|2026-05-20T20:42:42Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T12:05:19Z"
+      },
+      "1525": {
+        "fp": "sync|2026-05-20T20:42:06Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T12:05:22Z"
+      },
+      "1547": {
+        "fp": "sync|2026-05-20T20:39:54Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T12:05:25Z"
+      },
+      "1558": {
+        "fp": "sync|2026-05-21T19:16:28Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T19:17:11Z"
+      },
+      "1564": {
+        "fp": "fix-ci|2026-05-21T20:02:50Z",
+        "stage": "fix-ci-auto",
+        "lastActAt": "2026-05-21T20:36:08Z"
+      },
+      "1566": {
+        "fp": "sync|2026-05-21T19:16:32Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T19:17:15Z"
+      },
+      "1571": {
+        "fp": "sync|2026-05-21T19:16:35Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T19:17:18Z"
+      },
+      "1573": {
+        "fp": "sync|2026-05-21T13:34:52Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T17:36:40Z"
+      },
+      "1574": {
+        "fp": "sync|2026-05-21T13:35:00Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T17:36:42Z"
+      },
+      "1584": {
+        "fp": "sync|2026-05-21T13:34:31Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T17:36:48Z"
+      },
+      "1586": {
+        "fp": "sync|2026-05-21T13:36:10Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T17:36:52Z"
+      },
+      "1588": {
+        "fp": "sync|2026-05-21T13:35:13Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T17:36:54Z"
+      },
+      "1591": {
+        "fp": "sync|2026-05-21T14:38:00Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T19:17:24Z"
+      },
+      "1606": {
+        "fp": "sync|2026-05-20T20:34:22Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T19:56:05Z"
+      },
+      "1623": {
+        "fp": "sync|2026-05-20T20:22:12Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T19:56:08Z"
+      },
+      "1631": {
+        "fp": "sync|2026-05-20T20:24:12Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T19:56:10Z"
+      },
+      "1640": {
+        "fp": "sync|2026-05-20T20:21:57Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T19:56:12Z"
+      },
+      "1650": {
+        "fp": "sync|2026-05-20T20:19:19Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T20:36:19Z"
+      },
+      "1656": {
+        "fp": "sync|2026-05-20T20:22:22Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T20:36:21Z"
+      },
+      "1660": {
+        "fp": "sync|2026-05-20T20:18:44Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T20:36:23Z"
+      },
+      "1668": {
+        "fp": "sync|2026-05-20T20:21:37Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-21T20:36:26Z"
+      }
+    },
+    "lastFiredAt": "2026-05-21T20:36:54.022Z"
+  },
+  "done": false
+}
