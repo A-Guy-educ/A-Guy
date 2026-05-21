@@ -638,6 +638,12 @@ export function initAnalyticsSubscriber(): () => void {
 /**
  * Re-fetches user data and updates Mixpanel People profile with current course entitlements.
  * Called after ACCESS_GRANTED to ensure the user profile reflects the new entitlement immediately.
+ *
+ * Runs in the browser bundle (AnalyticsProvider invokes initAnalyticsSubscriber on mount),
+ * so this MUST NOT import or call Payload directly — doing so drags the Payload runtime
+ * (grpc, fs, tls) into the client bundle and breaks the build. Read enrollment data
+ * exclusively from /api/users/me. Legacy `courseEntitlements` is the source today;
+ * when /api/users/me starts populating active-enrollment data, read it from there.
  */
 async function refreshUserEntitlementsInMixpanel(): Promise<void> {
   try {
@@ -646,7 +652,12 @@ async function refreshUserEntitlementsInMixpanel(): Promise<void> {
 
     const data = await response.json()
     const user = data.user
-    if (!user?.id || !Array.isArray(user.courseEntitlements)) return
+    if (
+      !user?.id ||
+      !Array.isArray(user.courseEntitlements) ||
+      user.courseEntitlements.length === 0
+    )
+      return
 
     const entry = user.courseEntitlements[0] as {
       course: string | { id: string }
