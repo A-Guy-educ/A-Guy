@@ -9,6 +9,7 @@ import { logger } from '@/infra/utils/logger/logger'
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 
+import { getBrand } from '@/brands'
 import { withApiHandler } from '@/server/api/with-api-handler'
 
 // Use Node.js runtime because we use GoogleGenerativeAI
@@ -127,7 +128,8 @@ export const POST = withApiHandler<ChatBody, unknown>(
       const dashboardData = await getDashboardContext()
 
       // Build system prompt with dashboard context
-      const systemPrompt = `You are a helpful assistant for the Cody Operations Dashboard, which shows GitHub issues from the A-Guy repository.
+      const brandName = getBrand().config.name
+      const systemPrompt = `You are a helpful assistant for the Cody Operations Dashboard, which shows GitHub issues from the ${brandName} repository.
 
 You help users understand the dashboard, manage issues, and answer questions about the project.
 

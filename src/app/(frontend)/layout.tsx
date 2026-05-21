@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 
 import { cn } from '@/infra/utils/ui'
 import { GeistMono } from 'geist/font/mono'
@@ -27,6 +27,7 @@ import './globals.css'
 import { LayoutClient } from './LayoutClient'
 import { NavigationBar } from '@/ui/web/homepage/NavigationBar'
 import { ActiveTimeProvider } from '@/client/providers/ActiveTimeProvider'
+import { getBrand } from '@/brands'
 
 const assistant = Assistant({
   subsets: ['latin', 'hebrew'],
@@ -42,12 +43,15 @@ const stixTwoText = STIX_Two_Text({
 })
 
 async function getMessages(locale: string) {
-  try {
-    return (await import(`../../../src/i18n/${locale}.json`, { with: { type: 'json' } })).default
-  } catch {
-    return (await import(`../../../src/i18n/${defaultLocale}.json`, { with: { type: 'json' } }))
-      .default
-  }
+  const base = await import(`../../../src/i18n/${locale}.json`, { with: { type: 'json' } })
+    .then((m) => m.default)
+    .catch(() =>
+      import(`../../../src/i18n/${defaultLocale}.json`, { with: { type: 'json' } }).then(
+        (m) => m.default,
+      ),
+    )
+  const brand = getBrand().messages[locale as 'en' | 'he'] ?? {}
+  return { ...base, ...brand }
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -80,8 +84,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <head>
         <InitTheme />
-        <link href="/favicon.ico" rel="icon" sizes="32x32" />
-        <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
+        {/* Brand theme colors injected as CSS variables */}
+        <style>{`:root {
+          --brand-primary-light: ${getBrand().config.themeColor.light};
+          --brand-primary-dark:  ${getBrand().config.themeColor.dark};
+        }`}</style>
       </head>
       <body>
         <I18nProvider locale={locale} messages={messages}>
@@ -117,59 +124,49 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   )
 }
 
-export const metadata: Metadata = {
-  metadataBase: new URL('https://www.aguy.co.il'),
-  manifest: '/manifest.json',
-  title: {
-    default: 'A-Guy | תרגול מתמטיקה אינטראקטיבי',
-    template: '%s | A-Guy',
-  },
-  description:
-    'פלטפורמה לתרגול מתמטיקה עם שיעורים מסודרים, תרגילים ממוקדים, משוב מיידי והסברים ברורים שלב אחר שלב – בנויה להתקדמות עקבית ואמיתית.',
-  keywords: [],
-  authors: [{ name: 'A-Guy', url: 'https://www.aguy.co.il' }],
-  creator: 'A-Guy',
-  publisher: 'A-Guy',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'A-Guy',
-  },
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#91262C' },
-    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
-  ],
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+export async function generateMetadata(): Promise<Metadata> {
+  const b = getBrand().config
+  return {
+    metadataBase: new URL(b.host),
+    title: { default: b.defaultTitle, template: b.titleTemplate },
+    description: b.description,
+    keywords: b.keywords,
+    authors: [b.author],
+    creator: b.author.name,
+    publisher: b.author.name,
+    appleWebApp: { capable: true, statusBarStyle: 'default', title: b.appleWebApp.title },
+    robots: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
-  },
-  openGraph: mergeOpenGraph(),
-  twitter: {
-    card: 'summary_large_image',
-    site: '@aguy',
-    creator: '@aguy',
-    title: 'A-Guy | תרגול מתמטיקה אינטראקטיבי',
-    description:
-      'פלטפורמה לתרגול מתמטיקה עם שיעורים מסודרים, תרגילים ממוקדים, משוב מיידי והסברים ברורים שלב אחר שלב.',
-    images: [
-      {
-        url: 'https://www.aguy.co.il/api/media/file/telescope.4ee60378.svg',
-        width: 1200,
-        height: 630,
-        alt: 'A-Guy - תרגול מתמטיקה אינטראקטיבי',
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
       },
+    },
+    openGraph: mergeOpenGraph(),
+    twitter: {
+      card: 'summary_large_image',
+      site: b.social.twitterHandle,
+      creator: b.social.twitterHandle,
+    },
+    icons: {
+      icon: '/favicon.svg',
+      shortcut: '/favicon.ico',
+      apple: '/apple-icon.png',
+    },
+    manifest: '/manifest.webmanifest',
+  }
+}
+
+export async function generateViewport(): Promise<Viewport> {
+  const b = getBrand().config
+  return {
+    themeColor: [
+      { media: '(prefers-color-scheme: light)', color: b.themeColor.light },
+      { media: '(prefers-color-scheme: dark)', color: b.themeColor.dark },
     ],
-  },
-  icons: {
-    icon: '/favicon.svg',
-    shortcut: '/favicon.ico',
-    apple: '/favicon.svg',
-  },
+  }
 }

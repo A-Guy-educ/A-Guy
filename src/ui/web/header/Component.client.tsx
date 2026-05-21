@@ -8,7 +8,7 @@ import React, { useEffect, useState } from 'react'
 import type { Header } from '@/payload-types'
 
 import { useCurrentUser } from '@/client/hooks/useCurrentUser'
-import { TelescopeLogo } from '@/ui/web/TelescopeLogo'
+import { BrandLogo } from '@/ui/web/BrandLogo'
 import { MobileMenu, MobileMenuButton } from './MobileMenu'
 import { HeaderNav } from './Nav'
 
@@ -79,7 +79,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data, version }) => 
               href="/"
               className="flex items-center gap-3 flex-shrink-0 hover:opacity-80 transition-opacity"
             >
-              <TelescopeLogo className="h-8 w-auto" />
+              <BrandLogo className="h-8 w-auto" />
             </SystemLink>
 
             {/* Desktop Navigation */}

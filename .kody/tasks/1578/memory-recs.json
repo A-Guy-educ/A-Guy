@@ -1,0 +1,10 @@
+[
+  {
+    "type": "decision",
+    "name": "brand-logo-inline-svg-pattern",
+    "hook": "Brand Logo as inline SVG component in brand bundle",
+    "body": "When extending Brand with a Logo component, render the SVG inline in a React component (not next/image) so it accepts className/fill props from callers. This enables the consumer BrandLogo wrapper to pass through className cleanly.\n\nWhy: The old TelescopeLogo used next/image with a raw .svg file, which doesn't support prop passthrough. The new Logo.tsx in the brand bundle renders inline SVG JSX.\nHow to apply: When adding brand components (e.g., icons, favicons), prefer inline JSX over file-based assets when the component needs to accept props.",
+    "why": "Inline SVG components can accept className and other React SVG props; raw file imports via next/image cannot.",
+    "confidence": 0.9
+  }
+]

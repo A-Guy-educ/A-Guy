@@ -15,7 +15,7 @@ import { usePasswordLogin } from '@/ui/web/providers/PasswordLoginProvider'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { sanitizeReturnTo } from '@/infra/auth/oauth_sanitize'
 import { loginAction } from './login_authenticate-action'
-import telescopeSvg from '@/ui/web/TelescopeLogo/telescope.svg'
+import telescopeSvg from '@/brands/aguy/assets/telescope.svg'
 
 function LoginFormContent() {
   const t = useTranslations('auth.login')
@@ -49,7 +49,7 @@ function LoginFormContent() {
         {/* Logo */}
         <div className="flex flex-col items-center gap-1">
           <Image src={telescopeSvg} alt="A-Guy" className="h-24 w-auto" width={224} height={204} />
-          <p className="text-primary font-semibold">{t('heroSubtitle')}</p>
+          <p className="text-primary font-semibold">{t('brand.heroSubtitle')}</p>
         </div>
         {/* Section label with decorative line */}
         <div className="flex flex-col items-center mt-3">

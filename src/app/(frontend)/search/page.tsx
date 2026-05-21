@@ -1,5 +1,6 @@
 import type { Metadata } from 'next/types'
 
+import { pageMetadata } from '@/infra/seo/pageMetadata'
 import { searchPosts } from '@/server/repos/queries/posts'
 import { searchCourseContent } from '@/server/repos/queries/course-search'
 import { CollectionArchive } from '@/ui/web/CollectionArchive'
@@ -91,7 +92,5 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
 }
 
 export function generateMetadata(): Metadata {
-  return {
-    title: `Search - A-Guy`,
-  }
+  return pageMetadata({ title: 'Search' })
 }

@@ -1,0 +1,38 @@
+[
+  {
+    "title": "Phase 2: Migrate hardcoded SEO strings to getBrand()",
+    "body": "Replace hardcoded brand strings in src/app/(frontend)/layout.tsx metadata, mergeOpenGraph, and other files with getBrand() calls. See issue #1575 Phase 2.",
+    "rationale": "Phase 1 created the abstraction; Phase 2 begins consuming it by migrating ~15 files of hardcoded A-Guy strings.",
+    "priority": "high"
+  },
+  {
+    "title": "Phase 3: Move favicon/manifest into brand bundle",
+    "body": "Move favicon.svg and manifest.json assets into src/brands/aguy/assets/. See issue #1575 Phase 3.",
+    "rationale": "Brand assets should live alongside brand config for easy theming.",
+    "priority": "medium"
+  },
+  {
+    "title": "Phase 4: Logo component refactor",
+    "body": "Replace TelescopeLogo and other logo references with getBrand().Logo component. See issue #1575 Phase 4.",
+    "rationale": "Logo is the most prominent brand element and natural next step after Phase 2.",
+    "priority": "medium"
+  },
+  {
+    "title": "Phase 5: i18n brand string extraction",
+    "body": "Extract brand-specific strings from i18n/{en,he}.json into brand bundle messages. See issue #1575 Phase 5.",
+    "rationale": "Completes the brand abstraction for all static content.",
+    "priority": "medium"
+  },
+  {
+    "title": "Phase 6: Remaining hardcoded string migrations",
+    "body": "Migrate remaining brand strings (login pages, copilotkit/route.ts, MCP plugin, etc.) to getBrand(). See issue #1575 Phase 6.",
+    "rationale": "Completes migration of all brand-specific hardcoded strings.",
+    "priority": "medium"
+  },
+  {
+    "title": "Phase 7: Course data scope decision + smoke test",
+    "body": "Decide whether course data (titles, descriptions) lives in Payload or brand bundle; add smoke test. See issue #1575 Phase 7.",
+    "rationale": "Finalizes the multi-brand architecture decision for editable content.",
+    "priority": "low"
+  }
+]

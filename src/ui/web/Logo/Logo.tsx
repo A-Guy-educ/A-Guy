@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import React from 'react'
 
-import { TelescopeLogo } from '@/ui/web/TelescopeLogo'
+import { BrandLogo } from '@/ui/web/BrandLogo'
 
 interface Props {
   className?: string
@@ -12,5 +12,5 @@ interface Props {
 export const Logo = (props: Props) => {
   const { className } = props
 
-  return <TelescopeLogo className={clsx(className)} />
+  return <BrandLogo className={clsx(className)} />
 }

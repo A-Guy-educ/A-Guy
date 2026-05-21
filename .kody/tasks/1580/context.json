@@ -1,0 +1,18 @@
+{
+  "taskId": "1580",
+  "taskType": "issue",
+  "target": "1580-phase-6-brand-aware-stragglers-copilotkit-mcp-erro",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "All acceptance criteria met: copilotkit, MCP, and seed routes updated to use getBrand().config.name; error pages verified; typecheck and lint pass.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/copilotkit/route.ts",
+    "src/server/payload/plugins/mcp/index.ts",
+    "src/server/payload/endpoints/seed/intro-page.ts"
+  ],
+  "sessionLog": ".kody/runs/gh-26242718428-1/session.jsonl",
+  "startedAt": "2026-05-21T17:38:00Z",
+  "finishedAt": "2026-05-21T17:50:00Z"
+}
