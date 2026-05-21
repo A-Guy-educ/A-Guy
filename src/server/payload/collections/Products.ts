@@ -12,6 +12,7 @@ import { adminOnly } from '../access/adminOnly'
 import { anyone } from '../access/anyone'
 import { createdByField } from '../fields/createdBy'
 import { formatSlugAsync } from '../fields/formatSlug'
+import { optionalTenantField } from '../fields/tenant'
 
 export const Products: CollectionConfig = {
   slug: 'products',
@@ -79,6 +80,8 @@ export const Products: CollectionConfig = {
     },
   },
   fields: [
+    // Tenant (optional - null/empty means global/legacy product accessible to all)
+    optionalTenantField,
     {
       name: 'name',
       type: 'text',

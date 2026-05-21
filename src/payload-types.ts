@@ -489,6 +489,10 @@ export interface User {
   id: string;
   name?: string | null;
   role: 'admin' | 'advanced-content-editor' | 'student';
+  /**
+   * Tenant scope for this document (leave empty for global/legacy products)
+   */
+  tenant?: (string | null) | Tenant;
   googleSub?: string | null;
   verifiedEmail?: string | null;
   registrationMethod?: ('google' | 'email') | null;
@@ -545,6 +549,27 @@ export interface User {
       }[]
     | null;
   password?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tenants".
+ */
+export interface Tenant {
+  id: string;
+  /**
+   * Tenant display name
+   */
+  name: string;
+  /**
+   * Tenant slug (used to resolve default tenant from env)
+   */
+  slug: string;
+  /**
+   * Tenant status flag
+   */
+  status?: ('active' | 'archived') | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -641,27 +666,6 @@ export interface Course {
    * User who created this document
    */
   createdBy?: (string | null) | User;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tenants".
- */
-export interface Tenant {
-  id: string;
-  /**
-   * Tenant display name
-   */
-  name: string;
-  /**
-   * Tenant slug (used to resolve default tenant from env)
-   */
-  slug: string;
-  /**
-   * Tenant status flag
-   */
-  status?: ('active' | 'archived') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1762,6 +1766,10 @@ export interface CouponUsage {
 export interface Coupon {
   id: string;
   /**
+   * Tenant scope for this document (leave empty for global/legacy products)
+   */
+  tenant?: (string | null) | Tenant;
+  /**
    * Coupon code (stored uppercase, case-insensitive in app logic)
    */
   code: string;
@@ -1818,6 +1826,10 @@ export interface Coupon {
  */
 export interface Product {
   id: string;
+  /**
+   * Tenant scope for this document (leave empty for global/legacy products)
+   */
+  tenant?: (string | null) | Tenant;
   /**
    * שם המוצר (יוצג למשתמשים)
    */
@@ -3790,6 +3802,7 @@ export interface CouponUsagesSelect<T extends boolean = true> {
  * via the `definition` "coupons_select".
  */
 export interface CouponsSelect<T extends boolean = true> {
+  tenant?: T;
   code?: T;
   discountType?: T;
   discountValue?: T;
@@ -4285,6 +4298,7 @@ export interface EnrollmentsSelect<T extends boolean = true> {
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
   role?: T;
+  tenant?: T;
   googleSub?: T;
   verifiedEmail?: T;
   registrationMethod?: T;
@@ -4545,6 +4559,7 @@ export interface ProductItemsSelect<T extends boolean = true> {
  * via the `definition` "products_select".
  */
 export interface ProductsSelect<T extends boolean = true> {
+  tenant?: T;
   name?: T;
   slug?: T;
   billingType?: T;
