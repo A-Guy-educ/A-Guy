@@ -170,6 +170,7 @@ export const Lessons: CollectionConfig = {
           '@/ui/admin/TranslationButton#TranslateLessonAction',
           '@/ui/admin/CascadeDeleteButton#LessonCascadeDelete',
           '@/ui/admin/LessonDuplicateButton/LessonDuplicateButton#LessonDuplicateAction',
+          '@/ui/admin/LessonGenerateExercisesButton/LessonGenerateExercisesButton#LessonGenerateExercisesAction',
         ],
       },
     },

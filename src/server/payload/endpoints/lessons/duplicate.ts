@@ -114,7 +114,9 @@ export async function duplicateLessonEndpoint(req: PayloadRequest): Promise<Resp
   }
 
   // 2) Lesson id from path: /lessons/:id/duplicate
-  const url = new URL(req.url || 'http://localhost')
+  const rawUrl = req.url || ''
+  const baseUrl = rawUrl.startsWith('http') ? rawUrl : `http://localhost${rawUrl}`
+  const url = new URL(baseUrl)
   const match = url.pathname.match(/\/lessons\/([^/]+)\/duplicate/)
   const lessonId = match?.[1]
   if (!lessonId) {
