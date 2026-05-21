@@ -123,4 +123,52 @@ describe('SafeHtml', () => {
       expect(p?.getAttribute('onclick')).toBeNull()
     })
   })
+
+  describe('SVG rendering', () => {
+    it('preserves svg element', () => {
+      const { container } = render(
+        <SafeHtml html='<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40"/></svg>' />,
+      )
+      const div = container.firstElementChild as HTMLElement
+      expect(div.querySelector('svg')).not.toBeNull()
+    })
+
+    it('preserves svg path element with d attribute', () => {
+      const { container } = render(
+        <SafeHtml html='<svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg>' />,
+      )
+      const div = container.firstElementChild as HTMLElement
+      const path = div.querySelector('path')
+      expect(path).not.toBeNull()
+      expect(path?.getAttribute('d')).toBe('M12 2L2 7l10 5 10-5-10-5z')
+    })
+
+    it('preserves svg with style tag inside', () => {
+      const { container } = render(
+        <SafeHtml html='<svg viewBox="0 0 100 100"><style>.cls{fill:red}</style><rect class="cls" x="10" y="10" width="80" height="80"/></svg>' />,
+      )
+      const div = container.firstElementChild as HTMLElement
+      expect(div.querySelector('svg style')).not.toBeNull()
+      expect(div.querySelector('svg rect')).not.toBeNull()
+    })
+
+    it('preserves svg viewBox and preserveAspectRatio attributes', () => {
+      const { container } = render(
+        <SafeHtml html='<svg viewBox="0 0 24 24" preserveAspectRatio="xMidYMid meet"><circle cx="12" cy="12" r="10"/></svg>' />,
+      )
+      const div = container.firstElementChild as HTMLElement
+      const svg = div.querySelector('svg')
+      expect(svg?.getAttribute('viewBox')).toBe('0 0 24 24')
+      expect(svg?.getAttribute('preserveAspectRatio')).toBe('xMidYMid meet')
+    })
+
+    it('preserves svg g, polygon, and polyline elements', () => {
+      const { container } = render(
+        <SafeHtml html='<svg viewBox="0 0 100 100"><g><polygon points="50,10 90,90 10,90"/></g></svg>' />,
+      )
+      const div = container.firstElementChild as HTMLElement
+      expect(div.querySelector('svg g')).not.toBeNull()
+      expect(div.querySelector('svg polygon')).not.toBeNull()
+    })
+  })
 })

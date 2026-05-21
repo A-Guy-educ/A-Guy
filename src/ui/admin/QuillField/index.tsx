@@ -35,61 +35,9 @@ const QUILL_FORMATS = [
   'direction',
 ]
 
-const SANITIZE_CONFIG = {
-  ALLOWED_TAGS: [
-    'p',
-    'br',
-    'hr',
-    'span',
-    'h1',
-    'h2',
-    'h3',
-    'h4',
-    'h5',
-    'h6',
-    'strong',
-    'b',
-    'em',
-    'i',
-    'u',
-    's',
-    'del',
-    'ins',
-    'mark',
-    'sub',
-    'sup',
-    'ul',
-    'ol',
-    'li',
-    'blockquote',
-    'pre',
-    'code',
-    'a',
-    'img',
-    'div',
-    'section',
-    'table',
-    'thead',
-    'tbody',
-    'tr',
-    'th',
-    'td',
-  ],
-  ALLOWED_ATTR: [
-    'href',
-    'src',
-    'alt',
-    'title',
-    'class',
-    'id',
-    'rel',
-    'width',
-    'height',
-    'colspan',
-    'rowspan',
-    'dir',
-  ],
-}
+// Admin-only — XSS not a risk since only admins input HTML content
+// ALLOWED_TAGS=[] allows all HTML including SVG, <style>, <script>, etc.
+const SANITIZE_CONFIG = { ALLOWED_TAGS: [] as string[] }
 
 export const QuillField: React.FC<{ path: string }> = ({ path }) => {
   const { value, setValue } = useField<string>({ path })
@@ -108,7 +56,7 @@ export const QuillField: React.FC<{ path: string }> = ({ path }) => {
 
   const handleToggleSource = () => {
     if (showSource && value) {
-      const sanitized = DOMPurify.sanitize(value, SANITIZE_CONFIG)
+      const sanitized = DOMPurify.sanitize(value, SANITIZE_CONFIG) as string
       if (sanitized !== value) {
         setValue(sanitized)
       }

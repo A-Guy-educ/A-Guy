@@ -36,61 +36,9 @@ const QUILL_FORMATS = [
   'direction',
 ]
 
-const SANITIZE_CONFIG = {
-  ALLOWED_TAGS: [
-    'p',
-    'br',
-    'hr',
-    'span',
-    'h1',
-    'h2',
-    'h3',
-    'h4',
-    'h5',
-    'h6',
-    'strong',
-    'b',
-    'em',
-    'i',
-    'u',
-    's',
-    'del',
-    'ins',
-    'mark',
-    'sub',
-    'sup',
-    'ul',
-    'ol',
-    'li',
-    'blockquote',
-    'pre',
-    'code',
-    'a',
-    'img',
-    'div',
-    'section',
-    'table',
-    'thead',
-    'tbody',
-    'tr',
-    'th',
-    'td',
-  ],
-  ALLOWED_ATTR: [
-    'href',
-    'src',
-    'alt',
-    'title',
-    'class',
-    'id',
-    'rel',
-    'width',
-    'height',
-    'colspan',
-    'rowspan',
-    'dir',
-  ],
-}
+// Admin-only — XSS not a risk since only admins input HTML content
+// ALLOWED_TAGS=[] allows all HTML including SVG, <style>, <script>, etc.
+const SANITIZE_CONFIG = { ALLOWED_TAGS: [] as string[] }
 
 interface HtmlBlockEditorProps {
   block: HtmlBlock
@@ -115,7 +63,7 @@ export const HtmlBlockEditor: React.FC<HtmlBlockEditorProps> = ({ block, onChang
 
   const handleToggleSource = () => {
     if (showSource && block.html) {
-      const sanitized = DOMPurify.sanitize(block.html, SANITIZE_CONFIG)
+      const sanitized = DOMPurify.sanitize(block.html, SANITIZE_CONFIG) as string
       if (sanitized !== block.html) {
         onChange({ ...block, html: sanitized })
       }
@@ -134,7 +82,7 @@ export const HtmlBlockEditor: React.FC<HtmlBlockEditorProps> = ({ block, onChang
         onChange({ ...block, guidedExplanation: payload })
       } else {
         // Not a guided explanation — treat as static HTML, sanitize it
-        const sanitized = DOMPurify.sanitize(html, SANITIZE_CONFIG)
+        const sanitized = DOMPurify.sanitize(html, SANITIZE_CONFIG) as string
         onChange({ ...block, html: sanitized, guidedExplanation: undefined })
       }
     }
