@@ -88,8 +88,9 @@ latex_examples/
 # Tracked-file commits would re-introduce the churn this design eliminates.
 .kody/missions/*.state.json
 
-# kody job state — same rationale as missions, see kody.config.json jobs.stateBackend.
-.kody/jobs/*.state.json
+# kody job state is durable via the contents-api backend (see
+# kody.config.json jobs.stateBackend) — the engine commits <slug>.state.json
+# through the GitHub Contents API, so these files are tracked, not ignored.
 
 # kody qa-engineer artifacts — ad-hoc screenshots, snapshots, console logs.
 # The Playwright MCP server writes its own working dir at the repo root.
