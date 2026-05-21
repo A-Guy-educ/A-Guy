@@ -34,6 +34,7 @@ interface LessonPageProps {
     chapterSlug: string
     lessonSlug: string
   }>
+  searchParams: Promise<{ mode?: string }>
 }
 
 /**
@@ -64,6 +65,8 @@ function renderDualMode(args: {
   chatLessonId: string
   showChat: boolean
   formulaSheet: FormulaSheet | null
+  /** Initial mode from entry page query param — takes precedence on first mount. */
+  initialMode?: LessonMode
 }) {
   return (
     <AccessGateProvider
@@ -94,6 +97,7 @@ function renderDualMode(args: {
         showChat={args.showChat}
         formulaSheet={args.formulaSheet}
         visibleRenderers={(args.lesson.visibleRenderers ?? undefined) as LessonMode[] | undefined}
+        initialMode={args.initialMode}
       />
     </AccessGateProvider>
   )
@@ -106,10 +110,23 @@ function hasRenderableBlocks(exercise: Exercise): boolean {
   return content.blocks.length > 0
 }
 
-export default async function LessonPage({ params }: LessonPageProps) {
+export default async function LessonPage({ params, searchParams }: LessonPageProps) {
   const { courseSlug, chapterSlug, lessonSlug } = await params
+  const { mode: modeParam } = await searchParams
   const locale = await getSystemLocale()
   const contentLocale = isValidContentLocale(locale) ? locale : undefined
+
+  // Map entry page mode to LessonMode
+  // 'scroll' maps to 'interactive' since LessonPager (content pages) is shown
+  // when there are no renderable exercises in the dual-mode path
+  const initialMode: LessonMode | undefined =
+    modeParam === 'pdf'
+      ? 'pdf'
+      : modeParam === 'scroll' || modeParam === 'interactive'
+        ? 'interactive'
+        : modeParam === 'media'
+          ? 'media'
+          : undefined
 
   const [course, lesson] = await Promise.all([
     queryCourseBySlug({ slug: courseSlug, locale: contentLocale }),
@@ -258,6 +275,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
         chatLessonId: lesson.id,
         showChat,
         formulaSheet,
+        initialMode,
       })
     }
 
@@ -335,6 +353,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
         chatLessonId,
         showChat,
         formulaSheet,
+        initialMode,
       })
     }
   }

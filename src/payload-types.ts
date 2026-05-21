@@ -1500,6 +1500,14 @@ export interface Lesson {
    */
   visibleRenderers?: ('media' | 'pdf' | 'interactive')[] | null;
   /**
+   * Estimated time to complete the lesson (in minutes). Default: 30.
+   */
+  estimatedTime?: number | null;
+  /**
+   * Which display modes are available for students. At least one must be selected.
+   */
+  availableDisplayModes?: ('interactive' | 'scroll' | 'pdf')[] | null;
+  /**
    * Ordered playlist of exercises and content pages. Defines the lesson flow.
    */
   blocks?: string | null;
@@ -3850,6 +3858,8 @@ export interface LessonsSelect<T extends boolean = true> {
   isActive?: T;
   accessType?: T;
   visibleRenderers?: T;
+  estimatedTime?: T;
+  availableDisplayModes?: T;
   blocks?: T;
   contentFiles?: T;
   lessonContextText?: T;

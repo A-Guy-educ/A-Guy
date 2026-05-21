@@ -212,7 +212,9 @@
     "lessonsSection": "שיעורים",
     "chapter": "פרק",
     "lesson": "שיעור",
+    "learning": "לימוד",
     "exam": "בחינה",
+    "practice": "תרגול",
     "exercise": "תרגיל",
     "noCourses": "אין קורסים זמינים כרגע.",
     "noChapters": "אין פרקים זמינים לקורס זה.",
@@ -344,11 +346,28 @@
     "pdfLessonPagerCompletedDescription": "סקרת את כל המסמכים בשיעור זה.",
     "exercisesPagerBackToLesson": "חזור לשיעור",
     "startLesson": "התחל שיעור",
+    "startPractice": "התחל תרגול",
+    "startExam": "התחל בחינה",
     "soonBadge": "בקרוב",
     "justAddedBadge": "חדש",
     "contentLocked": "תוכן זה בהכנה ויהיה זמין בקרוב.",
     "formulaSheetTitle": "דף נוסחאות",
-    "formulaSheetEmpty": "אין תוכן זמין"
+    "formulaSheetEmpty": "אין תוכן זמין",
+    "estimatedTime": "זמן משוער: כ-{minutes} דקות",
+    "displayModeLabel": "מצב תצוגה",
+    "displayMode": {
+      "interactive": "אינטראקטיבי",
+      "scroll": "גלילה",
+      "pdf": "PDF"
+    },
+    "continueLesson": "המשך מאיפה שעצרת",
+    "restartLesson": "התחל מחדש",
+    "continuePractice": "המשך תרגול",
+    "restartPractice": "התחל תרגול מחדש",
+    "continueExam": "חזור לבחינה",
+    "restartExam": "התחל בחינה מחדש",
+    "completionPercent": "השלמת {percent}% מהשיעור",
+    "remainingExercises": "נשארו עוד {count} תרגילים"
   },
   "homepage": {
     "nav": {
