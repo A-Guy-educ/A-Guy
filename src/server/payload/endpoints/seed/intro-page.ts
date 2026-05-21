@@ -1,10 +1,12 @@
 import { RequiredDataFromCollectionSlug } from 'payload'
 
+import { getBrand } from '@/brands'
+
 /**
  * @fileType seed-data
  * @domain pages
  * @pattern published-content
- * @ai-summary Seed data for the A-Guy platform introduction page, converted from docs/a-guy/intro.md
+ * @ai-summary Seed data for the active brand's introduction page, converted from docs/a-guy/intro.md
  */
 
 const introHtml = `<article class="intro-page">
@@ -57,7 +59,7 @@ const introHtml = `<article class="intro-page">
 }
 </style>
 
-<h1>A-Guy: An AI-Native Educational Platform</h1>
+<h1>${getBrand().config.name}: An AI-Native Educational Platform</h1>
 
 <h2>Introduction</h2>
 
@@ -392,7 +394,7 @@ export const introPage: () => RequiredDataFromCollectionSlug<'pages'> = () => {
     slug: 'about',
     locale: 'en',
     _status: 'published',
-    title: 'About A-Guy',
+    title: `About ${getBrand().config.name}`,
     publishedAt: new Date().toISOString(),
     hero: {
       type: 'lowImpact',
@@ -409,7 +411,7 @@ export const introPage: () => RequiredDataFromCollectionSlug<'pages'> = () => {
                   format: 0,
                   mode: 'normal',
                   style: '',
-                  text: 'About A-Guy',
+                  text: `About ${getBrand().config.name}`,
                   version: 1,
                 },
               ],
