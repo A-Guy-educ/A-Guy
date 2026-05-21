@@ -35,7 +35,10 @@ import {
   validateExerciseSemantic,
   SEMANTIC_FAILURE_CODE,
 } from '@/server/services/lesson-duplication/validators/semantic'
-import { RouterStrategy } from '@/server/services/lesson-duplication/strategies/router'
+import {
+  RouterStrategy,
+  type VariationStrategy,
+} from '@/server/services/lesson-duplication/strategies/router'
 
 // Concurrency of 1 = process exercises sequentially. Each exercise hits the
 // LLM twice (creative + deterministic). Gemini's per-minute quota is easily
@@ -68,7 +71,9 @@ export interface StrategyResult {
  *
  * @param exercise    Source exercise to vary
  * @param level       Duplication level (none/light/medium/deep)
- * @param _payload    Payload instance (available for future AI strategy use)
+ * @param subject     Duplication subject
+ * @param payload     Payload CMS instance
+ * @param aiStrategy  Optional AI strategy override (for testing)
  * @returns           StrategyResult with generated blocks and strategy used
  */
 export async function runStrategy(
@@ -76,8 +81,9 @@ export async function runStrategy(
   level: 'none' | 'light' | 'medium' | 'deep',
   subject: DuplicationSubject,
   payload: Payload,
+  aiStrategy?: VariationStrategy,
 ): Promise<StrategyResult & { tokensUsed: { inputTokens: number; outputTokens: number } }> {
-  const router = new RouterStrategy(payload)
+  const router = new RouterStrategy(payload, undefined, aiStrategy)
   const result = await router.apply(exercise as unknown as Exercise, level, subject)
 
   const content = result.exercise.content as unknown as { blocks: ContentBlock[] }
@@ -394,6 +400,7 @@ async function processExercise(
   level: 'none' | 'light' | 'medium' | 'deep',
   subject: DuplicationSubject,
   payload: Payload,
+  aiStrategy?: VariationStrategy,
 ): Promise<{
   result: StrategyResult | null
   tokensUsed: { inputTokens: number; outputTokens: number }
@@ -413,7 +420,7 @@ async function processExercise(
   let strategyResult: StrategyResult
   let tokensUsed = { inputTokens: 0, outputTokens: 0 }
   try {
-    const strategyResponse = await runStrategy(trimmedExercise, level, subject, payload)
+    const strategyResponse = await runStrategy(trimmedExercise, level, subject, payload, aiStrategy)
     strategyResult = strategyResponse
     tokensUsed = strategyResponse.tokensUsed
   } catch (err) {
@@ -543,6 +550,7 @@ export interface RunOptions {
  *
  * @param duplicationId  ID of the LessonDuplications record to process
  * @param payload        Payload instance
+ * @param aiStrategy     Optional AI strategy override (for testing — inject a mock/stub)
  * @param options.deadlineMs  Absolute timestamp by which to stop processing
  *
  * Pre-condition: record has status `pending` (fresh) or `running` (resuming).
@@ -555,6 +563,7 @@ export interface RunOptions {
 export async function runDuplicationOrchestrator(
   duplicationId: string,
   payload: Payload,
+  aiStrategy?: VariationStrategy,
   options: RunOptions = {},
 ): Promise<RunOutcome> {
   // Load the duplication record
@@ -763,6 +772,7 @@ export async function runDuplicationOrchestrator(
         duplicationLevel,
         duplicationSubject,
         payload,
+        aiStrategy,
       )
 
       if (result === null) continue

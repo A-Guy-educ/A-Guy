@@ -15,6 +15,7 @@ import { usePasswordLogin } from '@/ui/web/providers/PasswordLoginProvider'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { sanitizeReturnTo } from '@/infra/auth/oauth_sanitize'
 import { loginAction } from './login_authenticate-action'
+import { safeValidate, emailSchema } from '@/infra/utils/validation'
 import telescopeSvg from '@/ui/web/TelescopeLogo/telescope.svg'
 
 function LoginFormContent() {
@@ -25,10 +26,27 @@ function LoginFormContent() {
   const returnTo = sanitizeReturnTo(searchParams?.get('returnTo'))
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
+    setFieldErrors({})
+
+    const email = (e.currentTarget.elements.namedItem('email') as HTMLInputElement)?.value
+    const password = (e.currentTarget.elements.namedItem('password') as HTMLInputElement)?.value
+    const errors: Record<string, string> = {}
+    if (!email?.trim()) {
+      errors.email = t('errors.emailRequired')
+    } else if (email?.trim() && safeValidate(emailSchema, email).success === false) {
+      errors.email = t('errors.invalidEmail')
+    }
+    if (!password?.trim()) errors.password = t('errors.passwordRequired')
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors)
+      return
+    }
+
     setIsLoading(true)
     try {
       const formData = new FormData(e.currentTarget)
@@ -40,6 +58,24 @@ function LoginFormContent() {
       }
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  function validateForm(e: React.MouseEvent<HTMLButtonElement>) {
+    const form = e.currentTarget.form
+    if (!form) return
+    const email = (form.elements.namedItem('email') as HTMLInputElement)?.value
+    const password = (form.elements.namedItem('password') as HTMLInputElement)?.value
+    const errors: Record<string, string> = {}
+    if (!email?.trim()) {
+      errors.email = t('errors.emailRequired')
+    } else if (email?.trim() && safeValidate(emailSchema, email).success === false) {
+      errors.email = t('errors.invalidEmail')
+    }
+    if (!password?.trim()) errors.password = t('errors.passwordRequired')
+    if (Object.keys(errors).length > 0) {
+      e.preventDefault()
+      setFieldErrors(errors)
     }
   }
 
@@ -101,7 +137,11 @@ function LoginFormContent() {
                   type="email"
                   placeholder={t('emailPlaceholder')}
                   required
+                  className={fieldErrors.email ? 'border-destructive' : ''}
                 />
+                {fieldErrors.email && (
+                  <p className="text-body-sm text-destructive">{fieldErrors.email}</p>
+                )}
               </div>
               <div className="space-y-1">
                 <Label htmlFor="password">{t('password')}</Label>
@@ -111,10 +151,14 @@ function LoginFormContent() {
                   type="password"
                   placeholder={t('passwordPlaceholder')}
                   required
+                  className={fieldErrors.password ? 'border-destructive' : ''}
                 />
+                {fieldErrors.password && (
+                  <p className="text-body-sm text-destructive">{fieldErrors.password}</p>
+                )}
               </div>
               {error && <p className="text-body-sm text-destructive">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full" disabled={isLoading} onClick={validateForm}>
                 {isLoading ? t('loggingIn') : t('loginButton')}
               </Button>
             </form>

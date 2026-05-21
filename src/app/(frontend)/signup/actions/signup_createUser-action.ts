@@ -17,10 +17,19 @@ import {
 } from '@/server/services/guest-session-upgrade'
 import { clearGuestSessionCookie, GUEST_SESSION_COOKIE_NAME } from '@/server/services/guest-session'
 import { logger } from '@/infra/utils/logger'
+import { isPasswordLoginEnabled } from '@/infra/config/system-params'
 
 export async function signupAction(formData: FormData): Promise<SignupResult> {
   try {
-    // 1. Extract data
+    // 1. Check if password login is enabled (server-side enforcement)
+    if (!(await isPasswordLoginEnabled())) {
+      return {
+        success: false,
+        message: 'Password login is currently disabled.',
+      }
+    }
+
+    // 2. Extract data
     const rawData = {
       name: formData.get('name'),
       email: formData.get('email'),
@@ -29,7 +38,7 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
       website: formData.get('website'),
     }
 
-    // 2. Honeypot check (anti-spam layer 1)
+    // 3. Honeypot check (anti-spam layer 1)
     if (rawData.website && rawData.website.toString().trim() !== '') {
       return {
         success: false,
@@ -37,7 +46,7 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
       }
     }
 
-    // 3. Validate with Zod
+    // 4. Validate with Zod
     const parsed = SignupSchema.safeParse(rawData)
 
     if (!parsed.success) {
@@ -52,7 +61,7 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
 
     const { name, email, password, confirmPassword } = parsed.data
 
-    // 4. Check password match
+    // 5. Check password match
     if (password !== confirmPassword) {
       return {
         success: false,
@@ -60,7 +69,7 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
       }
     }
 
-    // 5. Rate limiting (anti-spam layer 2)
+    // 6. Rate limiting (anti-spam layer 2)
     const emailHash = Buffer.from(email).toString('base64')
     if (!checkRateLimit(emailHash)) {
       return {
@@ -69,7 +78,7 @@ export async function signupAction(formData: FormData): Promise<SignupResult> {
       }
     }
 
-    // 6. Create user via Payload
+    // 7. Create user via Payload
     const payload = await getPayload({ config })
 
     try {

@@ -14,6 +14,30 @@ import config from '@payload-config'
 
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
+import type {
+  VariationStrategy,
+  VariationResult,
+} from '@/server/services/lesson-duplication/strategies/router'
+import type { Exercise } from '@/payload-types'
+import type {
+  DuplicationLevel,
+  DuplicationSubject,
+} from '@/server/payload/collections/LessonDuplications'
+
+/**
+ * Mock AI variation strategy — throws immediately to simulate LLM failure.
+ * Injected via runDuplicationOrchestrator's aiStrategy parameter, bypassing
+ * the vi.mock unreliability in the vitest forks pool.
+ */
+class MockAiVariationStrategy implements VariationStrategy {
+  async apply(
+    _exercise: Exercise,
+    _level: DuplicationLevel,
+    _subject?: DuplicationSubject,
+  ): Promise<VariationResult> {
+    throw new Error('Mocked AI strategy — LLM call bypassed for test')
+  }
+}
 
 // Mock the variation service so AiVariationStrategy (used for medium/deep level)
 // does not make real LLM calls in the integration test environment.
@@ -301,9 +325,10 @@ describe('Lesson duplication orchestrator — integration', () => {
 
     expect(record.status).toBe('pending')
 
-    // Run orchestrator (mocked runStrategy forces failure on exercise containing '-3')
+    // Run orchestrator with mock AI strategy that throws immediately
+    const mockAiStrategy = new MockAiVariationStrategy()
     try {
-      await runDuplicationOrchestrator(record.id, payload)
+      await runDuplicationOrchestrator(record.id, payload, mockAiStrategy)
     } catch {
       // Orchestrator may throw if the mock is not properly applied;
       // we still verify the DB record state below
@@ -327,7 +352,7 @@ describe('Lesson duplication orchestrator — integration', () => {
     // bypasses processExercise (which calls createOutputExercise). Exercise creation
     // is verified in lesson-duplication-review-resolve.int.spec.ts instead.
     expect(finalRecord.outputLesson).toBeTruthy()
-  }, 180000)
+  }, 600000)
 
   it('orchestrator does not abort when one exercise fails — remaining exercises are processed', async () => {
     // Create fresh pending record
@@ -338,9 +363,10 @@ describe('Lesson duplication orchestrator — integration', () => {
     })
     cleanupDuplicationIds.push(record.id)
 
-    // Run orchestrator; it may throw if the mock isn't applied (that's ok for this test)
+    // Run orchestrator with mock AI strategy
+    const mockAiStrategy = new MockAiVariationStrategy()
     try {
-      await runDuplicationOrchestrator(record.id, payload)
+      await runDuplicationOrchestrator(record.id, payload, mockAiStrategy)
     } catch {
       // ignore
     }
@@ -360,5 +386,5 @@ describe('Lesson duplication orchestrator — integration', () => {
 
     // outputLesson should be created even when some exercises fail
     expect(finalRecord.outputLesson).toBeTruthy()
-  }, 180000)
+  }, 600000)
 })

@@ -251,7 +251,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   let outcome: string = 'in_progress'
   try {
-    outcome = await runDuplicationOrchestrator(duplicationId, payload, { deadlineMs })
+    outcome = await runDuplicationOrchestrator(duplicationId, payload, undefined, { deadlineMs })
   } catch (err) {
     logger.error({ err, duplicationId }, '[cron/process-duplications] orchestrator threw')
     outcome = 'failed'

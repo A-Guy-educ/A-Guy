@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 
 import { cn } from '@/infra/utils/ui'
 import { GeistMono } from 'geist/font/mono'
@@ -135,10 +135,6 @@ export const metadata: Metadata = {
     statusBarStyle: 'default',
     title: 'A-Guy',
   },
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#91262C' },
-    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
-  ],
   robots: {
     index: true,
     follow: true,
@@ -172,4 +168,11 @@ export const metadata: Metadata = {
     shortcut: '/favicon.ico',
     apple: '/favicon.svg',
   },
+}
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#91262C' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
+  ],
 }

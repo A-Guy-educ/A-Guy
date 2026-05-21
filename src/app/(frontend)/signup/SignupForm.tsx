@@ -9,6 +9,7 @@ import { GoogleLoginButton } from '@/ui/web/auth/GoogleLoginButton'
 import { Button } from '@/ui/web/components/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/ui/web/components/card'
 import { useTranslations } from '@/ui/web/providers/I18n'
+import { usePasswordLogin } from '@/ui/web/providers/PasswordLoginProvider'
 import { useSearchParams } from 'next/navigation'
 import React, { Suspense, useState } from 'react'
 import { toast } from 'sonner'
@@ -28,6 +29,7 @@ function SignupFormContent() {
   const router = useRouterWithLoading()
   const searchParams = useSearchParams()
   const returnTo = searchParams?.get('returnTo') || '/'
+  const passwordEnabled = usePasswordLogin()
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const { execute: executeSignup, isLoading } = useAsyncAction(
@@ -127,29 +129,35 @@ function SignupFormContent() {
       <CardContent className="p-card-padding-lg">
         <div className="space-y-4">
           <GoogleLoginButton returnTo={returnTo} className="w-full" />
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-body-xs uppercase">
-              <span className="bg-card/80 px-2 text-muted-foreground">{tOauth('orDivider')}</span>
-            </div>
-          </div>
-        </div>
-        <form onSubmit={onSubmit} className="space-y-4">
-          <SignupFormFields t={t} isLoading={isLoading} errors={errors} />
+          {passwordEnabled && (
+            <>
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-body-xs uppercase">
+                  <span className="bg-card/80 px-2 text-muted-foreground">
+                    {tOauth('orDivider')}
+                  </span>
+                </div>
+              </div>
+              <form onSubmit={onSubmit} className="space-y-4">
+                <SignupFormFields t={t} isLoading={isLoading} errors={errors} />
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? (
-              <span className="flex items-center gap-content-gap-xs">
-                <Spinner size="sm" />
-                {t('creatingAccount')}
-              </span>
-            ) : (
-              t('createAccount')
-            )}
-          </Button>
-        </form>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? (
+                    <span className="flex items-center gap-content-gap-xs">
+                      <Spinner size="sm" />
+                      {t('creatingAccount')}
+                    </span>
+                  ) : (
+                    t('createAccount')
+                  )}
+                </Button>
+              </form>
+            </>
+          )}
+        </div>
       </CardContent>
       <CardFooter className="flex justify-center">
         <p className="text-body-sm text-muted-foreground">

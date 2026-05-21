@@ -129,7 +129,10 @@
       "noAccount": "Don't have an account?",
       "signupLink": "Sign up",
       "errors": {
-        "invalidCredentials": "Invalid email or password"
+        "emailRequired": "Email is required",
+        "passwordRequired": "Password is required",
+        "invalidCredentials": "Invalid email or password",
+        "invalidEmail": "Valid email is required"
       }
     },
     "account": {

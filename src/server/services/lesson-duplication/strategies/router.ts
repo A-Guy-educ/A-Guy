@@ -14,6 +14,8 @@ import type {
   DuplicationSubject,
 } from '@/server/payload/collections/LessonDuplications'
 import type { VariationStrategy, VariationResult } from './types'
+// Re-export so callers can inject mock implementations
+export type { VariationStrategy, VariationResult } from './types'
 import { ScriptVariationStrategy } from './script-strategy'
 
 /** AI variation strategy — calls generateVariation with two-pass approach. */
@@ -52,11 +54,17 @@ class AiVariationStrategy implements VariationStrategy {
  *  - level=none: return exercise unchanged
  *  - light + purely-algebraic: ScriptVariationStrategy (fast, no AI)
  *  - light + not algebraic OR medium/deep: AiVariationStrategy (two-pass)
+ *
+ * @param payload - Payload CMS instance
+ * @param scriptStrategy - Script variation strategy (default: ScriptVariationStrategy)
+ * @param aiStrategy - AI variation strategy override (default: AiVariationStrategy).
+ *                      Pass a mock/stub for fast deterministic tests that bypass the LLM.
  */
 export class RouterStrategy implements VariationStrategy {
   constructor(
     private readonly payload: Payload,
     private readonly scriptStrategy = new ScriptVariationStrategy(),
+    private readonly aiStrategy: VariationStrategy = new AiVariationStrategy(payload),
   ) {}
 
   async apply(
@@ -78,7 +86,6 @@ export class RouterStrategy implements VariationStrategy {
     }
 
     // medium/deep, or light with needsAiFallback → AI
-    const aiStrategy = new AiVariationStrategy(this.payload)
-    return aiStrategy.apply(exercise, level, subject)
+    return this.aiStrategy.apply(exercise, level, subject)
   }
 }
