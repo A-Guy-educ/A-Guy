@@ -15,35 +15,29 @@ import config from '@payload-config'
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication/orchestrator'
 
-// Mock the variation service so AiVariationStrategy (used for medium/deep level)
-// does not make real LLM calls in the integration test environment.
-// The variation service is only called when level != 'none' &&
-// (level != 'light' || scriptStrategy.needsAiFallback).
-// Uses call-count tracking instead of ID pattern — Payload generates UUIDs for
-// exercise IDs which don't contain '-3', so the old ID-based condition never triggered.
+// Mock runStrategy to inject one forced failure and bypass LLM calls.
+// The previous mock checked exercise.id.includes('-3') to force a failure on
+// the 3rd exercise, but database IDs never contain '-3', so the condition never
+// matched. We use a call counter instead for deterministic failure injection.
 // Must be vi.hoisted: the vi.mock factory below runs hoisted above imports,
-// so it may only close over hoisted refs. A plain `let` here makes the
-// factory throw at runtime, silently falling back to the REAL variation
-// service → real LLM call → flaky 180s timeout.
-const h = vi.hoisted(() => ({ vgCallCount: 0 }))
-vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
-  generateVariation: vi.fn().mockImplementation(
-    async (
-      input: { exercise: { id: string } },
-      _payload: unknown,
-    ): Promise<{
-      exercise: { id: string; content: { blocks: unknown[] } }
-      tokensUsed: { inputTokens: number; outputTokens: number }
-    }> => {
-      h.vgCallCount++
-      // Force failure on the 3rd exercise (call count 3 = index 2)
-      if (h.vgCallCount === 3) {
-        throw new Error('Forced failure for test')
-      }
-      return {
-        exercise: {
-          id: input.exercise.id,
-          content: {
+// so it may only close over hoisted refs.
+const h = vi.hoisted(() => ({ callCount: 0 }))
+vi.mock('@/server/services/lesson-duplication/orchestrator', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/server/services/lesson-duplication/orchestrator')>()
+  return {
+    ...actual,
+    runStrategy: vi
+      .fn()
+      .mockImplementation(
+        async (exercise: { id: string }, _level: string, _subject: unknown, _payload: unknown) => {
+          h.callCount++
+          if (h.callCount === 3) {
+            throw new Error('Forced failure for test')
+          }
+          return {
+            exerciseId: exercise.id,
+            strategy: 'script' as const,
             blocks: [
               {
                 id: 'q-1',
@@ -86,12 +80,7 @@ vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
                   value: 'Think arithmetic',
                   mediaIds: [],
                 },
-                solution: {
-                  type: 'rich_text',
-                  format: 'md-math-v1',
-                  value: '2+2=4',
-                  mediaIds: [],
-                },
+                solution: { type: 'rich_text', format: 'md-math-v1', value: '2+2=4', mediaIds: [] },
                 fullSolution: {
                   type: 'rich_text',
                   format: 'md-math-v1',
@@ -100,13 +89,12 @@ vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
                 },
               },
             ],
-          },
+            tokensUsed: { inputTokens: 10, outputTokens: 20 },
+          }
         },
-        tokensUsed: { inputTokens: 0, outputTokens: 0 },
-      }
-    },
-  ),
-}))
+      ),
+  }
+})
 
 async function ensureDefaultTenant(payload: Payload): Promise<string> {
   const slug = getDefaultTenantSlug()
@@ -137,7 +125,8 @@ describe('Lesson duplication orchestrator — integration', () => {
   const cleanupDuplicationIds: string[] = []
 
   beforeEach(() => {
-    h.vgCallCount = 0
+    // Reset the runStrategy call counter so each test gets a clean slate
+    h.callCount = 0
   })
 
   beforeAll(async () => {
@@ -301,7 +290,7 @@ describe('Lesson duplication orchestrator — integration', () => {
 
     expect(record.status).toBe('pending')
 
-    // Run orchestrator (mocked runStrategy forces failure on exercise containing '-3')
+    // Run orchestrator (mocked runStrategy forces failure on 3rd call via counter)
     try {
       await runDuplicationOrchestrator(record.id, payload)
     } catch {
@@ -315,8 +304,7 @@ describe('Lesson duplication orchestrator — integration', () => {
     // Final status must be needs_review (not succeeded, not failed)
     expect(finalRecord.status).toBe('needs_review')
 
-    // At least one failure entry expected (exercise containing '-3' threw in runStrategy)
-    // Note: the exact count depends on exercise ID strings; we check ≥1 to be robust
+    // At least one failure entry expected (3rd runStrategy call throws in mock)
     expect(finalRecord.failures).toBeDefined()
     expect(finalRecord.failures.length).toBeGreaterThanOrEqual(1)
     expect(finalRecord.failures[0].code).toBe('GENERATION_FAILED')
