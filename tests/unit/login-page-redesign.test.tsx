@@ -39,7 +39,7 @@ describe('Login Page Redesign - i18n translations', () => {
   it('English translations contain all new login keys', () => {
     const login = enMessages.auth.login as unknown as Record<string, string>
     expect(login.headingBold).toBe('Hello,')
-    expect(login.headingRest).toBe('Ready to Succeed?')
+    expect(login.headingRest).toBe('Success to Ready?')
     expect(login.heroSubtitle).toBe('A-Guy Your Personal Tutor')
     expect(login.quickLogin).toBe('Quick Login')
     expect(login.freeRegistration).toBe('Free Registration')
@@ -59,7 +59,7 @@ describe('LoginPageContent', () => {
   it('renders hero heading as gradient text in English', () => {
     renderWithI18n('en', <LoginPageContent />)
 
-    expect(screen.getByText('Ready to Succeed?')).toBeTruthy()
+    expect(screen.getByText('Success to Ready?')).toBeTruthy()
   })
 
   it('renders help link "זקוקים לעזרה?"', () => {
