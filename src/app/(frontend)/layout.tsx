@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 
 import { cn } from '@/infra/utils/ui'
 import { GeistMono } from 'geist/font/mono'
@@ -27,6 +27,7 @@ import './globals.css'
 import { LayoutClient } from './LayoutClient'
 import { NavigationBar } from '@/ui/web/homepage/NavigationBar'
 import { ActiveTimeProvider } from '@/client/providers/ActiveTimeProvider'
+import { getBrand } from '@/brands'
 
 const assistant = Assistant({
   subsets: ['latin', 'hebrew'],
@@ -117,59 +118,48 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   )
 }
 
-export const metadata: Metadata = {
-  metadataBase: new URL('https://www.aguy.co.il'),
-  manifest: '/manifest.json',
-  title: {
-    default: 'A-Guy | תרגול מתמטיקה אינטראקטיבי',
-    template: '%s | A-Guy',
-  },
-  description:
-    'פלטפורמה לתרגול מתמטיקה עם שיעורים מסודרים, תרגילים ממוקדים, משוב מיידי והסברים ברורים שלב אחר שלב – בנויה להתקדמות עקבית ואמיתית.',
-  keywords: [],
-  authors: [{ name: 'A-Guy', url: 'https://www.aguy.co.il' }],
-  creator: 'A-Guy',
-  publisher: 'A-Guy',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'A-Guy',
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  const b = getBrand().config
+  return {
+    metadataBase: new URL(b.host),
+    manifest: '/manifest.json', // dynamic in Phase 3
+    title: { default: b.defaultTitle, template: b.titleTemplate },
+    description: b.description,
+    keywords: b.keywords,
+    authors: [b.author],
+    creator: b.author.name,
+    publisher: b.author.name,
+    appleWebApp: { capable: true, statusBarStyle: 'default', title: b.appleWebApp.title },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
+    openGraph: mergeOpenGraph(),
+    twitter: {
+      card: 'summary_large_image',
+      site: b.social.twitterHandle,
+      creator: b.social.twitterHandle,
+    },
+    icons: {
+      icon: '/favicon.svg',
+      shortcut: '/favicon.ico',
+      apple: '/favicon.svg',
+    },
+  }
+}
+
+export const viewport: Viewport = {
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#91262C' },
     { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
   ],
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
-  },
-  openGraph: mergeOpenGraph(),
-  twitter: {
-    card: 'summary_large_image',
-    site: '@aguy',
-    creator: '@aguy',
-    title: 'A-Guy | תרגול מתמטיקה אינטראקטיבי',
-    description:
-      'פלטפורמה לתרגול מתמטיקה עם שיעורים מסודרים, תרגילים ממוקדים, משוב מיידי והסברים ברורים שלב אחר שלב.',
-    images: [
-      {
-        url: 'https://www.aguy.co.il/api/media/file/telescope.4ee60378.svg',
-        width: 1200,
-        height: 630,
-        alt: 'A-Guy - תרגול מתמטיקה אינטראקטיבי',
-      },
-    ],
-  },
-  icons: {
-    icon: '/favicon.svg',
-    shortcut: '/favicon.ico',
-    apple: '/favicon.svg',
-  },
 }
+// TODO (brand-bundle Phase 3): themeColor in viewport should be read from getBrand().config.themeColor
+// when Next.js supports async viewport exports or multi-brand static generation.

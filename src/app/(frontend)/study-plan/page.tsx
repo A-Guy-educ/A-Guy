@@ -1,3 +1,4 @@
+import { pageMetadata } from '@/infra/seo/pageMetadata'
 import { StudyPlanPage } from './_components/StudyPlanPage'
 
 export default function StudyPlanRoute() {
@@ -5,8 +6,8 @@ export default function StudyPlanRoute() {
 }
 
 export async function generateMetadata() {
-  return {
-    title: 'תוכנית לימודים - A-Guy',
+  return pageMetadata({
+    title: 'תוכנית לימודים',
     description: 'תכנן את ה-7 ימים הקרובים ללימוד',
-  }
+  })
 }

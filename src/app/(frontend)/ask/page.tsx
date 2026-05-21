@@ -1,3 +1,4 @@
+import { pageMetadata } from '@/infra/seo/pageMetadata'
 import { AskPageClient } from './_components/AskPageClient'
 
 export default function AskPage() {
@@ -5,8 +6,8 @@ export default function AskPage() {
 }
 
 export async function generateMetadata() {
-  return {
-    title: 'שאל - A-Guy',
+  return pageMetadata({
+    title: 'שאל',
     description: 'שאל שאלות',
-  }
+  })
 }

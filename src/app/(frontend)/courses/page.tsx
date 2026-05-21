@@ -1,6 +1,7 @@
 import { getDirection } from '@/i18n/config'
 import { getSystemLocale } from '@/i18n/server-locale'
 import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
+import { pageMetadata } from '@/infra/seo/pageMetadata'
 import { queryPublishedCourses } from '@/server/repos/queries/courses'
 import { CourseCardGrid } from './_components/CourseCardGrid'
 import { EmptyState } from './_components/EmptyState'
@@ -38,10 +39,10 @@ export async function generateMetadata() {
   const locale = await getSystemLocale()
   const isHebrew = locale === 'he'
 
-  return {
-    title: isHebrew ? 'חנות הקורסים - A-Guy' : 'Course Store - A-Guy',
+  return pageMetadata({
+    title: isHebrew ? 'חנות הקורסים' : 'Course Store',
     description: isHebrew
       ? 'בחר את התוכנית המתאימה לך והתקדם להצלחה במתמטיקה.'
       : 'Choose the right plan for you and advance in mathematics.',
-  }
+  })
 }

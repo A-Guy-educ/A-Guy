@@ -1,26 +1,42 @@
 import type { Metadata } from 'next'
 
-const defaultOpenGraph: Metadata['openGraph'] = {
-  type: 'website',
-  title: 'A-Guy | תרגול מתמטיקה אינטראקטיבי',
-  description:
-    'פלטפורמה לתרגול מתמטיקה עם שיעורים מסודרים, תרגילים ממוקדים, משוב מיידי והסברים ברורים שלב אחר שלב – בנויה להתקדמות עקבית ואמיתית.',
-  url: 'https://www.aguy.co.il/',
-  siteName: 'A-Guy',
-  images: [
-    {
-      url: 'https://www.aguy.co.il/api/media/file/telescope.4ee60378.svg',
-      width: 1200,
-      height: 630,
-      alt: 'A-Guy - תרגול מתמטיקה אינטראקטיבי',
-    },
-  ],
+import { getBrand } from '@/brands'
+
+function getDefaultOpenGraph(): Metadata['openGraph'] {
+  const b = getBrand().config
+  return {
+    type: 'website',
+    title: b.defaultTitle,
+    description: b.description,
+    url: b.host,
+    siteName: b.name,
+    images: [
+      {
+        url: b.ogImage,
+        width: 1200,
+        height: 630,
+        alt: `${b.name} - ${b.shortDescription}`,
+      },
+    ],
+  }
 }
 
+/** Fallback OG defaults when brand resolution fails (should never happen in practice). */
+const fallbackOpenGraph: Metadata['openGraph'] = {
+  type: 'website',
+  siteName: 'A-Guy',
+  images: [{ url: '', width: 1200, height: 630, alt: '' }],
+}
+
+/**
+ * Merges caller-provided OpenGraph overrides onto brand defaults.
+ * Brand defaults are read fresh from `getBrand().config` on every call.
+ */
 export const mergeOpenGraph = (og?: Metadata['openGraph']): Metadata['openGraph'] => {
+  const defaults = getDefaultOpenGraph() ?? fallbackOpenGraph
   return {
-    ...defaultOpenGraph,
+    ...defaults,
     ...og,
-    images: og?.images ? og.images : defaultOpenGraph.images,
+    images: og?.images ? og.images : defaults.images,
   }
 }

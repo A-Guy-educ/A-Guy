@@ -1,0 +1,14 @@
+[
+  {
+    "title": "viewport themeColor should be read from getBrand().config",
+    "body": "In src/app/(frontend)/layout.tsx, the viewport export hardcodes themeColor values (#91262C / #0f172a) that match the aguy brand config. When Phase 3 adds multi-brand support or Next.js supports async viewport exports, this should be changed to read from getBrand().config.themeColor. Currently flagged with a TODO comment.",
+    "rationale": "Brand theme colors are currently hardcoded in viewport export. Multi-brand support (Phase 3) or async viewport support in Next.js would require dynamic resolution.",
+    "priority": "medium"
+  },
+  {
+    "title": "mergeOpenGraph fallback should use brand defaults",
+    "body": "In src/infra/utils/mergeOpenGraph.ts, the fallbackOpenGraph object uses hardcoded 'A-Guy' strings as a last resort. This should ideally never be reached in practice (getBrand() always resolves to a valid brand), but if it is reached, the fallback values are incorrect for any non-aguy brand.",
+    "rationale": "The fallback is a defensive measure but uses brand-specific values that would be wrong for other brands. The fallback only triggers if getDefaultOpenGraph() returns null/undefined, which should not happen with proper brand resolution.",
+    "priority": "low"
+  }
+]
