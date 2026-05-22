@@ -1,6 +1,6 @@
 ---
-every: 24h
 staff: ceo
+mentions: aguyaharonyair
 ---
 
 # job-gap-scan
