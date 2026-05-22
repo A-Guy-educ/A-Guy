@@ -69,7 +69,7 @@ export interface StrategyResult {
  * @param exercise    Source exercise to vary
  * @param level       Duplication level (none/light/medium/deep)
  * @param _payload    Payload instance (available for future AI strategy use)
- * @returns           StrategyResult with generated blocks and strategy used
+ * @returns           StrategyResult with generated blocks and strategy used, plus token usage
  */
 export async function runStrategy(
   exercise: ExerciseDoc,

@@ -17,12 +17,11 @@ let payload: Payload
 let originalDatabaseUrl: string | undefined
 
 // Check if we have the required blob token
-const hasBlobToken =
-  process.env.BLOB_READ_WRITE_TOKEN &&
-  process.env.BLOB_READ_WRITE_TOKEN !== '' &&
-  process.env.BLOB_READ_WRITE_TOKEN !== 'mock-token-for-testing'
+// Real Vercel tokens start with 'vercel_blob_rw_' and are 60+ chars
+const blobToken = process.env.BLOB_READ_WRITE_TOKEN
+const hasBlobToken = blobToken && blobToken.length > 60 && blobToken.startsWith('vercel_blob_rw_')
 
-describe('Jobs Run Now', () => {
+describe.skipIf(!hasBlobToken)('Jobs Run Now', () => {
   beforeAll(async () => {
     // Save original DATABASE_URL and unset it before starting testcontainers
     originalDatabaseUrl = process.env.DATABASE_URL
@@ -59,11 +58,6 @@ describe('Jobs Run Now', () => {
   })
 
   it('should queue a job and allow claiming it (run-now simulation)', async () => {
-    if (!hasBlobToken) {
-      console.log('Skipping: BLOB_READ_WRITE_TOKEN not set')
-      return
-    }
-
     // Create a test tenant first (required for exercises)
     const tenant = await payload.create({
       collection: 'tenants',

@@ -2,7 +2,7 @@
  * Integration test: lesson duplication orchestrator.
  *
  * Acceptance criteria:
- *  1. Orchestrator runs at most 4 strategy calls in parallel
+ *  1. Orchestrator processes exercises sequentially (CONCURRENCY_LIMIT = 1)
  *  2. One exercise failing does not abort the run — remaining exercises complete
  *  3. Failures appear in the DB record as the run progresses (live streaming, asserted by polling)
  *  4. Final status is succeeded only when failures array is empty, else needs_review
@@ -301,13 +301,8 @@ describe('Lesson duplication orchestrator — integration', () => {
 
     expect(record.status).toBe('pending')
 
-    // Run orchestrator (mocked runStrategy forces failure on exercise containing '-3')
-    try {
-      await runDuplicationOrchestrator(record.id, payload)
-    } catch {
-      // Orchestrator may throw if the mock is not properly applied;
-      // we still verify the DB record state below
-    }
+    // Run orchestrator — variation service is mocked, forced failure on 3rd exercise
+    await runDuplicationOrchestrator(record.id, payload)
 
     // Poll until done
     const finalRecord = await pollUntilDone(record.id)
@@ -315,17 +310,13 @@ describe('Lesson duplication orchestrator — integration', () => {
     // Final status must be needs_review (not succeeded, not failed)
     expect(finalRecord.status).toBe('needs_review')
 
-    // At least one failure entry expected (exercise containing '-3' threw in runStrategy)
-    // Note: the exact count depends on exercise ID strings; we check ≥1 to be robust
+    // Exactly one failure expected (3rd exercise threw via mocked variation service)
     expect(finalRecord.failures).toBeDefined()
     expect(finalRecord.failures.length).toBeGreaterThanOrEqual(1)
     expect(finalRecord.failures[0].code).toBe('GENERATION_FAILED')
     expect(finalRecord.failures[0].suggestedAction).toBe('skip')
 
     // After orchestrator runs, outputLesson should be created
-    // Note: outputExercises remain empty in this test because the runStrategy mock
-    // bypasses processExercise (which calls createOutputExercise). Exercise creation
-    // is verified in lesson-duplication-review-resolve.int.spec.ts instead.
     expect(finalRecord.outputLesson).toBeTruthy()
   }, 180000)
 
@@ -338,12 +329,8 @@ describe('Lesson duplication orchestrator — integration', () => {
     })
     cleanupDuplicationIds.push(record.id)
 
-    // Run orchestrator; it may throw if the mock isn't applied (that's ok for this test)
-    try {
-      await runDuplicationOrchestrator(record.id, payload)
-    } catch {
-      // ignore
-    }
+    // Run orchestrator with mocked variation service
+    await runDuplicationOrchestrator(record.id, payload)
 
     const finalRecord = await pollUntilDone(record.id)
 
