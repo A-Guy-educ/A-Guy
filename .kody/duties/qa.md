@@ -1,7 +1,7 @@
 ---
 every: 30m
 staff: qa
-disabled: true
+mentions: aguyaharonyair
 ---
 
 # QA Changelog Verification
@@ -70,7 +70,7 @@ One comment, terse. It **MUST** `@`-mention the operator on the first line —
 that mention is the only thing that routes it into the dashboard inbox:
 
 ```
-@aguyaharonyair 🧪 **QA result** — `<action>`
+{{mentions}} 🧪 **QA result** — `<action>`
 
 <one or two sentences: what was tested, the verdict, what confirming does>
 
