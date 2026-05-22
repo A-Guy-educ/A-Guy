@@ -1,6 +1,6 @@
 ---
 disabled: true
-worker: cto
+staff: cto
 every: 7d
 ---
 
