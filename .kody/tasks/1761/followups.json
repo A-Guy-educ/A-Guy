@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Add integration tests for LessonExerciseEditor",
+    "body": "Write tests at tests/int/ui/admin/LessonExerciseEditor/ that verify: exercise fetching, local block editing, per-exercise save PATCH call, add/delete/reorder block operations, loading and error states.",
+    "rationale": "The component is functional but has no test coverage. Existing test patterns exist in tests/int/ for admin components.",
+    "priority": "medium"
+  },
+  {
+    "title": "Persist block order after reorder (exercise content.blocks mutation)",
+    "body": "Currently drag-drop reordering uses button-based up/down. The issue spec says 'reorder blocks via drag-drop' but only button-based reorder was implemented. Consider adding @dnd-kit for drag-drop if button UX is insufficient.",
+    "rationale": "The issue spec mentions drag-drop reordering. Button-based reorder was implemented as the minimal viable approach matching LessonBlocksField patterns.",
+    "priority": "low"
+  }
+]

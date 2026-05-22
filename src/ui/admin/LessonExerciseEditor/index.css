@@ -1,0 +1,422 @@
+/* LessonExerciseEditor Styles */
+
+.lesson-exercise-editor {
+  margin-bottom: 24px;
+}
+
+.lesson-exercise-editor__header {
+  margin-bottom: 16px;
+}
+
+.lesson-exercise-editor__header h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--theme-text);
+  margin: 0 0 4px 0;
+}
+
+.lesson-exercise-editor__description {
+  font-size: 12px;
+  color: var(--theme-elevation-500);
+  margin: 0;
+}
+
+.lesson-exercise-editor__loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 16px;
+  color: var(--theme-elevation-500);
+  font-size: 13px;
+}
+
+.lesson-exercise-editor__empty {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--theme-elevation-500);
+  font-size: 13px;
+}
+
+.lesson-exercise-editor__empty-hint {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.lesson-exercise-editor__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Exercise Card */
+
+.exercise-card {
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--theme-elevation-0);
+}
+
+.exercise-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--theme-elevation-50);
+  cursor: pointer;
+  user-select: none;
+}
+
+.exercise-card__header:hover {
+  background: var(--theme-elevation-100);
+}
+
+.exercise-card__number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--theme-primary-500, #3b82f6);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.exercise-card__title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--theme-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.exercise-card__count {
+  font-size: 11px;
+  color: var(--theme-elevation-500);
+  flex-shrink: 0;
+}
+
+.exercise-card__unsaved {
+  font-size: 11px;
+  color: var(--theme-warning-500, #f59e0b);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.exercise-card__save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+  flex-shrink: 0;
+  background: var(--theme-success-500, #22c55e);
+  color: white;
+}
+
+.exercise-card__save-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.exercise-card__save-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.exercise-card__chevron {
+  color: var(--theme-elevation-400);
+  flex-shrink: 0;
+}
+
+.exercise-card__body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.exercise-card__empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--theme-elevation-400);
+  font-size: 12px;
+}
+
+.exercise-card__add-block-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 1px dashed var(--theme-elevation-200);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--theme-elevation-500);
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  align-self: flex-start;
+}
+
+.exercise-card__add-block-btn:hover {
+  border-color: var(--theme-primary-500, #3b82f6);
+  color: var(--theme-primary-500, #3b82f6);
+}
+
+/* Editable Block */
+
+.editable-block {
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.editable-block:hover {
+  border-color: var(--theme-elevation-200);
+}
+
+.editable-block--selected {
+  border-color: var(--theme-primary-500, #3b82f6);
+}
+
+.editable-block__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  background: var(--theme-elevation-50);
+  border-bottom: 1px solid var(--theme-elevation-100);
+}
+
+.editable-block__header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.editable-block__grip {
+  color: var(--theme-elevation-300);
+  cursor: grab;
+}
+
+.editable-block__number {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--theme-elevation-500);
+}
+
+.editable-block__type-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--theme-elevation-100);
+  color: var(--theme-elevation-600);
+}
+
+.editable-block__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.editable-block__content {
+  padding: 8px;
+}
+
+/* Rich text editing */
+.editable-block__rich-text-editor {
+  min-height: 60px;
+}
+
+/* HTML editing */
+.editable-block__html-edit {
+  width: 100%;
+}
+
+.editable-block__html-textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: monospace;
+  resize: vertical;
+  background: var(--theme-elevation-0);
+  color: var(--theme-text);
+}
+
+.editable-block__html-textarea:focus {
+  outline: none;
+  border-color: var(--theme-primary-500, #3b82f6);
+}
+
+/* Media editing */
+.editable-block__media-edit {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.editable-block__media-input {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 4px;
+  font-size: 13px;
+  background: var(--theme-elevation-0);
+  color: var(--theme-text);
+}
+
+.editable-block__media-input:focus {
+  outline: none;
+  border-color: var(--theme-primary-500, #3b82f6);
+}
+
+/* LaTeX editing */
+.editable-block__latex-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.editable-block__latex-textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: monospace;
+  resize: vertical;
+  background: var(--theme-elevation-0);
+  color: var(--theme-text);
+}
+
+.editable-block__latex-textarea:focus {
+  outline: none;
+  border-color: var(--theme-primary-500, #3b82f6);
+}
+
+.editable-block__latex-preview {
+  padding: 8px;
+  background: var(--theme-elevation-50);
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: monospace;
+  color: var(--theme-elevation-600);
+  overflow-x: auto;
+}
+
+/* JSON Block Editor */
+.json-block-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.json-block-editor__textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: monospace;
+  resize: vertical;
+  background: var(--theme-elevation-0);
+  color: var(--theme-text);
+  min-height: 120px;
+}
+
+.json-block-editor__textarea:focus {
+  outline: none;
+  border-color: var(--theme-primary-500, #3b82f6);
+}
+
+.json-block-editor__actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.json-block-editor__btn {
+  padding: 4px 10px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.json-block-editor__btn:hover {
+  opacity: 0.85;
+}
+
+.json-block-editor__btn--cancel {
+  background: var(--theme-elevation-150);
+  color: var(--theme-text);
+}
+
+.json-block-editor__btn--apply {
+  background: var(--theme-primary-500, #3b82f6);
+  color: white;
+}
+
+.json-block-editor--preview {
+  position: relative;
+}
+
+.json-block-editor__preview {
+  padding: 8px;
+  background: var(--theme-elevation-50);
+  border: 1px solid var(--theme-elevation-100);
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: monospace;
+  color: var(--theme-elevation-600);
+  overflow-x: auto;
+  max-height: 200px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.json-block-editor__edit-btn {
+  align-self: flex-end;
+  padding: 4px 10px;
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--theme-elevation-500);
+  font-size: 11px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.json-block-editor__edit-btn:hover {
+  border-color: var(--theme-primary-500, #3b82f6);
+  color: var(--theme-primary-500, #3b82f6);
+}
+
+/* Utility: spin animation */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}

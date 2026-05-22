@@ -373,6 +373,16 @@ export const Lessons: CollectionConfig = {
         },
       },
     },
+    // Lesson Exercise Editor (worksheet view of exercises from blocks field)
+    {
+      name: 'lessonExerciseEditor',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/ui/admin/LessonExerciseEditor#LessonExerciseEditor',
+        },
+      },
+    },
     // --- Lesson Content ---
     {
       name: 'contentFiles',
