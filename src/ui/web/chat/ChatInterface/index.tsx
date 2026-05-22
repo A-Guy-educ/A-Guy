@@ -233,6 +233,16 @@ export function ChatInterface({
     return () => window.removeEventListener('ask-media-attach', handler)
   }, [])
 
+  // FloatingAskButton: focus the chat input when the floating button is clicked
+  useEffect(() => {
+    const handleFocusChatInput = () => {
+      onChatInteraction?.()
+      inputRef.current?.focus()
+    }
+    window.addEventListener('focus-chat-input', handleFocusChatInput)
+    return () => window.removeEventListener('focus-chat-input', handleFocusChatInput)
+  }, [onChatInteraction, inputRef])
+
   // Ask page actions (hint, solution, check solution from canvas)
   const askActionRef = useRef<(e: Event) => void>(() => {})
   askActionRef.current = (e: Event) => {
