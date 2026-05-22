@@ -1,0 +1,17 @@
+{
+  "taskId": "1778",
+  "taskType": "issue",
+  "target": "1778-p3-api-status-page-shows-ambiguous-unknown-label-n",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed HealthBadge to use correct API response field (version not projectVersion) and skip version display when values are 'unknown'",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/components/HealthBadge.tsx",
+    "tests/int/health-badge.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/0327E94F-0086-444C-A019-777A2FEAA414.jsonl",
+  "startedAt": "2026-05-22T14:50:00Z",
+  "finishedAt": "2026-05-22T14:55:00Z"
+}

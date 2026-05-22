@@ -7,24 +7,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 interface HealthResponse {
   ok: boolean
   gitSha: string
-  payloadVersion: string
-  projectVersion: string
+  version: string
   timestamp: string
 }
 
 const healthyResponse: HealthResponse = {
   ok: true,
   gitSha: 'abc123def456',
-  payloadVersion: '3.73.0',
-  projectVersion: '0.6.0',
+  version: '0.6.0',
   timestamp: '2026-07-02T12:00:00.000Z',
 }
 
 const unhealthyResponse: HealthResponse = {
   ok: false,
   gitSha: 'abc123def456',
-  payloadVersion: '3.73.0',
-  projectVersion: '0.6.0',
+  version: '0.6.0',
   timestamp: '2026-07-02T12:00:00.000Z',
 }
 
@@ -95,6 +92,52 @@ describe('HealthBadge component', () => {
       expect(await screen.findByText('API OK')).toBeTruthy()
       expect(screen.getByText(/0\.6\.0/)).toBeTruthy()
       expect(screen.getByText(/abc123d/)).toBeTruthy()
+    })
+
+    it('does not show ambiguous (unknown) text when API returns actual response format', async () => {
+      // Actual health endpoint returns: { ok, checks, version, gitSha, timestamp, pool }
+      // NOT: { ok, gitSha, payloadVersion, projectVersion, timestamp }
+      // The badge must handle this gracefully without showing "(unknown)"
+      const actualApiResponse = {
+        ok: true,
+        checks: { database: true },
+        version: '0.6.0',
+        gitSha: 'abc123def456',
+        timestamp: '2026-07-02T12:00:00.000Z',
+      }
+
+      vi.spyOn(global, 'fetch').mockResolvedValue(
+        new Response(JSON.stringify(actualApiResponse), { status: 200 }),
+      )
+
+      renderHealthBadge(true)
+
+      expect(await screen.findByText('API OK')).toBeTruthy()
+      // Must not show "(unknown)" anywhere - that's the bug
+      expect(screen.queryByText(/\(unknown\)/)).toBeNull()
+    })
+
+    it('does not show (unknown) when projectVersion is missing and gitSha is unknown', async () => {
+      // This is the production scenario: version="unknown" from env, no projectVersion field,
+      // gitSha="unknown" from env - resulting in confusing "(unknown)" suffix
+      const productionResponse = {
+        ok: true,
+        checks: { database: true },
+        version: 'unknown',
+        gitSha: 'unknown',
+        timestamp: '2026-07-02T12:00:00.000Z',
+      }
+
+      vi.spyOn(global, 'fetch').mockResolvedValue(
+        new Response(JSON.stringify(productionResponse), { status: 200 }),
+      )
+
+      renderHealthBadge(true)
+
+      expect(await screen.findByText('API OK')).toBeTruthy()
+      // The bug shows "(unknown)" when projectVersion is missing/unknown and gitSha is "unknown"
+      // Should NOT show "(unknown)" - it's confusing
+      expect(screen.queryByText(/\(unknown\)/)).toBeNull()
     })
   })
 
