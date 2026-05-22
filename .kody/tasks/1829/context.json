@@ -1,0 +1,18 @@
+{
+  "taskId": "1829",
+  "taskType": "issue",
+  "target": "1829-p1-transactions-api-endpoint-returns-404",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Created /api/admin/recent-transactions endpoint with overrideAccess:true to bypass collection-level access control, and updated RecentTransactionsWidget to call it instead of /api/collections/transactions",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/admin/recent-transactions/route.ts",
+    "src/ui/admin/RecentTransactionsWidget/index.tsx",
+    "tests/int/admin-recent-transactions-1829.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/placeholder.jsonl",
+  "startedAt": "2026-05-22T22:28:00Z",
+  "finishedAt": "2026-05-22T22:50:00Z"
+}
