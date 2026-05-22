@@ -224,7 +224,7 @@ export function SplitPaneLayout({
           {
             onChatInteraction: handleChatExpand,
             displayMode:
-              viewMode === 'CHAT' || (viewMode === 'PDF' && chatExpandedInPdf)
+              viewMode === 'CHAT' || (viewMode === 'PDF' && chatExpandedInPdf) || !isDesktop
                 ? 'full'
                 : ('input-only' as const),
             isMobile: true,
