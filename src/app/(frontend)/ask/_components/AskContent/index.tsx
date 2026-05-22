@@ -26,7 +26,8 @@ export function AskContent({ conversationContextKey }: AskContentProps) {
     async function loadCourse() {
       const profile = getUserProfile()
       if (!profile?.gradeLevel) {
-        window.location.href = '/'
+        // Redirect to /courses so users can select their grade level
+        window.location.href = '/courses'
         return
       }
 

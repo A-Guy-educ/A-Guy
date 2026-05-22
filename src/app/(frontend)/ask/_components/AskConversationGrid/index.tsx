@@ -84,7 +84,8 @@ export function AskConversationGrid() {
     async function loadData() {
       const profile = getUserProfile()
       if (!profile?.gradeLevel) {
-        window.location.href = '/'
+        // Redirect to /courses so users can select their grade level
+        window.location.href = '/courses'
         return
       }
 
