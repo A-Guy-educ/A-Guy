@@ -1,6 +1,6 @@
 ---
 every: manual
-worker: kody
+staff: kody
 ---
 
 # publish a release

@@ -1,6 +1,6 @@
 ---
 disabled: true
-worker: kody
+staff: kody
 ---
 
 # Flaky Test Quarantine
