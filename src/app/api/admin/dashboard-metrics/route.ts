@@ -228,16 +228,19 @@ function getPeriodStart(now: Date, period: Period): Date {
 export async function GET(req: Request) {
   const payload = await getPayload({ config })
 
-  const authResult = await payload.auth({ headers: req.headers })
+  let authResult: { user: unknown }
+  try {
+    authResult = await payload.auth({ headers: req.headers })
+  } catch {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   if (!authResult.user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (
-    !('collection' in authResult.user) ||
-    authResult.user.collection !== 'users' ||
-    authResult.user.role !== 'admin'
-  ) {
+  const user = authResult.user as { collection?: string; role?: string }
+  if (!('collection' in user) || user.collection !== 'users' || user.role !== 'admin') {
     return Response.json({ error: 'Forbidden' }, { status: 403 })
   }
 

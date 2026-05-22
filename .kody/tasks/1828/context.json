@@ -1,0 +1,16 @@
+{
+  "taskId": "1828",
+  "taskType": "issue",
+  "target": "1828",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed dashboard widgets stuck loading by wrapping payload.auth() in try/catch to handle errors gracefully",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/admin/dashboard-metrics/route.ts"
+  ],
+  "sessionLog": ".kody/sessions/1828-session.jsonl",
+  "startedAt": "2026-05-22T22:03:00Z",
+  "finishedAt": "2026-05-22T22:15:00Z"
+}
