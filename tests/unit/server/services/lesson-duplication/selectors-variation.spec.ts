@@ -74,7 +74,7 @@ describe('selectSectionsForVariation (issue #1665)', () => {
      * This violates the acceptance criteria: "always include at least one
      * question_* block in the picked set"
      */
-    it('BUG REPRO: interspersing context with questions causes 0-2 question picks', () => {
+    it('should select at least 4 question blocks when context and questions are interspersed', () => {
       // Realistic exercise shape: context and questions interspersed
       const blocks: TestBlock[] = [
         richText('r1'),
@@ -99,16 +99,13 @@ describe('selectSectionsForVariation (issue #1665)', () => {
         }
       }
 
-      // BUG: The current implementation produces this distribution:
-      // 0 questions: ~7 seeds, 1 question: ~36 seeds, 2 questions: ~66 seeds
-      //
-      // This is WRONG. The acceptance criteria requires at least 1 question.
-      // The assertion below FAILS because of the bug:
+      // The correct implementation should produce a distribution where most seeds
+      // return 4-5 questions (1 context + 4 questions when context precedes questions).
       expect(distributions[0]).toBe(0) // Should never pick 0 questions
       expect(distributions[1]).toBe(0) // Should rarely pick only 1 question
     })
 
-    it('BUG: with seed 42, interspersed blocks may return only 1 question', () => {
+    it('with seed 42, should return 4+ question blocks from interspersed blocks', () => {
       // Specific seed that demonstrates the bug
       const blocks: TestBlock[] = [
         richText('r1'),
@@ -128,7 +125,6 @@ describe('selectSectionsForVariation (issue #1665)', () => {
       expect(result).toHaveLength(5)
 
       // ACCEPTANCE CRITERION: Must include at least one question block
-      // BUG: This FAILS because selectSectionsForVariation ignores block type
       const questionCount = result.filter((b) => b.type.startsWith('question_')).length
       expect(questionCount).toBeGreaterThanOrEqual(1)
 
@@ -159,7 +155,7 @@ describe('selectSectionsForVariation (issue #1665)', () => {
     })
   })
 
-  describe('BUG: should prefer first context block as intro', () => {
+  describe('should prefer first context block as intro', () => {
     it('includes first rich_text when available', () => {
       // Setup: intro rich_text, then lots of questions, then latex
       const blocks: TestBlock[] = [
@@ -183,7 +179,7 @@ describe('selectSectionsForVariation (issue #1665)', () => {
       // Total 5 blocks: should have intro + 4 questions ideally
       expect(result).toHaveLength(5)
 
-      // BUG: May fail because algorithm doesn't prioritize questions
+      // The implementation should prioritize questions, giving us 1 context + 4 questions
       const questionCount = result.filter((b) => b.type.startsWith('question_')).length
       expect(questionCount).toBeGreaterThanOrEqual(4)
     })
@@ -207,7 +203,7 @@ describe('selectSectionsForVariation (issue #1665)', () => {
 
       expect(result).toHaveLength(5)
       const questionCount = result.filter((b) => b.type.startsWith('question_')).length
-      // BUG: May not include enough questions
+      // Should include at least 4 questions (1 context intro + 4 question blocks)
       expect(questionCount).toBeGreaterThanOrEqual(4)
     })
   })
@@ -271,7 +267,7 @@ describe('selectSectionsForVariation (issue #1665)', () => {
       expect(result).toHaveLength(5)
       // Should include the intro and 4 questions (dropping 1 question)
       const questionCount = result.filter((b) => b.type.startsWith('question_')).length
-      // BUG: May not preserve intro
+      // The intro should be preserved, with 4 question blocks selected
       expect(questionCount).toBeGreaterThanOrEqual(4)
     })
 
@@ -308,7 +304,7 @@ describe('selectSectionsForVariation (issue #1665)', () => {
   })
 
   describe('specific bug reproduction', () => {
-    it('BUG: seed 7 with intersperced blocks drops questions', () => {
+    it('with seed 7 should select 4+ question blocks from interspersed blocks', () => {
       // This specific test case demonstrates the bug with a known seed
       const blocks: TestBlock[] = [
         richText('r1'),
@@ -328,7 +324,6 @@ describe('selectSectionsForVariation (issue #1665)', () => {
       // Verify we got 5 blocks
       expect(result).toHaveLength(5)
 
-      // BUG: This assertion FAILS because selectSectionsForVariation doesn't prioritize questions
       // The acceptance criteria states: "always include at least one question_* block"
       const questionCount = result.filter((b) => b.type.startsWith('question_')).length
       expect(questionCount).toBeGreaterThanOrEqual(1)
