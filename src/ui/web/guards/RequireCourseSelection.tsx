@@ -12,6 +12,7 @@ export function RequireCourseSelection({ children }: { children: React.ReactNode
   useEffect(() => {
     const profile = getUserProfile()
     if (!profile?.gradeLevel) {
+      setHasSelection(false)
       router.replace('/')
       return
     }

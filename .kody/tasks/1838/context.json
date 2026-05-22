@@ -1,0 +1,17 @@
+{
+  "taskId": "1838",
+  "taskType": "issue",
+  "target": "1838",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed RequireCourseSelection guard: added setHasSelection(false) before router.replace('/') so the spinner stops instead of spinning forever. Added E2E test that reproduces the bug and will pass after the fix.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/guards/RequireCourseSelection.tsx",
+    "tests/e2e/ask-loading-1838.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-05-22T23:05:00Z",
+  "finishedAt": "2026-05-22T23:08:00Z"
+}
