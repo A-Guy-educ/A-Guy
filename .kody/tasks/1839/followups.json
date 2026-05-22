@@ -1,0 +1,8 @@
+[
+  {
+    "title": "RecentTransactionsWidget 404 - investigate Payload REST API access control behavior",
+    "body": "The RecentTransactionsWidget fetches from /api/collections/transactions and returns HTTP 404. This is likely due to the Transactions collection having access.read=adminOnly, and Payload returning 404 instead of 403 for unauthorized requests. Investigate if this is expected Payload behavior or a misconfiguration.",
+    "rationale": "The widget shows HTTP 404 even when the user is logged in as admin (based on the issue context). This suggests the access control might be returning 404 instead of 403 for non-admin users, or there's a Payload configuration issue.",
+    "priority": "medium"
+  }
+]

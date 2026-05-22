@@ -1,0 +1,17 @@
+{
+  "taskId": "1839",
+  "taskType": "issue",
+  "target": "1839",
+  "outcome": "partial",
+  "exitCode": 0,
+  "reason": "Fixed stuck loading issue by adding 15s timeout to MetricsProvider and RecentTransactionsWidget fetches. The 404 on RecentTransactions is likely due to access control (adminOnly) returning 404 instead of 403, which is a Payload behavior issue not fixable in widget code.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/ConversionTracking/MetricsProvider.tsx",
+    "src/ui/admin/RecentTransactionsWidget/index.tsx"
+  ],
+  "sessionLog": ".kody/sessions/1839.jsonl",
+  "startedAt": "2026-05-22T23:42:00.000Z",
+  "finishedAt": "2026-05-22T23:49:30.000Z"
+}
