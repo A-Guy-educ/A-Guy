@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "rev": 14,
+  "rev": 17,
   "cursor": "clean",
   "data": {
-    "last_tick": "2026-05-21T21:21:16Z",
+    "last_tick": "2026-05-22T00:12:00Z",
     "tasks_seen": 2,
     "tasks_processed": 2,
-    "lastFiredAt": "2026-05-21T22:05:24.124Z"
+    "lastFiredAt": "2026-05-22T02:29:13.366Z"
   },
   "done": false
 }
