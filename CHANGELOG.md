@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- #1741: [Mobile] Floating "שאל שאלה" button in bottom-left corner ([#1771](https://github.com/A-Guy-educ/A-Guy/pull/1771)) — @aguyaharonyair · 🔄 QA (#1796)
+- #1741: [Mobile] Floating "שאל שאלה" button in bottom-left corner ([#1771](https://github.com/A-Guy-educ/A-Guy/pull/1771)) — @aguyaharonyair
 - #1767: [Mobile] No horizontal scroll in any lesson display mode ([#1768](https://github.com/A-Guy-educ/A-Guy/pull/1768)) — @aguyaharonyair
 - #1743: [Mobile] Hide Prev/Next navigation until 85% scroll progress ([#1766](https://github.com/A-Guy-educ/A-Guy/pull/1766)) — @aguyaharonyair
 - #1727: Enforce tenant isolation in checkout — block cross-tenant produc… ([#1731](https://github.com/A-Guy-educ/A-Guy/pull/1731)) — @aguyaharonyair
