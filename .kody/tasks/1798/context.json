@@ -1,0 +1,14 @@
+{
+  "taskId": "1798",
+  "taskType": "issue",
+  "target": "issue #1798",
+  "outcome": "partial",
+  "exitCode": 0,
+  "reason": "Fix adds error state handling to StatsDashboard, but root cause (auth mismatch or data issue) could not be fully verified due to MongoDB unavailability in this environment",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": ["src/app/(frontend)/stats/_components/StatsDashboard.tsx"],
+  "sessionLog": null,
+  "startedAt": "2026-05-22T17:35:00Z",
+  "finishedAt": "2026-05-22T17:52:00Z"
+}
