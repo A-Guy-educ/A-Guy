@@ -270,9 +270,10 @@ describe('GraphWithPrompt Component', () => {
       )
       const graphChild = container.querySelector('[data-testid="graph-child"]')
 
-      // With 50-50, graph should have flex-1 (not flex-[2]) and no max-w cap
+      // With 50-50, graph should have flex-1 (not flex-[2]) with min-w-0 and max-w-full for mobile shrinking
       expect(graphChild?.className).toContain('flex-1')
-      expect(graphChild?.className).not.toContain('max-w-')
+      expect(graphChild?.className).toContain('min-w-0')
+      expect(graphChild?.className).toContain('max-w-full')
     })
   })
 
