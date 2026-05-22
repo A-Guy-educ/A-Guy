@@ -1,7 +1,7 @@
 ---
 title: Lesson Duplication Service
 type: architecture
-updated: 2026-05-11
+updated: 2026-05-15
 sources:
   - https://github.com/A-Guy-educ/A-Guy/pull/1517
   - https://github.com/A-Guy-educ/A-Guy/pull/1467
@@ -12,6 +12,8 @@ sources:
   - https://github.com/A-Guy-educ/A-Guy/pull/1556
   - https://github.com/A-Guy-educ/A-Guy/pull/1557
   - https://github.com/A-Guy-educ/A-Guy/pull/1560
+  - https://github.com/A-Guy-educ/A-Guy/pull/1602
+  - https://github.com/A-Guy-educ/A-Guy/pull/1624
 ---
 
 The lesson duplication service generates variations of exercises for practice. It uses a strategy pattern with three variation levels and supports subject-specific prompts. Failed exercises surface in an admin review screen for manual resolution.
@@ -83,6 +85,26 @@ When the orchestrator runs, it:
 - Suggestion actions: MISSING_QUESTION → regenerate
 - Failures array on LessonDuplications has a resolved boolean — set true after admin resolution
 
+## Manual Trigger (#1624)
+
+Vercel cron schedules only run on production deployments. On dev (preview tier), records stay at `pending` forever. The Process Now endpoint provides a manual trigger:
+
+**POST /api/lesson-duplications/:id/process-now** — Admin-only. Calls `runDuplicationOrchestrator` with the same deadline behavior as cron (800s max). Returns outcome (`succeeded`, `needs_review`, `in_progress`, `failed`).
+
+UI: "Process Now" button appears in the review screen when status is `pending` or `running`. An empty-state panel shows for `pending`/`running` records with zero output — focused call-to-action instead of an empty list.
+
+## Source Block Trimming (#1624)
+
+The structural validator caps exercises at 5 blocks (`TOO_MANY_SECTIONS` — renderer limit). Source exercises with 9-10 blocks would always fail variation.
+
+**Fix**: `trimSourceBlocksIfNeeded()` pre-trims source blocks to 5 using `selectSectionsScaled()` — the same scaling-random bucketing used at lesson level. Preserves source order for natural-feeling truncation.
+
+## Empty Prompt Passthrough (#1624)
+
+Legacy geometry/axis exercises pose questions via figure, not separate prompt text. Source has empty `prompt.value`; variations faithfully preserve that.
+
+**Fix**: `validateBlock()` now accepts `sourceBlock`. If both source and generated have empty prompts, `MISSING_QUESTION` is suppressed — it's passthrough, not a generation failure.
+
 ## Admin Review Screen
 
 When the orchestrator finishes with failures, the record enters needs_review status. Admins use the review screen (/admin/lesson-duplications/:id) to inspect and resolve failures. See admin/lesson-duplication-review.md.
@@ -92,3 +114,4 @@ When the orchestrator finishes with failures, the record enters needs_review sta
 - admin/lesson-duplication-review.md — Admin review screen pattern
 - design-system.md — UI patterns for lesson views
 - conventions.md — TypeScript patterns used
+- [lesson-export](./lesson-export.md) — Related lesson export feature
