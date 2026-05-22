@@ -564,7 +564,7 @@ function WorksheetMedia({
       <img
         src={src}
         alt={media.alt || media.filename || ''}
-        className="max-h-96 w-auto object-contain"
+        className="max-h-96 w-auto max-w-full object-contain"
       />
     </figure>
   )
