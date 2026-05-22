@@ -39,3 +39,11 @@ src/
 - **AI Documentation Pipeline**: Automated generation of doc chunks, pattern indexes, and route maps for AI context (scripts: `ai:generate-docs`, `ai:generate-patterns`, `ai:generate-all-indexes`)
 
 Refer to [AGENTS.md](./AGENTS.md) for Payload-specific patterns and [CLAUDE.md](./CLAUDE.md) for development commands.
+
+## Content Security Policy (#1604)
+
+CSP headers are defined in `next.config.js` per route. The Vercel feedback script (`https://vercel.live/_next-live/feedback/feedback.js`) requires `https://vercel.live` in both `script-src` and `connect-src` directives for `/admin/:path*` routes. Without this, the "Give feedback" button on the admin panel is blocked.
+
+## Lesson Duplication: Cron Trigger (#1602)
+
+Non-trivial duplication (light/medium/deep) is triggered by a Vercel cron worker at `/api/cron/process-duplications` (runs every minute). The `lesson-duplications` collection is the queue; the cron endpoint claims one record per tick and delegates to the resumable orchestrator. See [lesson-duplication.md](./lesson-duplication.md) for details.

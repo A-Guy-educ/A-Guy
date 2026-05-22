@@ -65,3 +65,25 @@ See [design-system.md](./design-system.md) for complete rules. Key points:
 ## Learned 2026-04-19 (task: 2)
 - Uses @/ path aliases for imports
 - Active directories: src/app/api/instructor/dashboard, src/app/(frontend)/instructor/_components, tests/int, tests/e2e
+
+## Package Manager (#1609)
+
+`package.json` pins the package manager version via the `packageManager` field: `"packageManager": "pnpm@10.33.0"`. This makes the pnpm version explicit and reproducible across runner, local dev, and CI. `pnpm/action-setup` in CI workflows reads this field directly — do not set `version` in the action's `with:` block.
+
+## Script Safety Guards (#1602)
+
+Scripts that touch MongoDB or bill external services (LLM APIs) must guard against accidental runs against production:
+
+```typescript
+function assertSafeEnvironment(): void {
+  if (process.env.ALLOW_LIVE === '1') return
+  const uri = process.env.DATABASE_URI ?? process.env.MONGODB_URI ?? ''
+  const isLocal = uri.includes('localhost') || uri.includes('127.0.0.1') || uri.includes('mongo:')
+  if (!isLocal) {
+    console.error('[script] Refusing to run against non-local Mongo. Set ALLOW_LIVE=1 to override.')
+    process.exit(1)
+  }
+}
+```
+
+Required for: any script that reads, writes, or mutates data; any script that calls billable external services.

@@ -12,10 +12,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 
 import config from '@payload-config'
-import type { Transaction } from '@/payload-types'
 import { refundStripe } from '@/lib/payment/stripe'
 import { refundPayPal } from '@/lib/payment/paypal'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
+import type { Transaction } from '@/payload-types'
 
 interface RouteParams {
   params: Promise<{ id: string }>
