@@ -1,0 +1,17 @@
+{
+  "taskId": "1764",
+  "taskType": "feature",
+  "target": "LessonExerciseEditor block management — add, reorder, delete in lesson worksheet",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "All changes implemented: drag-and-drop reordering, between-block add buttons, delete confirmation dialog, CSS visual feedback. TypeScript and lint pass.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/ExerciseContentEditor/index.tsx",
+    "src/ui/admin/ExerciseContentEditor/index.css"
+  ],
+  "sessionLog": ".kody/sessions/1764-admin-block-management-add-reorder-delete-in-lesso.jsonl",
+  "startedAt": "2026-05-22T06:03:00Z",
+  "finishedAt": "2026-05-22T06:07:00Z"
+}
