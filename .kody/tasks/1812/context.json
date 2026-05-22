@@ -1,0 +1,14 @@
+{
+  "taskId": "1812",
+  "taskType": "issue",
+  "target": "1812",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed ExerciseWorksheet question label alignment - label circle and text now share the same horizontal line via flex items-center",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": ["src/ui/web/exerciserenderer/ExerciseWorksheet/index.tsx"],
+  "sessionLog": ".kody/sessions/",
+  "startedAt": "2026-05-22T18:40:00Z",
+  "finishedAt": "2026-05-22T18:40:30Z"
+}
