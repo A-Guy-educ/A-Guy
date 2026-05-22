@@ -81,4 +81,27 @@ describe('CSP Configuration - Vercel Feedback Script on /admin', () => {
     // Admin routes should have vercel.live in connect-src for WebSocket connections
     expect(connectSrc).toContain('vercel.live')
   })
+
+  // Helper to extract img-src directive from CSP string
+  function extractImgSrc(csp: string): string | null {
+    const match = csp.match(/img-src\s+([^;]+)/)
+    return match ? match[1] : null
+  }
+
+  it('should include www.gravatar.com in img-src for /admin routes', async () => {
+    const configContent = fs.readFileSync(nextConfigPath, 'utf8')
+
+    // Extract the /admin route CSP
+    const adminRouteMatch = configContent.match(
+      /source:\s*'\/admin\/:path\*'[\s\S]*?Content-Security-Policy[\s\S]*?value:\s*"([^"]+)"/,
+    )
+    expect(adminRouteMatch).not.toBeNull()
+
+    const csp = adminRouteMatch![1]
+    const imgSrc = extractImgSrc(csp)
+
+    expect(imgSrc).not.toBeNull()
+    // Admin routes MUST have www.gravatar.com in img-src for user avatars to load
+    expect(imgSrc).toContain('www.gravatar.com')
+  })
 })
