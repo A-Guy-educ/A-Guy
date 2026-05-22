@@ -52,7 +52,7 @@ export function MediaTabContent({
                   <div className="border rounded-lg overflow-hidden bg-card shadow-card h-full">
                     <MediaComponent
                       resource={file}
-                      className="w-full h-full"
+                      className="w-full h-full max-w-full"
                       htmlElement={null}
                       lessonId={lessonId}
                       courseId={courseSlug}
