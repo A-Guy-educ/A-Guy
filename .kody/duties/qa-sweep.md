@@ -1,6 +1,7 @@
 ---
 every: 1h
 staff: qa
+mentions: aguyaharonyair
 ---
 
 # QA Sweep
@@ -53,7 +54,7 @@ One comment, terse. It **MUST** `@`-mention the operator on the first line —
 that mention is the only thing that routes it into the dashboard inbox:
 
 ```
-@aguyaharonyair 🧹 **QA sweep** — `<action>`
+{{mentions}} 🧹 **QA sweep** — `<action>`
 
 <one or two sentences: routes covered, verdict, finding count>
 
