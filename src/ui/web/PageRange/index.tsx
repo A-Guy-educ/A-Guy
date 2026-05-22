@@ -21,6 +21,7 @@ export const PageRange: React.FC<{
     singular?: string
   }
   currentPage?: number
+  isSearchResult?: boolean
   limit?: number
   totalDocs?: number
 }> = (props) => {
@@ -29,6 +30,7 @@ export const PageRange: React.FC<{
     collection,
     collectionLabels: collectionLabelsFromProps,
     currentPage,
+    isSearchResult,
     limit,
     totalDocs,
   } = props
@@ -47,7 +49,9 @@ export const PageRange: React.FC<{
 
   return (
     <div className={cn('font-semibold', className)}>
-      {(typeof totalDocs === 'undefined' || totalDocs === 0) && 'Search produced no results.'}
+      {isSearchResult &&
+        (typeof totalDocs === 'undefined' || totalDocs === 0) &&
+        'Search produced no results.'}
       {typeof totalDocs !== 'undefined' &&
         totalDocs > 0 &&
         `Showing ${indexStart}${indexStart > 0 ? ` - ${indexEnd}` : ''} of ${totalDocs} ${

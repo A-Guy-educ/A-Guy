@@ -1,0 +1,17 @@
+{
+  "taskId": "1779",
+  "taskType": "issue",
+  "target": "1779-p3-posts-page-shows-misleading-search-produced-no",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed PageRange component to only show 'Search produced no results' when isSearchResult prop is true",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/PageRange/index.tsx",
+    "tests/unit/ui/web/PageRange.spec.tsx"
+  ],
+  "sessionLog": null,
+  "startedAt": "2026-05-22T15:50:00Z",
+  "finishedAt": "2026-05-22T15:51:30Z"
+}
