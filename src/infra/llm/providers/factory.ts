@@ -115,11 +115,11 @@ export function getOpenAICompatibleBaseUrl(): string | undefined {
 }
 
 /**
- * Get API key for openai-compatible provider
- * ONLY uses OPENAI_COMPATIBLE_API_KEY - no fallback to OPENAI_API_KEY
+ * Get API key for openai-compatible provider.
+ * Uses MINIMAX_API_KEY (env var name set in GitHub/Vercel secrets).
  */
 export function getOpenAICompatibleApiKey(): string | undefined {
-  return process.env.OPENAI_COMPATIBLE_API_KEY
+  return process.env.MINIMAX_API_KEY
 }
 
 // Unified provider interface

@@ -11,6 +11,7 @@ export const __genkit_exports__ = true
  */
 import type { AIModel, AIModelKey } from '@/infra/llm/models'
 import type { UnifiedLLMProvider } from '@/infra/llm/providers/factory'
+import { LLMProviderType } from '@/infra/llm/providers/types'
 import { getCircuitBreaker } from '@/infra/llm/providers/shared/circuit-breaker'
 import { LLMErrorCode } from '@/infra/llm/providers/shared/errors'
 import { withRetry } from '@/infra/llm/providers/shared/retry'
@@ -151,14 +152,24 @@ function buildGenkitMessages(
 
 /**
  * Create a Genkit-backed UnifiedLLMProvider
+ *
+ * @param providerOverride - if provided, forces this provider type instead of
+ *   reading from LLM_PROVIDER env var. Used by the conversion pipeline to
+ *   force MiniMax (OpenAI-compatible) regardless of env setup.
  */
 export async function createGenkitUnifiedAdapter(
   payload: Payload,
   tenantId?: string,
+  providerOverride?: LLMProviderType,
 ): Promise<UnifiedLLMProvider> {
   // Get provider type for error classification
-  const { getProviderTypeFromEnv } = await import('@/infra/llm/providers/factory')
-  const providerType = await getProviderTypeFromEnv(payload)
+  let providerType: LLMProviderType
+  if (providerOverride) {
+    providerType = providerOverride
+  } else {
+    const { getProviderTypeFromEnv } = await import('@/infra/llm/providers/factory')
+    providerType = await getProviderTypeFromEnv(payload)
+  }
   const errorAdapter = getErrorAdapter(providerType)
   const circuitBreaker = getCircuitBreaker(`genkit-${providerType}`)
 
@@ -170,7 +181,7 @@ export async function createGenkitUnifiedAdapter(
       const modelKey = input.model.modelKey || 'EXERCISE_CHAT'
       const config = await resolveGenkitConfig(modelKey, tenantId, payloadInstance)
 
-      const ai = await getGenkitInstance(payloadInstance, tenantId)
+      const ai = await getGenkitInstance(payloadInstance, tenantId, providerType)
 
       return circuitBreaker.execute(() =>
         withRetry(
@@ -264,7 +275,7 @@ export async function createGenkitUnifiedAdapter(
       const modelKey = input.model.modelKey || 'EXERCISE_CHAT'
       const config = await resolveGenkitConfig(modelKey, tenantId, payloadInstance)
 
-      const ai = await getGenkitInstance(payloadInstance, tenantId)
+      const ai = await getGenkitInstance(payloadInstance, tenantId, providerType)
 
       // Build structured messages to preserve conversation history
       const messages = buildGenkitMessages(input.system, input.messages)
@@ -338,7 +349,7 @@ export async function createGenkitUnifiedAdapter(
       // Allow callers to override the resolved model name by passing a prefixed name
       const modelToUse = input.model.name.includes('/') ? input.model.name : config.model
 
-      const ai = await getGenkitInstance(payloadInstance, tenantId)
+      const ai = await getGenkitInstance(payloadInstance, tenantId, providerType)
 
       return circuitBreaker.execute(() =>
         withRetry(
@@ -404,7 +415,7 @@ export async function createGenkitUnifiedAdapter(
       const modelKey = input.model.modelKey || 'EXERCISE_CHAT'
       const config = await resolveGenkitConfig(modelKey, tenantId, payloadInstance)
 
-      const ai = await getGenkitInstance(payloadInstance, tenantId)
+      const ai = await getGenkitInstance(payloadInstance, tenantId, providerType)
 
       return circuitBreaker.execute(() =>
         withRetry(
@@ -470,7 +481,7 @@ export async function createGenkitUnifiedAdapter(
      */
     isConfigured: async (payloadInstance: Payload) => {
       try {
-        await getGenkitInstance(payloadInstance, tenantId)
+        await getGenkitInstance(payloadInstance, tenantId, providerType)
         return true
       } catch {
         return false

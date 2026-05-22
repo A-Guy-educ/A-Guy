@@ -143,9 +143,12 @@ export const PROVIDER_MODEL_NAMES: Record<LLMProviderType, Record<AIModelKey, st
   [LLMProviderType.GEMINI]: {
     IMAGE_TO_EXERCISE: 'gemini-3.1-pro',
     EXERCISE_CHAT: 'gemini-3.1-flash-lite-preview',
-    PDF_TO_EXERCISE: 'gemini-2.5-flash',
+    // PDF_TO_EXERCISE and SUPPORT_GENERATION use the lite model since
+    // gemini-3.1-pro doesn't exist in this Google AI account. Lite is
+    // sufficient for these conversion tasks.
+    PDF_TO_EXERCISE: 'gemini-3.1-flash-lite-preview',
     ANSWER_VALIDATION: 'gemini-3.1-pro',
-    SUPPORT_GENERATION: 'gemini-3.1-pro',
+    SUPPORT_GENERATION: 'gemini-3.1-flash-lite-preview',
     CONTENT_TRANSLATION: 'gemini-3.1-pro',
     // 'gemini-3.1-pro' returns 404 on the v1beta generativelanguage API
     // (the model isn't published there, or our keys lack access). The error

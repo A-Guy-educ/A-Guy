@@ -16,10 +16,20 @@
  */
 import type { PayloadRequest } from 'payload'
 import { parseLatexToBlocks } from '@/lib/latex-parser'
+import { isSolutionHeader } from '@/lib/latex-parser/enumerate-parser'
 import { logger } from '@/infra/utils/logger'
 import { getConfigValueByKey } from '@/infra/config/runtime'
 import { ConfigDomain } from '@/infra/config/config-constants'
-import type { ContentBlock, LatexBlock } from '@/server/payload/collections/Exercises/types'
+import { generateSupport } from '@/infra/llm/services/support-generation-service'
+import {
+  applyGeneratedSupport,
+  isQuestionBlock,
+} from '@/server/payload/endpoints/exercises/generate-support/support-block-utils'
+import type {
+  ContentBlock,
+  InlineRichText,
+  LatexBlock,
+} from '@/server/payload/collections/Exercises/types'
 
 type ImportMethod = 'script' | 'ai_fallback'
 
@@ -28,6 +38,9 @@ interface ConversionOutcome {
    *  remain in content (the viewer hides them); the parsed structured blocks
    *  are inserted immediately after each. */
   convertedBlockIds: string[]
+  /** IDs of LaTeX blocks that were solution blocks and were removed (replaced
+   *  by the exercise block's parsed content). */
+  replacedBlockIds: string[]
   addedBlockCount: number
   method: ImportMethod
   warnings: { line: number; message: string; rawLatex: string }[]
@@ -71,15 +84,63 @@ export async function convertLatexBlockOnExercise(
     .filter((i) => i !== -1)
 
   if (latexBlockIndices.length === 0) {
-    return Response.json(
-      { success: false, error: 'Exercise has no LaTeX block to convert' },
-      { status: 422 },
+    // No LaTeX blocks to convert. Check if there are question blocks missing
+    // hints/solutions — if so, run the AI fill step on the existing blocks.
+    // This makes re-clicking "Convert" useful for already-converted exercises:
+    // it triggers AI generation for any sub-question still missing support content.
+    const hasFillableBlocks = blocks.some((b) => {
+      if (!isQuestionBlock(b)) return false
+      const qb = b as ContentBlock & { hint?: InlineRichText; solution?: InlineRichText }
+      return !qb.hint?.value || !qb.solution?.value
+    })
+
+    if (!hasFillableBlocks) {
+      return Response.json(
+        {
+          success: false,
+          error:
+            'Exercise has no LaTeX block to convert and no question blocks need hints/solutions',
+        },
+        { status: 422 },
+      )
+    }
+
+    reqLogger.info(
+      'No LaTeX blocks but question blocks need hints/solutions — running AI fill only',
     )
+    const fillBlocks: ContentBlock[] = [...blocks]
+    await fillMissingSolutionsWithAI(fillBlocks, req.payload, reqLogger)
+
+    try {
+      const updated = await req.payload.update({
+        collection: 'exercises',
+        id: exerciseId,
+        data: { content: { blocks: fillBlocks as never } },
+        draft: true,
+        overrideAccess: true,
+        req: { payload: req.payload, user: req.user } as never,
+      })
+      return Response.json({
+        success: true,
+        method: 'ai_fill_only',
+        data: {
+          exerciseId: updated.id,
+          replacedBlockIds: [],
+          addedBlockCount: 0,
+          totalBlocks: fillBlocks.length,
+          warnings: [],
+        },
+      })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to save exercise'
+      return Response.json({ success: false, error: message }, { status: 500 })
+    }
   }
 
   const nextBlocks: ContentBlock[] = [...blocks]
   const outcome: ConversionOutcome = {
     convertedBlockIds: [],
+    replacedBlockIds: [],
     addedBlockCount: 0,
     method: 'script',
     warnings: [],
@@ -87,12 +148,59 @@ export async function convertLatexBlockOnExercise(
   }
   const sourceLatexChunks: string[] = []
 
+  // Identify solution blocks. Two detection methods:
+  // 1. Origin-based: exercises created by create-context-exercises (origin: 'context_extraction')
+  //    always have [exercise block, solution block] — the last LaTeX block is the solution
+  // 2. Header detection: first line matches isSolutionHeader() (e.g. \section*{פתרון})
+  const solutionBlockIndices = new Set<number>()
+  const exerciseOrigin = (exercise as unknown as Record<string, unknown>).origin as
+    | string
+    | undefined
+
+  if (exerciseOrigin === 'context_extraction' && latexBlockIndices.length >= 2) {
+    // Context extraction exercises: last LaTeX block is always the solution
+    solutionBlockIndices.add(latexBlockIndices[latexBlockIndices.length - 1])
+  } else {
+    // Other origins: detect by solution header
+    for (const idx of latexBlockIndices) {
+      const lb = blocks[idx] as LatexBlock
+      const firstLine =
+        lb.latex
+          .trim()
+          .split('\n')
+          .find((l) => l.trim().length > 0) || ''
+      if (isSolutionHeader(firstLine)) {
+        solutionBlockIndices.add(idx)
+      }
+    }
+  }
+
+  // Build a map: exercise block index → solution LaTeX to attach after conversion
+  const solutionForExercise = new Map<number, string>()
+  for (const idx of latexBlockIndices) {
+    if (solutionBlockIndices.has(idx)) continue
+    // Find the next LaTeX block — if it's a solution, pair them
+    const posInList = latexBlockIndices.indexOf(idx)
+    const nextIdx = latexBlockIndices[posInList + 1]
+    if (nextIdx !== undefined && solutionBlockIndices.has(nextIdx)) {
+      solutionForExercise.set(idx, (blocks[nextIdx] as LatexBlock).latex)
+    }
+  }
+
   // Iterate right-to-left so splice indices stay valid as we mutate nextBlocks.
   for (let i = latexBlockIndices.length - 1; i >= 0; i--) {
     const idx = latexBlockIndices[i]
     const latexBlock = blocks[idx] as LatexBlock
 
-    // --- Attempt 1: script parser ---
+    // Solution blocks: remove them — their content was combined with the
+    // preceding exercise block for AI processing.
+    if (solutionBlockIndices.has(idx)) {
+      outcome.replacedBlockIds.push(latexBlock.id)
+      nextBlocks.splice(idx, 1)
+      continue
+    }
+
+    // --- Attempt 1: script parser (exercise block only, no solution) ---
     const result = parseLatexToBlocks(latexBlock.latex)
     outcome.warnings.push(...result.warnings)
     outcome.errors.push(...result.errors)
@@ -108,17 +216,25 @@ export async function convertLatexBlockOnExercise(
       outcome.convertedBlockIds.push(latexBlock.id)
       outcome.addedBlockCount += result.blocks.length
       sourceLatexChunks.unshift(latexBlock.latex)
-      nextBlocks.splice(idx + 1, 0, ...result.blocks)
+
+      // If there's a paired solution block, attach its content to
+      // the question blocks' `solution` field.
+      if (solutionForExercise.has(idx)) {
+        attachSolutionToBlocks(result.blocks, solutionForExercise.get(idx)!)
+      }
+
+      nextBlocks.splice(idx, 1, ...result.blocks)
       continue
     }
 
-    // --- Attempt 2: AI fallback ---
+    // --- Attempt 2: AI fallback (with solution content included) ---
     reqLogger.info(
       {
         blockId: latexBlock.id,
         scriptErrors: result.errors.length,
         scriptBlocks: result.blocks.length,
         scriptUsable,
+        hasSolutionBlock: solutionForExercise.has(idx),
       },
       'Script parser output not usable, checking AI fallback',
     )
@@ -134,7 +250,13 @@ export async function convertLatexBlockOnExercise(
       continue
     }
 
-    const aiBlocks = await tryAiFallback(req, latexBlock.latex, lessonId, reqLogger)
+    // Send combined exercise+solution LaTeX to AI so it can place
+    // solutions in the question blocks' `solution` field.
+    const pairedSolution = solutionForExercise.get(idx)
+    const latexForAI = pairedSolution
+      ? `${latexBlock.latex}\n\n${pairedSolution}`
+      : latexBlock.latex
+    const aiBlocks = await tryAiFallback(req, latexForAI, lessonId, reqLogger)
     if (aiBlocks && aiBlocks.length > 0) {
       outcome.method = 'ai_fallback'
       outcome.convertedBlockIds.push(latexBlock.id)
@@ -163,6 +285,24 @@ export async function convertLatexBlockOnExercise(
       { status: 422 },
     )
   }
+
+  // Detect a trailing rich_text block that is actually solution content
+  // (e.g., script parser produced "## פתרון תרגיל 1" header followed by answers).
+  // Move its content into the previous question block's `solution` field and
+  // remove the rich_text block, so the solution doesn't show as a "page" to students.
+  rerouteTrailingSolutionRichText(nextBlocks, reqLogger)
+
+  // AI fallback for missing solutions: any question block that didn't receive
+  // a solution from the LaTeX (because the parser couldn't split per-sub-question
+  // or there simply wasn't a matching solution) gets one generated by the AI.
+  // This uses the same `generateSupport` service the admin "Generate with AI" button uses.
+  await fillMissingSolutionsWithAI(nextBlocks, req.payload, reqLogger)
+
+  // After AI fill: if all question blocks now have solutions and there's
+  // a trailing rich_text block, it's almost certainly a redundant duplicate
+  // of the solution content that should be removed (otherwise it shows as a
+  // separate "page" of answer text after the questions).
+  removeRedundantTrailingSolution(nextBlocks, reqLogger)
 
   // Persist updated content and sourceLatex.
   const combinedSourceLatex = sourceLatexChunks.join('\n\n% --- %\n\n')
@@ -345,6 +485,203 @@ function isScriptOutputMeaningful(sourceLatex: string, parsedBlocks: ContentBloc
   return true
 }
 
+/**
+ * Split a solution LaTeX string by sub-question labels.
+ *
+ * Returns an array of solution parts in document order. Each part starts at
+ * a label and ends just before the next label.
+ *
+ * Modes:
+ * - 'hebrew': only top-level Hebrew letter labels (א., ב., ג., ...)
+ * - 'all': both Hebrew letter and parenthetical numeric labels ((1), (2), ...).
+ *   Empty parent labels (e.g. ג. immediately followed by (1)(2) with no
+ *   content in between) are filtered out so they don't create empty parts.
+ */
+export function splitSolutionByLabels(text: string, mode: 'hebrew' | 'all'): string[] {
+  const hebrewLetters = 'אבגדהוזחטי'
+  const labelRegexes: RegExp[] = [new RegExp(`(^|\\n)\\s*([${hebrewLetters}])\\.\\s`, 'g')]
+  if (mode === 'all') {
+    labelRegexes.push(/(^|\n)\s*\((\d+)\)\s/g)
+  }
+
+  // Collect all label match positions
+  const positions: number[] = []
+  for (const re of labelRegexes) {
+    let m: RegExpExecArray | null
+    while ((m = re.exec(text)) !== null) {
+      // m.index points to the leading char (^ or \n). Skip past the leading
+      // newline to anchor the part at the actual label character.
+      positions.push(m.index + (m[1] === '\n' ? 1 : 0))
+    }
+  }
+  positions.sort((a, b) => a - b)
+  // Deduplicate identical positions
+  const uniquePositions = positions.filter((p, i) => i === 0 || p !== positions[i - 1])
+  if (uniquePositions.length === 0) return []
+
+  // Build candidate parts: each part runs from this position to the next
+  // (or to the end of the text)
+  const candidates: string[] = []
+  for (let i = 0; i < uniquePositions.length; i++) {
+    const start = uniquePositions[i]
+    const end = i + 1 < uniquePositions.length ? uniquePositions[i + 1] : text.length
+    candidates.push(text.slice(start, end).trim())
+  }
+
+  // Filter out empty parent labels: a label whose content is just the label
+  // itself (e.g. "ג." with nothing after it before the next label). These
+  // happen when ג. is just a header before nested (1)(2).
+  const meaningful = candidates.filter((part) => {
+    // Strip leading label and check if anything substantial remains
+    const stripped = part.replace(/^\s*([אבגדהוזחטי]\.|\(\d+\))\s*/, '').trim()
+    return stripped.length > 0
+  })
+
+  return meaningful
+}
+
+/**
+ * Attach solution LaTeX content to question blocks' `solution` field.
+ *
+ * Strategy (in order of preference):
+ * 1. Strip the solution header (if present)
+ * 2. Find question blocks in document order
+ * 3. If 0 question blocks → nothing to do
+ * 4. If 1 question block → attach the whole solution to it
+ * 5. If 2+ question blocks:
+ *    a. Pass 1: split by Hebrew letter labels only
+ *    b. Pass 2: split by Hebrew letters + numeric labels
+ *    c. Pass 3: split by paragraph (double-newline) when no labels found
+ *    For each pass, do best-effort distribution:
+ *      - parts == questions → 1:1
+ *      - parts > questions → first (N-1) get 1:1, last gets all remaining joined
+ *      - parts < questions → first M questions get parts, rest stay empty
+ *        (AI auto-fill will catch the empty ones in Phase 6)
+ *    The first pass to produce any parts wins.
+ * 6. If no pass produces any parts → fallback: dump on last question block
+ */
+export function attachSolutionToBlocks(blocks: ContentBlock[], solutionLatex: string): void {
+  // Clean solution: strip the header line, keep the content
+  const lines = solutionLatex.split('\n')
+  const firstLine = lines.find((l) => l.trim().length > 0) || ''
+  const contentWithoutHeader = isSolutionHeader(firstLine)
+    ? lines
+        .slice(lines.indexOf(firstLine) + 1)
+        .join('\n')
+        .trim()
+    : solutionLatex.trim()
+
+  if (!contentWithoutHeader) return
+
+  // Find question blocks
+  const questionIndices: number[] = []
+  for (let i = 0; i < blocks.length; i++) {
+    const t = blocks[i].type
+    if (
+      t === 'question_free_response' ||
+      t === 'question_select' ||
+      t === 'question_table' ||
+      t === 'question_axis' ||
+      t === 'question_geometry'
+    ) {
+      questionIndices.push(i)
+    }
+  }
+
+  if (questionIndices.length === 0) return
+
+  // Single question: whole solution goes to it
+  if (questionIndices.length === 1) {
+    setSolutionOnBlock(blocks[questionIndices[0]], contentWithoutHeader)
+    return
+  }
+
+  // Multiple questions: try increasingly aggressive splitting strategies.
+  // The first strategy that produces any parts wins; we then distribute
+  // best-effort even if counts don't match exactly.
+  const strategies: (() => string[])[] = [
+    () => splitSolutionByLabels(contentWithoutHeader, 'hebrew'),
+    () => splitSolutionByLabels(contentWithoutHeader, 'all'),
+    () => splitByParagraphs(contentWithoutHeader),
+  ]
+
+  for (const strategy of strategies) {
+    const parts = strategy()
+    if (parts.length > 0) {
+      distributeParts(blocks, questionIndices, parts)
+      return
+    }
+  }
+
+  // No strategy produced any parts — dump on last question block as ultimate fallback
+  setSolutionOnBlock(blocks[questionIndices[questionIndices.length - 1]], contentWithoutHeader)
+}
+
+/**
+ * Split text by paragraph boundaries (double newlines). Used as a fallback
+ * when label-based splitting finds no labels.
+ *
+ * Returns paragraphs that have substantive content (>10 chars after trim).
+ */
+function splitByParagraphs(text: string): string[] {
+  const paragraphs = text
+    .split(/\n\s*\n+/)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 10)
+  // Only useful as a strategy if we got more than one paragraph
+  return paragraphs.length >= 2 ? paragraphs : []
+}
+
+/**
+ * Distribute solution parts across question blocks with best-effort matching:
+ * - parts.length === questions.length → 1:1 by position
+ * - parts.length >  questions.length → first (N-1) get 1:1, last block gets
+ *   all remaining parts joined (so no content is lost)
+ * - parts.length <  questions.length → first M questions get a part each,
+ *   remaining questions stay empty (AI auto-fill in Phase 6 will fill them)
+ */
+function distributeParts(blocks: ContentBlock[], questionIndices: number[], parts: string[]): void {
+  const N = questionIndices.length
+  const M = parts.length
+
+  if (M === N) {
+    // Perfect 1:1 match
+    for (let i = 0; i < N; i++) {
+      setSolutionOnBlock(blocks[questionIndices[i]], parts[i])
+    }
+    return
+  }
+
+  if (M > N) {
+    // More parts than questions: first (N-1) get 1:1, last gets the rest
+    for (let i = 0; i < N - 1; i++) {
+      setSolutionOnBlock(blocks[questionIndices[i]], parts[i])
+    }
+    const remaining = parts.slice(N - 1).join('\n\n')
+    setSolutionOnBlock(blocks[questionIndices[N - 1]], remaining)
+    return
+  }
+
+  // M < N: fewer parts than questions. Assign each part to a question;
+  // remaining questions stay empty for the AI auto-fill step to handle.
+  for (let i = 0; i < M; i++) {
+    setSolutionOnBlock(blocks[questionIndices[i]], parts[i])
+  }
+}
+
+/** Set the `solution` field on a question block (md-math-v1 inline rich text). */
+function setSolutionOnBlock(block: ContentBlock, value: string): void {
+  const qBlock = block as ContentBlock & {
+    solution?: { type: string; format: string; value: string; mediaIds: string[] }
+  }
+  qBlock.solution = {
+    type: 'rich_text',
+    format: 'md-math-v1',
+    value,
+    mediaIds: [],
+  }
+}
+
 function emitFallbackAnalytics(
   req: PayloadRequest,
   props: { lessonId: string; exerciseId: string; scriptErrors: number },
@@ -358,5 +695,282 @@ function emitFallbackAnalytics(
       userId: req.user?.id,
     },
     'latex_import_fallback',
+  )
+}
+
+/**
+ * Fill missing `hint` and `solution` fields on question blocks using AI generation.
+ *
+ * Walks the blocks array and, for each question block that's missing either
+ * a hint or a solution, calls the same `generateSupport` service the admin
+ * "Generate with AI" button uses.
+ *
+ * Only requests the fields that are missing — if the block already has a
+ * solution from the LaTeX (Phase 4), we only ask the AI to generate a hint.
+ *
+ * Mutates `blocks` in place. Failures are logged and the block is left as-is
+ * rather than aborting the conversion.
+ */
+export async function fillMissingSolutionsWithAI(
+  blocks: ContentBlock[],
+  payload: PayloadRequest['payload'],
+  reqLogger: typeof logger,
+): Promise<void> {
+  // For each question block, determine which fields are missing
+  type Target = {
+    idx: number
+    targetFields: ('hints' | 'solution')[]
+  }
+  const targets: Target[] = []
+  for (let i = 0; i < blocks.length; i++) {
+    if (!isQuestionBlock(blocks[i])) continue
+    const b = blocks[i] as ContentBlock & { hint?: InlineRichText; solution?: InlineRichText }
+    const missing: ('hints' | 'solution')[] = []
+    if (!b.hint?.value) missing.push('hints')
+    if (!b.solution?.value) missing.push('solution')
+    if (missing.length > 0) {
+      targets.push({ idx: i, targetFields: missing })
+    }
+  }
+
+  if (targets.length === 0) {
+    return
+  }
+
+  reqLogger.info(
+    {
+      blocksToFill: targets.length,
+      totalBlocks: blocks.length,
+      breakdown: targets.map((t) => ({ idx: t.idx, fields: t.targetFields })),
+    },
+    'Filling missing hints/solutions with AI',
+  )
+
+  // Generate sequentially to avoid overwhelming the LLM API / hitting rate limits.
+  for (const { idx, targetFields } of targets) {
+    const block = blocks[idx]
+    try {
+      const result = await generateSupport(
+        {
+          block,
+          targetFields,
+        },
+        payload,
+      )
+
+      if (result.success && result.data) {
+        // applyGeneratedSupport handles the immutable update — replace in place
+        blocks[idx] = applyGeneratedSupport(block, result.data, false)
+      } else {
+        reqLogger.warn(
+          { blockId: block.id, fields: targetFields, error: result.error },
+          'AI hint/solution generation failed for block',
+        )
+      }
+    } catch (err) {
+      reqLogger.warn(
+        {
+          blockId: block.id,
+          fields: targetFields,
+          error: err instanceof Error ? err.message : 'Unknown error',
+        },
+        'AI hint/solution generation threw',
+      )
+    }
+  }
+}
+
+/**
+ * Detect a trailing rich_text block that is actually solution content (e.g.,
+ * the script parser converted `\section*{פתרון תרגיל N}` into a markdown
+ * `## פתרון ...` header followed by answers). Such a block ends up rendered
+ * as a separate "page" to students, mixing the answers into the question flow.
+ *
+ * If detected: extract the body (after the header line), attach it to the
+ * preceding question block's `solution` field (when empty), and remove the
+ * rich_text block from the array.
+ *
+ * Mutates `blocks` in place.
+ */
+function rerouteTrailingSolutionRichText(blocks: ContentBlock[], reqLogger: typeof logger): void {
+  if (blocks.length === 0) return
+
+  // Find the last non-empty rich_text block
+  let trailingIdx = -1
+  for (let i = blocks.length - 1; i >= 0; i--) {
+    const b = blocks[i]
+    if (b.type === 'rich_text') {
+      trailingIdx = i
+      break
+    }
+    // Stop if we hit a question block (means there's no trailing rich_text after questions)
+    if (isQuestionBlock(b)) {
+      return
+    }
+  }
+
+  if (trailingIdx < 0) return
+
+  const trailing = blocks[trailingIdx] as ContentBlock & { value?: string }
+  const value = trailing.value || ''
+  if (!looksLikeSolutionContent(value)) return
+
+  // Strip the solution header line and use the rest as the solution body
+  const body = stripSolutionHeaderLine(value).trim()
+  if (!body) {
+    // Header only with no body — just remove the block, nothing to attach
+    blocks.splice(trailingIdx, 1)
+    reqLogger.info(
+      { blockId: trailing.id },
+      'Removed trailing rich_text solution header (empty body)',
+    )
+    return
+  }
+
+  // Find the previous question block (could be at any position before trailingIdx)
+  let qIdx = -1
+  for (let i = trailingIdx - 1; i >= 0; i--) {
+    if (isQuestionBlock(blocks[i])) {
+      qIdx = i
+      break
+    }
+  }
+
+  if (qIdx < 0) {
+    // No question block to attach to — just remove the trailing solution block
+    // (it's not useful as a standalone block to students)
+    blocks.splice(trailingIdx, 1)
+    reqLogger.info(
+      { blockId: trailing.id },
+      'Removed trailing rich_text solution (no preceding question block)',
+    )
+    return
+  }
+
+  const qBlock = blocks[qIdx] as ContentBlock & { solution?: InlineRichText }
+  if (qBlock.solution?.value) {
+    // Question already has a solution — append rather than overwrite
+    qBlock.solution = {
+      type: 'rich_text',
+      format: 'md-math-v1',
+      value: `${qBlock.solution.value}\n\n${body}`,
+      mediaIds: [],
+    }
+    reqLogger.info(
+      { questionBlockId: qBlock.id, removedBlockId: trailing.id },
+      'Appended trailing solution rich_text to existing question solution',
+    )
+  } else {
+    qBlock.solution = {
+      type: 'rich_text',
+      format: 'md-math-v1',
+      value: body,
+      mediaIds: [],
+    }
+    reqLogger.info(
+      { questionBlockId: qBlock.id, removedBlockId: trailing.id },
+      'Moved trailing solution rich_text into question solution',
+    )
+  }
+
+  // Remove the rich_text block
+  blocks.splice(trailingIdx, 1)
+}
+
+/**
+ * Detect whether a rich_text block's value looks like solution content.
+ * After parsing, `\section*{פתרון}` becomes `## פתרון`, `\textbf{פתרון}`
+ * becomes `**פתרון**`, etc. We match the post-parse forms.
+ */
+export function looksLikeSolutionContent(value: string): boolean {
+  if (!value) return false
+  const firstLine =
+    value
+      .trim()
+      .split('\n')
+      .find((l) => l.trim().length > 0) || ''
+
+  // Markdown header from \section*{פתרון ...} or \subsection*{פתרון ...}
+  if (/^#{1,3}\s*פתרון/.test(firstLine)) return true
+  if (/^#{1,3}\s*פתרונות/.test(firstLine)) return true
+  if (/^#{1,3}\s*תשובה\s+סופית/.test(firstLine)) return true
+
+  // Bold from \textbf{פתרון תרגיל N:} or \textbf{פתרון שאלה N:}
+  if (/^\*\*\s*פתרון\s+(?:תרגיל|שאלה)/.test(firstLine)) return true
+
+  // Plain prefix (parser may strip formatting in some cases)
+  if (/^פתרון\s+(?:תרגיל|שאלה)\s+\d+/.test(firstLine)) return true
+  if (/^פתרונות(\s|$)/.test(firstLine)) return true
+  if (/^תשובה\s+סופית/.test(firstLine)) return true
+
+  return false
+}
+
+/**
+ * Remove the first non-empty line if it's a solution header marker,
+ * leaving the body of the solution. Used to clean rich_text content
+ * before attaching it to a question's `solution` field.
+ */
+function stripSolutionHeaderLine(value: string): string {
+  const lines = value.split('\n')
+  const firstNonEmptyIdx = lines.findIndex((l) => l.trim().length > 0)
+  if (firstNonEmptyIdx < 0) return value
+  const firstLine = lines[firstNonEmptyIdx]
+  const isHeader =
+    /^#{1,3}\s*פתרון/.test(firstLine.trim()) ||
+    /^#{1,3}\s*פתרונות/.test(firstLine.trim()) ||
+    /^\*\*\s*פתרון/.test(firstLine.trim()) ||
+    /^פתרון\s+(?:תרגיל|שאלה)/.test(firstLine.trim()) ||
+    /^פתרונות(\s|$)/.test(firstLine.trim()) ||
+    /^תשובה\s+סופית/.test(firstLine.trim())
+  if (!isHeader) return value
+  return lines.slice(firstNonEmptyIdx + 1).join('\n')
+}
+
+/**
+ * Remove a trailing rich_text block when all question blocks already have
+ * solution content populated. This catches redundant duplicates of the
+ * solution that survived earlier rerouting (e.g., when looksLikeSolutionContent
+ * didn't match the exact format).
+ *
+ * Only removes if:
+ * - The last block is a rich_text block
+ * - There are question blocks BEFORE it in the array
+ * - All question blocks have a non-empty `solution` field
+ *
+ * The third condition is the safety net: if any question still lacks a
+ * solution, we leave the trailing block alone — it may be the only place
+ * the solution content exists.
+ */
+export function removeRedundantTrailingSolution(
+  blocks: ContentBlock[],
+  reqLogger: typeof logger,
+): void {
+  if (blocks.length === 0) return
+
+  const last = blocks[blocks.length - 1]
+  if (last.type !== 'rich_text') return
+
+  // Collect question blocks before the trailing rich_text
+  const questionBlocks = blocks.slice(0, -1).filter((b) => isQuestionBlock(b))
+  if (questionBlocks.length === 0) return // nothing to be redundant against
+
+  // Check that ALL question blocks have a non-empty solution
+  const allHaveSolution = questionBlocks.every((b) => {
+    const qb = b as ContentBlock & { solution?: InlineRichText }
+    return Boolean(qb.solution?.value)
+  })
+
+  if (!allHaveSolution) {
+    // At least one question lacks a solution — keep the trailing block
+    // since it might be the only place that content exists
+    return
+  }
+
+  // Safe to remove — all questions have their own solutions
+  blocks.splice(blocks.length - 1, 1)
+  reqLogger.info(
+    { removedBlockId: last.id },
+    'Removed trailing rich_text block (all question blocks have solutions)',
   )
 }

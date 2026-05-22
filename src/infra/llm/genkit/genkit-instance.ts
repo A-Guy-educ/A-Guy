@@ -26,12 +26,23 @@ const instances = new Map<LLMProviderType, Genkit>()
  *
  * @param payload - Payload instance for config access
  * @param tenantId - Optional tenant ID for scoped configuration
+ * @param providerOverride - if provided, forces this provider type instead of
+ *   reading from LLM_PROVIDER env var
  * @returns Configured Genkit instance
  */
-export async function getGenkitInstance(payload: Payload, tenantId?: string): Promise<Genkit> {
+export async function getGenkitInstance(
+  payload: Payload,
+  tenantId?: string,
+  providerOverride?: LLMProviderType,
+): Promise<Genkit> {
   // Import dynamically to avoid circular dependency
-  const { getProviderTypeFromEnv } = await import('../providers/factory')
-  const providerType = await getProviderTypeFromEnv(payload)
+  let providerType: LLMProviderType
+  if (providerOverride) {
+    providerType = providerOverride
+  } else {
+    const { getProviderTypeFromEnv } = await import('../providers/factory')
+    providerType = await getProviderTypeFromEnv(payload)
+  }
 
   // Return cached instance if available
   if (instances.has(providerType)) {
@@ -80,8 +91,7 @@ async function getApiKeyForProvider(
   payload: Payload,
   tenantId?: string,
 ): Promise<string> {
-  const secretKey =
-    providerType === LLMProviderType.GEMINI ? 'GEMINI_API_KEY' : 'OPENAI_COMPATIBLE_API_KEY'
+  const secretKey = providerType === LLMProviderType.GEMINI ? 'GEMINI_API_KEY' : 'MINIMAX_API_KEY'
 
   // Check if config is loaded
   if (!isConfigLoaded()) {
@@ -100,10 +110,13 @@ async function getApiKeyForProvider(
     // ConfigSecrets not available, continue to environment fallback
   }
 
-  // Fallback to environment variable
-  const envKey =
-    providerType === LLMProviderType.GEMINI ? 'GEMINI_API_KEY' : 'OPENAI_COMPATIBLE_API_KEY'
-  const envValue = process.env[envKey]
+  // Fallback to environment variable.
+  // OpenAI-compatible provider uses MINIMAX_API_KEY (the env var name set in
+  // GitHub/Vercel secrets).
+  const envValue =
+    providerType === LLMProviderType.GEMINI
+      ? process.env.GEMINI_API_KEY
+      : process.env.MINIMAX_API_KEY
 
   if (!envValue) {
     logger.warn(

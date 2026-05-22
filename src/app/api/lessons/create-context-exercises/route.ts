@@ -31,7 +31,6 @@ export const POST = withApiHandler<CreateContextExercisesBody, unknown>(
       user: user!,
       lessonId,
     })
-
     if ('error' in result) {
       return apiError('VALIDATION_ERROR', result.error.message, 400)
     }

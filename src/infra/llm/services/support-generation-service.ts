@@ -35,6 +35,9 @@ export async function generateSupport(
   payload: Payload,
 ): Promise<SupportGenerationResponse> {
   try {
+    // Support generation uses Gemini (lite model — see models.ts).
+    // MiniMax forcing was reverted because the configured MiniMax credentials
+    // could not be validated end-to-end.
     const { createGenkitUnifiedAdapter } = await import('../genkit/adapters/unified-adapter')
     const adapter = await createGenkitUnifiedAdapter(payload)
     const modelConfig = resolveModelConfig('SUPPORT_GENERATION')

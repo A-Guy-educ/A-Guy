@@ -53,6 +53,7 @@ export async function POST(request: NextRequest) {
     reqLogger.info({ chunkCount: chunks.length }, 'Split LaTeX into exercise chunks for AI')
 
     // Use Genkit unified adapter for AI parsing
+    // Conversion pipeline uses Gemini (MiniMax integration is unvalidated).
     const { createGenkitUnifiedAdapter } =
       await import('@/infra/llm/genkit/adapters/unified-adapter')
     const adapter = await createGenkitUnifiedAdapter(payload)
@@ -367,6 +368,9 @@ function repairBlocks(blocks: unknown[]): unknown[] {
     // Repair question_table
     if (b.type === 'question_table') {
       repairInlineRichText(b, 'prompt')
+      repairInlineRichText(b, 'hint')
+      repairInlineRichText(b, 'solution')
+      repairInlineRichText(b, 'fullSolution')
 
       if (b.table && typeof b.table === 'object') {
         const t = b.table as Record<string, unknown>
@@ -619,13 +623,13 @@ Each block must have an "id" (random string like "b-abc1234") and a "type".
 { "id": "...", "type": "rich_text", "format": "md-math-v1", "value": "markdown with $inline$ or $$block$$ math", "mediaIds": [] }
 
 ### question_free_response
-{ "id": "...", "type": "question_free_response", "prompt": { "type": "rich_text", "format": "md-math-v1", "value": "question text with $math$", "mediaIds": [] }, "answer": { "acceptedAnswers": ["42"] } }
+{ "id": "...", "type": "question_free_response", "prompt": { "type": "rich_text", "format": "md-math-v1", "value": "question text with $math$", "mediaIds": [] }, "answer": { "acceptedAnswers": ["42"] }, "solution": { "type": "rich_text", "format": "md-math-v1", "value": "step-by-step solution text", "mediaIds": [] } }
 
 ### question_select (MCQ)
-{ "id": "...", "type": "question_select", "variant": "mcq", "selectionMode": "single", "prompt": { "type": "rich_text", "format": "md-math-v1", "value": "question", "mediaIds": [] }, "answer": { "multiSelect": false, "options": [{ "id": "opt-1", "content": { "type": "rich_text", "format": "md-math-v1", "value": "option text", "mediaIds": [] } }], "correctOptionIds": ["opt-1"] } }
+{ "id": "...", "type": "question_select", "variant": "mcq", "selectionMode": "single", "prompt": { "type": "rich_text", "format": "md-math-v1", "value": "question", "mediaIds": [] }, "answer": { "multiSelect": false, "options": [{ "id": "opt-1", "content": { "type": "rich_text", "format": "md-math-v1", "value": "option text", "mediaIds": [] } }], "correctOptionIds": ["opt-1"] }, "solution": { "type": "rich_text", "format": "md-math-v1", "value": "why this option is correct", "mediaIds": [] } }
 
 ### question_table
-{ "id": "...", "type": "question_table", "prompt": { "type": "rich_text", "format": "md-math-v1", "value": "question", "mediaIds": [] }, "table": { "solutionFill": false, "headers": ["col1", "col2"], "rowsData": [["val1", "val2"]], "showBorders": true, "showHeader": true } }
+{ "id": "...", "type": "question_table", "prompt": { "type": "rich_text", "format": "md-math-v1", "value": "question", "mediaIds": [] }, "table": { "solutionFill": false, "headers": ["col1", "col2"], "rowsData": [["val1", "val2"]], "showBorders": true, "showHeader": true }, "solution": { "type": "rich_text", "format": "md-math-v1", "value": "table fill reasoning", "mediaIds": [] } }
 
 ### latex (for display math that isn't part of a question)
 { "id": "...", "type": "latex", "latex": "\\\\frac{x}{y}", "renderMode": "block" }
@@ -641,7 +645,7 @@ Each block must have an "id" (random string like "b-abc1234") and a "type".
 - Tables (\\begin{tabular}) become question_table blocks
 - For TikZ diagrams: create a rich_text block with "[diagram]" — do NOT try to reproduce the diagram content
 - Skip preamble, \\documentclass, \\usepackage, etc.
-- Skip solution sections (\\section*{פתרון ...})
+- If solution content is present (\\section*{פתרון ...}), place it in the matching question block's "solution" field — do NOT create separate blocks for solutions
 - Be CONCISE — minimal block content, no verbose explanations in values
 - Return ONLY valid JSON — no markdown fences, no comments, no explanatory text`
 
