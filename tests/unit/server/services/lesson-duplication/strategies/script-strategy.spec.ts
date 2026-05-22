@@ -10,7 +10,6 @@ import {
 } from '@/server/services/lesson-duplication/strategies/script-strategy'
 import { isPurelyAlgebraic } from '@/server/services/lesson-duplication/strategies/algebraic-detector'
 import type { ContentBlock, InlineRichText } from '@/server/payload/collections/Exercises/types'
-import type { Exercise } from '@/payload-types'
 
 // ---------------------------------------------------------------------------
 // Factory helpers

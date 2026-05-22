@@ -444,9 +444,13 @@ describe('Pathname Builder', () => {
 })
 
 // Check token validity outside describe - skip entire describe if no valid token
-// Real Vercel tokens are 60+ chars
+// Real Vercel tokens are 60+ chars and are not the mock test token
 const blobToken = process.env.BLOB_READ_WRITE_TOKEN
-const shouldRunMedia = blobToken && blobToken.length > 60 && blobToken.startsWith('vercel_blob_rw_')
+const shouldRunMedia =
+  blobToken &&
+  blobToken.length > 60 &&
+  blobToken.startsWith('vercel_blob_rw_') &&
+  blobToken !== 'mock-token-for-testing'
 
 // Use conditional describe pattern
 const mediaUploadDescribe = shouldRunMedia ? describe : describe.skip

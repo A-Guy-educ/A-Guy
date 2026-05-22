@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@modelcontextprotocol/sdk': '>=1.25.2'
+  '@modelcontextprotocol/sdk': ^1.27.1
 
 importers:
 
@@ -24,7 +24,7 @@ importers:
         specifier: ^0.7.0
         version: 0.7.0(@cfworker/json-schema@4.1.1)(zod@4.3.6)
       '@modelcontextprotocol/sdk':
-        specifier: '>=1.25.2'
+        specifier: ^1.27.1
         version: 1.27.1(@cfworker/json-schema@4.1.1)(zod@4.3.6)
       '@napi-rs/canvas':
         specifier: ^0.1.89
@@ -3786,7 +3786,7 @@ packages:
     resolution: {integrity: sha512-o/QA4LhYCJvuL7/i8CfKPpOm29u25/L4m1LWH44EQZ8cfYJlc4B7Bu+YzDHl23m8A3hDxCJQmlgZEGmsPAQ0vQ==}
     hasBin: true
     peerDependencies:
-      '@modelcontextprotocol/sdk': '>=1.25.2'
+      '@modelcontextprotocol/sdk': ^1.27.1
       next: '>=13.0.0'
     peerDependenciesMeta:
       next:
@@ -6294,7 +6294,7 @@ packages:
     resolution: {integrity: sha512-w2wHb6IVmbiS+pnBNb5BXaSd+ynSgExNauB55gUwoHDw8Q8Ew9TVMsSX89yItmex61zQTl+/NuSYmlOgSpj8SQ==}
     hasBin: true
     peerDependencies:
-      '@modelcontextprotocol/sdk': '>=1.25.2'
+      '@modelcontextprotocol/sdk': ^1.27.1
       next: '>=13.0.0'
     peerDependenciesMeta:
       next:
