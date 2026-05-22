@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "rev": 22,
+  "cursor": "idle",
+  "data": {
+    "prs": {
+      "1285": {
+        "fp": "sync|2026-05-22T08:15:09Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-22T10:33:37Z"
+      },
+      "1377": {
+        "fp": "sync|2026-05-22T08:15:13Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-22T10:33:40Z"
+      },
+      "1405": {
+        "fp": "sync|2026-05-22T08:19:27Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-22T10:33:44Z"
+      },
+      "1406": {
+        "fp": "sync|2026-05-22T08:16:14Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-22T10:33:47Z"
+      },
+      "1480": {
+        "fp": "sync|2026-05-22T08:18:03Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-22T10:33:51Z"
+      }
+    },
+    "lastFiredAt": "2026-05-22T10:34:33.115Z"
+  },
+  "done": false
+}
