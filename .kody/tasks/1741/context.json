@@ -1,0 +1,19 @@
+{
+  "taskId": "1741",
+  "taskType": "enhancement",
+  "target": "1741-mobile-floating-button-in-bottom-left-corner",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Implemented floating ask button with bottom sheet for mobile lesson pages",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/FloatingAskButton/index.tsx",
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx",
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseWorkspace/index.tsx",
+    "tests/unit/components/FloatingAskButton.test.tsx"
+  ],
+  "sessionLog": ".kody/sessions/0327E94F-0086-444C-A019-777A2FEAA414.jsonl",
+  "startedAt": "2026-05-22T08:47:00.000Z",
+  "finishedAt": "2026-05-22T08:54:00.000Z"
+}
