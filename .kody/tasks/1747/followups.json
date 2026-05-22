@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Wire pass-1 outputSchema back into variation service",
+    "body": "The LessonVariationOutputSchema (Zod) is noted as NOT WIRED UP in the file header. The issue was that Gemini collapsed nested block schemas. With the new augmentBlocksSchema forcing hint/solution/fullSolution on every question_* block, it may now be viable to re-wire LessonVariationOutputSchema into the variation service (pass 1) — worth a live test against lesson 6a018b33e52a9f5d741af848 to confirm MISSING_HINT warnings drop.",
+    "rationale": "The schema is already derived correctly; the wire-up was disabled due to a different root cause that may now be mitigated.",
+    "priority": "low"
+  },
+  {
+    "title": "Update buildPass1JsonSchemaForExercise docstring to document the augmentation",
+    "body": "The docstring on buildPass1JsonSchemaForExercise doesn't mention that it augments question_* blocks with forced hint/solution/fullSolution slots. Update it to document this behavior, referencing the question-block augmentation logic.",
+    "rationale": "Future maintainers should understand why question blocks get extra slots without reading the implementation.",
+    "priority": "low"
+  }
+]

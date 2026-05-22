@@ -113,7 +113,7 @@ describe('SolutionDerivationOutputSchema', () => {
 
 describe('deriveJsonSchemaFromValue', () => {
   it('builds primitive types', () => {
-    expect(deriveJsonSchemaFromValue('hi')).toEqual({ type: 'string' })
+    expect(deriveJsonSchemaFromValue('hi')).toEqual({ type: 'string', enum: ['hi'] })
     expect(deriveJsonSchemaFromValue(3)).toEqual({ type: 'integer' })
     expect(deriveJsonSchemaFromValue(3.14)).toEqual({ type: 'number' })
     expect(deriveJsonSchemaFromValue(true)).toEqual({ type: 'boolean' })
@@ -127,7 +127,7 @@ describe('deriveJsonSchemaFromValue', () => {
       required: string[]
     }
     expect(schema.type).toBe('object')
-    expect(schema.properties.id).toEqual({ type: 'string' })
+    expect(schema.properties.id).toEqual({ type: 'string', enum: ['b1'] })
     expect(schema.properties.value).toEqual({ type: 'integer' })
     expect(schema.required).toEqual(['id', 'value'])
   })
@@ -181,5 +181,200 @@ describe('buildPass1JsonSchemaForExercise', () => {
     expect(buildPass1JsonSchemaForExercise({})).toBeDefined()
     expect(buildPass1JsonSchemaForExercise({ content: null })).toBeDefined()
     expect(buildPass1JsonSchemaForExercise({ content: { blocks: [] } })).toBeDefined()
+  })
+
+  // Schema shape: blocksSchema = { type: 'array', items: BlockObjectSchema | { anyOf: BlockObjectSchema[] } }
+  // For single block: items = BlockObjectSchema (with properties.id, properties.type, etc.)
+  // For heterogeneous: items = { anyOf: BlockObjectSchema[] }
+
+  it('adds hint/solution/fullSolution slots to question_free_response blocks missing them', () => {
+    // Source has a question block with no hint, solution, or fullSolution
+    const exercise = {
+      content: {
+        blocks: [{ id: 'q1', type: 'question_free_response', prompt: 'What is 2+2?' }],
+      },
+    }
+    const schema = buildPass1JsonSchemaForExercise(exercise) as {
+      type: string
+      properties: {
+        content: {
+          properties: { blocks: unknown }
+        }
+      }
+    }
+    const blocksSchema = schema.properties.content.properties.blocks as {
+      type: string
+      items: { type: string; properties: Record<string, unknown>; required: string[] }
+    }
+    // Single block: items is the block object schema directly
+    expect(blocksSchema.type).toBe('array')
+    const blockSchema = blocksSchema.items
+    expect(blockSchema.properties.hint).toBeDefined()
+    expect(blockSchema.properties.solution).toBeDefined()
+    expect(blockSchema.properties.fullSolution).toBeDefined()
+    expect(blockSchema.required).toContain('hint')
+    expect(blockSchema.required).toContain('fullSolution')
+    // Source fields still present
+    expect(blockSchema.properties.prompt).toBeDefined()
+  })
+
+  it('preserves existing hint/solution/fullSolution sub-schema when source already has them', () => {
+    // Source has a question_select with an existing hint shape
+    const exercise = {
+      content: {
+        blocks: [
+          {
+            id: 'q1',
+            type: 'question_select',
+            hint: { type: 'rich_text', format: 'md-math-v1', value: 'Try again' },
+            solution: { type: 'rich_text', format: 'md-math-v1', value: 'The answer is A' },
+          },
+        ],
+      },
+    }
+    const schema = buildPass1JsonSchemaForExercise(exercise) as {
+      type: string
+      properties: {
+        content: {
+          properties: { blocks: unknown }
+        }
+      }
+    }
+    const blocksSchema = schema.properties.content.properties.blocks as {
+      items: { properties: Record<string, unknown>; required: string[] }
+    }
+    const blockSchema = blocksSchema.items
+    // hint and solution from source should be preserved with their original sub-schema
+    // deriveJsonSchemaFromValue derives { type: 'object', properties: { type: { type: 'string' }, ... } }
+    // for a rich_text object — the source shape is preserved
+    expect(blockSchema.properties.hint).toMatchObject({
+      type: 'object',
+      properties: {
+        type: { type: 'string' },
+        format: { type: 'string' },
+        value: { type: 'string' },
+      },
+    })
+    expect(blockSchema.properties.solution).toMatchObject({
+      type: 'object',
+      properties: {
+        type: { type: 'string' },
+        format: { type: 'string' },
+        value: { type: 'string' },
+      },
+    })
+    // fullSolution should still be added (wasn't in source)
+    expect(blockSchema.properties.fullSolution).toBeDefined()
+    expect(blockSchema.required).toContain('fullSolution')
+  })
+
+  it('does not add hint/solution/fullSolution to non-question blocks', () => {
+    const exercise = {
+      content: {
+        blocks: [
+          { id: 'b1', type: 'rich_text', value: 'Some text' },
+          { id: 'b2', type: 'svg', content: '<svg></svg>' },
+          { id: 'b3', type: 'latex', latex: 'E=mc^2' },
+        ],
+      },
+    }
+    const schema = buildPass1JsonSchemaForExercise(exercise) as {
+      type: string
+      properties: {
+        content: {
+          properties: { blocks: unknown }
+        }
+      }
+    }
+    const blocksSchema = schema.properties.content.properties.blocks as {
+      items: { anyOf: Array<{ properties: Record<string, unknown>; required: string[] }> }
+    }
+    expect(blocksSchema.items.anyOf).toBeDefined()
+    for (const variant of blocksSchema.items.anyOf) {
+      // Non-question blocks should NOT have hint/solution/fullSolution added
+      const typeVal = variant.properties.type as { const?: string } | undefined
+      const typeStr = typeVal?.const ?? ''
+      if (!typeStr.startsWith('question_')) {
+        expect(variant.properties.hint).toBeUndefined()
+        expect(variant.properties.solution).toBeUndefined()
+        expect(variant.properties.fullSolution).toBeUndefined()
+      }
+    }
+  })
+
+  it('adds hint/solution/fullSolution to all question_* block variants', () => {
+    const questionTypes = [
+      'question_select',
+      'question_free_response',
+      'question_table',
+      'question_matching',
+      'question_geometry',
+      'question_axis',
+      'question_multi_axis',
+    ]
+    for (const type of questionTypes) {
+      const exercise = {
+        content: {
+          blocks: [{ id: 'q1', type, prompt: 'Sample prompt' }],
+        },
+      }
+      const schema = buildPass1JsonSchemaForExercise(exercise) as unknown as {
+        properties: {
+          content: {
+            properties: { blocks: unknown }
+          }
+        }
+      }
+      const blocksSchema = schema.properties.content.properties.blocks as {
+        items: { properties: Record<string, unknown>; required: string[] }
+      }
+      const blockSchema = blocksSchema.items
+      ;(expect(blockSchema.properties.hint).toBeDefined(), `${type}: hint should be defined`)
+      ;(expect(blockSchema.properties.solution).toBeDefined(),
+        `${type}: solution should be defined`)
+      ;(expect(blockSchema.properties.fullSolution).toBeDefined(),
+        `${type}: fullSolution should be defined`)
+      ;(expect(blockSchema.required).toContain('hint'), `${type}: hint should be required`)
+      ;(expect(blockSchema.required).toContain('fullSolution'),
+        `${type}: fullSolution should be required`)
+    }
+  })
+
+  it('augments question blocks inside anyOf heterogeneous block arrays', () => {
+    // Mix of question and non-question blocks → anyOf schema
+    const exercise = {
+      content: {
+        blocks: [
+          { id: 'b1', type: 'rich_text', value: 'intro' },
+          { id: 'q1', type: 'question_select', prompt: 'MCQ?' },
+          { id: 'q2', type: 'question_free_response', prompt: 'FRQ?' },
+        ],
+      },
+    }
+    const schema = buildPass1JsonSchemaForExercise(exercise) as unknown as {
+      properties: {
+        content: {
+          properties: { blocks: unknown }
+        }
+      }
+    }
+    const blocksSchema = schema.properties.content.properties.blocks as {
+      type: string
+      items: { anyOf: Array<{ properties: Record<string, unknown>; required: string[] }> }
+    }
+    expect(blocksSchema.type).toBe('array')
+    expect(blocksSchema.items.anyOf).toBeDefined()
+    // Each question variant should have hint/solution/fullSolution added
+    for (const variant of blocksSchema.items.anyOf) {
+      const typeVal = variant.properties.type as { const?: string } | undefined
+      const typeStr = typeVal?.const ?? ''
+      if (typeStr.startsWith('question_')) {
+        expect(variant.properties.hint).toBeDefined()
+        expect(variant.properties.solution).toBeDefined()
+        expect(variant.properties.fullSolution).toBeDefined()
+        expect(variant.required).toContain('hint')
+        expect(variant.required).toContain('fullSolution')
+      }
+    }
   })
 })
