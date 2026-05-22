@@ -1,3 +1,7 @@
+---
+for: qa
+---
+
 # QA scenarios
 
 Route map and critical user flows for QA. This is what `qa-engineer` should
