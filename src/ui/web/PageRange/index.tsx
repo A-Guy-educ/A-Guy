@@ -23,6 +23,7 @@ export const PageRange: React.FC<{
   currentPage?: number
   limit?: number
   totalDocs?: number
+  isSearchResult?: boolean
 }> = (props) => {
   const {
     className,
@@ -31,6 +32,7 @@ export const PageRange: React.FC<{
     currentPage,
     limit,
     totalDocs,
+    isSearchResult,
   } = props
 
   let indexStart = (currentPage ? currentPage - 1 : 1) * (limit || 1) + 1
@@ -47,7 +49,9 @@ export const PageRange: React.FC<{
 
   return (
     <div className={cn('font-semibold', className)}>
-      {(typeof totalDocs === 'undefined' || totalDocs === 0) && 'Search produced no results.'}
+      {isSearchResult &&
+        (typeof totalDocs === 'undefined' || totalDocs === 0) &&
+        'Search produced no results.'}
       {typeof totalDocs !== 'undefined' &&
         totalDocs > 0 &&
         `Showing ${indexStart}${indexStart > 0 ? ` - ${indexEnd}` : ''} of ${totalDocs} ${

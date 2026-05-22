@@ -1,0 +1,17 @@
+{
+  "taskId": "1773",
+  "taskType": "issue",
+  "target": "1773-p2-posts-page-shows-confusing-search-produced-no-r",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed PageRange component to only show 'Search produced no results.' when isSearchResult prop is true. Added isSearchResult?: boolean prop to PageRange component.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/PageRange/index.tsx",
+    "tests/unit/components/PageRange.test.tsx"
+  ],
+  "sessionLog": ".kody/sessions/1773.jsonl",
+  "startedAt": "2026-05-22T12:40:00Z",
+  "finishedAt": "2026-05-22T12:43:25Z"
+}
