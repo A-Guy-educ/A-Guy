@@ -138,7 +138,7 @@ export function GraphWithPrompt({
   } else if (isSideBySide) {
     // Interactive side-by-side: equal split with min-w floor
     promptFlexClass = 'flex-1'
-    graphFlexClass = 'flex-1 min-w-[280px]'
+    graphFlexClass = 'flex-1 min-w-0 max-w-full'
   } else {
     // Vertical layouts
     promptFlexClass = ''

@@ -184,7 +184,7 @@ export function BlocksDocumentLessonView({
       primaryContent={
         <div className="flex h-full flex-col">
           {headerSlot}
-          <div className="flex-1 overflow-auto bg-gradient-to-b from-muted via-muted to-border/40 py-section-md px-4 print:bg-background print:overflow-visible print:p-0">
+          <div className="flex-1 overflow-auto max-w-full bg-gradient-to-b from-muted via-muted to-border/40 py-section-md px-4 print:bg-background print:overflow-visible print:p-0">
             {/* Use a table so <tfoot> repeats on every printed page */}
             <table
               className="mx-auto max-w-[794px] w-full border-collapse overflow-hidden rounded-md border border-border bg-card shadow-modal print:shadow-none print:border-0 print:rounded-none print:max-w-full"
