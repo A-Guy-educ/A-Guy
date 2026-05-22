@@ -77,57 +77,37 @@ describe('GraphWithPrompt Component', () => {
   })
 
   describe('textLeft layout (interactive mode — no worksheetLayout)', () => {
-    it('renders prompt left of graph with flex-row', () => {
+    it('renders prompt left of graph with responsive breakpoint classes', () => {
       const { container } = renderWithGraph('textLeft')
       const wrapper = container.firstChild as HTMLElement
 
-      // Should have flex-row class (NOT flex-col)
-      expect(wrapper.className).toContain('flex-row')
-      expect(wrapper.className).not.toContain('flex-col')
+      // Should have flex-col on mobile (stacked), sm:flex-row at sm+ (side-by-side)
+      expect(wrapper.className).toContain('flex-col')
+      expect(wrapper.className).toContain('sm:flex-row')
       // Prompt should come before graph in DOM (left side)
       const promptEl = container.querySelector('[data-testid="prompt-renderer"]')
       const graphEl = container.querySelector('[data-testid="graph-child"]')
       expect(promptEl?.compareDocumentPosition(graphEl!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
     })
-
-    it('interactive mode does NOT use responsive breakpoint classes', () => {
-      const { container } = renderWithGraph('textLeft')
-      const wrapper = container.firstChild as HTMLElement
-
-      // Should NOT have md:, lg:, or sm: prefixed flex-direction classes
-      expect(wrapper.className).not.toMatch(/sm:flex/)
-      expect(wrapper.className).not.toMatch(/md:flex/)
-      expect(wrapper.className).not.toMatch(/lg:flex/)
-    })
   })
 
   describe('textRight layout (interactive mode — no worksheetLayout)', () => {
-    it('renders graph left of prompt with flex-row', () => {
+    it('renders graph left of prompt with responsive breakpoint classes', () => {
       const { container } = renderWithGraph('textRight')
       const wrapper = container.firstChild as HTMLElement
 
-      // Should have flex-row class (NOT flex-col)
-      expect(wrapper.className).toContain('flex-row')
-      expect(wrapper.className).not.toContain('flex-col')
+      // Should have flex-col on mobile (stacked), sm:flex-row at sm+ (side-by-side)
+      expect(wrapper.className).toContain('flex-col')
+      expect(wrapper.className).toContain('sm:flex-row')
       // Graph should come before prompt in DOM (left side)
       const promptEl = container.querySelector('[data-testid="prompt-renderer"]')
       const graphEl = container.querySelector('[data-testid="graph-child"]')
       expect(graphEl?.compareDocumentPosition(promptEl!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
     })
-
-    it('interactive mode does NOT use responsive breakpoint classes', () => {
-      const { container } = renderWithGraph('textRight')
-      const wrapper = container.firstChild as HTMLElement
-
-      // Should NOT have md:, lg:, or sm: prefixed flex-direction classes
-      expect(wrapper.className).not.toMatch(/sm:flex/)
-      expect(wrapper.className).not.toMatch(/md:flex/)
-      expect(wrapper.className).not.toMatch(/lg:flex/)
-    })
   })
 
   describe('default layout', () => {
-    it('defaults to textRight (flex-row) when no layout provided', () => {
+    it('defaults to textRight with responsive breakpoint (flex-col sm:flex-row) when no layout provided', () => {
       const { container } = render(
         <GraphWithPrompt blockId="test-block" prompt={mockPrompt}>
           <div data-testid="graph-child">Graph Content</div>
@@ -135,8 +115,9 @@ describe('GraphWithPrompt Component', () => {
       )
       const wrapper = container.firstChild as HTMLElement
 
-      // Should default to flex-row (textRight)
-      expect(wrapper.className).toContain('flex-row')
+      // Should default to flex-col sm:flex-row (mobile-first responsive)
+      expect(wrapper.className).toContain('flex-col')
+      expect(wrapper.className).toContain('sm:flex-row')
     })
   })
 

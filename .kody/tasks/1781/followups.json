@@ -1,0 +1,8 @@
+[
+  {
+    "title": "JSXGraphBoard width/height props are now inert",
+    "body": "After removing the inline `style={{ width, height, maxWidth: '100%' }}` from JSXGraphBoard's container div, the `width` and `height` props are now inert — accepted by the component signature but no longer used anywhere in the JSX (the ResizeObserver handles canvas sizing internally). Callers (AxisRenderer, GeometryRenderer) still pass these props. Consider a future cleanup to either remove the props entirely (requiring updates to all callers) or document that they are deprecated.",
+    "rationale": "Dead/inert props create confusion and are a code smell. A future follow-up could remove these props after updating all callers, or add a comment marking them as deprecated.",
+    "priority": "low"
+  }
+]

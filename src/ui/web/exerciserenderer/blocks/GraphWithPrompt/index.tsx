@@ -4,9 +4,8 @@
  * Renders prompt text alongside a graph (geometry or axis) with configurable layout.
  * Supports 4 layout modes: textAbove, textBelow, textLeft, textRight.
  *
- * IMPORTANT: Side-by-side layouts (textLeft, textRight) do NOT use responsive breakpoints
- * in interactive mode (when worksheetLayout is absent). In worksheet mode, responsive
- * breakpoints activate to enforce mobile stacking with prompt-first ordering.
+ * Both worksheet and interactive modes use responsive breakpoints for side-by-side
+ * layouts: flex-col on mobile (stacked vertically), sm:flex-row side-by-side at 640px+.
  */
 
 import React from 'react'
@@ -76,15 +75,17 @@ function getLayoutClasses(layout: GraphLayout, worksheetLayout?: WorksheetLayout
     return 'flex flex-col sm:flex-row'
   }
 
-  // Non-worksheet (interactive tab) — no responsive breakpoints, strict side-by-side
+  // Non-worksheet (interactive tab) — side-by-side with sm: breakpoint for mobile stacking
   switch (layout) {
     case 'textAbove':
     case 'textBelow':
       return 'flex flex-col'
     case 'textLeft':
     case 'textRight':
+      // flex-col on mobile (stacked), sm:flex-row side-by-side at 640px+
+      return 'flex flex-col sm:flex-row'
     default:
-      return 'flex flex-row'
+      return 'flex flex-col sm:flex-row'
   }
 }
 

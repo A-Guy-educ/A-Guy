@@ -1,0 +1,18 @@
+[
+  {
+    "type": "lesson",
+    "name": "fixing-responsive-layout-tests-conflict",
+    "hook": "When fixing a bug, existing tests may assert the buggy behavior — must update them",
+    "body": "When fixing a bug, existing unit tests that assert the OLD (buggy) behavior MUST be updated as part of the fix. Failing to update them causes quality gates to fail. The test file `tests/unit/ui/graph-with-prompt.test.tsx` had two tests named 'interactive mode does NOT use responsive breakpoint classes' that asserted the exact opposite of what the fix requires — these were updated to assert the new correct behavior.",
+    "why": "In this session, the GraphWithPrompt fix changed textLeft/textRight layouts to use mobile-first responsive breakpoints. Two existing tests in tests/unit/ui/graph-with-prompt.test.tsx (lines 93-101 and 118-126) explicitly asserted that interactive mode should NOT have responsive breakpoint classes. Without updating these tests, the verify tool (quality gates) would fail.",
+    "confidence": 0.95
+  },
+  {
+    "type": "lesson",
+    "name": "unused-props-after-inline-style-removal",
+    "hook": "Remove inline width/height from container? Prefix unused props with _ to silence linter",
+    "body": "When removing an inline style prop from a JSX element that used component props (width, height), prefix those props with `_` in the function signature to silence the @typescript-eslint/no-unused-vars linter. The props remain part of the public API for backward compatibility.",
+    "why": "JSXGraphBoard had `style={{ width, height, maxWidth: '100%' }}` where width/height were component props. After removing them from style, the linter flagged them as unused. Prefixing with `_width` and `_height` (destructuring pattern) satisfies the linter without removing the props from the API.",
+    "confidence": 0.9
+  }
+]

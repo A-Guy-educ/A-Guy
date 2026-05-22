@@ -237,7 +237,7 @@ export function ExercisesPager({
             <div
               ref={contentRef}
               tabIndex={-1}
-              className="flex-1 overflow-y-auto min-h-0 pb-4 outline-none"
+              className="flex-1 overflow-x-hidden overflow-y-auto min-h-0 pb-4 outline-none"
               onTouchStart={onTouchStart}
               onTouchMove={onTouchMove}
               onTouchEnd={onTouchEnd}

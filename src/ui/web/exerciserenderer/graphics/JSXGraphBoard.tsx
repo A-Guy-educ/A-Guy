@@ -24,8 +24,8 @@ interface JSXGraphBoardProps {
 
 export function JSXGraphBoard({
   id,
-  width,
-  height,
+  width: _width,
+  height: _height,
   boundingBox = [-10, 10, 10, -10],
   showGrid = false,
   showAxis = false,
@@ -166,7 +166,7 @@ export function JSXGraphBoard({
       ref={containerRef}
       id={`jsxgraph-${id}`}
       className={cn('w-full border rounded-lg overflow-hidden bg-white', className)}
-      style={{ width, height, maxWidth: '100%' }}
+      style={{ maxWidth: '100%' }}
     />
   )
 }
