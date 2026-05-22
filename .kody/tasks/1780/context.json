@@ -1,0 +1,19 @@
+{
+  "taskId": "1780",
+  "taskType": "issue",
+  "target": "1780",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed frontend login form to show inline client-side validation errors for empty fields and invalid email format, mirroring the existing signup form validation pattern",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/login/LoginForm.tsx",
+    "src/i18n/en.json",
+    "src/i18n/he.json",
+    "tests/e2e/frontend-login-form-validation.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1780.jsonl",
+  "startedAt": "2026-05-22T16:44:00.000Z",
+  "finishedAt": "2026-05-22T16:44:30.000Z"
+}

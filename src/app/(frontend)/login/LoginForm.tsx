@@ -24,14 +24,43 @@ function LoginFormContent() {
   const searchParams = useSearchParams()
   const returnTo = sanitizeReturnTo(searchParams?.get('returnTo'))
   const [error, setError] = useState<string | null>(null)
+  const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
+
+  function validateLoginForm(formData: FormData): Record<string, string> {
+    const validationErrors: Record<string, string> = {}
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+
+    if (!email || email.trim().length === 0) {
+      validationErrors.email = t('errors.emailRequired')
+    } else if (!email.includes('@')) {
+      validationErrors.email = t('errors.invalidEmail')
+    }
+
+    if (!password || password.trim().length === 0) {
+      validationErrors.password = t('errors.passwordRequired')
+    }
+
+    return validationErrors
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
+    setErrors({})
+
+    const formData = new FormData(e.currentTarget)
+
+    // Client-side validation
+    const validationErrors = validateLoginForm(formData)
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors)
+      return
+    }
+
     setIsLoading(true)
     try {
-      const formData = new FormData(e.currentTarget)
       const result = await loginAction(formData)
       if (result.success) {
         window.location.href = returnTo
@@ -100,8 +129,9 @@ function LoginFormContent() {
                   name="email"
                   type="email"
                   placeholder={t('emailPlaceholder')}
-                  required
+                  className={errors.email ? 'border-destructive' : ''}
                 />
+                {errors.email && <p className="text-body-sm text-destructive">{errors.email}</p>}
               </div>
               <div className="space-y-1">
                 <Label htmlFor="password">{t('password')}</Label>
@@ -110,8 +140,11 @@ function LoginFormContent() {
                   name="password"
                   type="password"
                   placeholder={t('passwordPlaceholder')}
-                  required
+                  className={errors.password ? 'border-destructive' : ''}
                 />
+                {errors.password && (
+                  <p className="text-body-sm text-destructive">{errors.password}</p>
+                )}
               </div>
               {error && <p className="text-body-sm text-destructive">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>

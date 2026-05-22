@@ -152,7 +152,10 @@
       "noAccount": "אין לך חשבון?",
       "signupLink": "הירשם",
       "errors": {
-        "invalidCredentials": "אימייל או סיסמה שגויים"
+        "invalidCredentials": "אימייל או סיסמה שגויים",
+        "emailRequired": "נדרש אימייל",
+        "invalidEmail": "הזן כתובת אימייל תקינה",
+        "passwordRequired": "נדרשת סיסמה"
       }
     },
     "account": {
