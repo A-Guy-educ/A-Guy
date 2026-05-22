@@ -1,9 +1,11 @@
 ---
 every: 15m
-worker: cto
+staff: cto
 ---
 
-# PR health triage
+# PR health
+
+# PR health
 
 > Standing PR-health triage, executed by the **CTO** persona
 > (`worker: cto`). Every 15 minutes, read the open pull requests, detect
