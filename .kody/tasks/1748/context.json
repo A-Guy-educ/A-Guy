@@ -1,0 +1,18 @@
+{
+  "taskId": "1748",
+  "taskType": "issue",
+  "target": "1748",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Dropped outputSchema from pass-2 generateChatCompletion call; parse text only and validate post-hoc with Zod safeParse; filter hallucinated patches by pass-1 question-block ids",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/infra/llm/services/lesson-duplication-variation-service.ts",
+    "src/infra/llm/schemas/lesson-duplication-output.ts",
+    "tests/unit/server/llm/services/lesson-duplication-variation-service.test.ts"
+  ],
+  "sessionLog": ".kody/sessions/2f53c96e-e822-41d0-83a5-edb8256c3c1b.jsonl",
+  "startedAt": "2026-05-21T11:55:00Z",
+  "finishedAt": "2026-05-21T12:03:00Z"
+}

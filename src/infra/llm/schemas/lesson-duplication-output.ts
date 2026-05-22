@@ -1,12 +1,14 @@
 /**
  * Output schemas for the lesson-duplication variation pipeline.
  *
- * Passed to Genkit's `ai.generate({ output: { schema } })` so Gemini's
- * responseSchema mode refuses to emit non-conforming output.
- *
  * Status (2026-05-13):
- *  - `SolutionDerivationOutputSchema` (pass 2): IN USE. Small/well-bounded —
- *    Gemini handles it correctly. Verified live against gemini-2.5-pro.
+ *  - `SolutionDerivationOutputSchema` (pass 2): POST-HOC VALIDATION ONLY.
+ *    NOT passed to Genkit's outputSchema / Gemini's responseSchema — verified
+ *    live that Gemini collapses the per-block array shape to a literal string
+ *    array of property names (e.g. { "blocks": ["id", "solution", ...] }),
+ *    the same collapse pattern seen on LessonVariationOutputSchema (pass 1).
+ *    We now parse text only and validate post-hoc with Zod's safeParse.
+ *    See: issue #1748.
  *  - `LessonVariationOutputSchema` (pass 1): NOT WIRED UP. Verified live that
  *    Gemini collapses the full content.blocks shape to `{ "content": "blocks" }`
  *    (treating the property name as a string value) regardless of whether the
