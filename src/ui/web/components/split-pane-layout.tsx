@@ -216,17 +216,14 @@ export function SplitPaneLayout({
         {React.cloneElement(
           chatContent as React.ReactElement<{
             onChatInteraction?: () => void
-            displayMode?: 'full' | 'input-only'
+            displayMode?: 'full'
             isMobile?: boolean
             viewMode?: ViewMode
             onModeToggle?: () => void
           }>,
           {
             onChatInteraction: handleChatExpand,
-            displayMode:
-              viewMode === 'CHAT' || (viewMode === 'PDF' && chatExpandedInPdf) || !isDesktop
-                ? 'full'
-                : ('input-only' as const),
+            displayMode: 'full',
             isMobile: true,
             viewMode,
             onModeToggle: handleModeToggle,
