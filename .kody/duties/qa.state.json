@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "rev": 5,
-  "cursor": "waiting_on_qa_engineer",
+  "rev": 6,
+  "cursor": "idle",
   "data": {
-    "inflightPr": 1771,
-    "inflightIssue": 1796,
-    "nextEligibleISO": "2026-05-22T14:45:29Z",
-    "lastFiredAt": "2026-05-22T17:26:49.565Z"
+    "inflightPr": null,
+    "inflightIssue": null,
+    "nextEligibleISO": "2026-05-22T18:15:00Z",
+    "lastFiredAt": "2026-05-22T18:13:53.714Z"
   },
   "done": false
 }
