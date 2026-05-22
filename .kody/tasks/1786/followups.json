@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Handle quick-chat-submit event in ChatInterface or ExercisesPager",
+    "body": "The FloatingAskButton dispatches 'quick-chat-submit' with { message } when the user taps send. This event needs a listener in the ExercisesPager or ChatInterface to actually send the message via useNotebookChat. Currently the event is dispatched but not handled.",
+    "rationale": "Without a listener, pressing send in the expanded panel does nothing visible to the user.",
+    "priority": "high"
+  },
+  {
+    "title": "Wire up formula button to open FormulaComposer modal",
+    "body": "The math formula button (labeled 'f') currently toggles isFormulaOpen state but the actual FormulaComposer popup is not rendered. The _handleFormulaInsert callback is ready to use once the FormulaComposer is integrated into the expanded panel.",
+    "rationale": "The issue requires math support in the input panel, but the actual formula editor popup wasn't implemented due to complexity.",
+    "priority": "medium"
+  }
+]

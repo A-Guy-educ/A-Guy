@@ -69,8 +69,9 @@ describe('FloatingAskButton Component', () => {
     render(<FloatingAskButton onAskClick={onClick} isCentered={false} />)
 
     const button = screen.getByRole('button', { name: /Stuck on a problem/i })
-    expect(button.className).toContain('bottom-0')
-    expect(button.className).toContain('left-0')
+    // Issue #1786: positioned at bottom: 24px, left: 24px (bottom-6 left-6 in Tailwind)
+    expect(button.className).toContain('bottom-6')
+    expect(button.className).toContain('left-6')
     expect(button.className).toContain('fixed')
   })
 
@@ -131,7 +132,7 @@ describe('FloatingAskButton Component', () => {
     expect(button.className).toMatch(/z-\[70\]/)
   })
 
-  it('should have safe-area padding for iOS', async () => {
+  it('should have correct padding for touch target', async () => {
     const { FloatingAskButton } =
       await import('@/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/FloatingAskButton')
 
@@ -139,7 +140,9 @@ describe('FloatingAskButton Component', () => {
     render(<FloatingAskButton onAskClick={onClick} isCentered={false} />)
 
     const button = screen.getByRole('button', { name: /Stuck on a problem/i })
-    // Should include safe-area-inset for iOS
-    expect(button.className).toMatch(/pb-\[max/)
+    // Issue #1786: 24px margin from edges, with proper padding for touch target
+    expect(button.className).toContain('p-4')
+    expect(button.className).toContain('w-14')
+    expect(button.className).toContain('h-14')
   })
 })
