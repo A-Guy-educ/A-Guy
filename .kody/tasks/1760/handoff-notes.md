@@ -23,3 +23,19 @@ Created a new `LessonExerciseEditorLayout` custom edit view for the Lessons coll
 - The `LessonBlocksField` component still exists but is no longer used in the Lessons collection config
 - The header dynamically fetches the chapter title to build the full breadcrumb text
 - `ExerciseWorksheet` is rendered with `hideLatexBlocks={false}` so LaTeX is visible in the worksheet view
+
+## Fix Round (2026-05-22)
+
+**Root Cause:** The `LessonExerciseEditorLayout` component was NOT in the Payload admin import map (`src/app/(payload)/admin/importMap.js`). This meant Payload CMS could not resolve the path `@/ui/admin/LessonExerciseEditor#LessonExerciseEditorLayout` specified in `views.edit.Default.Component`, causing the component to silently fail to load (preview showed no change).
+
+**Fix Applied:** Ran `pnpm generate:importmap` to regenerate the import map. The import map now includes:
+```
+"@/ui/admin/LessonExerciseEditor#LessonExerciseEditorLayout": LessonExerciseEditorLayout_ae6d4dbf332bf3db3251a54fed0e8636
+```
+
+**Verification:**
+- TypeScript: `tsc --noEmit` passes with no errors
+- ESLint: passes (no errors in modified files)
+- Import map: `LessonExerciseEditorLayout` now correctly registered
+
+**Key lesson:** When adding new admin UI component directories, always run `pnpm generate:importmap` to register them with Payload's component loader. The `Products.ts` collection follows the same `views.edit.Default.Component` pattern and serves as a reference for correct usage.
