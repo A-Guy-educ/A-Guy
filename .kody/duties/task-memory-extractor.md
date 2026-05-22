@@ -1,6 +1,6 @@
 ---
 every: 30m
-worker: coo
+staff: coo
 ---
 
 # task-memory-extractor
