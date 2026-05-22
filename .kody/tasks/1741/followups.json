@@ -1,12 +1,6 @@
 [
   {
-    "title": "Wire up 'ask-from-floating-button' event to ChatInterface",
-    "body": "The FloatingAskButton dispatches a 'ask-from-floating-button' custom event on submit, but ChatInterface does not yet listen for this event. Need to add a window event listener in ChatInterface to handle this event and inject the question into the chat.",
-    "rationale": "Without this wiring, the floating button submission has no effect on the chat.",
-    "priority": "high"
-  },
-  {
-    "title": "Test button in fullscreen mode",
+    "title": "E2E test floating button in fullscreen mode",
     "body": "Verify the floating button persists and moves to center when Prev/Next navigation appears at 85% scroll. The isCentered prop is wired, but end-to-end testing is needed.",
     "rationale": "Issue requirement states button must persist in fullscreen mode.",
     "priority": "medium"

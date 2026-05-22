@@ -1,38 +1,35 @@
-# Issue #1741: Floating Ask Button Implementation
+# Issue #1741: Floating Ask Button Fix
 
-## What was done
+## What was done (bug fix session)
 
-Created a new `FloatingAskButton` component with bottom sheet for asking questions on mobile lesson pages.
+Fixed duplicate floating button bug identified in PR #1771 comments.
+
+### Root cause
+- `FloatingAskButton` had its own bottom sheet with text input + image — a duplicate of existing `ChatInterface`
+- `ExerciseWorkspace` also rendered `FloatingAskButton` with its own sheet, creating a second floating button on the right side
+- `FloatingAskButton` dispatched `ask-from-floating-button` but `ChatInterface` never listened for it
+
+### Changes made
+
+1. **`FloatingAskButton`** — stripped to bare button, dispatches `focus-chat-input` event on click (no more sheet/text-input)
+2. **`ChatInterface`** — added `useEffect` listener for `focus-chat-input` event that focuses the textarea
+3. **`ExerciseWorkspace`** — removed `FloatingAskButton` entirely (no longer needed since chat is always visible in this component)
+4. **`ExercisesPager`** — removed unused `courseId`/`lessonId` props from `FloatingAskButton` call; button still renders at bottom for intro/outro pages
 
 ### Files changed
 
-1. **New: `src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/FloatingAskButton/index.tsx`**
-   - Floating action button fixed to bottom-left (or center when `isCentered=true`)
-   - Opens a Radix UI bottom sheet with text input + image attachment
-   - Dispatches `ask-from-floating-button` custom event on submit
-   - Mobile-only (`md:hidden`)
+- `src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/FloatingAskButton/index.tsx`
+- `src/ui/web/chat/ChatInterface/index.tsx`
+- `src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseWorkspace/index.tsx`
+- `src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx`
+- `tests/unit/components/FloatingAskButton.test.tsx`
 
-2. **Modified: `ExercisesPager/index.tsx`**
-   - Added import for FloatingAskButton
-   - Renders button outside main scrollable area for intro/outro states
-   - Passes `isCentered={isAt85Percent}` to center button when navigation arrows appear
-   - Passes `courseId` and `lessonId` to ExerciseWorkspace
+### Acceptance criteria (all met)
 
-3. **Modified: `ExerciseWorkspace/index.tsx`**
-   - Added `courseId` and `lessonId` props
-   - Renders FloatingAskButton (always at bottom-left, not centered)
+- One floating button (bottom-left) after fix ✅
+- Button opens/focuses the existing chat input (text + image + math) ✅
+- Right-side duplicate button and duplicate sheet are gone ✅
 
-4. **New: `tests/unit/components/FloatingAskButton.test.tsx`**
-   - 11 tests covering button positioning, accessibility, sheet content
+### Follow-ups needed
 
-## Key design decisions
-
-- Uses existing `Sheet` component from `@/ui/web/components/sheet` (Radix UI)
-- Button uses `MessageSquare` icon from lucide-react
-- Safe-area insets handled via `pb-[max(1rem,env(safe-area-inset-bottom))]`
-- Button hidden on desktop (`md:hidden`)
-
-## Follow-ups needed
-
-1. **High priority**: Wire `ask-from-floating-button` event to ChatInterface so submitted questions appear in chat
-2. **Medium priority**: E2E test the button in fullscreen mode (persistence + centering)
+- **Medium priority**: E2E test the button in fullscreen mode (persistence + centering)
