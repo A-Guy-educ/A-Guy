@@ -1,0 +1,20 @@
+[
+  {
+    "title": "Root cause of /api/collections/transactions 404 not definitively identified",
+    "body": "Integration test infrastructure issue prevents reproducing the bug: getPayload({ config }) hangs for 60s when DATABASE_URL is set to Atlas in test environment (hook timeout). Transaction-refund.int.spec.ts works because it clears DATABASE_URL before getPayload. The root cause of 404 from the transactions REST API could not be reproduced in test environment.",
+    "rationale": "The issue title says transactions API returns 404, but the root cause was not definitively identified. The Transactions collection appears correctly configured. The error handling improvements mitigate symptoms but don't fix the root cause.",
+    "priority": "high"
+  },
+  {
+    "title": "Integration tests for /api/collections/transactions endpoint needed",
+    "body": "Create integration tests that directly test the Payload REST API endpoint /api/collections/transactions with admin auth. Current test infrastructure has issues with getPayload hanging. Consider using the transaction-refund.int.spec.ts pattern (clearing DATABASE_URL before getPayload) to avoid the hook timeout issue.",
+    "rationale": "The RecentTransactionsWidget makes a direct REST API call to /api/collections/transactions. Integration tests for this endpoint would have caught the 404 issue.",
+    "priority": "medium"
+  },
+  {
+    "title": "Pre-existing test infrastructure issue with getPayload and Atlas",
+    "body": "Several integration tests (admin-dashboard-metrics.int.spec.ts, admin-dashboard-recent-transactions-1797.int.spec.ts) fail with 'Hook timed out in 60000ms' when DATABASE_URL is set to Atlas. Only transaction-refund.int.spec.ts works because it clears DATABASE_URL before getPayload. This is a pre-existing test infrastructure issue.",
+    "rationale": "Tests cannot be used to verify fixes for this issue due to infrastructure problems. The pattern of clearing DATABASE_URL before getPayload (as used in transaction-refund.int.spec.ts) should be adopted by other tests.",
+    "priority": "low"
+  }
+]

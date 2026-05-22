@@ -89,23 +89,45 @@ const RecentTransactionsWidget: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
 
   const fetchTransactions = useCallback(async () => {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10_000)
+
     setLoading(true)
     setError(null)
     try {
       const res = await fetch('/api/collections/transactions?limit=5&sort=-createdAt&depth=2', {
         credentials: 'include',
+        signal: controller.signal,
       })
+      clearTimeout(timeoutId)
+
       if (!res.ok) {
         if (res.status === 403) {
           setError('admin-only')
           return
         }
-        throw new Error(`HTTP ${res.status}`)
+        // Try to extract a meaningful error message from the response body
+        let errorMessage = `HTTP ${res.status}`
+        const contentType = res.headers.get('content-type') ?? ''
+        if (contentType.includes('application/json')) {
+          try {
+            const body = (await res.json()) as { error?: string; message?: string }
+            errorMessage = body.error || body.message || errorMessage
+          } catch {
+            // Fall through to use the status-based message
+          }
+        }
+        throw new Error(errorMessage)
       }
+
       const json = (await res.json()) as TransactionsResponse
       setTransactions(json.docs ?? [])
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('Request timed out')
+      } else {
+        setError(err instanceof Error ? err.message : 'Unknown error')
+      }
     } finally {
       setLoading(false)
     }

@@ -29,23 +29,45 @@ const MetricsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) 
   const [period, setPeriod] = useState<Period>('month')
 
   const fetchMetrics = useCallback(async () => {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10_000)
+
     setLoading(true)
     setError(null)
     try {
       const res = await fetch(`/api/admin/dashboard-metrics?period=${period}`, {
         credentials: 'include',
+        signal: controller.signal,
       })
+      clearTimeout(timeoutId)
+
       if (!res.ok) {
         if (res.status === 403) {
           setError('admin-only')
           return
         }
-        throw new Error(`Failed to fetch metrics: ${res.status}`)
+        // Try to extract a meaningful error message from the response body
+        let errorMessage = `Failed to fetch metrics: ${res.status}`
+        const contentType = res.headers.get('content-type') ?? ''
+        if (contentType.includes('application/json')) {
+          try {
+            const body = (await res.json()) as { error?: string; message?: string }
+            errorMessage = body.error || body.message || errorMessage
+          } catch {
+            // Fall through to use the status-based message
+          }
+        }
+        throw new Error(errorMessage)
       }
+
       const json = (await res.json()) as DashboardMetricsResponse
       setData(json)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('Request timed out')
+      } else {
+        setError(err instanceof Error ? err.message : 'Unknown error')
+      }
     } finally {
       setLoading(false)
     }

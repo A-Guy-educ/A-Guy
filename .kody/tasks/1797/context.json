@@ -1,0 +1,19 @@
+{
+  "taskId": "1797",
+  "taskType": "issue",
+  "target": "Admin dashboard widgets fail to load — transactions API returns 404",
+  "outcome": "partial",
+  "exitCode": 0,
+  "reason": "Error handling improved in RecentTransactionsWidget and MetricsProvider with timeout and better error parsing; root cause of 404 could not be definitively identified due to test infrastructure issues (getPayload hangs with Atlas connection in test environment)",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/RecentTransactionsWidget/index.tsx",
+    "src/ui/admin/ConversionTracking/MetricsProvider.tsx",
+    "tests/int/admin-dashboard-recent-transactions-1797.int.spec.ts",
+    "tests/unit/dashboard-metrics-helpers.test.ts"
+  ],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-05-22T16:29:00Z",
+  "finishedAt": "2026-05-22T17:13:00Z"
+}
