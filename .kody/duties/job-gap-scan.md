@@ -1,6 +1,6 @@
 ---
 every: 24h
-worker: ceo
+staff: ceo
 ---
 
 # job-gap-scan

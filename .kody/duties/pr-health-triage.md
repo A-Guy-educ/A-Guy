@@ -1,6 +1,6 @@
 ---
 every: 15m
-worker: cto
+staff: cto
 ---
 
 # PR health
