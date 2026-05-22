@@ -1,6 +1,6 @@
 ---
 disabled: false
-worker: coo
+staff: coo
 every: 30m
 ---
 
