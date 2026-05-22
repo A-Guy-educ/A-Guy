@@ -27,6 +27,7 @@ export interface ConversationMessage {
   role: string
   content: string
   media?: Array<{ mediaId: string; filename?: string }>
+  createdAt?: string
 }
 
 export interface ConversationApiResponse {
@@ -185,6 +186,7 @@ export const apiService = {
             role: string
             content: string
             media?: Array<{ mediaId: string; filename?: string }>
+            createdAt?: string
           }) => ({
             role:
               msg.role === ChatRole.User || msg.role === 'user'
@@ -192,6 +194,7 @@ export const apiService = {
                 : ChatRole.Assistant,
             content: msg.content,
             media: msg.media,
+            createdAt: msg.createdAt,
           }),
         )
 

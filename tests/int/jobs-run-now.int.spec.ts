@@ -112,6 +112,7 @@ describe('Jobs Run Now', () => {
       collection: 'chapters',
       data: {
         title: 'Test Chapter',
+        slug: `test-chapter-${Date.now()}`,
         course: course.id,
         order: 1,
         tenant: tenant.id,
