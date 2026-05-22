@@ -1,10 +1,6 @@
 import { cache } from 'react'
 import { getPayload } from 'payload'
-import type { Where } from 'payload'
 import configPromise from '@payload-config'
-
-import type { ContentLocale } from '@/server/payload/fields/contentLocale'
-import { localeWhereClause } from '@/server/payload/fields/contentLocale'
 
 export const queryChaptersByCourse = cache(async ({ courseId }: { courseId: string }) => {
   const payload = await getPayload({ config: configPromise })
@@ -109,25 +105,32 @@ export const queryChapterBySlug = cache(async ({ slug }: { slug: string }) => {
 
 /**
  * Fetch chapters by grade level (filters by courseLabel)
+ *
+ * Note: Locale filtering is NOT applied to the course query here.
+ * Courses are found by courseLabel (grade) alone — locale filtering
+ * is applied at the lesson level in prefetchStudyData. This prevents
+ * the study page from showing empty state when the user's contentLocale
+ * differs from the course's locale (e.g., user in 'en' locale viewing
+ * a course with locale 'he').
  */
 export const queryChaptersByGrade = cache(
-  async ({ gradeLevel, locale }: { gradeLevel: string; locale?: ContentLocale }) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async ({ gradeLevel }: { gradeLevel: string; locale?: string }) => {
     const payload = await getPayload({ config: configPromise })
 
-    const conditions: Where[] = [
-      { courseLabel: { equals: gradeLevel } },
-      { status: { equals: 'published' } },
-      { isActive: { equals: true } },
-    ]
-
-    if (locale) {
-      conditions.push(localeWhereClause(locale))
-    }
-
-    // Find course for this grade
+    // Find course for this grade — no locale filter on courses.
+    // The course is selected by courseLabel (grade level), not locale.
+    // Sort by _id to ensure deterministic ordering (first-created course first).
     const courseResult = await payload.find({
       collection: 'courses',
-      where: { and: conditions },
+      where: {
+        and: [
+          { courseLabel: { equals: gradeLevel } },
+          { status: { equals: 'published' } },
+          { isActive: { equals: true } },
+        ],
+      },
+      sort: '_id',
       limit: 1,
       pagination: false,
       overrideAccess: false,

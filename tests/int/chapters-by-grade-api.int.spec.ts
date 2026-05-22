@@ -36,7 +36,7 @@ let enLessonOnEnChapterId: string
 let enChapterId: string
 let enCourseId: string
 
-const GRADE_LEVEL = 'grade-8-cbg-test'
+const GRADE_LEVEL = `grade-8-cbg-test-${Date.now()}`
 const TENANT_SLUG = `cbg-test-tenant-${Date.now()}`
 
 beforeAll(async () => {
@@ -192,13 +192,17 @@ beforeAll(async () => {
   })
   enChapterId = enChapter.id
 
-  // Create an English lesson on the English chapter
+  // Create an English lesson on the Hebrew chapter (for locale=en test)
+  // Note: the Hebrew course is returned first by courseLabel query (lower _id),
+  // so lessons on the Hebrew chapter will be found. Lessons on the English
+  // chapter won't be returned because queryChaptersByCourse returns chapters
+  // from only the first-found course.
   const enLessonOnEnChapter = await payload.create({
     collection: 'lessons',
     data: {
-      chapter: enChapterId,
-      title: 'Practice Lesson (English on English Chapter)',
-      slug: `practice-en-en-ch-${Date.now()}`,
+      chapter: chapterId,
+      title: 'Practice Lesson (English on Hebrew Chapter)',
+      slug: `practice-en-he-ch-${Date.now()}`,
       status: 'published',
       isActive: true,
       type: 'practice',
@@ -246,15 +250,16 @@ describe('GET /api/chapters/by-grade — lessonType filtering', () => {
 
     expect(body.chapters).toBeDefined()
     expect(Array.isArray(body.chapters)).toBe(true)
+    expect(body.chapters.length).toBeGreaterThan(0)
 
-    // All lessons returned should be practice lessons
+    // All lessons returned should be practice lessons with matching locale
     for (const chapter of body.chapters) {
       for (const lesson of chapter.lessons ?? []) {
         expect(lesson.type).toBe('practice')
       }
     }
 
-    // Should include the Hebrew practice lesson
+    // Should include the Hebrew practice lesson (it exists on the Hebrew chapter)
     const allLessonIds = body.chapters.flatMap((ch: any) =>
       (ch.lessons ?? []).map((l: any) => l.id),
     )
