@@ -208,7 +208,7 @@ export function BlocksDocumentLessonView({
               {/* Document body — lesson title, exercises, solutions */}
               <tbody>
                 <tr>
-                  <td className="bg-background px-12 py-10 font-serif sm:px-16 sm:py-section-lg">
+                  <td className="bg-background px-12 py-10 font-serif sm:px-16 sm:py-section-lg max-w-full overflow-hidden">
                     {lessonTitle && (
                       <h1 className="mb-8 text-center text-heading-xl font-bold text-foreground">
                         {lessonTitle}

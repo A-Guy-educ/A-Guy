@@ -63,7 +63,11 @@ export function LessonContent({
                       <div className="h-0.5 my-8 flex-shrink-0 bg-gradient-to-r from-transparent via-border to-transparent" />
                     )}
                     <div className="border rounded-lg overflow-hidden bg-muted shadow-card">
-                      <MediaComponent resource={file} className="w-full" htmlElement={null} />
+                      <MediaComponent
+                        resource={file}
+                        className="w-full max-w-full"
+                        htmlElement={null}
+                      />
                     </div>
                   </div>
                 ))}
