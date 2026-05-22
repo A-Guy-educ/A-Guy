@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Chat button shifting to center when arrows visible",
+    "body": "The issue mentions that the floating 'שאלה' chat button should shift to center when arrows are visible. This was not implemented as it requires deeper changes to the component hierarchy (passing arrowsVisible state up through ExerciseWorkspace to SplitPaneLayout). The navigation arrows now appear at 85% scroll which addresses the core requirement.",
+    "rationale": "The chat button shift is a secondary UX effect mentioned in the issue. The core requirement (hiding Prev/Next until 85% scroll) is implemented.",
+    "priority": "low"
+  },
+  {
+    "title": "PDF viewer navigation not updated",
+    "body": "The PDF viewer section in LessonPager (pageState.type === 'pdf') still shows the full navigation bar. Only the exercise block and content page sections were updated to use the new scroll-based visibility.",
+    "rationale": "The issue specifically targets 'exercise content' navigation. PDF viewing may have different UX patterns.",
+    "priority": "low"
+  }
+]
