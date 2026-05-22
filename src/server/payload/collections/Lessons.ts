@@ -178,6 +178,13 @@ export const Lessons: CollectionConfig = {
     useAsTitle: 'title',
     listSearchableFields: ['chapter.course.courseLabel', 'chapter.course.title'],
     components: {
+      views: {
+        edit: {
+          Default: {
+            Component: '@/ui/admin/LessonExerciseEditor#LessonExerciseEditorLayout',
+          },
+        },
+      },
       edit: {
         beforeDocumentControls: [
           '@/ui/admin/TranslationButton#TranslateLessonAction',
@@ -353,26 +360,25 @@ export const Lessons: CollectionConfig = {
       },
     },
     // --- Lesson Blocks (ordered playlist) ---
+    // Note: rendered by LessonExerciseEditorLayout (custom edit view), not here
     {
       name: 'blocks',
       type: 'textarea',
       admin: {
         description: 'Ordered playlist of exercises and content pages. Defines the lesson flow.',
-        components: {
-          Field: '@/ui/admin/LessonBlocksField#LessonBlocksField',
-        },
+        hidden: true, // Hidden - rendered by LessonExerciseEditorLayout instead
       },
     },
-    // Context Exercise Viewer (displays parsed exercises from lessonContextText)
-    {
-      name: 'contextExerciseViewer',
-      type: 'ui',
-      admin: {
-        components: {
-          Field: '@/ui/admin/context-exercise-viewer#ContextExerciseViewer',
-        },
-      },
-    },
+    // Context Exercise Viewer - removed; functionality moved to LessonExerciseEditor worksheet view
+    // {
+    //   name: 'contextExerciseViewer',
+    //   type: 'ui',
+    //   admin: {
+    //     components: {
+    //       Field: '@/ui/admin/context-exercise-viewer#ContextExerciseViewer',
+    //     },
+    //   },
+    // },
     // --- Lesson Content ---
     {
       name: 'contentFiles',

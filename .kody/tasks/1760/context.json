@@ -1,0 +1,17 @@
+{
+  "taskId": "1760",
+  "taskType": "refactor",
+  "target": "admin-lesson-edit-page-layout-two-column-worksheet",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Implemented two-column worksheet layout for lesson edit page",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/LessonExerciseEditor/index.tsx",
+    "src/server/payload/collections/Lessons.ts"
+  ],
+  "sessionLog": ".kody/sessions/4624c8ef-bbe3-4b99-9085-0d8ff0e6588b.jsonl",
+  "startedAt": "2026-05-22T08:46:00Z",
+  "finishedAt": "2026-05-22T08:51:00Z"
+}
