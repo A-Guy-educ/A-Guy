@@ -8,12 +8,12 @@
  * Issue #1785: Remove bottom chat input bar from lesson page on mobile
  *
  * Expected behavior:
- * - On mobile in PDF mode with chat collapsed, the chat should be fully hidden (no input bar)
- * - displayMode should NOT be 'input-only' when isMobile && viewMode === 'PDF' && !chatExpandedInPdf
+ * - On mobile in PDF mode with chat collapsed, the ChatInterface should NOT be rendered at all
+ * - The bottom chat bar area should be entirely absent from the DOM
  *
  * Buggy behavior:
- * - On mobile in PDF mode with chat collapsed, displayMode is set to 'input-only'
- *   which causes a bottom chat input bar to appear
+ * - On mobile in PDF mode with chat collapsed, ChatInterface still rendered (just with 'input-only' displayMode)
+ *   which causes a visible bottom chat bar area
  */
 
 import '@testing-library/jest-dom'
@@ -58,16 +58,20 @@ describe('SplitPaneLayout Mobile Chat Display Mode', () => {
     mockUseMediaQuery.mockReset()
   })
 
-  it('should always pass displayMode full on mobile in PDF mode with collapsed chat', async () => {
-    // The fix: displayMode is always 'full' on mobile — the ternary is removed entirely
+  it('should not render ChatInterface at all on mobile in PDF mode with collapsed chat', async () => {
+    // The fix: ChatInterface is wrapped with a condition that prevents rendering entirely
+    // when on mobile (!isDesktop) + PDF mode + chat collapsed
     const fs = await import('fs')
     const path = await import('path')
     const splitPanePath = path.join(process.cwd(), 'src/ui/web/components/split-pane-layout.tsx')
     const source = fs.readFileSync(splitPanePath, 'utf-8')
 
-    // Verify the ternary is gone and displayMode is always 'full'
-    const hasTernaryGone = /displayMode:\s*'full'/.test(source)
-    expect(hasTernaryGone).toBe(true)
+    // Verify the conditional guard is present: !( !isDesktop && viewMode === 'PDF' && !chatExpandedInPdf )
+    const hasConditionalGuard =
+      /!\(\s*!isDesktop\s*&&\s*viewMode\s*===\s*['"]PDF['"]\s*&&\s*!chatExpandedInPdf\s*\)/.test(
+        source,
+      )
+    expect(hasConditionalGuard).toBe(true)
 
     // Verify 'input-only' is no longer in the source
     const hasInputOnly = /input-only/.test(source)
