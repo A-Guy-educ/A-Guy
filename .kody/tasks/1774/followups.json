@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Add E2E test for signup validation",
+    "body": "Create a Playwright E2E test that verifies validation errors are displayed when submitting empty signup form. The test should: (1) Navigate to /signup, (2) Click Create Account without filling fields, (3) Verify error messages appear under each field. Currently no E2E test exists for this critical user flow.",
+    "rationale": "This bug would have been caught by an automated test. E2E tests for auth flows are essential for catching validation regressions.",
+    "priority": "high"
+  },
+  {
+    "title": "Investigate root cause of silent failure",
+    "body": "The fix adds defensive error handling, but the actual root cause of why validation errors weren't showing is unclear. The validateSignupForm function appears correct. Possible causes: (1) React state update batching issues, (2) Translation function returning undefined in some cases, (3) CSS/styling hiding error messages. Further investigation needed if bug persists.",
+    "rationale": "The defensive fix ensures errors are shown but doesn't explain the original behavior. Understanding the root cause would prevent similar bugs.",
+    "priority": "medium"
+  }
+]

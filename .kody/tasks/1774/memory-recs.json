@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "signup-validation-error-handling",
+    "hook": "Signup form validation needs try-catch to prevent silent failures",
+    "body": "The validateSignupForm function in SignupForm.tsx should be wrapped in try-catch to handle edge cases where it might throw or return unexpected results. Without this, validation failures can silently propagate and users see no error messages.",
+    "why": "The bug manifested as 'silent' failures - no errors shown. Adding defensive error handling ensures at minimum a toast error appears if validation itself throws.",
+    "confidence": 0.7
+  }
+]

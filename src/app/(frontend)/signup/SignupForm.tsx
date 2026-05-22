@@ -41,8 +41,16 @@ function SignupFormContent() {
 
     const formData = new FormData(event.currentTarget)
 
-    // Client-side validation
-    const clientErrors = validateSignupForm(formData, t)
+    // Client-side validation - wrap in try-catch to ensure errors are displayed
+    let clientErrors: Record<string, string> = {}
+    try {
+      clientErrors = validateSignupForm(formData, t)
+    } catch (error) {
+      console.error('Validation error:', error)
+      // Show generic error if validation itself throws
+      toast.error('Validation failed. Please check your input.')
+      return
+    }
 
     if (Object.keys(clientErrors).length > 0) {
       setErrors(clientErrors)
