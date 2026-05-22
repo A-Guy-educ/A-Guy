@@ -76,7 +76,7 @@ const chatConfigData = {
       capabilities: ['chat', 'validation'],
     },
     supportGeneration: {
-      gemini: 'gemini-3.1-pro',
+      gemini: 'gemini-2.5-flash',
       openaiCompatible: 'MiniMax-M2.1',
       maxOutputTokens: 4096,
       capabilities: ['chat', 'generation'],

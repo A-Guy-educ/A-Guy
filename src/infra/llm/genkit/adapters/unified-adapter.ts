@@ -11,6 +11,7 @@ export const __genkit_exports__ = true
  */
 import type { AIModel, AIModelKey } from '@/infra/llm/models'
 import type { UnifiedLLMProvider } from '@/infra/llm/providers/factory'
+import type { LLMProviderType } from '@/infra/llm/providers/types'
 import { getCircuitBreaker } from '@/infra/llm/providers/shared/circuit-breaker'
 import { LLMErrorCode } from '@/infra/llm/providers/shared/errors'
 import { withRetry } from '@/infra/llm/providers/shared/retry'
@@ -83,6 +84,12 @@ interface ChatCompletionInput {
    * @genkit-ai/googleai.
    */
   modelVersion?: string
+  /**
+   * Force a specific provider for this single call, bypassing the global
+   * `LLM_PROVIDER`. Used by features pinned to one provider (e.g. exercise
+   * generation → MiniMax) without flipping the whole app.
+   */
+  providerOverride?: LLMProviderType
 }
 
 /**
@@ -168,9 +175,14 @@ export async function createGenkitUnifiedAdapter(
      */
     generateChatCompletion: async (input: ChatCompletionInput, payloadInstance: Payload) => {
       const modelKey = input.model.modelKey || 'EXERCISE_CHAT'
-      const config = await resolveGenkitConfig(modelKey, tenantId, payloadInstance)
+      const config = await resolveGenkitConfig(
+        modelKey,
+        tenantId,
+        payloadInstance,
+        input.providerOverride,
+      )
 
-      const ai = await getGenkitInstance(payloadInstance, tenantId)
+      const ai = await getGenkitInstance(payloadInstance, tenantId, input.providerOverride)
 
       return circuitBreaker.execute(() =>
         withRetry(

@@ -1,0 +1,47 @@
+name: Generate-Exercises Live Smoke
+
+# Live smoke for the generate-exercises feature: makes real Gemini calls
+# end-to-end (model -> parse -> validate) for all exercise types.
+# Nightly only — not on PRs — since it costs money and is non-deterministic.
+
+on:
+  schedule:
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+
+jobs:
+  live-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL_ATLAS }}
+      DATABASE_URL_ATLAS: ${{ secrets.DATABASE_URL_ATLAS }}
+      USE_ATLAS: true
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET || 'test-secret-for-ci' }}
+      BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+      RUN_LIVE_LLM: '1'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run generate-exercises live smoke
+        run: >-
+          pnpm exec vitest run
+          tests/int/generate-exercises-live.int.spec.ts
+          --config ./vitest.config.mts

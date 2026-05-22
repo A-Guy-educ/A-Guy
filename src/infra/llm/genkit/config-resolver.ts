@@ -69,22 +69,28 @@ export async function resolveGenkitConfig(
   modelKey: AIModelKey,
   tenantId?: string,
   payload?: Payload,
+  providerOverride?: LLMProviderType,
 ): Promise<GenkitModelConfig> {
-  // 1. Check for runtime model name override from environment
-  const overrideName = getModelNameOverride(modelKey)
-  if (overrideName) {
-    const registryEntry = MODEL_REGISTRY[modelKey]
-    return {
-      model: overrideName,
-      temperature: registryEntry.temperature,
-      maxOutputTokens: registryEntry.maxOutputTokens,
+  // 1. Check for runtime model name override from environment.
+  //    Skipped when a provider is explicitly pinned for this call —
+  //    LLM_MODEL_OVERRIDE_* is a global, Gemini-oriented knob and would
+  //    otherwise return an unprefixed name routed to the wrong instance.
+  if (!providerOverride) {
+    const overrideName = getModelNameOverride(modelKey)
+    if (overrideName) {
+      const registryEntry = MODEL_REGISTRY[modelKey]
+      return {
+        model: overrideName,
+        temperature: registryEntry.temperature,
+        maxOutputTokens: registryEntry.maxOutputTokens,
+      }
     }
   }
 
   // 2. Determine provider type
   // Import dynamically to avoid circular dependency
   const { getProviderTypeFromEnv } = await import('../providers/factory')
-  const providerType = await getProviderTypeFromEnv(payload)
+  const providerType = providerOverride ?? (await getProviderTypeFromEnv(payload))
 
   // 3. Get provider-specific model name from ConfigValues or defaults
   let modelName: string

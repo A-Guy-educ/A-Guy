@@ -153,6 +153,12 @@ export interface UnifiedLLMProvider {
        * (e.g. `gemini-3.1-pro-preview` on @genkit-ai/googleai@1.28) work.
        */
       modelVersion?: string
+      /**
+       * Force a specific provider for this single call, bypassing the global
+       * `LLM_PROVIDER`. Lets one feature (e.g. exercise generation → MiniMax)
+       * use a different provider without flipping the whole app.
+       */
+      providerOverride?: import('./types').LLMProviderType
     },
     payload: Payload,
   ) => Promise<{
