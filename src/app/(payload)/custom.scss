@@ -28,6 +28,24 @@
 }
 
 // ============================================
+// Login Form - Fix narrow card on mobile viewports
+// ============================================
+// The login form was rendering in a cramped ~300px card at 375px mobile viewport.
+// Increase width and reduce padding on small screens for comfortable touch inputs.
+@media (max-width: 480px) {
+  .login {
+    max-width: 100% !important;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+
+    &__form {
+      max-width: 100% !important;
+      width: 100%;
+    }
+  }
+}
+
+// ============================================
 // Chat Scope - Tailwind utilities for ChatInterface in admin
 // ============================================
 
