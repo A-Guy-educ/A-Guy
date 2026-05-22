@@ -12,6 +12,8 @@ git activity belongs in `git log`, not here.
 
 - [User prefers concise answers](user-prefers-concise-answers.md) — The user explicitly stated a preference for short, simple answers in responses. (type: user)
 - [Kody does not address issues on goal branches directly](kody-does-not-address-issues-on-goal-branches-directly.md) — The Kody engine cannot directly address issues on goal branches; new work must be initiated from the default branch. (type: feedback)
+- [Dashboard Metrics Architecture](dashboard-metrics.md) — User activity tracked via UserStats; createdAt acts as first-active proxy; metrics include time-window breakdowns for active users, guests, conversion, and returns. (type: architecture)
+- [A-Guy memory system bootstrap smoke test](aguy-memory-bootstrap.md) — Verify A-Guy's memory-writer drains the inbox and files notes correctly. (type: lesson)
 
 - [Verdict: approve on CTO sync for #1573](verdict-cto-1573-sync-approve.md) — Operator approveed the CTO sync recommendation on task #1573 (by @aguyaharonyair). (type: verdict)
 
