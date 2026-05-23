@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "study-page-practice-default-lesson-type",
+    "hook": "Study page should default to 'practice' lesson type for consistency with Practice page",
+    "body": "When surfacing course content on the Study page (/study), use lessonType='practice' as the default to ensure consistency with the Practice page. The Study page was passing 'learning' explicitly to prefetchStudyData, causing it to return 0 lessons when the course only had 'practice' type lessons.\n\nWhy: The prefetchStudyData function defaults to 'practice' when no lessonType is passed. The Study page was the only caller passing an explicit 'learning' value, creating an inconsistency with the Practice page which relied on the default 'practice'. Both pages should surface the same course content.\n\nHow to apply: When modifying study-page.tsx or prefetchStudyData, ensure both Study and Practice pages use the same lessonType value (prefer 'practice' for consistency with existing Practice page behavior).",
+    "why": "This was the root cause of the bug — an asymmetric lessonType parameter causing different content on otherwise identical pages for the same course.",
+    "confidence": 0.95
+  }
+]

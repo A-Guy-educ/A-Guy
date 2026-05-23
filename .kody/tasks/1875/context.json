@@ -1,0 +1,15 @@
+{
+  "taskId": "1875",
+  "taskType": "issue",
+  "target": "GitHub issue #1875 — Study page shows no topics while Practice page shows lessons",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed the lesson type mismatch between Study and Practice pages by changing Study page to use 'practice' instead of 'learning'",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/study/page.tsx",
+    "tests/int/study-page-lesson-type.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/integration.jsonl"
+}
