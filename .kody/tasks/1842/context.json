@@ -1,0 +1,17 @@
+{
+  "taskId": "1842",
+  "taskType": "issue",
+  "target": "1842-p2-admin-api-status-dashboard-widget-shows-unknown",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed HealthBadge component to use correct API field (version instead of projectVersion)",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/components/HealthBadge.tsx",
+    "tests/int/health-badge.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-05-23T02:20:00Z",
+  "finishedAt": "2026-05-23T02:35:00Z"
+}
