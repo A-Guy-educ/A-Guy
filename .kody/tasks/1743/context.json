@@ -1,0 +1,18 @@
+{
+  "taskId": "1743",
+  "taskType": "issue",
+  "target": "1743-mobile-hide-prevnext-navigation-until-85-scroll-pr",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Implemented scroll-based navigation visibility: Prev/Next hidden until 85% scroll, then small arrow buttons appear centered at bottom",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/index.tsx",
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx",
+    "tests/unit/ui/lesson-navigation-scroll-visibility.test.tsx"
+  ],
+  "sessionLog": ".kody/sessions/1743-mobile-hide-prevnext-navigation-until-85-scroll-pr.jsonl",
+  "startedAt": "2026-05-22T06:03:00Z",
+  "finishedAt": "2026-05-22T06:14:50Z"
+}

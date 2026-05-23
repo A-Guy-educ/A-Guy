@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- #1581: Phase 7: Course data scope decision + brand smoke test ([#1757](https://github.com/A-Guy-educ/A-Guy/pull/1757)) — @aguyaharonyair · 🔄 QA (#1934)
+- #1812: [ExerciseWorksheet] Question label text should align vertically … ([#1815](https://github.com/A-Guy-educ/A-Guy/pull/1815)) — @aguyaharonyair
+- #1785: Remove bottom chat input bar from lesson page on mobile ([#1790](https://github.com/A-Guy-educ/A-Guy/pull/1790)) — @aguyaharonyair
+- #1741: [Mobile] Floating "שאל שאלה" button in bottom-left corner ([#1771](https://github.com/A-Guy-educ/A-Guy/pull/1771)) — @aguyaharonyair
+- #1767: [Mobile] No horizontal scroll in any lesson display mode ([#1768](https://github.com/A-Guy-educ/A-Guy/pull/1768)) — @aguyaharonyair
+- #1743: [Mobile] Hide Prev/Next navigation until 85% scroll progress ([#1766](https://github.com/A-Guy-educ/A-Guy/pull/1766)) — @aguyaharonyair
 - #1727: Enforce tenant isolation in checkout — block cross-tenant produc… ([#1731](https://github.com/A-Guy-educ/A-Guy/pull/1731)) — @aguyaharonyair
 - #1715: [Dashboard] וידג'ט הרשמות קורסים בדשבורד אדמין ([#1716](https://github.com/A-Guy-educ/A-Guy/pull/1716)) — @aguyaharonyair
 - #1733: Make pass-2 solution derivation per-block in lesson duplication ([#1735](https://github.com/A-Guy-educ/A-Guy/pull/1735)) — @aguyaharonyair
