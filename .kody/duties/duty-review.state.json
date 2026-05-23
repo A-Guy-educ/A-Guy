@@ -1,21 +1,22 @@
 {
   "version": 1,
-  "rev": 1,
+  "rev": 2,
   "cursor": "reviewed",
   "data": {
-    "lastRunISO": "2026-05-23T12:08:50Z",
-    "nextEligibleISO": "2026-05-23T18:08:50Z",
+    "lastRunISO": "2026-05-23T18:42:18Z",
+    "nextEligibleISO": "2026-05-24T00:42:18Z",
     "cycle": 1,
     "reviewed": [
-      "approval-gate"
+      "approval-gate",
+      "architecture-audit"
     ],
     "lastReviewed": {
-      "slug": "approval-gate",
+      "slug": "architecture-audit",
       "verdict": "broken"
     },
-    "lastFiredAt": "2026-05-23T12:08:54.080Z",
+    "lastFiredAt": "2026-05-23T18:42:27.477Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 88499
+    "lastDurationMs": 90129
   },
   "done": false
 }
