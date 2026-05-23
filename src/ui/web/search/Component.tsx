@@ -20,6 +20,12 @@ export const Search: React.FC = () => {
       <form
         onSubmit={(e) => {
           e.preventDefault()
+          // Immediately navigate on form submit (Enter or submit button)
+          // rather than waiting for debounce delay
+          const query = value.trim()
+          if (query) {
+            router.push(`/search?q=${encodeURIComponent(query)}`)
+          }
         }}
       >
         <Label htmlFor="search" className="sr-only">
@@ -27,6 +33,8 @@ export const Search: React.FC = () => {
         </Label>
         <Input
           id="search"
+          name="search"
+          value={value}
           onChange={(event) => {
             setValue(event.target.value)
           }}
