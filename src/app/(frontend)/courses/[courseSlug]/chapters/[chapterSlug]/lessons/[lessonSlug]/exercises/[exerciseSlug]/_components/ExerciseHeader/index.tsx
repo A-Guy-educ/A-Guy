@@ -3,7 +3,7 @@
 import { isRTL } from '@/i18n/config'
 import { cn } from '@/infra/utils/ui'
 import type { User } from '@/payload-types'
-import { TelescopeLogo } from '@/ui/web/TelescopeLogo'
+import { BrandLogo } from '@/ui/web/BrandLogo'
 import { UserDropdown } from '@/ui/web/UserDropdown'
 import { Button } from '@/ui/web/components/button'
 import { usePasswordLogin } from '@/ui/web/providers/PasswordLoginProvider'
@@ -75,7 +75,7 @@ export function ExerciseHeader({
         )}
       >
         {/* Logo - Hidden on mobile, shown on desktop */}
-        <TelescopeLogo className="h-8 w-auto hidden lg:flex" />
+        <BrandLogo className="h-8 w-auto hidden lg:flex" />
 
         {/* Hamburger menu - Shown on mobile, hidden on desktop */}
         {onMenuClick && (

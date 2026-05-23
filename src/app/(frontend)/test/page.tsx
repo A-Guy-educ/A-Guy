@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import { getSystemLocale } from '@/i18n/server-locale'
 import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
 import { GRADE_COOKIE_NAME } from '@/client/state/localStorage/userProfile'
+import { pageMetadata } from '@/infra/seo/pageMetadata'
 import { StudyContent } from '../study/_components/StudyContent'
 import { prefetchStudyData } from '@/server/repos/queries/study-page'
 
@@ -21,8 +22,8 @@ export default async function TestPage() {
 }
 
 export async function generateMetadata() {
-  return {
-    title: 'מבחן - A-Guy',
+  return pageMetadata({
+    title: 'מבחן',
     description: 'התכונן למבחנים',
-  }
+  })
 }

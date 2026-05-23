@@ -14,9 +14,9 @@ checks, and post one consolidated comment on the **Kody system audit**
 tracking issue so the operator sees it in the inbox. Purely diagnostic:
 never edits, re-kicks, or relabels anything outside posting the comment.
 
-**Cadence guard.** If `data.lastRunISO` is set and within the last 30
-minutes, exit with no comment and emit unchanged state. Otherwise
-proceed and set `data.lastRunISO` to now (UTC ISO) before emitting state.
+**Cadence.** Set by the `every:` frontmatter (the dashboard schedule
+dropdown) and enforced by the engine — the duty won't tick more often
+than its interval (default `every: 30m`).
 
 **Per tick (one action max):**
 
