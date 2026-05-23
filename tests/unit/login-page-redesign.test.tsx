@@ -9,13 +9,19 @@ import { I18nProvider } from '@/ui/web/providers/I18n'
 import { PasswordLoginProvider } from '@/ui/web/providers/PasswordLoginProvider'
 import enMessages from '../../src/i18n/en.json'
 import heMessages from '../../src/i18n/he.json'
+import { getBrand } from '@/brands'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mergedEnMessages: any = { ...enMessages, ...getBrand().messages.en }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mergedHeMessages: any = { ...heMessages, ...getBrand().messages.he }
 
 afterEach(() => {
   cleanup()
 })
 
 const renderWithI18n = (locale = 'en', children: React.ReactNode) => {
-  const messages = locale === 'he' ? heMessages : enMessages
+  const messages = locale === 'he' ? mergedHeMessages : mergedEnMessages
   return render(
     <I18nProvider locale={locale} messages={messages}>
       {children}
@@ -25,10 +31,9 @@ const renderWithI18n = (locale = 'en', children: React.ReactNode) => {
 
 describe('Login Page Redesign - i18n translations', () => {
   it('Hebrew translations contain all new login keys', () => {
-    const login = heMessages.auth.login as unknown as Record<string, string>
+    const login = mergedHeMessages.auth.login as unknown as Record<string, string>
     expect(login.headingBold).toBe('שלום,')
     expect(login.headingRest).toBe('מוכנים להצליח?')
-    expect(login.heroSubtitle).toBe('A-Guy המורה הפרטי שלכם')
     expect(login.quickLogin).toBe('כניסה מהירה')
     expect(login.freeRegistration).toBe('הרשמה ללא עלות')
     expect(login.secureAccess).toBe('גישה מהירה ומאובטחת.')
@@ -37,15 +42,24 @@ describe('Login Page Redesign - i18n translations', () => {
   })
 
   it('English translations contain all new login keys', () => {
-    const login = enMessages.auth.login as unknown as Record<string, string>
+    const login = mergedEnMessages.auth.login as unknown as Record<string, string>
     expect(login.headingBold).toBe('Hello,')
     expect(login.headingRest).toBe('Ready to Succeed?')
-    expect(login.heroSubtitle).toBe('A-Guy Your Personal Tutor')
     expect(login.quickLogin).toBe('Quick Login')
     expect(login.freeRegistration).toBe('Free Registration')
     expect(login.secureAccess).toBe('Fast and secure access.')
     expect(login.oneClickEntry).toBe("One click and you're in.")
     expect(login.needHelp).toBe('Need help?')
+  })
+
+  it('brand.heroSubtitle is present in merged English messages', () => {
+    const brand = mergedEnMessages.brand as Record<string, string>
+    expect(brand.heroSubtitle).toBe('A-Guy Your Personal Tutor')
+  })
+
+  it('brand.heroSubtitle is present in merged Hebrew messages', () => {
+    const brand = mergedHeMessages.brand as Record<string, string>
+    expect(brand.heroSubtitle).toBe('A-Guy המורה הפרטי שלכם')
   })
 })
 
@@ -85,7 +99,7 @@ describe('LoginPageContent', () => {
 describe('LoginForm - Google only mode (password disabled)', () => {
   const renderWithPasswordDisabled = (children: React.ReactNode) => {
     return render(
-      <I18nProvider locale="he" messages={heMessages}>
+      <I18nProvider locale="he" messages={mergedHeMessages}>
         <PasswordLoginProvider enabled={false}>{children}</PasswordLoginProvider>
       </I18nProvider>,
     )
@@ -130,7 +144,7 @@ describe('LoginForm - Google only mode (password disabled)', () => {
 describe('LoginForm - Password enabled mode', () => {
   const renderWithPasswordEnabled = (children: React.ReactNode) => {
     return render(
-      <I18nProvider locale="he" messages={heMessages}>
+      <I18nProvider locale="he" messages={mergedHeMessages}>
         <PasswordLoginProvider enabled={true}>{children}</PasswordLoginProvider>
       </I18nProvider>,
     )
@@ -171,7 +185,7 @@ describe('LoginForm - Password enabled mode', () => {
 describe('Functionality preservation', () => {
   it('registration link opens /signup in same window', () => {
     const { container } = render(
-      <I18nProvider locale="he" messages={heMessages}>
+      <I18nProvider locale="he" messages={mergedHeMessages}>
         <PasswordLoginProvider enabled={false}>
           <LoginForm />
         </PasswordLoginProvider>
