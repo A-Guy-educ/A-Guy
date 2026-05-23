@@ -1,6 +1,7 @@
 ---
 disabled: true
 staff: kody
+every: 1d
 ---
 
 # Coverage Floor
@@ -9,7 +10,7 @@ staff: kody
 
 Daily check that test coverage on `dev` (and `main`) hasn't fallen below the floor. Floor: **80% statements, 75% branches**. Triggers a Kody fix when the floor is breached.
 
-**Cadence guard.** If `data.lastRunISO` is set and within the last 20 hours, emit unchanged state and exit. Otherwise proceed and update `data.lastRunISO` to now.
+**Cadence.** Set by the `every:` frontmatter (the dashboard schedule dropdown) and enforced by the engine — the duty won't tick more often than its interval (default `every: 1d`).
 
 **Per tick (one action max):**
 
