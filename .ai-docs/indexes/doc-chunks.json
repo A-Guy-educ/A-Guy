@@ -1254,7 +1254,7 @@
     {
       "id": "AGENTS-kody-memory-protocol",
       "title": "Kody memory protocol",
-      "content": "You have a persistent memory at `.kody/memory/`. `INDEX.md` is the cheap\ntable of contents; read it at the start of any session and read individual\nmemory files only when they look relevant. Never edit memory files\ndirectly — they are owned by the `memory-writer` job.",
+      "content": "You have a persistent memory at `.kody/memory/`. `INDEX.md` is the cheap\ntable of contents; read it at the start of any session and read individual\nmemory files only when they look relevant. Never edit memory files\ndirectly — they are owned by the `task-memory-extractor` job.",
       "keywords": [
         "memory",
         "kody",
@@ -1276,45 +1276,23 @@
     {
       "id": "AGENTS-when-to-record-a-memory",
       "title": "When to record a memory",
-      "content": "- **Preference** — you learn how the operator wants kody to behave.\n- **Decision** — a non-obvious choice was made (and especially _why_).\n- **Lesson** — you tried something that broke or surprised you; future\n  sessions should not repeat it.\n- **Verdict** — an inbox approve / reject / dismiss happened (dashboard\n  writes these; you only do it from a chat where the operator gave a\n  verdict in words).\n\nIf the thing is already in the code, the commit history, or current\nsession context, don't bother — memory is for things that would\notherwise evaporate.",
+      "content": "- **Preference** — you learn how the operator wants kody to behave.\n- **Decision** — a non-obvious choice was made (and especially _why_).\n- **Lesson** — you tried something that broke or surprised you; future\n  sessions should not repeat it.\n\nIf the thing is already in the code, the commit history, or current\nsession context, don't bother — memory is for things that would\notherwise evaporate.",
       "keywords": [
         "memory",
-        "operator",
-        "verdict",
         "record",
         "preference",
         "learn",
+        "operator",
         "wants",
         "kody",
         "behave",
-        "decision"
+        "decision",
+        "non-obvious"
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
       "startLine": 1262,
-      "endLine": 1276,
-      "priority": 7
-    },
-    {
-      "id": "AGENTS-how-to-record-a-memory",
-      "title": "How to record a memory",
-      "content": "Drop a single JSON sticky note in `.kody/memory/inbox/`. The\n`memory-writer` job picks it up on its next tick (every 15m) and files\nit under `.kody/memory/<name>.md` with frontmatter, updating\n`INDEX.md`.\n\nSticky note shape (see `.kody/memory/inbox/README.md` for the full\ncontract):\n\n```json\n{\n  \"type\": \"preference | decision | lesson | verdict | architecture\",\n  \"name\": \"kebab-case-slug\",\n  \"title\": \"Human-readable title for INDEX.md\",\n  \"hook\": \"One-line hook for INDEX.md\",\n  \"body\": \"Full markdown content — no frontmatter.\",\n  \"source\": \"chat | executor:<name> | job:<slug> | dashboard:<action>\",\n  \"ts\": \"<UTC ISO timestamp>\",\n  \"links\": [\"other-memory-slug\"]\n}\n```\n\nFilename: `<utc-iso>-<source>-<short-uuid>.json` — must be unique so\nparallel writers never collide.\n\nCommit the sticky note (and only the sticky note) when you record. Do\n**not** also write `.kody/memory/<name>.md` yourself — that is the\nwriter job's territory and editing both at once will cause merge\nconflicts on the next tick.",
-      "keywords": [
-        "memory",
-        "sticky",
-        "note",
-        "kody",
-        "name",
-        "json",
-        "index",
-        "record",
-        "inbox",
-        "next"
-      ],
-      "category": "patterns",
-      "sourceFile": "AGENTS.md",
-      "startLine": 1276,
-      "endLine": 1307,
+      "endLine": 1273,
       "priority": 7
     },
     {
@@ -1335,8 +1313,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1307,
-      "endLine": 1314,
+      "startLine": 1273,
+      "endLine": 1280,
       "priority": 7
     },
     {
@@ -1357,8 +1335,8 @@
       ],
       "category": "patterns",
       "sourceFile": "AGENTS.md",
-      "startLine": 1314,
-      "endLine": 1351,
+      "startLine": 1280,
+      "endLine": 1317,
       "priority": 7
     },
     {
@@ -5395,8 +5373,8 @@
     }
   ],
   "metadata": {
-    "generatedAt": "2026-05-20T19:27:02.146Z",
-    "totalChunks": 273,
+    "generatedAt": "2026-05-20T20:22:40.573Z",
+    "totalChunks": 272,
     "sourceFiles": [
       "AGENTS.md",
       "DESIGN_SYSTEM.md",

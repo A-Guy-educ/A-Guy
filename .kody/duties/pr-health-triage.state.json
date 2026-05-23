@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "rev": 38,
+  "cursor": "idle",
+  "data": {
+    "prs": {
+      "1285": {
+        "fp": "sync|2026-05-23T06:27:46Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-23T08:18:05Z"
+      },
+      "1377": {
+        "fp": "sync|2026-05-23T06:25:17Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-23T08:18:08Z"
+      },
+      "1405": {
+        "fp": "sync|2026-05-23T06:28:24Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-23T08:18:11Z"
+      },
+      "1406": {
+        "fp": "sync|2026-05-23T06:28:20Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-23T08:18:13Z"
+      },
+      "1480": {
+        "fp": "sync|2026-05-23T06:28:13Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-23T08:18:16Z"
+      }
+    },
+    "lastFiredAt": "2026-05-23T08:19:06.878Z",
+    "lastOutcome": "completed",
+    "lastDurationMs": 78577
+  },
+  "done": false
+}
