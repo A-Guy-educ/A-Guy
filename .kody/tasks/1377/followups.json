@@ -1,1 +1,8 @@
-[]
+[
+  {
+    "title": "Preview Validation workflow 401 from fork context",
+    "body": "The 'Get PR number' step in .github/workflows/preview-validation.yml fails with 'Bad credentials' (401) when the workflow is triggered by a deployment_status event in a fork PR context. The workflow uses actions/github-script@v8 with context.payload.deployment.id from a base-repo deployment, but the fork's GITHUB_TOKEN cannot authenticate cross-repo. Fix: re-trigger deployment or ensure workflow runs from base repo context, not a fork.",
+    "rationale": "This is a known GitHub Actions limitation — fork GITHUB_TOKENs cannot access base repo resources. The workflow needs to run in the base repo with a token that has access to the deployment.",
+    "priority": "medium"
+  }
+]
