@@ -65,6 +65,10 @@ export const prefetchStudyData = cache(
               { status: { equals: 'published' } },
               { isActive: { equals: true } },
               { type: { equals: lessonType } },
+              // Filter out duplication artifacts: slugs containing "-copy" (from Payload
+              // built-in duplicate) or " - Copy" patterns. These are incomplete duplicates
+              // that should not be served to students.
+              { slug: { not_like: '-copy' } },
               ...(locale ? [localeWhereClause(locale)] : []),
             ],
           },
