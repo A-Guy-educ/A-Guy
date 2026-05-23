@@ -45,7 +45,7 @@ interface Transaction {
   product?: TransactionProduct
 }
 
-interface TransactionsResponse {
+interface RecentTransactionsResponse {
   docs: Transaction[]
 }
 
@@ -92,7 +92,7 @@ const RecentTransactionsWidget: React.FC = () => {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/api/collections/transactions?limit=5&sort=-createdAt&depth=2', {
+      const res = await fetch('/api/admin/transactions/recent?limit=5', {
         credentials: 'include',
       })
       if (!res.ok) {
@@ -102,7 +102,7 @@ const RecentTransactionsWidget: React.FC = () => {
         }
         throw new Error(`HTTP ${res.status}`)
       }
-      const json = (await res.json()) as TransactionsResponse
+      const json = (await res.json()) as RecentTransactionsResponse
       setTransactions(json.docs ?? [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')

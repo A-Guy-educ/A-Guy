@@ -1,0 +1,8 @@
+[
+  {
+    "title": "TransactionEditView also uses /api/collections/transactions directly",
+    "body": "The TransactionPaymentDetail component in src/ui/admin/TransactionEditView/index.tsx also fetches from /api/collections/transactions/{id} directly. This may also return 404 in certain contexts and should be migrated to a consistent admin API pattern.",
+    "rationale": "Same pattern issue as RecentTransactionsWidget - client-side fetches to Payload REST API may fail with 404 in admin context",
+    "priority": "low"
+  }
+]
