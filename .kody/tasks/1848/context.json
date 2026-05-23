@@ -1,0 +1,16 @@
+{
+  "taskId": "1848",
+  "taskType": "bug",
+  "target": "lesson-progress-not-persisted-re-entering-lesso",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed useExercisesPager handleStart to check existing progress before starting",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/useExercisesPager.ts"
+  ],
+  "sessionLog": ".kody/sessions/1848-p2-lesson-progress-not-persisted-re-entering-lesso.jsonl",
+  "startedAt": "2026-05-23T00:00:00Z",
+  "finishedAt": "2026-05-23T01:00:00Z"
+}

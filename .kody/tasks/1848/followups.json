@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Consider pre-fetching lesson progress on page load",
+    "body": "handleStart now fetches progress asynchronously when clicked. Consider pre-fetching progress when the ExercisesPager mounts so the resume position is immediately available without waiting for the fetch.",
+    "rationale": "Current implementation may cause brief flash of wrong exercise before correct one loads",
+    "priority": "low"
+  },
+  {
+    "title": "Handle edge case: exercises completed out of order",
+    "body": "The calculateResumeExerciseIndex formula derives position from completionPercentage, which only tracks how many exercises were completed (not which specific ones). If a user skips exercises, the resume position may be incorrect.",
+    "rationale": "The fix works for normal sequential completion but could be wrong if exercises were skipped",
+    "priority": "low"
+  }
+]

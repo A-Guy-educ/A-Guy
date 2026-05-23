@@ -43,6 +43,30 @@ function saveProgress(
   })
 }
 
+/**
+ * Calculate the next exercise index from completionPercentage.
+ *
+ * The completionPercentage is calculated when saving as:
+ *   pct = Math.round((visitedCount / totalExercises) * 100)
+ *
+ * To reverse this, we calculate:
+ *   visitedCount = Math.round((completionPercentage / 100) * totalExercises)
+ *
+ * The next exercise to resume is at index visitedCount (0-indexed),
+ * capped at totalExercises - 1 to handle the edge case where
+ * completionPercentage rounds up to totalExercises.
+ */
+function calculateResumeExerciseIndex(
+  completionPercentage: number,
+  totalExercises: number,
+): number {
+  if (totalExercises <= 0) return 0
+  if (completionPercentage <= 0) return 0
+
+  const visitedCount = Math.round((completionPercentage / 100) * totalExercises)
+  return Math.min(visitedCount, totalExercises - 1)
+}
+
 export function useExercisesPager({
   exercises,
   courseSlug,
@@ -250,14 +274,53 @@ export function useExercisesPager({
       setPageState({ type: 'outro', pageNumber: totalPages - 1 })
       return
     }
-    // Mark lesson as in_progress when starting exercises
-    saveProgress(gradeLevel, {
-      recordType: 'lesson',
-      recordId: lessonId,
-      completionPercentage: 0,
-      status: 'in_progress',
-    })
-    setPageState({ type: 'exercise', pageNumber: firstExercisePage, exerciseIndex: 0 })
+
+    // Fetch existing lesson progress to determine if we should resume
+    const progressUrl = `/api/progress?gradeLevel=${encodeURIComponent(gradeLevel)}&recordType=lesson&recordIds=${encodeURIComponent(lessonId)}`
+
+    fetch(progressUrl, { credentials: 'include' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data && data.data[lessonId]) {
+          const progress = data.data[lessonId]
+          if (progress.status === 'completed') {
+            // Lesson was already completed, go to outro
+            setPageState({ type: 'outro', pageNumber: totalPages - 1 })
+            return
+          }
+          if (progress.completionPercentage > 0) {
+            // Resume from the correct exercise based on saved progress
+            const exerciseIndex = calculateResumeExerciseIndex(
+              progress.completionPercentage,
+              exercises.length,
+            )
+            setPageState({
+              type: 'exercise',
+              pageNumber: firstExercisePage + exerciseIndex,
+              exerciseIndex,
+            })
+            return
+          }
+        }
+        // No existing progress or 0%, start fresh
+        saveProgress(gradeLevel, {
+          recordType: 'lesson',
+          recordId: lessonId,
+          completionPercentage: 0,
+          status: 'in_progress',
+        })
+        setPageState({ type: 'exercise', pageNumber: firstExercisePage, exerciseIndex: 0 })
+      })
+      .catch(() => {
+        // On error, start fresh
+        saveProgress(gradeLevel, {
+          recordType: 'lesson',
+          recordId: lessonId,
+          completionPercentage: 0,
+          status: 'in_progress',
+        })
+        setPageState({ type: 'exercise', pageNumber: firstExercisePage, exerciseIndex: 0 })
+      })
   }, [hasAboutPage, exercises.length, totalPages, firstExercisePage, lessonId, gradeLevel])
 
   const handleStartExercises = useCallback(() => {
@@ -265,14 +328,53 @@ export function useExercisesPager({
       setPageState({ type: 'outro', pageNumber: totalPages - 1 })
       return
     }
-    // Mark lesson as in_progress when starting exercises
-    saveProgress(gradeLevel, {
-      recordType: 'lesson',
-      recordId: lessonId,
-      completionPercentage: 0,
-      status: 'in_progress',
-    })
-    setPageState({ type: 'exercise', pageNumber: firstExercisePage, exerciseIndex: 0 })
+
+    // Fetch existing lesson progress to determine if we should resume
+    const progressUrl = `/api/progress?gradeLevel=${encodeURIComponent(gradeLevel)}&recordType=lesson&recordIds=${encodeURIComponent(lessonId)}`
+
+    fetch(progressUrl, { credentials: 'include' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data && data.data[lessonId]) {
+          const progress = data.data[lessonId]
+          if (progress.status === 'completed') {
+            // Lesson was already completed, go to outro
+            setPageState({ type: 'outro', pageNumber: totalPages - 1 })
+            return
+          }
+          if (progress.completionPercentage > 0) {
+            // Resume from the correct exercise based on saved progress
+            const exerciseIndex = calculateResumeExerciseIndex(
+              progress.completionPercentage,
+              exercises.length,
+            )
+            setPageState({
+              type: 'exercise',
+              pageNumber: firstExercisePage + exerciseIndex,
+              exerciseIndex,
+            })
+            return
+          }
+        }
+        // No existing progress or 0%, start fresh
+        saveProgress(gradeLevel, {
+          recordType: 'lesson',
+          recordId: lessonId,
+          completionPercentage: 0,
+          status: 'in_progress',
+        })
+        setPageState({ type: 'exercise', pageNumber: firstExercisePage, exerciseIndex: 0 })
+      })
+      .catch(() => {
+        // On error, start fresh
+        saveProgress(gradeLevel, {
+          recordType: 'lesson',
+          recordId: lessonId,
+          completionPercentage: 0,
+          status: 'in_progress',
+        })
+        setPageState({ type: 'exercise', pageNumber: firstExercisePage, exerciseIndex: 0 })
+      })
   }, [exercises.length, totalPages, firstExercisePage, lessonId, gradeLevel])
 
   useEffect(() => {
