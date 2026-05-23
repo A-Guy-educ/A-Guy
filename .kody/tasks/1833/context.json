@@ -1,0 +1,17 @@
+{
+  "taskId": "1833",
+  "taskType": "issue",
+  "target": "1833-p2-frontend-heartbeat-fetch-fails-repeatedly",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed heartbeat route to catch auth exceptions instead of crashing with 500",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/stats/heartbeat/route.ts",
+    "tests/int/stats-heartbeat.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1833.jsonl",
+  "startedAt": "2026-05-23T02:32:00.000Z",
+  "finishedAt": "2026-05-23T02:36:00.000Z"
+}

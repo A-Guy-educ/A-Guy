@@ -19,12 +19,19 @@ export async function POST(req: Request) {
   const payload = await getPayload({ config })
 
   // Auth check - return 401 if not authenticated
-  const authResult = await payload.auth({ headers: req.headers })
+  let authResult: { user: unknown }
+  try {
+    authResult = await payload.auth({ headers: req.headers })
+  } catch {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   if (!authResult.user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const userId = authResult.user.id
+  const user = authResult.user as { id: string }
+  const userId = user.id
 
   // Validate request body
   let body: unknown
