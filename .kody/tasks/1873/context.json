@@ -4,7 +4,7 @@
   "target": "1849-p2-ask-page-never-finishes-loading-stuck-on-loadin",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Fixed persist route to validate contextRef document existence before creating conversation. When contextKey value is not a valid existing document (e.g. test with unique suffix), contextRef is set to undefined/null and the conversation is created with contextKey only. This prevents Payload relationship validation from throwing HTTP 500.",
+  "reason": "Fixed persist route: conditionally include contextRef only when doc exists. Previously passed contextRef: undefined which Payload rejected as failing required validation, causing HTTP 500 instead of creating a valid conversation.",
   "prUrl": null,
   "runUrl": null,
   "filesTouched": [
@@ -12,5 +12,5 @@
   ],
   "sessionLog": null,
   "startedAt": "2026-05-23T21:30:00.000Z",
-  "finishedAt": "2026-05-23T22:55:00.000Z"
+  "finishedAt": "2026-05-23T23:25:00.000Z"
 }

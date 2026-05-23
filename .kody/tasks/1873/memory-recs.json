@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "type": "lesson",
+    "name": "payload-required-relationship-with-undefined",
+    "hook": "When Payload relationship field has required:true, passing undefined in data object still triggers validation failure",
+    "body": "In the persist route, contextRef was set to undefined when the referenced document didn't exist. The conversationData object was built with `contextRef,` always present (key in object, value undefined). Payload's required relationship validation runs even when value is undefined — the presence of the key in the data object is sufficient to trigger the required check.\n\nFix: Use conditional spread to only include the field when it has a truthy value. This pattern should be used whenever a Payload field has required:true and the value may be absent.",
+    "why": "The previous fix attempted to guard by setting contextRef=undefined when doc doesn't exist, but the object literal always included the key. Payload validates the presence of required fields regardless of undefined value in the data object.",
+    "confidence": 0.95
+  }
+]

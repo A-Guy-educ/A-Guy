@@ -111,14 +111,16 @@ export async function POST(request: NextRequest) {
         // Relationship validation will catch invalid collection names; proceed without contextRef
       }
 
-      const conversationData = {
+      const conversationData: Record<string, unknown> = {
         ...(guestSessionId ? { guestSession: guestSessionId } : { user: ownerId }),
-        contextRef,
         contextKey: validated.contextKey,
         preferredLocale: DEFAULT_CONTENT_LOCALE,
         messages: [],
         lastMessageAt: new Date().toISOString(),
         contextPolicyVersion: 'v1',
+      }
+      if (contextRef) {
+        conversationData.contextRef = contextRef
       }
 
       const newConversation = await payload.create({
