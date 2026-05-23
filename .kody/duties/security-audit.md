@@ -1,5 +1,6 @@
 ---
 staff: cto
+every: 1d
 ---
 
 # Security Audit
@@ -12,7 +13,7 @@ Daily **security posture sweep** — three layers, delegated to a Kody executabl
 2. **Code (OWASP Top 10 + STRIDE)** — review the codebase against the OWASP Top 10 and a STRIDE pass on auth/handlers/queries/external calls; every reported finding must carry a concrete exploit path.
 3. **Supply chain** — flag newly-added or version-jumped dependencies and any install/postinstall scripts.
 
-**Cadence guard.** If `data.lastRunISO` is set and within the last 20 hours, emit unchanged state and exit. Otherwise proceed and update `data.lastRunISO` to now (UTC ISO).
+**Cadence.** Set by the `every:` frontmatter (the dashboard schedule dropdown) and enforced by the engine — the duty won't tick more often than its interval (default `every: 1d`).
 
 **Per tick (one action max):**
 
