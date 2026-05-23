@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "lesson-type-mixed-chapter-index-bug",
+    "hook": "When chapters have mixed lesson types, filteredLessons count can cause off-by-one in startIndex",
+    "body": "The filteredLessons useMemo in StudyContent computes chapterGroups by filtering lessons of the correct type. However, if a chapter contains mixed lesson types (some matching, some not), the filtered count within that chapter differs from the total. This causes startIndex to be computed incorrectly for subsequent chapters, resulting in off-by-one lesson headings. Fix: sort filtered lessons by order field before mapping to ensure consistent ordering.",
+    "why": "Mixed lesson types within chapters is a valid data scenario that can occur when lessons have different types (practice/learning/exam). The off-by-one bug manifests in this case.",
+    "confidence": 0.85
+  }
+]

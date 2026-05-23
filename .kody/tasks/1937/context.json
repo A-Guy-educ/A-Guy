@@ -1,0 +1,15 @@
+{
+  "taskId": "1937",
+  "taskType": "bug",
+  "target": "practice page lesson card headings misaligned",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed off-by-one issue in StudyContent filteredLessons computation by adding explicit sort by order field and improved documentation of the bug",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/study/_components/StudyContent/index.tsx",
+    "tests/int/practice-lesson-card-headings-1937.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/d7257eba-a9a1-4837-9183-6e479249c4b6.jsonl"
+}

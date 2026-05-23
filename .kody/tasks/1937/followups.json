@@ -1,0 +1,8 @@
+[
+  {
+    "title": "E2E test for practice page lesson indices",
+    "body": "Add a Playwright E2E test that navigates to /practice, expands Chapter 2, and verifies each lesson card shows the correct heading (Lesson 4, Lesson 5, etc.)",
+    "rationale": "The integration test verifies the data operations work correctly, but an E2E test would catch visual rendering issues with lesson headings",
+    "priority": "medium"
+  }
+]
