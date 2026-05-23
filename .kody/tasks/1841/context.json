@@ -1,0 +1,17 @@
+{
+  "taskId": "1841",
+  "taskType": "issue",
+  "target": "1841-p2-admin-gravatar-images-blocked-by-content-securi",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added gravatar.com to img-src directive in next.config.js /admin CSP headers; test passes",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "next.config.js",
+    "tests/int/csp-admin-gravatar.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1841-p2-admin-gravatar-images-blocked-by-content-securi.jsonl",
+  "startedAt": "2026-05-23T01:28:00Z",
+  "finishedAt": "2026-05-23T01:31:00Z"
+}
