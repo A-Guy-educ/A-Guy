@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "rev": 8,
+  "rev": 9,
   "cursor": "idle",
   "data": {
     "prs": {},
-    "nextEligibleISO": "2026-05-23T16:38:55Z",
-    "lastFiredAt": "2026-05-23T16:36:13.286Z",
+    "nextEligibleISO": "2026-05-23T17:08:55Z",
+    "lastFiredAt": "2026-05-23T17:09:00.383Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 23082
+    "lastDurationMs": 23297
   },
   "done": false
 }
