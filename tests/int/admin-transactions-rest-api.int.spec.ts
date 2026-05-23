@@ -145,7 +145,9 @@ describe.skipIf(!hasDatabaseUrl)('GET /api/transactions — REST API endpoint', 
       params: Promise.resolve({ slug: ['transactions'] }),
     })) as Response
 
-    expect(res.status).toBe(401)
+    // Payload CMS returns 403 for any access denied (unauthenticated or unauthorized),
+    // not 401 — it does not distinguish between anonymous and authenticated-but-unauthorized
+    expect(res.status).toBe(403)
   })
 
   it('returns 403 for non-admin users', async () => {
