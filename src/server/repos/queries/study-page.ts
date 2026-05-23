@@ -74,6 +74,27 @@ export const prefetchStudyData = cache(
           depth: 2,
         })
         lessons = lessonsResult.docs
+
+        // Fall back to practice lessons when no learning lessons exist for the course
+        if (lessons.length === 0 && lessonType === 'learning') {
+          const fallbackResult = await payload.find({
+            collection: 'lessons',
+            where: {
+              and: [
+                { chapter: { in: chapterIds } },
+                { status: { equals: 'published' } },
+                { isActive: { equals: true } },
+                { type: { equals: 'practice' } },
+                ...(locale ? [localeWhereClause(locale)] : []),
+              ],
+            },
+            sort: 'order',
+            limit: 1000,
+            pagination: false,
+            depth: 2,
+          })
+          lessons = fallbackResult.docs
+        }
       }
 
       const lessonsByChapter: Record<string, Lesson[]> = {}
@@ -86,6 +107,41 @@ export const prefetchStudyData = cache(
           lessonsByChapter[chapterId].push(lesson)
         }
       })
+
+      // Fall back to practice lessons for chapters that have no learning lessons
+      if (lessonType === 'learning') {
+        const chaptersNeedingFallback = chapters.filter((ch) => !lessonsByChapter[ch.id]?.length)
+        if (chaptersNeedingFallback.length > 0) {
+          const fallbackChapterIds = chaptersNeedingFallback.map((ch) => ch.id)
+          const payload = await getPayload({ config: configPromise })
+          const fallbackResult = await payload.find({
+            collection: 'lessons',
+            where: {
+              and: [
+                { chapter: { in: fallbackChapterIds } },
+                { status: { equals: 'published' } },
+                { isActive: { equals: true } },
+                { type: { equals: 'practice' } },
+                ...(locale ? [localeWhereClause(locale)] : []),
+              ],
+            },
+            sort: 'order',
+            limit: 1000,
+            pagination: false,
+            depth: 2,
+          })
+          fallbackResult.docs.forEach((lesson) => {
+            const chapterId =
+              typeof lesson.chapter === 'string' ? lesson.chapter : lesson.chapter?.id
+            if (chapterId) {
+              if (!lessonsByChapter[chapterId]) {
+                lessonsByChapter[chapterId] = []
+              }
+              lessonsByChapter[chapterId].push(lesson)
+            }
+          })
+        }
+      }
 
       const chaptersWithLessons = chapters.map((chapter) => ({
         ...chapter,

@@ -56,9 +56,11 @@ export async function GET(request: NextRequest) {
     // Fetch all lessons for all chapters (batch query for efficiency)
     const chapterIds = chapters.map((chapter) => chapter.id)
     let lessons: Lesson[] = []
+    let lessonsByChapter: Record<string, Lesson[]> = {}
 
     if (chapterIds.length > 0) {
       const payload = await getPayload({ config: configPromise })
+
       const lessonsResult = await payload.find({
         collection: 'lessons',
         where: {
@@ -92,19 +94,68 @@ export async function GET(request: NextRequest) {
         depth: 2,
       })
       lessons = lessonsResult.docs
-    }
 
-    // Group lessons by chapter
-    const lessonsByChapter: Record<string, Lesson[]> = {}
-    lessons.forEach((lesson) => {
-      const chapterId = typeof lesson.chapter === 'string' ? lesson.chapter : lesson.chapter?.id
-      if (chapterId) {
-        if (!lessonsByChapter[chapterId]) {
-          lessonsByChapter[chapterId] = []
+      // Group lessons by chapter
+      lessons.forEach((lesson) => {
+        const chapterId = typeof lesson.chapter === 'string' ? lesson.chapter : lesson.chapter?.id
+        if (chapterId) {
+          if (!lessonsByChapter[chapterId]) {
+            lessonsByChapter[chapterId] = []
+          }
+          lessonsByChapter[chapterId].push(lesson)
         }
-        lessonsByChapter[chapterId].push(lesson)
+      })
+
+      // Fall back to practice lessons for chapters that have no learning lessons
+      if (lessonType === 'learning') {
+        const chaptersNeedingFallback = chapters.filter((ch) => !lessonsByChapter[ch.id]?.length)
+        if (chaptersNeedingFallback.length > 0) {
+          const fallbackChapterIds = chaptersNeedingFallback.map((ch) => ch.id)
+          const fallbackResult = await payload.find({
+            collection: 'lessons',
+            where: {
+              and: [
+                {
+                  chapter: {
+                    in: fallbackChapterIds,
+                  },
+                },
+                {
+                  status: {
+                    equals: 'published',
+                  },
+                },
+                {
+                  isActive: {
+                    equals: true,
+                  },
+                },
+                {
+                  type: {
+                    equals: 'practice',
+                  },
+                },
+                ...(locale ? [localeWhereClause(locale)] : []),
+              ],
+            },
+            sort: 'order',
+            limit: 1000,
+            pagination: false,
+            depth: 2,
+          })
+          fallbackResult.docs.forEach((lesson) => {
+            const chapterId =
+              typeof lesson.chapter === 'string' ? lesson.chapter : lesson.chapter?.id
+            if (chapterId) {
+              if (!lessonsByChapter[chapterId]) {
+                lessonsByChapter[chapterId] = []
+              }
+              lessonsByChapter[chapterId].push(lesson)
+            }
+          })
+        }
       }
-    })
+    }
 
     // Attach lessons to chapters
     const chaptersWithLessons = chapters.map((chapter) => ({
