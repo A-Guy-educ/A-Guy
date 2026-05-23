@@ -423,18 +423,18 @@ export function StudyContent({
           )}
 
           {/* Footer actions */}
-          <div className="mt-16 pt-8 border-t border-border/40 bg-gradient-to-b from-muted/10 to-transparent rounded-2xl p-content-gap-lg -mx-4 px-4">
+          <div className="mt-16 pt-8 border-t border-border">
             <div className="flex flex-wrap justify-center items-center gap-content-gap">
               <SystemLink
                 href="/stats"
-                className="flex items-center justify-center gap-2 text-body-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all"
+                className="flex items-center justify-center gap-content-gap-xs text-body-sm font-bold text-foreground bg-card border border-border px-6 py-3 rounded-full hover:bg-muted/50 transition-all duration-normal"
               >
                 <BarChart3 className="w-4 h-4" />
                 {t('statsAndPerformance')}
               </SystemLink>
               <SystemLink
                 href="/study-plan"
-                className="flex items-center justify-center gap-2 text-body-sm font-bold text-primary-foreground bg-primary px-6 py-3 rounded-full shadow-elevation-3 hover:opacity-90 transition-all"
+                className="flex items-center justify-center gap-content-gap-xs text-body-sm font-bold text-primary-foreground bg-primary px-6 py-3 rounded-full shadow-elevation-3 hover:opacity-90 transition-all duration-normal"
               >
                 <GraduationCap className="w-4 h-4" />
                 {t('upcomingExam')}
