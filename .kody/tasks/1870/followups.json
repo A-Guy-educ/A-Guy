@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Consider merging exercise-level and lesson-level progress logic",
+    "body": "The fix now prefers lesson-level completionPercentage over exercise-level calculation. A future refactor could merge both: use exercise-level counts when available, fall back to lesson-level for block-based lessons.",
+    "rationale": "The current code has two parallel paths (exercise-based and lesson-level). Merging them would simplify the logic.",
+    "priority": "low"
+  }
+]

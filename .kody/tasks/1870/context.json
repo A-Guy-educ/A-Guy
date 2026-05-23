@@ -1,0 +1,15 @@
+{
+  "taskId": "1870",
+  "taskType": "issue",
+  "target": "1870-p3-lesson-card-shows-0-progress-but-interactive-ta",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed buildLessonProgressMap to use lesson-level completionPercentage for block-based lessons",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/courses/[courseSlug]/page.tsx",
+    "tests/int/lesson-progress-block-based.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1870-p3-lesson-card-shows-0-progress-but-interactive-ta.jsonl"
+}
