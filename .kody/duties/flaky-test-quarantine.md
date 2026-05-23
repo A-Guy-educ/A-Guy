@@ -1,6 +1,7 @@
 ---
 disabled: true
 staff: kody
+every: 1d
 ---
 
 # Flaky Test Quarantine
@@ -9,7 +10,7 @@ staff: kody
 
 Detect and quarantine flaky tests by watching CI failure patterns on `dev` and `main`.
 
-**Cadence guard.** If `data.lastRunISO` is set and within the last 20 hours, emit unchanged state and exit. Otherwise proceed and update `data.lastRunISO` to now (UTC ISO).
+**Cadence.** Set by the `every:` frontmatter (the dashboard schedule dropdown) and enforced by the engine — the duty won't tick more often than its interval (default `every: 1d`).
 
 **Per tick (one action max):**
 
