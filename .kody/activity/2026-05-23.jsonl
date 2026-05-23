@@ -1,1 +1,2 @@
 {"ts":"2026-05-23T08:55:00.285Z","action":"Ran duty: PR health","duty":"pr-health-triage","dutyTitle":"PR health","staff":"cto","staffTitle":"CTO","trigger":"manual","outcome":"completed","durationMs":65771,"runUrl":"https://github.com/A-Guy-educ/A-Guy/actions/runs/26328570912"}
+{"ts":"2026-05-23T09:15:37.768Z","action":"Ran duty: PR health","duty":"pr-health-triage","dutyTitle":"PR health","staff":"cto","staffTitle":"CTO","trigger":"schedule","outcome":"failed","durationMs":219525,"runUrl":"https://github.com/A-Guy-educ/A-Guy/actions/runs/26328919501"}
