@@ -310,6 +310,13 @@ export function StudyContent({
           <div className="max-w-5xl mx-auto text-center">
             <ExamReminderBubble courseId={courseInfo?.courseId ?? ''} />
 
+            {/* Grade badge */}
+            {courseInfo?.courseLabel && (
+              <span className="text-body-sm md:text-body-md font-extrabold text-primary uppercase tracking-[0.3em]">
+                {t('grade')} {courseInfo.courseLabel}
+              </span>
+            )}
+
             <h1 className="text-heading-xl md:text-4xl font-black text-foreground mt-4 section-accent inline-block">
               {sectionTitle}
             </h1>
