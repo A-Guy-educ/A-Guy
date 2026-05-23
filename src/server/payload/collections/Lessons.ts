@@ -56,8 +56,13 @@ export const Lessons: CollectionConfig = {
         // When title changes → always regenerate slug from the new title
         // When no slug → generate from title
         // Otherwise → keep slug as-is (including " - Copy" from duplication)
+        // BUG FIX (issue #1904): strip " - Copy" suffix before slug generation.
+        // This prevents ugly slugs like "power---copy" when duplicating "Power".
+        // The duplication flow (deepCloneLesson) sets title "Original - Copy"
+        // which would otherwise produce a slug with "copy" or "---" artifacts.
         if (titleChanged || (!data.slug && title)) {
-          data.slug = await formatSlugAsync(title)
+          const cleanTitle = title?.endsWith(' - Copy') ? title.slice(0, -7) : title
+          data.slug = await formatSlugAsync(cleanTitle ?? '')
         } else if (data.slug) {
           data.slug = data.slug.trim()
         }
