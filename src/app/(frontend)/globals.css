@@ -408,7 +408,7 @@ html[data-theme='light'] {
   }
 
   table {
-    @apply w-full border-collapse my-4;
+    @apply w-full border-collapse my-4 overflow-x-auto;
 
     th,
     td {

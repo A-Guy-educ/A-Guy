@@ -51,7 +51,6 @@
     }
   },
   "home": {
-    "title": "Home - A-Guy",
     "description": "Your digital teacher - learning, practice, questions and exams"
   },
   "common": {
@@ -109,17 +108,14 @@
       }
     },
     "login": {
-      "title": "Welcome to A-Guy",
       "subtitle": "Sign in to continue learning",
       "headingBold": "Hello,",
       "headingRest": "Ready to Succeed?",
-      "heroSubtitle": "A-Guy Your Personal Tutor",
       "quickLogin": "Quick Login",
       "freeRegistration": "Free Registration",
       "secureAccess": "Fast and secure access.",
       "oneClickEntry": "One click and you're in.",
       "needHelp": "Need help?",
-      "googleOnlyMessage": "A-Guy currently supports Google authentication for a faster, more secure experience.",
       "email": "Email",
       "emailPlaceholder": "you@example.com",
       "password": "Password",
@@ -505,7 +501,6 @@
     "statusInProgress": "In Progress",
     "statusNotStarted": "Not Started",
     "moreCourses": "More courses",
-    "platformName": "Aguy Learning Platform",
     "loading": "Loading...",
     "deleteConversation": "Delete conversation",
     "deleteConfirm": "Are you sure you want to delete this conversation?"
@@ -649,7 +644,6 @@
       "questionnaire572Description": "Vectors, complex numbers and logarithms"
     },
     "footer": {
-      "platform": "A-Guy Learning Platform",
       "terms": "Terms of Use",
       "privacy": "Privacy Policy",
       "contact": "Contact Us"

@@ -1,0 +1,8 @@
+[
+  {
+    "title": "E2E test floating button in fullscreen mode",
+    "body": "Verify the floating button persists and moves to center when Prev/Next navigation appears at 85% scroll. The isCentered prop is wired, but end-to-end testing is needed.",
+    "rationale": "Issue requirement states button must persist in fullscreen mode.",
+    "priority": "medium"
+  }
+]

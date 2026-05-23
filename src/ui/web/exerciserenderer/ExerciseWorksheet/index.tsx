@@ -155,10 +155,9 @@ function renderBlockWithLabel({
     const inner = renderBlockContent({ block, mediaMap, sideBySideLayout, hideLatexBlocks })
     return {
       block: (
-        <>
-          <WorksheetQuestionLabel label={label} dir={isRtl ? 'rtl' : 'ltr'} />
+        <WorksheetQuestionLabel label={label} dir={isRtl ? 'rtl' : 'ltr'}>
           {inner}
-        </>
+        </WorksheetQuestionLabel>
       ),
       incremented: true,
     }
@@ -292,13 +291,14 @@ function renderBlockContent({
 interface WorksheetQuestionLabelProps {
   label: string
   dir: 'ltr' | 'rtl'
+  children?: React.ReactNode
 }
 
-function WorksheetQuestionLabel({ label, dir }: WorksheetQuestionLabelProps) {
+function WorksheetQuestionLabel({ label, dir, children }: WorksheetQuestionLabelProps) {
   return (
     <div
       className={cn(
-        'w-full flex items-center mb-3',
+        'w-full flex items-center',
         dir === 'rtl'
           ? 'justify-end text-right flex-row-reverse gap-content-gap-xs'
           : 'justify-start text-left gap-content-gap-xs',
@@ -307,6 +307,7 @@ function WorksheetQuestionLabel({ label, dir }: WorksheetQuestionLabelProps) {
       <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-primary/10 border border-primary/20">
         <span className="font-extrabold text-body-sm text-primary">{label}</span>
       </div>
+      {children}
     </div>
   )
 }
@@ -564,7 +565,7 @@ function WorksheetMedia({
       <img
         src={src}
         alt={media.alt || media.filename || ''}
-        className="max-h-96 w-auto object-contain"
+        className="max-h-96 w-auto max-w-full object-contain"
       />
     </figure>
   )

@@ -36,7 +36,7 @@ export function ConsolidatedLatexLessonView({
       primaryContent={
         <div className="flex h-full flex-col">
           {headerSlot}
-          <div className="flex-1 overflow-auto bg-gradient-to-b from-muted via-muted to-border/40 py-section-md px-4 print:bg-background print:overflow-visible print:p-0">
+          <div className="flex-1 overflow-auto max-w-full bg-gradient-to-b from-muted via-muted to-border/40 py-section-md px-4 print:bg-background print:overflow-visible print:p-0">
             <article className="mx-auto max-w-[794px] overflow-hidden rounded-md border border-border bg-card shadow-modal print:shadow-none print:border-0 print:rounded-none print:max-w-full">
               <header className="flex items-center justify-between border-b border-border/60 bg-card px-12 py-3 print:hidden">
                 <span className="truncate text-body-sm font-medium text-muted-foreground">

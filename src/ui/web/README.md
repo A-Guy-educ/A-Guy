@@ -105,7 +105,7 @@ ui/web/
 │   │   ├── Heading.tsx
 │   │   └── Text.tsx
 │   └── TypingAnimation/       # Typing effect
-└── TelescopeLogo/             # Logo
+└── BrandLogo.tsx             # Generic brand logo consumer
 ```
 
 ## Exercise Renderer (Core Feature)
