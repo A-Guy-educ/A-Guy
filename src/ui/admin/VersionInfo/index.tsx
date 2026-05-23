@@ -2,18 +2,15 @@
 
 import React from 'react'
 
-// Version from package.json - fallback to 'dev' if not available
-const VERSION = process.env.NEXT_PUBLIC_APP_VERSION || 'dev'
+// Version from package.json - read at build time for consistency
+import { version } from '../../../../package.json'
 
 /**
  * VersionInfo component for admin footer
- * Displays version and build date from package.json and environment
+ * Displays version and build date from package.json
  * @ai-summary Version/build date display for admin footer
  */
 export const VersionInfo: React.FC = () => {
-  // Read version from environment variable or use fallback
-  const version = VERSION
-
   // Read build date from environment variable or use current date
   const buildDate = process.env.BUILD_DATE || new Date().toISOString().split('T')[0]
 
