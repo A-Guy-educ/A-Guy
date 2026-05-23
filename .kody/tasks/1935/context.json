@@ -1,0 +1,14 @@
+{
+  "taskId": "1935",
+  "taskType": "issue",
+  "target": "1935-p1-admin-avatars-blocked-by-csp-gravatar-domain-no",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added www.gravatar.com to img-src CSP directive for /admin routes",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": ["next.config.js", "tests/int/csp-vercel-feedback-admin.int.spec.ts"],
+  "sessionLog": ".kody/sessions/1935-p1-admin-avatars-blocked-by-csp-gravatar-domain-no.jsonl",
+  "startedAt": "2026-05-23T17:40:00Z",
+  "finishedAt": "2026-05-23T17:44:00Z"
+}
