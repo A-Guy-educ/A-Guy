@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "zod-schema-backend-limit-must-match-frontend",
+    "hook": "Backend Zod schema max() must track frontend practical limits",
+    "body": "When a frontend operation (sendContextualHelp) can produce messages far larger than the frontend's visible input limit (e.g. formatExerciseContextMessage produces ~2000 chars, wrapped in a prompt to ~2250 chars), the backend Zod schema max() must be set to accommodate the practical maximum — not just the visible input field limit. The previous max(1000) caused a 400 on contextual help calls while normal user messages (<1000 chars) worked fine.",
+    "why": "This bug was a silent regression — the UI worked fine (exercise feedback displayed) but the AI help silently failed. It would have been caught by an integration test with a realistic exercise context.",
+    "confidence": 0.9
+  }
+]

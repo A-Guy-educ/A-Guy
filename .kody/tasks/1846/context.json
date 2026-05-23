@@ -1,0 +1,17 @@
+{
+  "taskId": "1846",
+  "taskType": "issue",
+  "target": "GitHub issue #1846: [P1] Exercise answer check triggers 400 on /api/agent/chat/stream",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed Zod schema max(1000) to max(5000) in chat request validation. The sendContextualHelp prompt includes full exercise context (~2000 chars from formatExerciseContextMessage) plus prefix/suffix (~250 chars), totaling ~2250 chars, which exceeded the old 1000-char server limit.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/endpoints/agent/chat/request-validation.ts",
+    "tests/unit/server/services/api-service.test.ts"
+  ],
+  "sessionLog": ".kody/sessions/1846.jsonl",
+  "startedAt": "2026-05-22T23:30:00.000Z",
+  "finishedAt": "2026-05-22T23:57:00.000Z"
+}

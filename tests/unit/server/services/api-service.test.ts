@@ -145,5 +145,27 @@ describe('apiService', () => {
       const chunkTexts = events.filter((e) => e.type === 'chunk').map((e) => e.text)
       expect(chunkTexts).toEqual(['hello'])
     })
+
+    it('yields error event when server returns 400 (e.g. message too long for Zod schema)', async () => {
+      // Regression for #1846: sendContextualHelp sends prompts > 1000 chars (exercise context
+      // is ~2000 chars). The server Zod schema previously had max(1000) causing 400.
+      vi.mocked(fetch).mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            error: 'Invalid request',
+            details: [{ message: 'String must be at most 1000 characters' }],
+          }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } },
+        ),
+      )
+
+      // Use a message longer than the old 1000-char limit but within the new 5000-char limit
+      const longMessage = 'A'.repeat(1500)
+      const events = await collectChunks(
+        apiService.chatStream(longMessage, 'ack', { exerciseId: 'ex-1', lessonId: 'lesson-1' }),
+      )
+
+      expect(events).toContainEqual({ type: 'error', error: 'Invalid request' })
+    })
   })
 })

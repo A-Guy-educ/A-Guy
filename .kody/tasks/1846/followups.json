@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Add integration test for oversized message to /api/agent/chat/stream",
+    "body": "The new unit test in api-service.test.ts verifies that the client correctly propagates a 400 error from the server. However, it cannot verify that the server NOW accepts messages >1000 chars (since it mocks the API). Add an integration test (in tests/int/agent-chat-streaming.int.spec.ts or a new file) that calls the actual route with a message >1000 chars and asserts it does NOT return 400.",
+    "rationale": "The unit test is a proxy test — it doesn't actually test the fix (schema max change). A real integration test with a 1500+ char message would directly verify the fix.",
+    "priority": "medium"
+  }
+]
