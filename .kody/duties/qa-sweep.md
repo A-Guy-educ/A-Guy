@@ -1,5 +1,5 @@
 ---
-every: 1h
+every: 1d
 staff: qa
 mentions: aguyaharonyair
 ---
@@ -21,10 +21,9 @@ target URL, and `.kody/qa-guide.md` carries login credentials + the route list,
 so `qa-engineer` can log in and browse. Flip to `disabled: false` to go live; no
 other setup needed.
 
-**Cadence guard.** A full sweep is the most expensive QA run. If
-`data.lastRunISO` is set and within the last 24 hours, emit unchanged state and
-exit. Otherwise proceed and set `data.lastRunISO` to now (UTC ISO). (`every: 1h`
-just wakes it; the guard makes it sweep ~once/day.)
+**Cadence.** Set by the `every:` frontmatter (the dashboard schedule dropdown)
+and enforced by the engine — the duty won't tick more often than its interval.
+A full sweep is the most expensive QA run, so the default is daily (`every: 1d`).
 
 **One run in flight at a time.**
 
@@ -39,7 +38,7 @@ just wakes it; the guard makes it sweep ~once/day.)
    close the tracking issue, clear `data.openIssue`.
 4. **Open, ≥ 2h old, no report** → comment the stall, close it, clear state
    (the next eligible tick re-runs). A stuck sweep must never wedge the job.
-5. **Otherwise** (cadence guard passed, none open) → open a tracking issue and
+5. **Otherwise** (none open) → open a tracking issue and
    dispatch with no scope (URL resolves from `qa.fallbackUrl`):
    ```
    gh issue create --title "QA sweep $(date -u +%Y-%m-%d)" --label kody:qa-sweep \
