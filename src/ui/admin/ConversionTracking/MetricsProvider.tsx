@@ -31,10 +31,15 @@ const MetricsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) 
   const fetchMetrics = useCallback(async () => {
     setLoading(true)
     setError(null)
+    const controller = new AbortController()
+    const TIMEOUT_MS = 30_000
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS)
     try {
       const res = await fetch(`/api/admin/dashboard-metrics?period=${period}`, {
         credentials: 'include',
+        signal: controller.signal,
       })
+      clearTimeout(timeoutId)
       if (!res.ok) {
         if (res.status === 403) {
           setError('admin-only')
@@ -45,8 +50,13 @@ const MetricsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) 
       const json = (await res.json()) as DashboardMetricsResponse
       setData(json)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('timeout')
+      } else {
+        setError(err instanceof Error ? err.message : 'Unknown error')
+      }
     } finally {
+      clearTimeout(timeoutId)
       setLoading(false)
     }
   }, [period])
