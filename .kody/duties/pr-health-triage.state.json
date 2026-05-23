@@ -1,36 +1,36 @@
 {
   "version": 1,
-  "rev": 28,
+  "rev": 33,
   "cursor": "idle",
   "data": {
     "prs": {
       "1285": {
-        "fp": "sync|2026-05-22T19:39:02Z",
+        "fp": "sync|2026-05-22T22:54:57Z",
         "stage": "sync-auto",
-        "lastActAt": "2026-05-22T20:57:32Z"
+        "lastActAt": "2026-05-22T23:52:39Z"
       },
       "1377": {
-        "fp": "sync|2026-05-22T19:39:15Z",
+        "fp": "sync|2026-05-22T22:55:15Z",
         "stage": "sync-auto",
-        "lastActAt": "2026-05-22T20:57:34Z"
-      },
-      "1406": {
-        "fp": "sync|2026-05-22T19:39:26Z",
-        "stage": "sync-auto",
-        "lastActAt": "2026-05-22T20:57:38Z"
+        "lastActAt": "2026-05-22T23:52:42Z"
       },
       "1480": {
-        "fp": "sync|2026-05-22T19:42:27Z",
+        "fp": "sync|2026-05-22T22:58:23Z",
         "stage": "sync-auto",
-        "lastActAt": "2026-05-22T20:57:40Z"
+        "lastActAt": "2026-05-22T23:52:46Z"
       },
-      "1553": {
-        "fp": "sync|2026-05-22T19:01:18Z",
+      "1483": {
+        "fp": "sync|2026-05-22T22:59:25Z",
         "stage": "sync-auto",
-        "lastActAt": "2026-05-22T20:57:47Z"
+        "lastActAt": "2026-05-22T23:52:49Z"
+      },
+      "1547": {
+        "fp": "sync|2026-05-22T22:34:29Z",
+        "stage": "sync-auto",
+        "lastActAt": "2026-05-22T23:52:54Z"
       }
     },
-    "lastFiredAt": "2026-05-22T20:58:24.687Z"
+    "lastFiredAt": "2026-05-22T23:53:39.783Z"
   },
   "done": false
 }
