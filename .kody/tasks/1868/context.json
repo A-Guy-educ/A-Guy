@@ -1,0 +1,17 @@
+{
+  "taskId": "1868",
+  "taskType": "issue",
+  "target": "1868",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed grade badge layout in AskConversationGrid by integrating it into the page header inside <main>, removing orphaned GradeSection sibling component",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/ask/_components/AskConversationGrid/index.tsx",
+    "tests/int/ask-page-grade-badge.int.spec.ts"
+  ],
+  "sessionLog": null,
+  "startedAt": "2026-05-23T10:38:00.000Z",
+  "finishedAt": "2026-05-23T10:55:00.000Z"
+}
