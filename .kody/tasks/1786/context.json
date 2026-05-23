@@ -4,11 +4,12 @@
   "target": "1786-upgrade-floating-chat-button-with-expandable-input",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Implemented expandable input panel for floating chat button with smooth animation, math/formula button, media upload, and click-outside-to-close behavior",
-  "prUrl": null,
+  "reason": "Implemented expandable input panel for floating chat button with smooth animation, math/formula button, media upload, click-outside-to-close behavior, and quick-chat-submit event handling in ChatInterface",
+  "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/1816",
   "runUrl": null,
   "filesTouched": [
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/FloatingAskButton/index.tsx",
+    "src/ui/web/chat/ChatInterface/index.tsx",
     "tests/unit/components/FloatingAskButton.test.tsx",
     "tests/unit/components/FloatingAskButton-expandable.test.tsx"
   ],

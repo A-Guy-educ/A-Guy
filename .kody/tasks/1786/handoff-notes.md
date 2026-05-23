@@ -22,5 +22,4 @@ Replaced the simple FloatingAskButton with an expandable panel component:
 
 ### Known gaps (see followups.json)
 
-1. `quick-chat-submit` event has no listener — the message isn't actually sent to the chat
-2. Formula button toggles state but doesn't render the FormulaComposer popup
+1. Formula button toggles state but doesn't render the FormulaComposer popup (medium priority)
