@@ -1,0 +1,18 @@
+{
+  "taskId": "1894",
+  "taskType": "issue",
+  "target": "1894",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed exam→practice fallback in both prefetchStudyData and /api/chapters/by-grade route",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/repos/queries/study-page.ts",
+    "src/app/api/chapters/by-grade/route.ts",
+    "tests/int/study-page-exam-fallback.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1894.jsonl",
+  "startedAt": "2026-05-23T11:15:00Z",
+  "finishedAt": "2026-05-23T11:27:00Z"
+}

@@ -155,6 +155,56 @@ export async function GET(request: NextRequest) {
           })
         }
       }
+
+      // Fall back to practice lessons for chapters that have no exam lessons
+      if (lessonType === 'exam') {
+        const chaptersNeedingFallback = chapters.filter((ch) => !lessonsByChapter[ch.id]?.length)
+        if (chaptersNeedingFallback.length > 0) {
+          const fallbackChapterIds = chaptersNeedingFallback.map((ch) => ch.id)
+          const fallbackResult = await payload.find({
+            collection: 'lessons',
+            where: {
+              and: [
+                {
+                  chapter: {
+                    in: fallbackChapterIds,
+                  },
+                },
+                {
+                  status: {
+                    equals: 'published',
+                  },
+                },
+                {
+                  isActive: {
+                    equals: true,
+                  },
+                },
+                {
+                  type: {
+                    equals: 'practice',
+                  },
+                },
+                ...(locale ? [localeWhereClause(locale)] : []),
+              ],
+            },
+            sort: 'order',
+            limit: 1000,
+            pagination: false,
+            depth: 2,
+          })
+          fallbackResult.docs.forEach((lesson) => {
+            const chapterId =
+              typeof lesson.chapter === 'string' ? lesson.chapter : lesson.chapter?.id
+            if (chapterId) {
+              if (!lessonsByChapter[chapterId]) {
+                lessonsByChapter[chapterId] = []
+              }
+              lessonsByChapter[chapterId].push(lesson)
+            }
+          })
+        }
+      }
     }
 
     // Attach lessons to chapters
