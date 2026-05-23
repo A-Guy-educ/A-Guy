@@ -4,14 +4,13 @@
   "target": "1849-p2-ask-page-never-finishes-loading-stuck-on-loadin",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Fixed two failing integration tests: (1) updated message-length validation test to use 5001 chars now that schema max is 5000; (2) fixed persist test to use real lesson ID for contextRef instead of non-existent ID",
+  "reason": "Fixed persist route to validate contextRef document existence before creating conversation. When contextKey value is not a valid existing document (e.g. test with unique suffix), contextRef is set to undefined/null and the conversation is created with contextKey only. This prevents Payload relationship validation from throwing HTTP 500.",
   "prUrl": null,
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26343623530",
+  "runUrl": null,
   "filesTouched": [
-    "tests/int/chat-endpoint-validation.int.spec.ts",
-    "tests/int/message-persist.int.spec.ts"
+    "src/app/api/agent/message/persist/route.ts"
   ],
   "sessionLog": null,
   "startedAt": "2026-05-23T21:30:00.000Z",
-  "finishedAt": "2026-05-23T21:45:00.000Z"
+  "finishedAt": "2026-05-23T22:55:00.000Z"
 }

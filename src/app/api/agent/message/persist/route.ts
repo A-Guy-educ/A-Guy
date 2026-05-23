@@ -90,22 +90,40 @@ export async function POST(request: NextRequest) {
       const value =
         colonIndex !== -1 ? validated.contextKey.slice(colonIndex + 1) : validated.contextKey
 
+      // Validate that the referenced document actually exists before creating the conversation.
+      // This prevents Payload relationship validation errors (HTTP 500) when a non-existent
+      // document ID is passed (e.g., test scenarios with fake IDs or stale contextKey values).
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let contextRef: any = undefined
+      try {
+        const docExists = await payload.find({
+          collection: relationTo as any,
+          where: { id: { equals: value } },
+          limit: 1,
+          depth: 0,
+          user: user ?? undefined,
+          overrideAccess: !!guestSessionId,
+        })
+        if (docExists.docs.length > 0) {
+          contextRef = { relationTo, value }
+        }
+      } catch {
+        // Relationship validation will catch invalid collection names; proceed without contextRef
+      }
+
+      const conversationData = {
+        ...(guestSessionId ? { guestSession: guestSessionId } : { user: ownerId }),
+        contextRef,
+        contextKey: validated.contextKey,
+        preferredLocale: DEFAULT_CONTENT_LOCALE,
+        messages: [],
+        lastMessageAt: new Date().toISOString(),
+        contextPolicyVersion: 'v1',
+      }
+
       const newConversation = await payload.create({
         collection: 'conversations',
-        data: {
-          ...(guestSessionId ? { guestSession: guestSessionId } : { user: ownerId }),
-          contextRef: {
-            // ContextRef allows users/categories, but conversation creation only supports courses/chapters/lessons/exercises
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            relationTo: relationTo as any,
-            value,
-          },
-          contextKey: validated.contextKey,
-          preferredLocale: DEFAULT_CONTENT_LOCALE,
-          messages: [],
-          lastMessageAt: new Date().toISOString(),
-          contextPolicyVersion: 'v1',
-        },
+        data: conversationData as any,
         user: user ?? undefined,
         overrideAccess: !!guestSessionId,
       })
