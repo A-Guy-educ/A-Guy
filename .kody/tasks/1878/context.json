@@ -1,0 +1,17 @@
+{
+  "taskId": "1878",
+  "taskType": "issue",
+  "target": "1878",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added www.gravatar.com to img-src directive in admin routes CSP in next.config.js",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "next.config.js",
+    "tests/int/csp-admin-gravatar-1878.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/a8aaa464-d046-4fac-bfb5-3c6f7516c274.jsonl",
+  "startedAt": "2026-05-23T10:00:00.000Z",
+  "finishedAt": "2026-05-23T10:01:00.000Z"
+}
