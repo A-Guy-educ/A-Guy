@@ -205,35 +205,34 @@ export function SplitPaneLayout({
         </div>
       )}
 
-      <div
-        className={cn(
-          'bg-background flex flex-col overflow-hidden relative',
-          viewMode === 'CHAT' && 'flex-1',
-          viewMode === 'PDF' && !chatExpandedInPdf && 'flex-shrink-0 h-auto',
-          viewMode === 'PDF' && chatExpandedInPdf && 'flex-1',
-        )}
-      >
-        {React.cloneElement(
-          chatContent as React.ReactElement<{
-            onChatInteraction?: () => void
-            displayMode?: 'full' | 'input-only'
-            isMobile?: boolean
-            viewMode?: ViewMode
-            onModeToggle?: () => void
-          }>,
-          {
-            onChatInteraction: handleChatExpand,
-            displayMode:
-              viewMode === 'CHAT' || (viewMode === 'PDF' && chatExpandedInPdf)
-                ? 'full'
-                : ('input-only' as const),
-            isMobile: true,
-            viewMode,
-            onModeToggle: handleModeToggle,
-          },
-        )}
-        {isDragging && <div className="absolute inset-0 z-10" />}
-      </div>
+      {!(!isDesktop && viewMode === 'PDF' && !chatExpandedInPdf) && (
+        <div
+          className={cn(
+            'bg-background flex flex-col overflow-hidden relative',
+            viewMode === 'CHAT' && 'flex-1',
+            viewMode === 'PDF' && !chatExpandedInPdf && 'flex-shrink-0 h-auto',
+            viewMode === 'PDF' && chatExpandedInPdf && 'flex-1',
+          )}
+        >
+          {React.cloneElement(
+            chatContent as React.ReactElement<{
+              onChatInteraction?: () => void
+              displayMode?: 'full'
+              isMobile?: boolean
+              viewMode?: ViewMode
+              onModeToggle?: () => void
+            }>,
+            {
+              onChatInteraction: handleChatExpand,
+              displayMode: 'full',
+              isMobile: true,
+              viewMode,
+              onModeToggle: handleModeToggle,
+            },
+          )}
+          {isDragging && <div className="absolute inset-0 z-10" />}
+        </div>
+      )}
     </div>
   )
 }
