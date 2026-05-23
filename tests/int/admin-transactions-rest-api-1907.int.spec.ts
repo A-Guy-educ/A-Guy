@@ -132,7 +132,10 @@ describe.skipIf(!hasDatabaseUrl)('GET /api/transactions — REST API endpoint', 
     expect(res.status).toBe(200)
   })
 
-  it('returns 401 without auth', async () => {
+  // Note: Payload REST API returns 403 for both unauthenticated (no token) and
+  // non-admin authenticated requests. It does not distinguish with 401 vs 403
+  // the way custom /api/admin/dashboard-metrics endpoint does.
+  it('returns 403 without auth (Payload REST API does not return 401)', async () => {
     const handler = REST_GET(config)
 
     const req = new Request('http://localhost:3000/api/transactions?limit=5', {
@@ -145,7 +148,7 @@ describe.skipIf(!hasDatabaseUrl)('GET /api/transactions — REST API endpoint', 
       params: Promise.resolve({ slug: ['transactions'] }),
     })) as Response
 
-    expect(res.status).toBe(401)
+    expect(res.status).toBe(403)
   })
 
   it('returns 403 for non-admin users', async () => {
