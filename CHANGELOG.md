@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- #1812: [ExerciseWorksheet] Question label text should align vertically … ([#1815](https://github.com/A-Guy-educ/A-Guy/pull/1815)) — @aguyaharonyair
+- #1812: [ExerciseWorksheet] Question label text should align vertically … ([#1815](https://github.com/A-Guy-educ/A-Guy/pull/1815)) — @aguyaharonyair · 🔄 QA (#1843)
 - #1785: Remove bottom chat input bar from lesson page on mobile ([#1790](https://github.com/A-Guy-educ/A-Guy/pull/1790)) — @aguyaharonyair
 - #1741: [Mobile] Floating "שאל שאלה" button in bottom-left corner ([#1771](https://github.com/A-Guy-educ/A-Guy/pull/1771)) — @aguyaharonyair
 - #1767: [Mobile] No horizontal scroll in any lesson display mode ([#1768](https://github.com/A-Guy-educ/A-Guy/pull/1768)) — @aguyaharonyair
@@ -49,7 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat(lesson-duplication): Process Now button for manual orchestrator trigger ([#1624](https://github.com/A-Guy-educ/A-Guy/pull/1624)) — @aguyshayb
 - #1621: Export lesson + ordered exercises as JSON from admin ([#1625](https://github.com/A-Guy-educ/A-Guy/pull/1625)) — @aguyaharonyair
 - feat(lesson-duplication): Constrain Gemini output with Zod schemas ([#1602](https://github.com/A-Guy-educ/A-Guy/pull/1602)) — @aguyshayb
-- chore: Pin pnpm to 10.33.0 via packageManager field ([#1609](https://github.com/A-Guy-educ/A-Guy/pull/1609)) — @aguyaharonyair · 🔄 QA (#1817)
+- chore: Pin pnpm to 10.33.0 via packageManager field ([#1609](https://github.com/A-Guy-educ/A-Guy/pull/1609)) — @aguyaharonyair
 - #1595: [P2] Vercel feedback script blocked by CSP script-src directive … ([#1604](https://github.com/A-Guy-educ/A-Guy/pull/1604)) — @aguyaharonyair
 <!-- semantic-release will automatically update this file with each release -->
 
