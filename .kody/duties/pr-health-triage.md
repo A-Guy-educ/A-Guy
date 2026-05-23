@@ -1,6 +1,7 @@
 ---
 every: 15m
 staff: cto
+mentions: aguyaharonyair
 ---
 
 # PR health
@@ -82,7 +83,7 @@ One list call — never `gh` once per PR:
 
 ```
 gh pr list --state open --limit 100 \
-  --json number,title,headRefName,baseRefName,isDraft,mergeable,statusCheckRollup,updatedAt
+  --json number,title,headRefName,headRefOid,baseRefName,isDraft,mergeable,statusCheckRollup,updatedAt
 ```
 
 Skip draft PRs (`isDraft: true`) — they aren't ready for repair.
@@ -135,11 +136,10 @@ is always `@kody <verb> --pr <n>`.
 
 ## Comment formats
 
-**Operator handle.** Before posting the first recommendation comment of
-the tick, read `github.operator` from `kody.config.json`
-(`jq -r .github.operator kody.config.json`) — that GitHub login is the
-operator. Substitute it for `<operator>` below. The operator handle is
-never hardcoded in this job; future operators only change the config.
+**Operator handle.** The engine substitutes `{{mentions}}` (the duty's
+`mentions:` frontmatter) on the recommendation's first line. Use the literal
+token `{{mentions}}` below — never hardcode a handle or read it from config;
+future operators only change the duty's `mentions:` list in the dashboard.
 
 **Recommendation** (verb not graduated). One terse, machine-greppable
 comment. It MUST `@`-mention the operator on the first line (that mention
@@ -148,7 +148,7 @@ command on a single `kody-cmd` line (that is what the inbox **Approve**
 button posts verbatim):
 
 ```
-@<operator> 🧭 **CTO recommendation** — `<verb>`
+{{mentions}} 🧭 **CTO recommendation** — `<verb>`
 
 <one or two sentences: what's wrong with PR #<n> and what confirming will do>
 
@@ -160,7 +160,7 @@ _Confirm or dismiss this in the dashboard inbox. The CTO will not act on its own
 **Auto-run** (verb graduated). Post `@kody <verb> --pr <n>` on the PR,
 then a **separate, silent audit-trail** comment. It **MUST NOT
 `@`-mention the operator** — graduation means you've earned the right to
-act *without* interrupting them, and any `@<operator>` mention routes
+act *without* interrupting them, and any operator mention routes
 straight to their inbox and push, defeating the point. Leave the mention
 out so the comment is a quiet record only:
 
@@ -179,7 +179,7 @@ This is a silent record, not a notification and not an ask — do not
 
 ## Allowed Commands
 
-- `gh pr list --state open --limit 100 --json number,title,headRefName,baseRefName,isDraft,mergeable,statusCheckRollup,updatedAt`
+- `gh pr list --state open --limit 100 --json number,title,headRefName,headRefOid,baseRefName,isDraft,mergeable,statusCheckRollup,updatedAt`
   — the single enumeration call.
 - `gh api repos/{owner}/{repo}/compare/{base}...{head} --jq .behind_by`
   — only for non-conflicting, CI-green PRs, to measure staleness for `sync`.
@@ -207,8 +207,12 @@ per-tick:
 `data`:
 
 - `prs` (object) — keyed by PR number. Each value:
-  - `fp` (string) — fingerprint = `"<verb>|<updatedAt>"`. The dedup key:
-    only post a new comment when `fp` changes.
+  - `fp` (string) — fingerprint = `"<verb>|<headRefOid>"`. The dedup key:
+    only post a new comment when `fp` changes. Keyed on the branch head SHA,
+    **not** `updatedAt` — our own `@kody <verb>` comment bumps `updatedAt`,
+    which would make every acted-on PR re-fire next tick and starve the cap.
+    The head SHA only moves when the branch actually changes (including a
+    successful sync), which is exactly when the repair should re-evaluate.
   - `stage` (string) — one of: `fix-ci-recommended`, `sync-recommended`,
     `resolve-recommended`, `fix-ci-auto`, `sync-auto`, `resolve-auto`,
     `dismissed`.
@@ -236,7 +240,7 @@ prune entries for PRs no longer in the open list.
   "data": {
     "prs": {
       "<pr-number>": {
-        "fp": "<verb>|<updatedAt>",
+        "fp": "<verb>|<headRefOid>",
         "stage": "<verb>-recommended|<verb>-auto|dismissed",
         "lastActAt": "<iso>"
       }
