@@ -1,0 +1,8 @@
+[
+  {
+    "title": "LoginForm still uses raw telescope.svg via next/image",
+    "body": "src/app/(frontend)/login/LoginForm.tsx imports telescope.svg directly from @/brands/aguy/assets/telescope.svg and uses next/image to render it. This is different from BrandLogo which renders inline SVG. Consider whether LoginForm should use BrandLogo for consistency once BrandLogo supports size/priority props that LoginForm needs (it passes width/height to next/image).",
+    "rationale": "LoginForm passes specific dimensions (h-24, width=224, height=204) to next/image for the large login page logo. BrandLogo currently only accepts className. If we want to replace the raw SVG import in LoginForm too, BrandLogo would need to support priority and different sizing modes.",
+    "priority": "low"
+  }
+]
