@@ -159,6 +159,7 @@ describe('formatSlug integration with collections', () => {
       // Title "First Lesson" with a space-containing slug: the title doesn't
       // match the slug pattern (slugified title ≠ slug), so no regeneration.
       // Defense-in-depth catches the space and normalizes to URL-safe form.
+      // stripCopySuffix then removes any " - Copy" artifact left over.
       const mockData = { title: 'First Lesson', slug: 'first-lesson - Copy' }
       // @ts-expect-error - Hook has complex signature
       const result = await beforeChangeHook({
@@ -167,7 +168,7 @@ describe('formatSlug integration with collections', () => {
         req: mockReq,
       })
 
-      expect(result.slug).toBe('first-lesson-copy')
+      expect(result.slug).toBe('first-lesson')
     })
 
     it('should add numeric suffix when slug already exists', async () => {

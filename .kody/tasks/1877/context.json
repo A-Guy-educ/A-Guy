@@ -1,0 +1,18 @@
+{
+  "taskId": "1877",
+  "taskType": "bug",
+  "target": "1877-p3-lesson-url-slug-contains-unencoded-copy-artifac",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed lesson URL slug containing unencoded space and ' - Copy' artifact by adding stripCopySuffix() call in Lessons beforeChange hook",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/collections/Lessons.ts",
+    "tests/unit/collections/formatSlug-integration.test.ts",
+    "tests/int/lesson-slug-copy-artifact.int.spec.ts"
+  ],
+  "sessionLog": ".kody/runs/gh-26328993334-1/events.jsonl",
+  "startedAt": "2026-05-23T09:15:36Z",
+  "finishedAt": "2026-05-23T09:45:15Z"
+}

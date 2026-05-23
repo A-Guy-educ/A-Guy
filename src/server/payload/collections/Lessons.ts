@@ -7,7 +7,7 @@ import { adminOnly } from '../access/adminOnly'
 import { publishedAndActive } from '../access/publishedAndActive'
 import { contentStatusFields } from '../fields/contentStatus'
 import { createdByField } from '../fields/createdBy'
-import { formatSlug, formatSlugAsync } from '../fields/formatSlug'
+import { formatSlug, formatSlugAsync, stripCopySuffix } from '../fields/formatSlug'
 import { translatedFromField } from '../fields/translatedFrom'
 
 // Type for visibleRenderers field data
@@ -55,7 +55,7 @@ export const Lessons: CollectionConfig = {
 
         // When title changes → always regenerate slug from the new title
         // When no slug → generate from title
-        // Otherwise → keep slug as-is (including " - Copy" from duplication)
+        // Otherwise → keep slug as-is (stripCopySuffix cleans " - Copy" artifacts below)
         if (titleChanged || (!data.slug && title)) {
           data.slug = await formatSlugAsync(title)
         } else if (data.slug) {
@@ -68,6 +68,14 @@ export const Lessons: CollectionConfig = {
         // "Power - Copy" (from Payload's built-in duplicate) get reformatted.
         if (typeof data.slug === 'string' && /[^a-z0-9\-]/i.test(data.slug)) {
           data.slug = formatSlug(data.slug)
+        }
+
+        // Strip " - Copy" / "-copy" artifacts from the slug (e.g., from Payload's
+        // built-in duplicate). This runs after formatSlug so the copy suffix
+        // (converted to "-copy") is also removed, giving a clean base for the
+        // uniqueness check below.
+        if (typeof data.slug === 'string') {
+          data.slug = stripCopySuffix(data.slug)
         }
 
         // On create, always ensure uniqueness (handles duplication & conflicts)
