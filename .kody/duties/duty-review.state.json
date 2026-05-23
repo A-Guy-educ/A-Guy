@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "rev": 1,
+  "cursor": "reviewed",
+  "data": {
+    "lastRunISO": "2026-05-23T12:08:50Z",
+    "nextEligibleISO": "2026-05-23T18:08:50Z",
+    "cycle": 1,
+    "reviewed": [
+      "approval-gate"
+    ],
+    "lastReviewed": {
+      "slug": "approval-gate",
+      "verdict": "broken"
+    },
+    "lastFiredAt": "2026-05-23T12:08:54.080Z",
+    "lastOutcome": "completed",
+    "lastDurationMs": 88499
+  },
+  "done": false
+}
