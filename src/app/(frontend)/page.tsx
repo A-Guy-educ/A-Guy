@@ -4,6 +4,7 @@ import { RenderHero } from '@/ui/web/heros/RenderHero'
 import { PayloadRedirects } from '@/ui/web/PayloadRedirects'
 import type { Metadata } from 'next'
 import { cookies, headers } from 'next/headers'
+import { getBrand } from '@/brands'
 
 export default async function HomepagePage() {
   // Run redirects first - if no redirect applies, we'll fall through
@@ -83,12 +84,15 @@ async function getLocale(): Promise<string> {
 }
 
 async function getMessages(locale: string) {
-  try {
-    return (await import(`../../../src/i18n/${locale}.json`, { with: { type: 'json' } })).default
-  } catch {
-    return (await import(`../../../src/i18n/${defaultLocale}.json`, { with: { type: 'json' } }))
-      .default
-  }
+  const base = await import(`../../../src/i18n/${locale}.json`, { with: { type: 'json' } })
+    .then((m) => m.default)
+    .catch(() =>
+      import(`../../../src/i18n/${defaultLocale}.json`, { with: { type: 'json' } }).then(
+        (m) => m.default,
+      ),
+    )
+  const brand = getBrand().messages[locale as 'en' | 'he'] ?? {}
+  return { ...base, ...brand }
 }
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -112,7 +116,7 @@ export async function generateMetadata(): Promise<Metadata> {
   // If there's a redirect, use default metadata
   if (redirectItem) {
     return {
-      title: t('home.title'),
+      title: t('brand.homepageTitle'),
       description: t('home.description'),
     }
   }
@@ -122,7 +126,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
   if (!homePage) {
     return {
-      title: t('home.title'),
+      title: t('brand.homepageTitle'),
       description: t('home.description'),
     }
   }
