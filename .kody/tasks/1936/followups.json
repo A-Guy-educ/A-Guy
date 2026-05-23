@@ -1,0 +1,14 @@
+[
+  {
+    "title": "TransactionEditView also uses wrong URL /api/collections/transactions/{id}",
+    "body": "src/ui/admin/TransactionEditView/index.tsx line 693 fetches /api/collections/transactions/${id}?depth=2. This is the same Payload v2 URL pattern that was wrong in the RecentTransactionsWidget. The correct Payload v3 URL is /api/transactions/{id}?depth=2. This was not part of the bug scope (issue #1936 only covers the Recent Transactions widget), but should be fixed in a follow-up to avoid the same bug affecting the transaction edit view.",
+    "rationale": "Same root cause as the #1936 bug — wrong Payload v3 REST API URL pattern. TransactionEditView would also return 404 when browsing to /admin/collections/transactions/{id}.",
+    "priority": "medium"
+  },
+  {
+    "title": "CouponUsageModal and CreateCouponModal also use wrong /api/collections/ URL pattern",
+    "body": "src/ui/admin/Coupons/CouponUsageModal/index.tsx and src/ui/admin/Coupons/CreateCouponModal/index.tsx also use /api/collections/coupons and /api/collections/coupon-usages URLs respectively. These should use /api/coupons and /api/coupon-usages instead (Payload v3 format). Not in #1936 scope but worth noting.",
+    "rationale": "Same wrong URL pattern as #1936 — /api/collections/{slug} instead of /api/{slug}.",
+    "priority": "low"
+  }
+]
