@@ -1,6 +1,7 @@
 ---
 every: manual
-staff: kody
+staff: coo
+mentions: aguyaharonyair
 ---
 
 # clean up branches
