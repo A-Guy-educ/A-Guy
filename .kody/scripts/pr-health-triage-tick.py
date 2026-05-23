@@ -233,7 +233,7 @@ def main() -> int:
 
     res = gh(
         ["pr", "list", "--state", "open", "--limit", "100", "--json",
-         "number,title,headRefName,baseRefName,isDraft,mergeable,statusCheckRollup,updatedAt"]
+         "number,title,headRefName,headRefOid,baseRefName,isDraft,mergeable,statusCheckRollup,updatedAt"]
     )
     if res.returncode != 0:
         log(f"pr list failed: {res.stderr.strip()}")
@@ -265,7 +265,13 @@ def main() -> int:
             print(f"| #{num} | — | — | skip | healthy |")
             continue
         verb, reason = repair
-        fp = f"{verb}|{pr.get('updatedAt', '')}"
+        # Fingerprint on the branch head SHA, not updatedAt. Posting our own
+        # `@kody <verb>` comment bumps updatedAt, so an updatedAt-based fp made
+        # every acted-on PR look "new" next tick and re-fire forever — a handful
+        # of zombie PRs then ate the whole per-tick cap and starved the queue.
+        # headRefOid only moves when the branch actually changes (incl. a
+        # successful sync), which is exactly when a repair should re-evaluate.
+        fp = f"{verb}|{pr.get('headRefOid', '')}"
         prior = new_prs.get(key)
 
         if prior and prior.get("fp") == fp:
