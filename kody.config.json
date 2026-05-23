@@ -11,8 +11,7 @@
   },
   "github": {
     "owner": "A-Guy-educ",
-    "repo": "A-Guy",
-    "operator": "aguyaharonyair"
+    "repo": "A-Guy"
   },
   "agent": {
     "model": "minimax/MiniMax-M2.7-highspeed"
@@ -31,5 +30,8 @@
   },
   "jobs": {
     "stateBackend": "contents-api"
+  },
+  "executables": {
+    "default": "run"
   }
 }

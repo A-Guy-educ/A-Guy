@@ -18,6 +18,8 @@ import type { MCPAccessSettings } from '@payloadcms/plugin-mcp'
 import { mcpPlugin } from '@payloadcms/plugin-mcp'
 import type { PayloadRequest } from 'payload'
 
+import { getBrand } from '@/brands'
+
 /**
  * Custom auth override that allows authenticated admin users to access MCP tools
  * without requiring a separate API key.
@@ -109,7 +111,7 @@ export const mcp = mcpPlugin({
     // Server options
     serverOptions: {
       serverInfo: {
-        name: 'A-Guy MCP Server',
+        name: `${getBrand().config.name} MCP Server`,
         version: '1.0.0',
       },
     },
