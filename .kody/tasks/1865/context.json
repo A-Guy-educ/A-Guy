@@ -1,0 +1,18 @@
+{
+  "taskId": "1865",
+  "taskType": "issue",
+  "target": "1865-p2-admin-dashboard-recent-transactions-returns-htt",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Created /api/admin/recent-transactions endpoint and updated RecentTransactionsWidget to use it, resolving HTTP 404",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/admin/recent-transactions/route.ts",
+    "src/ui/admin/RecentTransactionsWidget/index.tsx",
+    "tests/int/admin-recent-transactions-1865.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1865-p2-admin-dashboard-recent-transactions-returns-htt.jsonl",
+  "startedAt": "2026-05-23T07:29:00Z",
+  "finishedAt": "2026-05-23T07:34:10Z"
+}
