@@ -1,0 +1,17 @@
+{
+  "taskId": "1887",
+  "taskType": "issue",
+  "target": "1887-p2-gravatar-avatar-blocked-by-csp-in-admin-panel",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added www.gravatar.com to img-src directive in admin route CSP in next.config.js, added regression test",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "next.config.js",
+    "tests/int/csp-vercel-feedback-admin.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1887-p2-gravatar-avatar-blocked-by-csp-in-admin-panel.jsonl",
+  "startedAt": "2026-05-23T10:00:00Z",
+  "finishedAt": "2026-05-23T10:05:39Z"
+}
