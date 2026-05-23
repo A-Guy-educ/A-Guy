@@ -92,7 +92,11 @@ function MediaItem({ media }: { media: Media }) {
   if (isImageType(media)) {
     return (
       /* eslint-disable-next-line @next/next/no-img-element */
-      <img src={src} alt={media.alt || ''} className="w-full h-auto max-h-96 object-contain" />
+      <img
+        src={src}
+        alt={media.alt || ''}
+        className="w-full h-auto max-h-96 max-w-full object-contain"
+      />
     )
   }
 
