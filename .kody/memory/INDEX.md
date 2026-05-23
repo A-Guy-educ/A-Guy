@@ -30,3 +30,9 @@ git activity belongs in `git log`, not here.
 - [First chat-driven memory written by LLM session](writer1-chat-proof.md) — First LLM-authored sticky note following prose contract in AGENTS.md (type: lesson)
 
 - [Write context.json and memory-recs.json at end of every kody task](task-memory-protocol-bootstrap.md) — Write context.json and memory-recs.json at end of every kody task (type: lesson)
+
+- [Viewport Export Cannot Be Async](viewport-export-cannot-be-async.md) — Next.js viewport export must be synchronous (type: lesson)
+
+- [Ogimage Type Requires Object](ogimage-type-requires-object.md) — OGImage/TwitterImage strings need {url} wrapper (type: lesson)
+
+- [Brand Logo Inline Svg Pattern](brand-logo-inline-svg-pattern.md) — Brand Logo as inline SVG component in brand bundle (type: decision)
