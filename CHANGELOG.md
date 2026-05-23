@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- #1812: [ExerciseWorksheet] Question label text should align vertically … ([#1815](https://github.com/A-Guy-educ/A-Guy/pull/1815)) — @aguyaharonyair
+- #1785: Remove bottom chat input bar from lesson page on mobile ([#1790](https://github.com/A-Guy-educ/A-Guy/pull/1790)) — @aguyaharonyair
+- #1741: [Mobile] Floating "שאל שאלה" button in bottom-left corner ([#1771](https://github.com/A-Guy-educ/A-Guy/pull/1771)) — @aguyaharonyair
+- #1767: [Mobile] No horizontal scroll in any lesson display mode ([#1768](https://github.com/A-Guy-educ/A-Guy/pull/1768)) — @aguyaharonyair
+- #1743: [Mobile] Hide Prev/Next navigation until 85% scroll progress ([#1766](https://github.com/A-Guy-educ/A-Guy/pull/1766)) — @aguyaharonyair
 - #1727: Enforce tenant isolation in checkout — block cross-tenant produc… ([#1731](https://github.com/A-Guy-educ/A-Guy/pull/1731)) — @aguyaharonyair
 - #1715: [Dashboard] וידג'ט הרשמות קורסים בדשבורד אדמין ([#1716](https://github.com/A-Guy-educ/A-Guy/pull/1716)) — @aguyaharonyair
 - #1733: Make pass-2 solution derivation per-block in lesson duplication ([#1735](https://github.com/A-Guy-educ/A-Guy/pull/1735)) — @aguyaharonyair
@@ -34,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - #1518: User Learning Agent Task ([#1686](https://github.com/A-Guy-educ/A-Guy/pull/1686)) — @aguyaharonyair
 - #1663: Per-exercise retry from review page ([#1673](https://github.com/A-Guy-educ/A-Guy/pull/1673)) — @aguyaharonyair
 - #1672: Export lessons in canonical content format ([#1680](https://github.com/A-Guy-educ/A-Guy/pull/1680)) — @aguyaharonyair
-- fix(tests): Unblock stuck-record tests (6 failing on dev) ([#1682](https://github.com/A-Guy-educ/A-Guy/pull/1682)) — @aguyshayb
+- fix(tests): Unblock stuck-record tests (6 failing on dev) ([#1682](https://github.com/A-Guy-educ/A-Guy/pull/1682)) — @aguyshayb · 🔄 QA (#1923)
 - #1647: Add admin coupon management UI ([#1676](https://github.com/A-Guy-educ/A-Guy/pull/1676)) — @aguyaharonyair
 - #1664: Auto-fail stuck duplication records to unblock the cron queue ([#1670](https://github.com/A-Guy-educ/A-Guy/pull/1670)) — @aguyaharonyair
 - #1665: Smarter section selector for variations ([#1666](https://github.com/A-Guy-educ/A-Guy/pull/1666)) — @aguyaharonyair
