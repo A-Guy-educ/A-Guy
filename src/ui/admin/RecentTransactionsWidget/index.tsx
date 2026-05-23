@@ -92,7 +92,7 @@ const RecentTransactionsWidget: React.FC = () => {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/api/collections/transactions?limit=5&sort=-createdAt&depth=2', {
+      const res = await fetch('/api/admin/recent-transactions?limit=5', {
         credentials: 'include',
       })
       if (!res.ok) {
