@@ -75,7 +75,7 @@ export function QuestionCard({
             className={cn(
               'w-full flex items-center mb-4',
               dir === 'rtl'
-                ? 'justify-end text-right flex-row-reverse gap-content-gap-xs'
+                ? 'justify-start gap-content-gap-xs'
                 : 'justify-start text-left gap-content-gap-xs',
             )}
           >

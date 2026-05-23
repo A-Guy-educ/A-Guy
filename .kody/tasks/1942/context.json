@@ -1,0 +1,14 @@
+{
+  "taskId": "1942",
+  "taskType": "issue",
+  "target": "issue #1942",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed RTL section label alignment in QuestionCard by removing flex-row-reverse from RTL branch",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": ["src/ui/web/exerciserenderer/components/QuestionCard/index.tsx"],
+  "sessionLog": ".kody/runs/gh-26340560278-1/events.jsonl",
+  "startedAt": "2026-05-23T19:15:00.000Z",
+  "finishedAt": "2026-05-23T19:15:30.000Z"
+}
