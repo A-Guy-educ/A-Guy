@@ -1,0 +1,17 @@
+{
+  "taskId": "1908",
+  "taskType": "issue",
+  "target": "1908-p3-set-descriptive-page-title-on-stats-page",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added metadata export to stats page following the established pattern from login/account pages",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/stats/page.tsx",
+    "tests/e2e/stats-page-title.e2e.spec.ts"
+  ],
+  "sessionLog": null,
+  "startedAt": "2026-05-23T13:59:00.000Z",
+  "finishedAt": "2026-05-23T14:00:00.000Z"
+}

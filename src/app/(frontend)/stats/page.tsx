@@ -11,6 +11,8 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { StatsDashboard } from './_components/StatsDashboard'
 
+export const metadata = { title: 'Statistics' }
+
 interface StatsPageProps {
   searchParams: Promise<{
     courseId?: string
