@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Add scroll-to-bottom when isLoadingHistory becomes false",
+    "body": "In useNotebookChat.ts, the useEffect at lines 180-192 watches isLoadingHistory and calls scrollToBottom() when it becomes false. This should ensure the chat scrolls to show loaded messages. However, the existing unit test at line 239 ('should scroll to bottom after loading conversation history') has a comment indicating it expects this behavior but may not be verifying it correctly. Verify the scroll behavior works in the actual browser.",
+    "rationale": "The chat should automatically scroll to show loaded messages when history finishes loading, rather than requiring the user to scroll manually.",
+    "priority": "low"
+  },
+  {
+    "title": "Remove double-RAF pattern from conversation loading",
+    "body": "The original code used a double-RAF (requestAnimationFrame) pattern before setting isLoadingHistory(false). I simplified this to a direct setIsLoadingHistory(false) call. If the direct call causes any rendering issues in the browser, we may need to revisit the timing mechanism.",
+    "rationale": "The double-RAF was overly complex and could cause timing issues. The direct state update is simpler and should work correctly with React's batching.",
+    "priority": "low"
+  }
+]

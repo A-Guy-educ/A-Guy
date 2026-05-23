@@ -1,0 +1,16 @@
+{
+  "taskId": "1849",
+  "taskType": "issue",
+  "target": "GitHub issue #1849: Ask page never finishes loading - stuck on Loading...",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed useNotebookChat loadConversationHistory: removed retry loop that caused up to 11s of visible 'Loading history...' when conversation exists but all messages filtered as invalid. Now immediately shows chat UI when conversation exists but has no valid messages.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/chat/hooks/useNotebookChat.ts"
+  ],
+  "sessionLog": null,
+  "startedAt": "2026-05-23T02:43:00Z",
+  "finishedAt": "2026-05-23T03:14:00Z"
+}
