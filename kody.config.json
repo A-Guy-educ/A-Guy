@@ -30,5 +30,8 @@
   },
   "jobs": {
     "stateBackend": "contents-api"
+  },
+  "executables": {
+    "default": "run"
   }
 }

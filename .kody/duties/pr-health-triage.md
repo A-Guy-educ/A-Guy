@@ -83,7 +83,7 @@ One list call — never `gh` once per PR:
 
 ```
 gh pr list --state open --limit 100 \
-  --json number,title,headRefName,baseRefName,isDraft,mergeable,statusCheckRollup,updatedAt
+  --json number,title,headRefName,headRefOid,baseRefName,isDraft,mergeable,statusCheckRollup,updatedAt
 ```
 
 Skip draft PRs (`isDraft: true`) — they aren't ready for repair.
@@ -179,7 +179,7 @@ This is a silent record, not a notification and not an ask — do not
 
 ## Allowed Commands
 
-- `gh pr list --state open --limit 100 --json number,title,headRefName,baseRefName,isDraft,mergeable,statusCheckRollup,updatedAt`
+- `gh pr list --state open --limit 100 --json number,title,headRefName,headRefOid,baseRefName,isDraft,mergeable,statusCheckRollup,updatedAt`
   — the single enumeration call.
 - `gh api repos/{owner}/{repo}/compare/{base}...{head} --jq .behind_by`
   — only for non-conflicting, CI-green PRs, to measure staleness for `sync`.
@@ -207,8 +207,12 @@ per-tick:
 `data`:
 
 - `prs` (object) — keyed by PR number. Each value:
-  - `fp` (string) — fingerprint = `"<verb>|<updatedAt>"`. The dedup key:
-    only post a new comment when `fp` changes.
+  - `fp` (string) — fingerprint = `"<verb>|<headRefOid>"`. The dedup key:
+    only post a new comment when `fp` changes. Keyed on the branch head SHA,
+    **not** `updatedAt` — our own `@kody <verb>` comment bumps `updatedAt`,
+    which would make every acted-on PR re-fire next tick and starve the cap.
+    The head SHA only moves when the branch actually changes (including a
+    successful sync), which is exactly when the repair should re-evaluate.
   - `stage` (string) — one of: `fix-ci-recommended`, `sync-recommended`,
     `resolve-recommended`, `fix-ci-auto`, `sync-auto`, `resolve-auto`,
     `dismissed`.
@@ -236,7 +240,7 @@ prune entries for PRs no longer in the open list.
   "data": {
     "prs": {
       "<pr-number>": {
-        "fp": "<verb>|<updatedAt>",
+        "fp": "<verb>|<headRefOid>",
         "stage": "<verb>-recommended|<verb>-auto|dismissed",
         "lastActAt": "<iso>"
       }

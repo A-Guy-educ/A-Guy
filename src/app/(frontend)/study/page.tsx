@@ -2,6 +2,7 @@ import { cookies } from 'next/headers'
 import { getSystemLocale } from '@/i18n/server-locale'
 import { isValidContentLocale } from '@/server/payload/fields/contentLocale'
 import { GRADE_COOKIE_NAME } from '@/client/state/localStorage/userProfile'
+import { pageMetadata } from '@/infra/seo/pageMetadata'
 import { StudyContent } from './_components/StudyContent'
 import { prefetchStudyData } from '@/server/repos/queries/study-page'
 
@@ -22,8 +23,8 @@ export default async function StudyPage() {
 }
 
 export async function generateMetadata() {
-  return {
-    title: 'לימוד - A-Guy',
+  return pageMetadata({
+    title: 'לימוד',
     description: 'בחר נושא ללימוד',
-  }
+  })
 }
