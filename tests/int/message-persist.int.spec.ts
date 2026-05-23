@@ -152,27 +152,12 @@ describe.skipIf(!hasDatabaseUrl)('POST /api/agent/message/persist', () => {
   })
 
   it('creates a conversation and persists message when no conversation exists (bug #1847 fix)', async () => {
-    // Clean up any existing conversation for this user+contextKey
-    const existing = await payload.find({
-      collection: 'conversations',
-      where: {
-        and: [
-          { user: { equals: testUserId } },
-          { contextKey: { equals: testContextKey } },
-          { archivedAt: { exists: false } },
-        ],
-      },
-      limit: 1,
-      overrideAccess: true,
-    })
-    for (const conv of existing.docs) {
-      await payload.delete({ collection: 'conversations', id: conv.id, overrideAccess: true })
-    }
+    // Use testLessonId (a real lesson with valid chapter) but a unique contextKey
+    // so no prior conversation exists. Using a fake lesson ID fails Payload
+    // relationship validation (500), so we use the real testLessonId instead.
+    const uniqueContextKey = `lessons:${testLessonId}-unique-${Date.now()}`
 
     const { POST } = await import('@/app/api/agent/message/persist/route')
-
-    // After fix: route should create a new conversation if none exists
-    const uniqueContextKey = `lessons:nonexistent-${Date.now()}`
 
     const req = createMockNextRequest(
       {
@@ -205,6 +190,13 @@ describe.skipIf(!hasDatabaseUrl)('POST /api/agent/message/persist', () => {
     expect((conversations.docs[0].messages as any)[0].content).toBe(
       'Test content for newly created conversation',
     )
+
+    // Cleanup
+    await payload.delete({
+      collection: 'conversations',
+      id: conversations.docs[0].id,
+      overrideAccess: true,
+    })
   })
 
   it('persists message to an existing conversation successfully', async () => {

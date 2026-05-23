@@ -1,0 +1,17 @@
+{
+  "taskId": "1873",
+  "taskType": "pr",
+  "target": "1849-p2-ask-page-never-finishes-loading-stuck-on-loadin",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed two failing integration tests: (1) updated message-length validation test to use 5001 chars now that schema max is 5000; (2) fixed persist test to use real lesson ID for contextRef instead of non-existent ID",
+  "prUrl": null,
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26343623530",
+  "filesTouched": [
+    "tests/int/chat-endpoint-validation.int.spec.ts",
+    "tests/int/message-persist.int.spec.ts"
+  ],
+  "sessionLog": null,
+  "startedAt": "2026-05-23T21:30:00.000Z",
+  "finishedAt": "2026-05-23T21:45:00.000Z"
+}

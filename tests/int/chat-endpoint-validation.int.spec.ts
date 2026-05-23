@@ -147,13 +147,13 @@ describe('agentChat validation', () => {
     expect(res.status).toBe(400)
   })
 
-  it('returns 400 for message length over 1000 chars', async () => {
+  it('returns 400 for message length over 5000 chars', async () => {
     const req = {
       payload,
       headers: new Headers(),
       user: { id: testUserId, role: 'student' } as PayloadRequest['user'],
       json: async () => ({
-        message: 'a'.repeat(1001),
+        message: 'a'.repeat(5001),
         acknowledgment: 'ack',
         exerciseId: context.exerciseId,
       }),
