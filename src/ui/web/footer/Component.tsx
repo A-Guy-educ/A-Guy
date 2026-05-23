@@ -6,7 +6,7 @@ import type { Footer } from '@/payload-types'
 
 import { ThemeSelector } from '@/ui/web/providers/Theme/ThemeSelector'
 import { CMSLink } from '@/ui/web/Link'
-import { TelescopeLogo } from '@/ui/web/TelescopeLogo'
+import { BrandLogo } from '@/ui/web/BrandLogo'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 import { getSystemLocale } from '@/i18n/server-locale'
@@ -43,7 +43,7 @@ export async function Footer() {
     <footer className="mt-auto border-t border-border bg-footer text-card-foreground relative z-0">
       <div className="container py-3 flex flex-row items-center gap-content-gap-xs">
         <SystemLink className="flex items-center" href="/">
-          <TelescopeLogo className="h-5 w-auto" />
+          <BrandLogo className="h-5 w-auto" />
         </SystemLink>
 
         <span className="flex-1 text-center text-body-xs font-bold text-muted-foreground/40 uppercase tracking-[0.2em]">
