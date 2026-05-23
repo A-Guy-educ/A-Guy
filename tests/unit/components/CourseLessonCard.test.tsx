@@ -163,4 +163,48 @@ describe('CourseLessonCard component', () => {
       expect(screen.getByText('Lesson 1')).toBeTruthy()
     })
   })
+
+  describe('index prop for sequential lesson numbering across chapters', () => {
+    it('displays correct label when index=4 (simulating Chapter 2, first lesson after 3 lessons)', () => {
+      render(
+        <I18nProvider locale="en" messages={enMessages}>
+          <CourseLessonCard
+            lesson={mockLesson}
+            index={4}
+            courseSlug="test-course"
+            chapterSlug="test-chapter"
+          />
+        </I18nProvider>,
+      )
+      expect(screen.getByText('Lesson 4')).toBeTruthy()
+    })
+
+    it('displays correct label when index=5 (simulating Chapter 2, second lesson after 3 lessons)', () => {
+      render(
+        <I18nProvider locale="en" messages={enMessages}>
+          <CourseLessonCard
+            lesson={mockLesson}
+            index={5}
+            courseSlug="test-course"
+            chapterSlug="test-chapter"
+          />
+        </I18nProvider>,
+      )
+      expect(screen.getByText('Lesson 5')).toBeTruthy()
+    })
+
+    it('displays correct label when index=6 (simulating Chapter 2, third lesson after 3 lessons)', () => {
+      render(
+        <I18nProvider locale="en" messages={enMessages}>
+          <CourseLessonCard
+            lesson={mockLesson}
+            index={6}
+            courseSlug="test-course"
+            chapterSlug="test-chapter"
+          />
+        </I18nProvider>,
+      )
+      expect(screen.getByText('Lesson 6')).toBeTruthy()
+    })
+  })
 })

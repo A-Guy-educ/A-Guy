@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Verify issue #1896 on QA environment",
+    "body": "The bug could not be reproduced in tests. The issue description mentions Chapter 2's lessons showing 'Lesson 4' and 'Lesson 5' instead of 'Lesson 5' and 'Lesson 6', which with 3 lessons in Ch1 would be correct output. QA should verify the actual data in the course to confirm if the issue is still present or if it was fixed by recent fallback commits (08d496e46, e35df134f).",
+    "rationale": "The issue description appears inconsistent with the expected sequential numbering pattern. Need QA verification to confirm whether the bug exists in real data.",
+    "priority": "medium"
+  }
+]
