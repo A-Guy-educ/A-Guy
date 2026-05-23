@@ -1,6 +1,7 @@
 ---
 disabled: true
 staff: kody
+every: 1d
 ---
 
 # Kody Health Check
@@ -9,7 +10,7 @@ staff: kody
 
 Daily digest of **tasks already assigned to Kody** — any open issue carrying an active `kody:*` lifecycle label other than `kody:done` — that **haven't been updated in the last 6 hours**. Purely diagnostic: never re-kicks, closes, or relabels anything. The operator reads the digest and decides what (if anything) to nudge.
 
-**Cadence guard.** If `data.lastRunISO` is set and within the last 20 hours, emit unchanged state and exit. Otherwise proceed and update `data.lastRunISO` to now (UTC ISO) when you write the report.
+**Cadence.** Set by the `every:` frontmatter (the dashboard schedule dropdown) and enforced by the engine — the duty won't tick more often than its interval (default `every: 1d`).
 
 **Per tick (one action max):**
 
