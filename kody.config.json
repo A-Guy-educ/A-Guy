@@ -21,9 +21,7 @@
   },
   "release": {
     "releaseBranch": "main",
-    "versionFiles": [
-      "package.json"
-    ],
+    "versionFiles": ["package.json"],
     "e2eCommand": "npx tsx scripts/release-e2e-gate.ts",
     "timeoutMs": 1800000
   },

@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- #1581: Phase 7: Course data scope decision + brand smoke test ([#1757](https://github.com/A-Guy-educ/A-Guy/pull/1757)) — @aguyaharonyair
 - #1812: [ExerciseWorksheet] Question label text should align vertically … ([#1815](https://github.com/A-Guy-educ/A-Guy/pull/1815)) — @aguyaharonyair
 - #1785: Remove bottom chat input bar from lesson page on mobile ([#1790](https://github.com/A-Guy-educ/A-Guy/pull/1790)) — @aguyaharonyair
 - #1741: [Mobile] Floating "שאל שאלה" button in bottom-left corner ([#1771](https://github.com/A-Guy-educ/A-Guy/pull/1771)) — @aguyaharonyair
@@ -39,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - #1518: User Learning Agent Task ([#1686](https://github.com/A-Guy-educ/A-Guy/pull/1686)) — @aguyaharonyair
 - #1663: Per-exercise retry from review page ([#1673](https://github.com/A-Guy-educ/A-Guy/pull/1673)) — @aguyaharonyair
 - #1672: Export lessons in canonical content format ([#1680](https://github.com/A-Guy-educ/A-Guy/pull/1680)) — @aguyaharonyair
-- fix(tests): Unblock stuck-record tests (6 failing on dev) ([#1682](https://github.com/A-Guy-educ/A-Guy/pull/1682)) — @aguyshayb · 🔄 QA (#1923)
+- fix(tests): Unblock stuck-record tests (6 failing on dev) ([#1682](https://github.com/A-Guy-educ/A-Guy/pull/1682)) — @aguyshayb
 - #1647: Add admin coupon management UI ([#1676](https://github.com/A-Guy-educ/A-Guy/pull/1676)) — @aguyaharonyair
 - #1664: Auto-fail stuck duplication records to unblock the cron queue ([#1670](https://github.com/A-Guy-educ/A-Guy/pull/1670)) — @aguyaharonyair
 - #1665: Smarter section selector for variations ([#1666](https://github.com/A-Guy-educ/A-Guy/pull/1666)) — @aguyaharonyair
