@@ -1,0 +1,16 @@
+{
+  "taskId": "1876",
+  "taskType": "bug",
+  "target": "1876-p2-lesson-headings-misnumbered-in-chapter-2-on-pra",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed off-by-one error in lesson heading numbering by adding deduplication of lesson IDs in chapterGroups",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/study/_components/StudyContent/index.tsx"
+  ],
+  "sessionLog": null,
+  "startedAt": "2026-05-23T06:30:00Z",
+  "finishedAt": "2026-05-23T07:10:00Z"
+}
