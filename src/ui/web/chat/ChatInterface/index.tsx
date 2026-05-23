@@ -243,6 +243,21 @@ export function ChatInterface({
     return () => window.removeEventListener('focus-chat-input', handleFocusChatInput)
   }, [onChatInteraction, inputRef])
 
+  // FloatingAskButton: handle quick-chat-submit event from the expandable panel
+  useEffect(() => {
+    const handleQuickChatSubmit = (e: Event) => {
+      const { message } = (e as CustomEvent).detail as { message: string }
+      onChatInteraction?.()
+      setInputValue(message)
+      // Submit on next tick so setInputValue takes effect first
+      setTimeout(() => {
+        formRef.current?.requestSubmit()
+      }, 0)
+    }
+    window.addEventListener('quick-chat-submit', handleQuickChatSubmit)
+    return () => window.removeEventListener('quick-chat-submit', handleQuickChatSubmit)
+  }, [onChatInteraction, setInputValue])
+
   // Ask page actions (hint, solution, check solution from canvas)
   const askActionRef = useRef<(e: Event) => void>(() => {})
   askActionRef.current = (e: Event) => {
@@ -336,6 +351,7 @@ export function ChatInterface({
   const [formulaComposerOpen, setFormulaComposerOpen] = useState(false)
   const [formulaSheetOpen, setFormulaSheetOpen] = useState(false)
   const [isChatInputFocused, setIsChatInputFocused] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
 
   const handleFormulaInsert = useCallback(
     (latex: string) => {
@@ -722,7 +738,7 @@ export function ChatInterface({
         )}
 
         {/* Input Wrapper */}
-        <form onSubmit={handleFormSubmit}>
+        <form ref={formRef} onSubmit={handleFormSubmit}>
           <div className="max-w-chat mx-auto bg-muted rounded-chat-2xl flex items-center px-4 py-1.5 border border-input gap-3 relative">
             {/* Input — always mounted */}
             <input
