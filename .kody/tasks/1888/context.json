@@ -1,0 +1,19 @@
+{
+  "taskId": "1888",
+  "taskType": "issue",
+  "target": "1888-p2-core-feature-routes-redirect-to-start-instead-o",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed RequireCourseSelection and StudyContent to redirect to /onboarding/persona (with returnTo) instead of / when gradeLevel is missing; /home then has no homePage so redirected to /start",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/guards/RequireCourseSelection.tsx",
+    "src/app/(frontend)/study/_components/StudyContent/index.tsx",
+    "tests/unit/infra/onboarding/redirect.spec.ts",
+    "tests/e2e/1888-route-redirect.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1888-p2-core-feature-routes-redirect-to-start-instead-o.jsonl",
+  "startedAt": "2026-05-23T10:40:00Z",
+  "finishedAt": "2026-05-23T11:02:58Z"
+}

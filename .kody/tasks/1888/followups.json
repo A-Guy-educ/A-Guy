@@ -1,0 +1,8 @@
+[
+  {
+    "title": "/stats route may need grade-level guard",
+    "body": "The /stats page (src/app/(frontend)/stats/page.tsx) uses getMeUser for auth checking but does NOT use RequireCourseSelection. This means an authenticated user without gradeLevel can access the stats dashboard. If the intent is that /stats also requires persona completion, add RequireCourseSelection wrapper. The issue description says all 4 routes (/study, /practice, /ask, /stats) redirect to /start, but /stats was only fixed if its issue was the homepage chain redirect via missing grade.",
+    "rationale": "The issue says all 4 routes redirect to /start, but /stats has different auth logic. Verify the fix is complete for /stats or open a separate issue.",
+    "priority": "medium"
+  }
+]

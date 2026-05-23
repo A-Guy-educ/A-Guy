@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "guard-redirect-uses-getOnboardingRedirect",
+    "hook": "Any client-side guard checking gradeLevel should redirect to /onboarding/persona, not /",
+    "body": "When implementing client-side route guards that check for gradeLevel (e.g., RequireCourseSelection, StudyContent's loadData), redirect to '/onboarding/persona' using getOnboardingRedirect(pathname) instead of '/'. Redirecting to '/' causes a chain redirect to '/start' because the homepage falls back to /start when no CMS homePage document exists. Using getOnboardingRedirect preserves the returnTo parameter so users return to the intended route after completing persona selection.\n\n**Why:** This bug affected /study, /practice, and /ask routes (via RequireCourseSelection and StudyContent). Users who had authenticated but hadn't completed persona selection were silently redirected to /start instead of being guided through onboarding.\n\n**How to apply:** Any new guard component that checks getUserProfile()?.gradeLevel and redirects should use: router.replace(getOnboardingRedirect(window.location.pathname))",
+    "why": "The homepage (/ page.tsx) has no homePage in the Pages collection, so it falls back to redirect('/start'). Guards that redirect to '/' instead of the proper onboarding flow inadvertently trigger this chain.",
+    "confidence": 0.95
+  }
+]
