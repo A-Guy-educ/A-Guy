@@ -1,0 +1,14 @@
+{
+  "taskId": "1564",
+  "taskType": "pr",
+  "target": "1564",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Format check failed on kody.config.json; fixed with pnpm format",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": ["kody.config.json"],
+  "sessionLog": ".kody/last-run.jsonl",
+  "startedAt": "2026-05-23T00:00:00.000Z",
+  "finishedAt": "2026-05-23T00:00:00.000Z"
+}
