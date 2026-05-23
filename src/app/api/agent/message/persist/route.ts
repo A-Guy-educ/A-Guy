@@ -8,6 +8,7 @@ import '@/infra/config/server-init'
 import { logger } from '@/infra/utils/logger/logger'
 import { getGuestSessionByToken, getGuestSessionCookie } from '@/server/services/guest-session'
 import config from '@payload-config'
+import { DEFAULT_CONTENT_LOCALE } from '@/server/payload/fields/contentLocale'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import type { Where } from 'payload'
@@ -73,16 +74,46 @@ export async function POST(request: NextRequest) {
       overrideAccess: !!guestSessionId,
     })
 
-    if (result.docs.length === 0) {
-      reqLogger.warn(
-        { ownerId, contextKey: validated.contextKey },
-        'No conversation found for message persist',
-      )
-      return NextResponse.json({ error: 'No active conversation found' }, { status: 404 })
-    }
+    let conversationId: string
+    let existingMessages: unknown[] = []
 
-    const conversation = result.docs[0]
-    const existingMessages = conversation.messages ?? []
+    if (result.docs.length === 0) {
+      // No conversation exists — create one (bug #1847 fix)
+      reqLogger.info(
+        { ownerId, contextKey: validated.contextKey },
+        'No conversation found for message persist, creating new conversation',
+      )
+
+      // Parse contextKey to get relationTo and value (e.g., "lessons:abc123")
+      const colonIndex = validated.contextKey.indexOf(':')
+      const relationTo = colonIndex !== -1 ? validated.contextKey.slice(0, colonIndex) : 'lessons'
+      const value =
+        colonIndex !== -1 ? validated.contextKey.slice(colonIndex + 1) : validated.contextKey
+
+      const newConversation = await payload.create({
+        collection: 'conversations',
+        data: {
+          ...(guestSessionId ? { guestSession: guestSessionId } : { user: ownerId }),
+          contextRef: {
+            // ContextRef allows users/categories, but conversation creation only supports courses/chapters/lessons/exercises
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            relationTo: relationTo as any,
+            value,
+          },
+          contextKey: validated.contextKey,
+          preferredLocale: DEFAULT_CONTENT_LOCALE,
+          messages: [],
+          lastMessageAt: new Date().toISOString(),
+          contextPolicyVersion: 'v1',
+        },
+        user: user ?? undefined,
+        overrideAccess: !!guestSessionId,
+      })
+      conversationId = newConversation.id
+    } else {
+      conversationId = result.docs[0].id
+      existingMessages = result.docs[0].messages ?? []
+    }
 
     const assistantMessage = {
       role: 'assistant' as const,
@@ -93,9 +124,9 @@ export async function POST(request: NextRequest) {
 
     await payload.update({
       collection: 'conversations',
-      id: conversation.id,
+      id: conversationId,
       data: {
-        messages: [...existingMessages, assistantMessage],
+        messages: [...(existingMessages as never[]), assistantMessage],
         lastMessageAt: new Date().toISOString(),
       },
       user: user ?? undefined,
@@ -103,7 +134,7 @@ export async function POST(request: NextRequest) {
     })
 
     reqLogger.info(
-      { conversationId: conversation.id, contextKey: validated.contextKey },
+      { conversationId, contextKey: validated.contextKey },
       'Assistant message persisted',
     )
 

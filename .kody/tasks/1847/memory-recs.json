@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "persist-endpoint-creates-conversation",
+    "hook": "The /api/agent/message/persist endpoint should create a conversation if none exists",
+    "body": "The persist endpoint (for CMS-authored help content like guiding questions) should not return 404 when no conversation exists. Instead, it should create the conversation first and then persist the message. This ensures help content survives page refresh even when the user hasn't sent any chat messages yet.\n\nWhy: The Guiding Question button triggers addAssistantMessage() which calls persistMessage() - if no conversation exists (user hasn't chatted yet), the message is lost. Creating the conversation on-the-fly fixes this.\n\nHow to apply: When implementing new persist-style endpoints that assume a conversation exists, always create the conversation if it doesn't exist rather than returning 404.",
+    "why": "The guiding question button was failing with a 404 because no conversation existed yet - users can get help before ever sending a chat message.",
+    "confidence": 0.95
+  }
+]
