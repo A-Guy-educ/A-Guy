@@ -1,0 +1,14 @@
+{
+  "taskId": "1869",
+  "taskType": "issue",
+  "target": "1869-p2-admin-dashboard-user-avatar-blocked-by-content",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added secure.gravatar.com to img-src directive for /admin route CSP in next.config.js",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": ["next.config.js", "tests/int/csp-vercel-feedback-admin.int.spec.ts"],
+  "sessionLog": ".kody/sessions/1869.jsonl",
+  "startedAt": "2026-05-23T11:18:00Z",
+  "finishedAt": "2026-05-23T11:20:00Z"
+}
