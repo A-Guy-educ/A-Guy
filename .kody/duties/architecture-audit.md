@@ -16,7 +16,7 @@ Scope of the delegated sweep:
 - **Premature / dead abstractions** — interfaces or layers with a single implementation and no second caller; abstractions no longer used.
 - **Duplication** — logic re-implemented where an existing sibling already solves it.
 
-**Cadence guard.** If `data.lastRunISO` is set and within the last 6 days, emit unchanged state and exit. Otherwise proceed and update `data.lastRunISO` to now (UTC ISO).
+**Cadence.** Set by the `every:` frontmatter (the dashboard schedule dropdown) and enforced by the engine — the duty won't tick more often than its interval (default `every: 7d`).
 
 **Per tick (one action max):**
 
