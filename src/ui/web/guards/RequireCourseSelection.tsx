@@ -1,20 +1,23 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 import { getUserProfile } from '@/client/state/localStorage/userProfile'
+import { getOnboardingRedirect } from '@/infra/onboarding/redirect'
 
 export function RequireCourseSelection({ children }: { children: React.ReactNode }) {
+  const router = useRouter()
   const [hasSelection, setHasSelection] = useState<boolean | null>(null)
 
   useEffect(() => {
     const profile = getUserProfile()
     if (!profile?.gradeLevel) {
-      window.location.replace('/')
+      router.replace(getOnboardingRedirect(window.location.pathname))
       return
     }
     setHasSelection(true)
-  }, [])
+  }, [router])
 
   if (hasSelection === null) {
     return (

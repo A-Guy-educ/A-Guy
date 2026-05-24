@@ -1,0 +1,20 @@
+{
+  "taskId": "2038",
+  "taskType": "bug",
+  "target": "2038-p1-practice-test-and-study-pages-silently-redirect",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed redirect chain by using getOnboardingRedirect instead of window.location.href = '/' in RequireCourseSelection, StudyContent, AskConversationGrid, and AskContent",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/guards/RequireCourseSelection.tsx",
+    "src/app/(frontend)/study/_components/StudyContent/index.tsx",
+    "src/app/(frontend)/ask/_components/AskConversationGrid/index.tsx",
+    "src/app/(frontend)/ask/_components/AskContent/index.tsx",
+    "tests/e2e/2038-route-redirect.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2038.jsonl",
+  "startedAt": "2026-05-24T19:34:08Z",
+  "finishedAt": "2026-05-24T19:53:00Z"
+}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { getUserProfile } from '@/client/state/localStorage/userProfile'
+import { getOnboardingRedirect } from '@/infra/onboarding/redirect'
 import { ChatInterface } from '@/ui/web/chat'
 import { logger } from '@/infra/utils/logger'
 import { cn } from '@/infra/utils/ui'
@@ -26,7 +27,7 @@ export function AskContent({ conversationContextKey }: AskContentProps) {
     async function loadCourse() {
       const profile = getUserProfile()
       if (!profile?.gradeLevel) {
-        window.location.href = '/'
+        window.location.href = getOnboardingRedirect(window.location.pathname)
         return
       }
 
