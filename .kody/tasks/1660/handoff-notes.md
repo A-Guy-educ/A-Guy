@@ -1,5 +1,5 @@
-Fixed Prettier formatting issue in kody.config.json that was failing the CI "Fast Gate" check.
+Resolved merge conflict in CHANGELOG.md between release/v0.25.9 (HEAD) and origin/dev.
 
-Changes: Prettier collapsed single-element arrays to one line (e.g., `["aguyaharonyair"]` instead of multi-line) and added the missing trailing newline at end of file.
+Resolution: Took HEAD's full changelog content and inserted the #2011 entry from origin/dev at the top of the [Unreleased] section. Dropped "test content" placeholder from origin/dev as it is not a valid changelog entry.
 
-No other files or code were modified.
+No other files were modified.
