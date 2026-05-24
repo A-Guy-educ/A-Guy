@@ -1,0 +1,16 @@
+{
+  "taskId": "1950",
+  "taskType": "bug",
+  "target": "Recent Transactions widget on admin dashboard returns HTTP 404",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Root cause was that RecentTransactionsWidget called Payload REST API (/api/collections/transactions) which returned 404. Fixed by adding recentTransactions to the dashboard metrics API and updating the widget to use it instead.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/admin/dashboard-metrics/route.ts",
+    "src/ui/admin/RecentTransactionsWidget/index.tsx",
+    "tests/int/recent-transactions-widget-1950.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1950-recent-transactions-widget.jsonl"
+}

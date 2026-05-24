@@ -154,12 +154,23 @@ interface RevenueMetrics {
   topProducts: TopProduct[]
 }
 
+interface RecentTransaction {
+  id: string
+  createdAt: string
+  amount: number
+  currency: string
+  status: 'pending' | 'succeeded' | 'failed' | 'refunded'
+  user?: { email?: string }
+  product?: { name?: string }
+}
+
 export interface DashboardMetricsResponse {
   period: Period
   userMetrics: UserMetrics
   contentCounts: ContentCounts
   engagement: EngagementMetrics
   revenueMetrics: RevenueMetrics
+  recentTransactions: RecentTransaction[]
 }
 
 function startOfDay(date: Date): Date {
@@ -296,6 +307,7 @@ export async function GET(req: Request) {
     returningUsersResult,
     totalUsersInPeriod,
     allTransactions,
+    recentTransactionsResult,
   ] = await Promise.all([
     // Active users today/yesterday
     payload.find({
@@ -550,6 +562,14 @@ export async function GET(req: Request) {
           totalPages: number
         }>,
     ),
+    // Recent transactions: 5 most recent for the RecentTransactionsWidget
+    payload.find({
+      collection: 'transactions',
+      limit: 5,
+      sort: '-createdAt',
+      depth: 2,
+      overrideAccess: true,
+    }),
   ])
 
   // Calculate avg time spent (allUserStats is already a flat array from findAll)
@@ -774,6 +794,15 @@ export async function GET(req: Request) {
       successRate,
       topProducts,
     },
+    recentTransactions: recentTransactionsResult.docs.map((tx) => ({
+      id: tx.id as string,
+      createdAt: (tx.createdAt as string) || new Date().toISOString(),
+      amount: (tx.amount as number) || 0,
+      currency: (tx.currency as string) || 'ILS',
+      status: (tx.status as 'pending' | 'succeeded' | 'failed' | 'refunded') || 'pending',
+      user: tx.user as { email?: string } | undefined,
+      product: tx.product as { name?: string } | undefined,
+    })),
   }
 
   return Response.json(response)
