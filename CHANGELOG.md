@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- #1987: Persist PayPal capture ID for refunds + forward currency from ad… ([#2003](https://github.com/A-Guy-educ/A-Guy/pull/2003)) — @kodyade
+- #1747: Force pass-1 schema to include hint/solution/fullSolution slots … ([#1751](https://github.com/A-Guy-educ/A-Guy/pull/1751)) — @aguyaharonyair
+- #2000: Short-circuit lesson duplication for level=none with fast clone … ([#2002](https://github.com/A-Guy-educ/A-Guy/pull/2002)) — @kodyade
+- #1986: Persist Stripe payment_intent ID + gate entitlements on payment_… ([#1998](https://github.com/A-Guy-educ/A-Guy/pull/1998)) — @kodyade
+- #1748: Drop responseSchema on pass-2 solution derivation and validate o… ([#1749](https://github.com/A-Guy-educ/A-Guy/pull/1749)) — @aguyaharonyair
 - #1581: Phase 7: Course data scope decision + brand smoke test ([#1757](https://github.com/A-Guy-educ/A-Guy/pull/1757)) — @aguyaharonyair · ⚠️ QA 2026-05-23 (#1946)
 - #1812: [ExerciseWorksheet] Question label text should align vertically … ([#1815](https://github.com/A-Guy-educ/A-Guy/pull/1815)) — @aguyaharonyair
 - #1785: Remove bottom chat input bar from lesson page on mobile ([#1790](https://github.com/A-Guy-educ/A-Guy/pull/1790)) — @aguyaharonyair
@@ -51,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - #1621: Export lesson + ordered exercises as JSON from admin ([#1625](https://github.com/A-Guy-educ/A-Guy/pull/1625)) — @aguyaharonyair
 - feat(lesson-duplication): Constrain Gemini output with Zod schemas ([#1602](https://github.com/A-Guy-educ/A-Guy/pull/1602)) — @aguyshayb
 - chore: Pin pnpm to 10.33.0 via packageManager field ([#1609](https://github.com/A-Guy-educ/A-Guy/pull/1609)) — @aguyaharonyair
-- #1595: [P2] Vercel feedback script blocked by CSP script-src directive … ([#1604](https://github.com/A-Guy-educ/A-Guy/pull/1604)) — @aguyaharonyair
+- #1595: [P2] Vercel feedback script blocked by CSP script-src directive … ([#1604](https://github.com/A-Guy-educ/A-Guy/pull/1604)) — @aguyaharonyair · 🔄 QA (#1985)
 <!-- semantic-release will automatically update this file with each release -->
 
 ## v0.25.8 — 2026-05-06

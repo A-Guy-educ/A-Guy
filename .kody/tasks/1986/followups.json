@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Backfill paymentIntentId for existing Stripe transactions",
+    "body": "Existing transactions on dev/staging/prod may have providerTransactionId = cs_... (Stripe session ID) and no paymentIntentId. A one-shot migration should backfill paymentIntentId from Stripe's API using the session ID. The webhook now falls back to providerTransactionId for charge.refunded lookups, so this is not breaking — but full backfill is needed for admin refunds to work via paymentIntentId on legacy transactions.",
+    "rationale": "The admin refund route now uses paymentIntentId with providerTransactionId fallback, but without backfill, legacy Stripe transactions would still use the cs_... ID when calling stripe.refunds.create, which Stripe rejects.",
+    "priority": "medium"
+  },
+  {
+    "title": "Add paymentIntentId to transaction list columns",
+    "body": "In src/server/payload/collections/Transactions.ts admin.defaultColumns, add 'paymentIntentId' so admins can see which PaymentIntent ID is associated with each transaction. This helps debugging refund issues.",
+    "rationale": "Debuggability — without the field visible in the list view, it's hard to correlate transactions with Stripe dashboard PaymentIntents.",
+    "priority": "low"
+  }
+]
