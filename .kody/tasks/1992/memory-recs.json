@@ -1,0 +1,10 @@
+[
+  {
+    "type": "decision",
+    "name": "lessons-within-chapter-need-explicit-sort",
+    "hook": "Explicit sort by order field within chapters needed even when DB sorts by order",
+    "body": "When grouping filtered lessons by chapter in StudyContent, lessons within each chapter should be explicitly sorted by the `order` field. This is needed even when the database query sorts by `order`, because: (1) grouped lessons may be processed in a way that doesn't preserve order, and (2) mixed lesson type scenarios can cause inconsistent ordering.\n\nWhy: Commit df31412c8 (#1937) already identified and fixed this exact bug, but the fix was never merged into dev (same issue re-filed as #1992). The root cause is that without explicit client-side sorting, the flatMap+group operation doesn't guarantee intra-chapter ordering.\n\nHow to apply: In filteredLessons useMemo in StudyContent, after filtering by lessonType, always call .sort((a,b) => (a as any).order - (b as any).order) before the map.",
+    "why": "The same off-by-one bug was already fixed once (#1937) but the fix wasn't in dev. This is a recurring pattern that should be remembered.",
+    "confidence": 0.9
+  }
+]
