@@ -79,10 +79,15 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     providerTransactionId: string
     amount: number
   }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const paymentIntentId = (transaction as any).paymentIntentId as string | null
 
   try {
     if (provider === 'stripe') {
-      await refundStripe(id, providerTransactionId, amount)
+      // Use paymentIntentId (pi_...) if available, fall back to providerTransactionId (cs_...)
+      // for legacy transactions created before the paymentIntentId field was added.
+      const refundId = paymentIntentId ?? providerTransactionId
+      await refundStripe(id, refundId, amount)
     } else if (provider === 'paypal') {
       await refundPayPal(providerTransactionId, amount)
     } else {
