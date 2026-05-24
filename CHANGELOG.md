@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- #1581: Phase 7: Course data scope decision + brand smoke test ([#1757](https://github.com/A-Guy-educ/A-Guy/pull/1757)) — @aguyaharonyair · 🔄 QA (#1934)
+- #1581: Phase 7: Course data scope decision + brand smoke test ([#1757](https://github.com/A-Guy-educ/A-Guy/pull/1757)) — @aguyaharonyair · ⚠️ QA 2026-05-23 (#1946)
 - #1812: [ExerciseWorksheet] Question label text should align vertically … ([#1815](https://github.com/A-Guy-educ/A-Guy/pull/1815)) — @aguyaharonyair
 - #1785: Remove bottom chat input bar from lesson page on mobile ([#1790](https://github.com/A-Guy-educ/A-Guy/pull/1790)) — @aguyaharonyair
 - #1741: [Mobile] Floating "שאל שאלה" button in bottom-left corner ([#1771](https://github.com/A-Guy-educ/A-Guy/pull/1771)) — @aguyaharonyair
