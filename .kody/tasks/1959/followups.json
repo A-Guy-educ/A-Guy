@@ -1,0 +1,8 @@
+[
+  {
+    "title": "LessonDuplications admin list could use depth=1 in the list query for richer data",
+    "body": "The custom Cell components now safely display IDs when relationships aren't populated, but a better fix would be to configure the admin list to use depth=1 so relationships are always populated. This would require a custom list component that passes depth=1 to the find query.",
+    "rationale": "The Cell fix is a fallback display improvement; depth=1 in the list query would be a more complete solution.",
+    "priority": "low"
+  }
+]

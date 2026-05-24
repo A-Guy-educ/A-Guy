@@ -1,0 +1,18 @@
+{
+  "taskId": "1959",
+  "taskType": "issue",
+  "target": "1959",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed by adding custom Cell components to sourceLesson and outputLesson relationship fields in LessonDuplications collection",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/collections/LessonDuplications.ts",
+    "src/ui/admin/LessonDuplications/Cell/index.tsx",
+    "tests/int/lesson-duplication-admin-list.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/6ab44e8a-fc8d-41dd-a32b-b21859573346.jsonl",
+  "startedAt": "2026-05-24T06:40:00Z",
+  "finishedAt": "2026-05-24T06:50:00Z"
+}

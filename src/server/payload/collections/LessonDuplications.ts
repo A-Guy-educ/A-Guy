@@ -93,7 +93,13 @@ export const LessonDuplications: CollectionConfig = {
       relationTo: 'lessons',
       required: true,
       index: true,
-      admin: { description: 'Lesson being duplicated.', readOnly: true },
+      admin: {
+        description: 'Lesson being duplicated.',
+        readOnly: true,
+        components: {
+          Cell: '@/ui/admin/LessonDuplications/Cell#LessonDuplicationRelationshipCell',
+        },
+      },
     },
     {
       name: 'level',
@@ -128,6 +134,9 @@ export const LessonDuplications: CollectionConfig = {
       admin: {
         description: 'The newly created lesson (set when status=succeeded).',
         readOnly: true,
+        components: {
+          Cell: '@/ui/admin/LessonDuplications/Cell#LessonDuplicationRelationshipCell',
+        },
       },
     },
     {
