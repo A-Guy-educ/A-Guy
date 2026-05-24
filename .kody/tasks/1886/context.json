@@ -1,0 +1,18 @@
+{
+  "taskId": "1886",
+  "taskType": "issue",
+  "target": "1886",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed HTTP 404 in admin Recent Transactions widget by creating custom /api/admin/recent-transactions endpoint with proper auth checks and overrideAccess",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/admin/recent-transactions/route.ts",
+    "src/ui/admin/RecentTransactionsWidget/index.tsx",
+    "tests/int/admin-recent-transactions-1886.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1886.jsonl",
+  "startedAt": "2026-05-23T09:20:00Z",
+  "finishedAt": "2026-05-23T09:28:00Z"
+}

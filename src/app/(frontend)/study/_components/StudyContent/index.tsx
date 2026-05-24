@@ -7,6 +7,7 @@ import {
 import { useExamCountdown } from '@/client/hooks/useExamCountdown'
 import { getUserProfile } from '@/client/state/localStorage/userProfile'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
+import { getOnboardingRedirect } from '@/infra/onboarding/redirect'
 import { logger } from '@/infra/utils/logger'
 // cn import removed - not currently used
 import type { Chapter, Lesson } from '@/payload-types'
@@ -133,7 +134,7 @@ export function StudyContent({
     async function loadData() {
       const profile = getUserProfile()
       if (!profile?.gradeLevel) {
-        window.location.href = '/'
+        window.location.href = getOnboardingRedirect(window.location.pathname)
         return
       }
 
