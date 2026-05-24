@@ -1,0 +1,17 @@
+{
+  "taskId": "1980",
+  "taskType": "issue",
+  "target": "1980-p2-mobile-viewport-exposes-admin-controls-on-front",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed sm:hidden to hidden sm:block in AdminBar component - admin controls are now hidden on mobile viewport (<640px) and shown on desktop (>=640px)",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/AdminBar/index.tsx",
+    "tests/e2e/admin-bar-mobile-visibility.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/9ec4a1cb-7bc2-4ce9-a8ec-df4906c084b7.jsonl",
+  "startedAt": "2026-05-24T09:30:00.000Z",
+  "finishedAt": "2026-05-24T09:39:00.000Z"
+}
