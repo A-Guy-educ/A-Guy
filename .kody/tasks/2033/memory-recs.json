@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "router-ref-infinite-loop-bug",
+    "hook": "Next.js useRouter in useEffect deps can cause infinite loop",
+    "body": "When using `useRouter()` from `next/navigation` inside a `useEffect` with `router` in the dependency array, the effect can fire unexpectedly or cause issues in Next.js 15 where router reference may change. Fix by using a `useRef` to hold the router and updating it via a separate effect, so the main effect only depends on the actual triggering values (e.g., debounced search term).",
+    "why": "Without this fix, the Search component's debounce mechanism is disrupted because the effect keeps re-firing as router changes, preventing proper URL updates.",
+    "confidence": 0.9
+  }
+]

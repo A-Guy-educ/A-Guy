@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Write integration test for Search component",
+    "body": "Create a unit/integration test for src/ui/web/search/Component.tsx that tests the debounce behavior and URL update mechanism without requiring full E2E setup.",
+    "rationale": "The E2E test created demonstrates the bug is fixed but E2E tests are slow and require full environment.",
+    "priority": "low"
+  }
+]

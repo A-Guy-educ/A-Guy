@@ -133,7 +133,9 @@ export function StudyContent({
     async function loadData() {
       const profile = getUserProfile()
       if (!profile?.gradeLevel) {
-        window.location.href = '/'
+        // Redirect to /courses (grade selection page) instead of / (which falls through to /start)
+        // This allows both authenticated and unauthenticated users to select a course
+        window.location.href = '/courses'
         return
       }
 

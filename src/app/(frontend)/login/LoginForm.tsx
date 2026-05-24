@@ -19,6 +19,7 @@ import telescopeSvg from '@/brands/aguy/assets/telescope.svg'
 
 function LoginFormContent() {
   const t = useTranslations('auth.login')
+  const tBrand = useTranslations()
   const tOauth = useTranslations('auth.oauth')
   const passwordEnabled = usePasswordLogin()
   const searchParams = useSearchParams()
@@ -49,7 +50,7 @@ function LoginFormContent() {
         {/* Logo */}
         <div className="flex flex-col items-center gap-1">
           <Image src={telescopeSvg} alt="A-Guy" className="h-24 w-auto" width={224} height={204} />
-          <p className="text-primary font-semibold">{t('brand.heroSubtitle')}</p>
+          <p className="text-primary font-semibold">{tBrand('brand.heroSubtitle')}</p>
         </div>
         {/* Section label with decorative line */}
         <div className="flex flex-col items-center mt-3">

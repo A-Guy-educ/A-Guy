@@ -1,0 +1,18 @@
+{
+  "taskId": "2032",
+  "taskType": "issue",
+  "target": "2032-p2-ask-practice-and-stats-pages-redirect-to-start",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed two guard/redirect points that were redirecting to / instead of /courses for missing gradeLevel",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/guards/RequireCourseSelection.tsx",
+    "src/app/(frontend)/study/_components/StudyContent/index.tsx",
+    "tests/e2e/ask-redirect-when-authenticated.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2032-p2-ask-practice-and-stats-pages-redirect-to-start.jsonl",
+  "startedAt": "2026-05-24T18:30:00Z",
+  "finishedAt": "2026-05-24T18:32:00Z"
+}

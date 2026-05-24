@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "redirect-to-start-vs-courses",
+    "hook": "Redirects to / fall through to /start, not /courses",
+    "body": "When fixing redirect issues for unauthenticated/authenticated-but-no-grade users, redirect to /courses (grade selection) rather than /, because / falls through to /start which is confusing for authenticated users who just need to select a grade.",
+    "why": "The RequireCourseSelection guard was redirecting to / when no gradeLevel was set, but / falls through to /start (homepage redirect) making it look like the user lost their session rather than needing to select a course.",
+    "confidence": 0.9
+  }
+]

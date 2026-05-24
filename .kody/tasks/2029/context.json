@@ -1,0 +1,17 @@
+{
+  "taskId": "2029",
+  "taskType": "issue",
+  "target": "2029-p2-gravatar-images-blocked-by-csp-on-admin-dashboa",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added *.gravatar.com to img-src directive for /admin routes in next.config.js",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "next.config.js",
+    "tests/int/csp-gravatar-admin.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2029-session.jsonl",
+  "startedAt": "2026-05-24T15:55:00Z",
+  "finishedAt": "2026-05-24T16:00:00Z"
+}

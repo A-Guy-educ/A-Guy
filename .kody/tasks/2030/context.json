@@ -1,0 +1,17 @@
+{
+  "taskId": "2030",
+  "taskType": "issue",
+  "target": "2030-p2-transactions-api-returns-404-on-admin-dashboard",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed by creating custom admin endpoint /api/admin/transactions and updating RecentTransactionsWidget to use it instead of broken /api/collections/transactions",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/admin/transactions/route.ts",
+    "src/ui/admin/RecentTransactionsWidget/index.tsx"
+  ],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-05-24T17:24:00Z",
+  "finishedAt": "2026-05-24T17:26:00Z"
+}

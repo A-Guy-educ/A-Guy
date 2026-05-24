@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Verify /stats redirect behavior",
+    "body": "The /stats page does not use RequireCourseSelection or StudyContent. It has its own auth gate using getMeUser(). The issue reported all three routes redirect to /start, but only /ask and /practice had identifiable redirect bugs. The /stats redirect may have been a secondary effect of the same bug or a separate issue.",
+    "rationale": "The issue description said all three (/ask, /practice, /stats) redirect to /start, but only /ask (via RequireCourseSelection) and /practice (via StudyContent) had the / redirect. Stats has no such client-side redirect.",
+    "priority": "low"
+  }
+]
