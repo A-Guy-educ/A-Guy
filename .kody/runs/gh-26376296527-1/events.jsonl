@@ -1,0 +1,10 @@
+{"ts":"2026-05-24T23:55:32.843Z","runId":"gh-26376296527-1","executable":"resolve","kind":"preflight","name":"resolveFlow","durationMs":3025,"outcome":"ok"}
+{"ts":"2026-05-24T23:55:32.844Z","runId":"gh-26376296527-1","executable":"resolve","kind":"preflight","name":"apply-prefer.sh","outcome":"skipped"}
+{"ts":"2026-05-24T23:55:33.132Z","runId":"gh-26376296527-1","executable":"resolve","kind":"preflight","name":"loadTaskState","durationMs":288,"outcome":"ok"}
+{"ts":"2026-05-24T23:55:33.132Z","runId":"gh-26376296527-1","executable":"resolve","kind":"preflight","name":"loadConventions","durationMs":0,"outcome":"ok"}
+{"ts":"2026-05-24T23:55:33.137Z","runId":"gh-26376296527-1","executable":"resolve","kind":"preflight","name":"loadMemoryContext","durationMs":5,"outcome":"ok"}
+{"ts":"2026-05-24T23:55:33.137Z","runId":"gh-26376296527-1","executable":"resolve","kind":"preflight","name":"loadCoverageRules","durationMs":0,"outcome":"ok"}
+{"ts":"2026-05-24T23:55:33.138Z","runId":"gh-26376296527-1","executable":"resolve","kind":"preflight","name":"composePrompt","durationMs":1,"outcome":"ok"}
+{"ts":"2026-05-24T23:55:33.138Z","runId":"gh-26376296527-1","executable":"resolve","kind":"agent_start"}
+{"ts":"2026-05-24T23:57:18.753Z","runId":"gh-26376296527-1","executable":"resolve","kind":"agent_end","durationMs":105614,"outcome":"ok","meta":{"kind":"ok","tokens":{"input":623050,"output":5127,"cacheRead":525483,"cacheCreate":29134},"messageCount":76}}
+{"ts":"2026-05-24T23:57:18.755Z","runId":"gh-26376296527-1","executable":"resolve","kind":"postflight","name":"parseAgentResult","durationMs":1,"outcome":"ok"}

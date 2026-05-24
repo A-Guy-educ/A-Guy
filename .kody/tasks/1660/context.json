@@ -4,7 +4,7 @@
   "target": "release/v0.25.9",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Resolved CHANGELOG.md merge conflict with origin/dev",
+  "reason": "Single asymmetric conflict in CHANGELOG.md — origin/dev added duplicate #2011 entry plus spurious test content; HEAD full changelog preserved as-is",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/1660",
   "runUrl": null,
   "filesTouched": ["CHANGELOG.md"],
