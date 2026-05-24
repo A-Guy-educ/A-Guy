@@ -53,8 +53,17 @@ export async function GET(request: NextRequest) {
         ? (courseObj.accessType ?? DEFAULT_ACCESS_TYPE)
         : DEFAULT_ACCESS_TYPE
 
+    // Deduplicate chapters by ID to prevent duplicate lessons
+    // (same chapter can appear multiple times if chapters table has duplicates)
+    const seenChapterIds = new Set<string>()
+    const uniqueChapters = chapters.filter((chapter) => {
+      if (seenChapterIds.has(chapter.id)) return false
+      seenChapterIds.add(chapter.id)
+      return true
+    })
+
     // Fetch all lessons for all chapters (batch query for efficiency)
-    const chapterIds = chapters.map((chapter) => chapter.id)
+    const chapterIds = uniqueChapters.map((chapter) => chapter.id)
     let lessons: Lesson[] = []
 
     if (chapterIds.length > 0) {
@@ -106,8 +115,8 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Attach lessons to chapters
-    const chaptersWithLessons = chapters.map((chapter) => ({
+    // Attach lessons to chapters (using uniqueChapters to avoid duplicates)
+    const chaptersWithLessons = uniqueChapters.map((chapter) => ({
       ...chapter,
       lessons: lessonsByChapter[chapter.id] || [],
     }))
