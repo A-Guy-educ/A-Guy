@@ -1,0 +1,17 @@
+{
+  "taskId": "2041",
+  "taskType": "issue",
+  "target": "2041-p2-pdf-embed-test-page-shows-no-title-as-document",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed generateMetadata fallback from 'No Title' to 'Test PDF' to match page component default",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/test/pdf-embed/page.tsx",
+    "tests/e2e/pdf-embed-xframe.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2041-p2-pdf-embed-test-page-shows-no-title-as-document.jsonl",
+  "startedAt": "2026-05-24T20:53:00Z",
+  "finishedAt": "2026-05-24T21:05:00Z"
+}

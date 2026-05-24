@@ -46,4 +46,14 @@ test.describe('PDF Embed X-Frame-Options Issue', () => {
     // Check that the URL is displayed in the parameters section
     await expect(page.locator('code').first()).toContainText(BLOCKED_URL)
   })
+
+  test('page title should not show "No Title" when no title param is provided', async ({
+    page,
+  }) => {
+    await page.goto('/test/pdf-embed', { waitUntil: 'domcontentloaded' })
+
+    // The page should not display "No Title" in the document title
+    const title = await page.locator('meta[name="title"]').getAttribute('content')
+    expect(title).not.toContain('No Title')
+  })
 })
