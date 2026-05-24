@@ -87,8 +87,13 @@ export async function POST(request: NextRequest) {
  * The coupon-usages row is created only if the atomic increment succeeds,
  * and the afterChange hook is skipped via context to avoid double-incrementing.
  *
+ * Tenant scoping: the coupon lookup is filtered by the transaction's tenant.
+ * Global (tenant-less) coupons also match — they are found via
+ * `tenant: { exists: false }` in the OR clause.
+ *
  * @param payload - Payload instance
  * @param transaction - The succeeded transaction with appliedCoupon in metadata
+ * @param tenantId - The tenant ID to scope coupon lookup
  */
 async function consumeCouponOnPayment(
   payload: Awaited<ReturnType<typeof getPayload>>,
@@ -106,21 +111,26 @@ async function consumeCouponOnPayment(
     user?: string | { id: string }
     product?: string | { id: string }
   },
+  tenantId: string,
 ): Promise<void> {
   const appliedCoupon = transaction.metadata?.appliedCoupon
   if (!appliedCoupon) return
 
-  // Find the coupon by code
+  // Find the coupon by code, scoped to the transaction's tenant.
+  // Also match global (tenant-less) coupons via the OR clause.
   const coupons = await payload.find({
     collection: 'coupons',
-    where: { code: { equals: appliedCoupon.code } },
+    where: {
+      code: { equals: appliedCoupon.code },
+      or: [{ tenant: { equals: tenantId } }, { tenant: { exists: false } }],
+    },
     limit: 1,
     depth: 0,
     overrideAccess: true,
   })
 
   if (coupons.totalDocs === 0) {
-    payload.logger.warn({ code: appliedCoupon.code }, 'Coupon not found for consumption')
+    payload.logger.warn({ code: appliedCoupon.code, tenantId }, 'Coupon not found for consumption')
     return
   }
 
@@ -217,44 +227,64 @@ async function handleEvent(
       }
 
       // Idempotency: skip if entitlements already granted (replayed webhook)
-      if (transaction.entitlementsGrantedAt) {
-        return
-      }
-
-      // Build update data: flip to succeeded, record grant timestamp, persist paymentIntentId
-      const updateData: Record<string, unknown> = {
-        status: 'succeeded',
-        entitlementsGrantedAt: new Date().toISOString(),
-      }
-      if (stripePaymentIntentId) {
-        updateData.paymentIntentId = stripePaymentIntentId
-      }
-
-      // Grant entitlements BEFORE flipping status to succeeded — fail-safe:
-      // if grant throws we do NOT set status=succeeded so the provider retries.
-      await grantProductEntitlements(
-        transaction.user as string,
-        transaction.product as string,
-        transaction.id,
-      )
-
-      // Grant succeeded — atomically flip status and record the grant timestamp
-      await payload.update({
-        collection: 'transactions',
-        id: transaction.id,
-        data: updateData,
-        overrideAccess: true,
-      })
-
-      // Consume coupon atomically (if applied)
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await consumeCouponOnPayment(payload, transaction as any)
-      } catch (err) {
-        payload.logger.error(
-          { error: err, transactionId: transaction.id },
-          'Failed to consume coupon',
+      if (!transaction.entitlementsGrantedAt) {
+        // Grant entitlements BEFORE flipping status to succeeded — fail-safe:
+        // if grant throws we do NOT set status=succeeded so the provider retries.
+        await grantProductEntitlements(
+          transaction.user as string,
+          transaction.product as string,
+          transaction.id,
         )
+
+        // Grant succeeded — atomically flip status and record the grant timestamp
+        await payload.update({
+          collection: 'transactions',
+          id: transaction.id,
+          data: {
+            status: 'succeeded',
+            entitlementsGrantedAt: new Date().toISOString(),
+            ...(stripePaymentIntentId ? { paymentIntentId: stripePaymentIntentId } : {}),
+          },
+          overrideAccess: true,
+        })
+      }
+
+      // Coupon consumption — independent from entitlementsGrantedAt, idempotent via couponConsumedAt.
+      // Attempt consumption if couponConsumedAt is null (regardless of entitlementsGrantedAt).
+      // This is retry-safe: if first delivery fails in consumption (returns 500), retry will
+      // still attempt consumption since couponConsumedAt is not set.
+      const txMetadata = transaction.metadata as
+        | {
+            appliedCoupon?: {
+              code: string
+              discountType: string
+              discountValue: number
+              originalAmount?: number
+              discountedAmount?: number
+            } | null
+          }
+        | null
+        | undefined
+      if (!transaction.couponConsumedAt && txMetadata?.appliedCoupon) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await consumeCouponOnPayment(payload, transaction as any, transaction.tenant as string)
+        } catch (err) {
+          // Do NOT swallow — log and re-throw so the webhook returns 500 and provider retries.
+          // Entitlements are already granted (idempotent), so retry is safe for coupon consumption.
+          payload.logger.error(
+            { error: err, transactionId: transaction.id },
+            'Coupon consumption failed — returning 500 so provider retries',
+          )
+          throw err
+        }
+        // Consumption succeeded — record couponConsumedAt
+        await payload.update({
+          collection: 'transactions',
+          id: transaction.id,
+          data: { couponConsumedAt: new Date().toISOString() },
+          overrideAccess: true,
+        })
       }
       break
     }
@@ -286,40 +316,56 @@ async function handleEvent(
       const transaction = transactions.docs[0]
 
       // Idempotency: skip if entitlements already granted
-      if (transaction.entitlementsGrantedAt) {
-        return
-      }
-
-      // Build update data: flip to succeeded, record grant timestamp, persist paymentIntentId
-      const updateData: Record<string, unknown> = {
-        status: 'succeeded',
-        entitlementsGrantedAt: new Date().toISOString(),
-      }
-      if (stripePaymentIntentId) {
-        updateData.paymentIntentId = stripePaymentIntentId
-      }
-
-      await grantProductEntitlements(
-        transaction.user as string,
-        transaction.product as string,
-        transaction.id,
-      )
-
-      await payload.update({
-        collection: 'transactions',
-        id: transaction.id,
-        data: updateData,
-        overrideAccess: true,
-      })
-
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await consumeCouponOnPayment(payload, transaction as any)
-      } catch (err) {
-        payload.logger.error(
-          { error: err, transactionId: transaction.id },
-          'Failed to consume coupon',
+      if (!transaction.entitlementsGrantedAt) {
+        await grantProductEntitlements(
+          transaction.user as string,
+          transaction.product as string,
+          transaction.id,
         )
+
+        await payload.update({
+          collection: 'transactions',
+          id: transaction.id,
+          data: {
+            status: 'succeeded',
+            entitlementsGrantedAt: new Date().toISOString(),
+            ...(stripePaymentIntentId ? { paymentIntentId: stripePaymentIntentId } : {}),
+          },
+          overrideAccess: true,
+        })
+      }
+
+      // Coupon consumption — independent from entitlementsGrantedAt, idempotent via couponConsumedAt.
+      // Attempt consumption if couponConsumedAt is null (regardless of entitlementsGrantedAt).
+      const asyncTxMetadata = transaction.metadata as
+        | {
+            appliedCoupon?: {
+              code: string
+              discountType: string
+              discountValue: number
+              originalAmount?: number
+              discountedAmount?: number
+            } | null
+          }
+        | null
+        | undefined
+      if (!transaction.couponConsumedAt && asyncTxMetadata?.appliedCoupon) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await consumeCouponOnPayment(payload, transaction as any, transaction.tenant as string)
+        } catch (err) {
+          payload.logger.error(
+            { error: err, transactionId: transaction.id },
+            'Coupon consumption failed — returning 500 so provider retries',
+          )
+          throw err
+        }
+        await payload.update({
+          collection: 'transactions',
+          id: transaction.id,
+          data: { couponConsumedAt: new Date().toISOString() },
+          overrideAccess: true,
+        })
       }
       break
     }
