@@ -103,6 +103,12 @@ const codeStyle: React.CSSProperties = {
   whiteSpace: 'nowrap',
 }
 const messageStyle: React.CSSProperties = { fontSize: 13, flex: 1 }
+const sectionIndexStyle: React.CSSProperties = {
+  fontFamily: 'monospace',
+  fontSize: 12,
+  color: 'var(--theme-elevation-600)',
+  whiteSpace: 'nowrap',
+}
 const buttonStyle: React.CSSProperties = {
   padding: '4px 10px',
   fontSize: 12,
@@ -637,6 +643,7 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
                     <span style={codeStyle}>
                       {FAILURE_CODE_LABELS[failure.code] ?? failure.code}
                     </span>
+                    <span style={sectionIndexStyle}>Section {failure.sectionIndex}</span>
                     <span style={messageStyle}>{failure.message}</span>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                       <button
@@ -798,6 +805,7 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
                   {items.map((w, i) => (
                     <div key={`${w.code}-${w.sectionIndex}-${i}`} style={failureRowStyle}>
                       <span style={codeStyle}>{w.code}</span>
+                      <span style={sectionIndexStyle}>Section {w.sectionIndex}</span>
                       <span style={messageStyle}>{w.message}</span>
                     </div>
                   ))}

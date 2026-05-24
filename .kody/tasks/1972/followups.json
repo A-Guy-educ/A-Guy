@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Consider adding exerciseRef to failure/warning rows",
+    "body": "Issue #1972 says 'Exercise Ref' should also appear in failure/warning rows, not just in the card header. Currently each card shows 'Exercise: {exerciseRef.slice(0, 12)}' as the card header, but each individual failure/warning row does not repeat the exerciseRef. Consider if this is needed for clarity or is fine as-is since the card groups failures by exercise.",
+    "rationale": "The issue description explicitly mentions 'Exercise Ref, Section Index, Code, and Message' should be in rows. Only Section Index was fixed; exerciseRef may also need display in rows if the grouping by card is deemed insufficient.",
+    "priority": "low"
+  }
+]

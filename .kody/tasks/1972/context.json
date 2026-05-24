@@ -1,0 +1,17 @@
+{
+  "taskId": "1972",
+  "taskType": "issue",
+  "target": "GitHub issue #1972",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed sectionIndex not displayed in failure/warning rows — added sectionIndexStyle and rendering in both failure and warning rows",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/LessonDuplicationReview/index.tsx",
+    "tests/unit/admin/lesson-duplication-review-redesign-1662.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-05-24T10:00:00.000Z",
+  "finishedAt": "2026-05-24T10:05:45.000Z"
+}
