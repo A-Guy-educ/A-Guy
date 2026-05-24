@@ -20,6 +20,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 const hasDatabaseUrl = !!process.env.DATABASE_URL
 
+// This test makes HTTP requests to a running Next.js server — skip if server is not available
+const hasServerUrl = !!process.env.SERVER_URL
+
 let payload: Payload
 let adminToken: string
 let adminUserId: string
@@ -185,18 +188,21 @@ describe.skipIf(!hasDatabaseUrl)('RecentTransactionsWidget API — #1936', () =>
     expect(Array.isArray(result.docs)).toBe(true)
   })
 
-  it('WRONG URL: /api/collections/transactions does not exist (returns 404)', async () => {
-    // The widget was calling /api/collections/transactions which does NOT exist.
-    // Only /api/transactions is valid. This test proves the wrong URL was used.
-    const req = new Request(
-      'http://localhost:3000/api/collections/transactions?limit=5&sort=-createdAt&depth=2',
-      {
-        headers: { Authorization: `JWT ${adminToken}` },
-      },
-    )
+  it.skipIf(!hasServerUrl)(
+    'WRONG URL: /api/collections/transactions does not exist (returns 404)',
+    async () => {
+      // The widget was calling /api/collections/transactions which does NOT exist.
+      // Only /api/transactions is valid. This test proves the wrong URL was used.
+      const req = new Request(
+        'http://localhost:3000/api/collections/transactions?limit=5&sort=-createdAt&depth=2',
+        {
+          headers: { Authorization: `JWT ${adminToken}` },
+        },
+      )
 
-    const res = await fetch(req)
-    // /api/collections/transactions is not a valid Payload v3 endpoint — returns 404
-    expect(res.status).toBe(404)
-  })
+      const res = await fetch(req)
+      // /api/collections/transactions is not a valid Payload v3 endpoint — returns 404
+      expect(res.status).toBe(404)
+    },
+  )
 })
