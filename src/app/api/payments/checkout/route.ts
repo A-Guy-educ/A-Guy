@@ -109,12 +109,19 @@ export async function POST(request: NextRequest) {
   // A product with no tenant (null) is a global/legacy product — accessible to all.
   // A product with a tenant can only be purchased by users in the same tenant.
   // Super-admin users bypass this check.
+  // Fail-closed: null-tenant non-super-admin users cannot buy tenant-scoped products.
   if (!isSuperAdmin(user as { roles?: unknown } | null)) {
     const productTenantId = extractTenantId((product as { tenant?: unknown }).tenant)
     const userTenantId = extractTenantId((user as { tenant?: unknown })?.tenant)
 
+    // Null-tenant user trying to buy a tenant-scoped product → fail closed (404)
+    // Use == null (loose) to catch both null (explicit) and undefined (field absent)
+    if (productTenantId !== null && userTenantId == null) {
+      return NextResponse.json({ success: false, error: 'product_not_found' }, { status: 404 })
+    }
+
+    // Product belongs to a different tenant — pretend it doesn't exist
     if (productTenantId !== null && userTenantId !== null && productTenantId !== userTenantId) {
-      // Product belongs to a different tenant — pretend it doesn't exist
       return NextResponse.json({ success: false, error: 'product_not_found' }, { status: 404 })
     }
   }
@@ -253,12 +260,19 @@ export async function POST(request: NextRequest) {
     // A coupon with no tenant (null) is global — usable by all.
     // A coupon with a tenant can only be used by users in the same tenant.
     // Super-admin users bypass this check.
+    // Fail-closed: null-tenant non-super-admin users cannot use tenant-scoped coupons.
     if (!isSuperAdmin(user as { roles?: unknown } | null)) {
       const couponTenantId = extractTenantId((coupon as { tenant?: unknown }).tenant)
       const userTenantId = extractTenantId((user as { tenant?: unknown })?.tenant)
 
+      // Null-tenant user trying to use a tenant-scoped coupon → fail closed (400)
+      // Use == null (loose) to catch both null (explicit) and undefined (field absent)
+      if (couponTenantId !== null && userTenantId == null) {
+        return NextResponse.json({ success: false, error: 'invalid_coupon' }, { status: 400 })
+      }
+
+      // Coupon belongs to a different tenant — treat as invalid
       if (couponTenantId !== null && userTenantId !== null && couponTenantId !== userTenantId) {
-        // Coupon belongs to a different tenant — treat as invalid
         return NextResponse.json({ success: false, error: 'invalid_coupon' }, { status: 400 })
       }
     }

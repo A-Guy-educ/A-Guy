@@ -1,0 +1,17 @@
+{
+  "taskId": "2012",
+  "taskType": "pr",
+  "target": "2011-fail-closed-in-checkout-tenant-guard-when-user-has",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fix verified: changed === null to == null in both tenant guards (product and coupon) to catch both null and undefined tenant values. Also fixed test user creation to explicitly set tenant: null.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/payments/checkout/route.ts",
+    "tests/int/checkout-tenant-isolation.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/",
+  "startedAt": "2026-05-24T14:00:00Z",
+  "finishedAt": "2026-05-24T14:05:00Z"
+}
