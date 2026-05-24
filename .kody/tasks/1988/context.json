@@ -1,0 +1,19 @@
+{
+  "taskId": "1988",
+  "taskType": "issue",
+  "target": "1988",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "All fixes applied: couponConsumedAt field added, coupon consumption decoupled from entitlementsGrantedAt guard, tenant scoping added to consumeCouponOnPayment, consumption errors now return 500 instead of being swallowed. All 41 integration tests pass.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/collections/Transactions.ts",
+    "src/app/api/webhooks/stripe/route.ts",
+    "src/app/api/webhooks/paypal/route.ts",
+    "tests/int/payment-webhook-entitlements.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/live-1778149397247-m4aa1p.jsonl",
+  "startedAt": "2026-05-24T08:14:00Z",
+  "finishedAt": "2026-05-24T08:38:00Z"
+}

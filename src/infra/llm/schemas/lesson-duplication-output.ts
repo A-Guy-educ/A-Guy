@@ -1,12 +1,14 @@
 /**
  * Output schemas for the lesson-duplication variation pipeline.
  *
- * Passed to Genkit's `ai.generate({ output: { schema } })` so Gemini's
- * responseSchema mode refuses to emit non-conforming output.
- *
  * Status (2026-05-13):
- *  - `SolutionDerivationOutputSchema` (pass 2): IN USE. Small/well-bounded —
- *    Gemini handles it correctly. Verified live against gemini-2.5-pro.
+ *  - `SolutionDerivationOutputSchema` (pass 2): POST-HOC VALIDATION ONLY.
+ *    NOT passed to Genkit's outputSchema / Gemini's responseSchema — verified
+ *    live that Gemini collapses the per-block array shape to a literal string
+ *    array of property names (e.g. { "blocks": ["id", "solution", ...] }),
+ *    the same collapse pattern seen on LessonVariationOutputSchema (pass 1).
+ *    We now parse text only and validate post-hoc with Zod's safeParse.
+ *    See: issue #1748.
  *  - `LessonVariationOutputSchema` (pass 1): NOT WIRED UP. Verified live that
  *    Gemini collapses the full content.blocks shape to `{ "content": "blocks" }`
  *    (treating the property name as a string value) regardless of whether the
@@ -108,10 +110,160 @@ export type LessonVariationOutput = z.infer<typeof LessonVariationOutputSchema>
  * `anyOf`. `additionalProperties` is rejected by Gemini's v1beta API.
  */
 type GeminiJsonSchema =
-  | { type: 'string' | 'number' | 'integer' | 'boolean' }
+  | { type: 'string'; enum?: string[] }
+  | { type: 'number' | 'integer' | 'boolean' }
   | { type: 'array'; items: GeminiJsonSchema }
   | { type: 'object'; properties: Record<string, GeminiJsonSchema>; required?: string[] }
   | { anyOf: GeminiJsonSchema[] }
+
+/**
+ * The rich-text sub-schema shape that must exist on every question_* block
+ * in the pass-1 output. Used as the forced slot when the source doesn't already
+ * define hint/solution/fullSolution.
+ */
+const INLINE_RICH_TEXT_JSON_SCHEMA: GeminiJsonSchema = {
+  type: 'object',
+  properties: {
+    type: { type: 'string' },
+    format: { type: 'string' },
+    value: { type: 'string' },
+    mediaIds: { type: 'array', items: { type: 'string' } },
+  },
+}
+
+const QUESTION_FORCED_SLOTS = ['hint', 'solution', 'fullSolution'] as const
+
+/**
+ * Detect whether a block object schema represents a question_* block by checking
+ * whether its `type` property carries a value starting with "question_".
+ */
+function isQuestionBlockSchema(blockSchema: GeminiJsonSchema): boolean {
+  if ((blockSchema as { type?: string }).type !== 'object') return false
+  const obj = blockSchema as {
+    type: 'object'
+    properties: Record<string, GeminiJsonSchema>
+    required?: string[]
+  }
+  const props = obj.properties
+  if (!props) return false
+  const typeSchema = props['type']
+  if (!typeSchema) return false
+  // Check for enum values (added by deriveJsonSchemaFromValue for identifier strings)
+  const asEnum = typeSchema as { enum?: string[] }
+  if (Array.isArray(asEnum.enum) && asEnum.enum.some((v: string) => v.startsWith('question_'))) {
+    return true
+  }
+  // Also handle const (if deriveJsonSchemaFromValue is changed in future to use const)
+  const asConst = typeSchema as { const?: string }
+  if (typeof asConst.const === 'string' && asConst.const.startsWith('question_')) return true
+  // Generic string type — cannot reliably identify as question block.
+  return false
+}
+
+/**
+ * Returns true if every schema in the array is a question-block schema.
+ */
+function allAreQuestionBlocks(schemas: GeminiJsonSchema[]): boolean {
+  return schemas.length > 0 && schemas.every(isQuestionBlockSchema)
+}
+
+/**
+ * Augment a single block object schema: add hint/solution/fullSolution slots
+ * (required, rich-text-shaped) when the block is a question_* variant.
+ * Existing slot sub-schemas from the source are preserved.
+ */
+function augmentBlockSchema(blockSchema: GeminiJsonSchema): GeminiJsonSchema {
+  if ((blockSchema as { type?: string }).type !== 'object') return blockSchema
+  const obj = blockSchema as {
+    type: 'object'
+    properties: Record<string, GeminiJsonSchema>
+    required?: string[]
+  }
+  if (!obj.properties) return blockSchema
+
+  const isQuestion = isQuestionBlockSchema(blockSchema)
+  if (!isQuestion) return blockSchema
+
+  const properties = { ...obj.properties }
+  const required = obj.required ? [...obj.required] : []
+
+  for (const slot of QUESTION_FORCED_SLOTS) {
+    if (!properties[slot]) {
+      properties[slot] = INLINE_RICH_TEXT_JSON_SCHEMA
+    }
+    if (!required.includes(slot)) {
+      required.push(slot)
+    }
+  }
+
+  return { type: 'object', properties, required }
+}
+
+/**
+ * Recursively walk a blocks schema (which may be a bare object schema or an
+ * anyOf union) and augment every question_* block variant with
+ * hint/solution/fullSolution slots. Returns a new schema — never mutates the
+ * input.
+ */
+function augmentBlocksSchema(schema: GeminiJsonSchema): GeminiJsonSchema {
+  if ((schema as { type?: string }).type === 'array') {
+    const arraySchema = schema as { type: 'array'; items: GeminiJsonSchema }
+    const items = arraySchema.items
+    if (!items) return schema
+
+    if ((items as { type?: string }).type === 'object') {
+      // Single block variant — check if it's a question block
+      return {
+        type: 'array',
+        items: augmentBlockSchema(
+          items as {
+            type: 'object'
+            properties: Record<string, GeminiJsonSchema>
+            required?: string[]
+          },
+        ),
+      }
+    }
+
+    if (Array.isArray((items as { anyOf?: unknown }).anyOf)) {
+      // Heterogeneous block array — augment each anyOf branch
+      const anyOfItems = (items as { anyOf: GeminiJsonSchema[] }).anyOf
+      const augmentedAnyOf = anyOfItems.map(augmentBlockSchema)
+      // If ALL variants are question blocks, add hint/solution/fullSolution to
+      // the required array of every variant so Gemini can't drop them.
+      if (allAreQuestionBlocks(augmentedAnyOf)) {
+        for (const variant of augmentedAnyOf) {
+          if ((variant as { type?: string }).type === 'object') {
+            const obj = variant as {
+              required?: string[]
+              properties: Record<string, GeminiJsonSchema>
+            }
+            for (const slot of QUESTION_FORCED_SLOTS) {
+              if (!obj.required?.includes(slot)) {
+                obj.required = [...(obj.required ?? []), slot]
+              }
+            }
+          }
+        }
+      }
+      return { type: 'array', items: { anyOf: augmentedAnyOf } }
+    }
+
+    return schema
+  }
+
+  if ((schema as { type?: string }).type === 'object') {
+    return augmentBlockSchema(
+      schema as {
+        type: 'object'
+        properties: Record<string, GeminiJsonSchema>
+        required?: string[]
+      },
+    )
+  }
+
+  return schema
+}
 
 /**
  * Walk a JSON value and produce a Gemini-compatible JSON Schema that mirrors
@@ -174,7 +326,15 @@ export function deriveJsonSchemaFromValue(value: unknown): GeminiJsonSchema {
     }
     return { type: 'object', properties, required }
   }
-  if (typeof value === 'string') return { type: 'string' }
+  if (typeof value === 'string') {
+    // Preserve short identifier-like strings as `enum` so callers (notably
+    // augmentBlocksSchema) can identify block-type fields without falling back
+    // to a generic `type: 'string'`. Long prose strings are left as plain strings.
+    if (value.length <= 64 && /^[a-zA-Z0-9_-]+$/.test(value)) {
+      return { type: 'string', enum: [value] }
+    }
+    return { type: 'string' }
+  }
   if (typeof value === 'number') {
     return { type: Number.isInteger(value) ? 'integer' : 'number' }
   }
@@ -194,12 +354,13 @@ export function buildPass1JsonSchemaForExercise(exercise: unknown): GeminiJsonSc
     content && typeof content === 'object' ? (content as { blocks?: unknown }).blocks : undefined
   const blocks = Array.isArray(rawBlocks) ? rawBlocks : []
   const blocksSchema = deriveJsonSchemaFromValue(blocks)
+  const augmentedBlocksSchema = augmentBlocksSchema(blocksSchema)
   return {
     type: 'object',
     properties: {
       content: {
         type: 'object',
-        properties: { blocks: blocksSchema },
+        properties: { blocks: augmentedBlocksSchema },
         required: ['blocks'],
       },
     },
