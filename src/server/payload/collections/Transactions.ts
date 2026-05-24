@@ -107,6 +107,18 @@ export const Transactions: CollectionConfig = {
       },
     },
 
+    // PayPal Capture ID — required for PayPal refund and PAYMENT.CAPTURE.REFUNDED lookup.
+    // For PayPal, providerTransactionId stores the Order ID, but the refund endpoint and
+    // PAYMENT.CAPTURE.REFUNDED event key on the Capture ID (event.resource.id).
+    // Populated when PAYMENT.CAPTURE.COMPLETED fires.
+    {
+      name: 'captureId',
+      type: 'text',
+      admin: {
+        description: 'PayPal Capture ID — used for refunds and refund webhook lookup',
+      },
+    },
+
     // Transaction status
     {
       name: 'status',

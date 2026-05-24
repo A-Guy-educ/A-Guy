@@ -1925,6 +1925,10 @@ export interface Transaction {
    */
   paymentIntentId?: string | null;
   /**
+   * PayPal Capture ID — used for refunds and refund webhook lookup
+   */
+  captureId?: string | null;
+  /**
    * Current status of the transaction
    */
   status: 'pending' | 'succeeded' | 'failed' | 'refunded';
@@ -4466,6 +4470,7 @@ export interface TransactionsSelect<T extends boolean = true> {
   provider?: T;
   providerTransactionId?: T;
   paymentIntentId?: T;
+  captureId?: T;
   status?: T;
   amount?: T;
   currency?: T;
