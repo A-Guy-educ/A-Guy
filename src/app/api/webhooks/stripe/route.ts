@@ -87,8 +87,13 @@ export async function POST(request: NextRequest) {
  * The coupon-usages row is created only if the atomic increment succeeds,
  * and the afterChange hook is skipped via context to avoid double-incrementing.
  *
+ * Tenant scoping: the coupon lookup is filtered by the transaction's tenant.
+ * Global (tenant-less) coupons also match — they are found via
+ * `tenant: { exists: false }` in the OR clause.
+ *
  * @param payload - Payload instance
  * @param transaction - The succeeded transaction with appliedCoupon in metadata
+ * @param tenantId - The tenant ID to scope coupon lookup
  */
 async function consumeCouponOnPayment(
   payload: Awaited<ReturnType<typeof getPayload>>,
@@ -106,21 +111,26 @@ async function consumeCouponOnPayment(
     user?: string | { id: string }
     product?: string | { id: string }
   },
+  tenantId: string,
 ): Promise<void> {
   const appliedCoupon = transaction.metadata?.appliedCoupon
   if (!appliedCoupon) return
 
-  // Find the coupon by code
+  // Find the coupon by code, scoped to the transaction's tenant.
+  // Also match global (tenant-less) coupons via the OR clause.
   const coupons = await payload.find({
     collection: 'coupons',
-    where: { code: { equals: appliedCoupon.code } },
+    where: {
+      code: { equals: appliedCoupon.code },
+      or: [{ tenant: { equals: tenantId } }, { tenant: { exists: false } }],
+    },
     limit: 1,
     depth: 0,
     overrideAccess: true,
   })
 
   if (coupons.totalDocs === 0) {
-    payload.logger.warn({ code: appliedCoupon.code }, 'Coupon not found for consumption')
+    payload.logger.warn({ code: appliedCoupon.code, tenantId }, 'Coupon not found for consumption')
     return
   }
 
@@ -181,6 +191,10 @@ async function handleEvent(
   switch (event.type) {
     case 'checkout.session.completed': {
       const sessionId = event.data.object.id
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const session = event.data.object as any
+      const paymentStatus = session.payment_status
+      const stripePaymentIntentId = session.payment_intent as string | null
 
       // Find the transaction by providerTransactionId (Stripe session ID)
       const transactions = await payload.find({
@@ -200,37 +214,189 @@ async function handleEvent(
 
       const transaction = transactions.docs[0]
 
-      // Idempotency: skip if entitlements already granted (replayed webhook)
-      if (transaction.entitlementsGrantedAt) {
+      // Only grant entitlements and flip to succeeded when payment_status === 'paid'.
+      // For async payment methods (Klarna, ACH, SEPA) where payment_status is 'unpaid' or
+      // 'pending', we leave the transaction pending — the async_payment_succeeded/failed
+      // handlers will flip it later.
+      if (paymentStatus !== 'paid') {
+        payload.logger.info(
+          { sessionId, paymentStatus },
+          'Stripe webhook: checkout.session.completed with payment_status != paid — leaving pending',
+        )
         return
       }
 
-      // Grant entitlements BEFORE flipping status to succeeded — fail-safe:
-      // if grant throws we do NOT set status=succeeded so the provider retries.
-      await grantProductEntitlements(
-        transaction.user as string,
-        transaction.product as string,
-        transaction.id,
-      )
+      // Idempotency: skip if entitlements already granted (replayed webhook)
+      if (!transaction.entitlementsGrantedAt) {
+        // Grant entitlements BEFORE flipping status to succeeded — fail-safe:
+        // if grant throws we do NOT set status=succeeded so the provider retries.
+        await grantProductEntitlements(
+          transaction.user as string,
+          transaction.product as string,
+          transaction.id,
+        )
 
-      // Grant succeeded — atomically flip status and record the grant timestamp
-      await payload.update({
+        // Grant succeeded — atomically flip status and record the grant timestamp
+        await payload.update({
+          collection: 'transactions',
+          id: transaction.id,
+          data: {
+            status: 'succeeded',
+            entitlementsGrantedAt: new Date().toISOString(),
+            ...(stripePaymentIntentId ? { paymentIntentId: stripePaymentIntentId } : {}),
+          },
+          overrideAccess: true,
+        })
+      }
+
+      // Coupon consumption — independent from entitlementsGrantedAt, idempotent via couponConsumedAt.
+      // Attempt consumption if couponConsumedAt is null (regardless of entitlementsGrantedAt).
+      // This is retry-safe: if first delivery fails in consumption (returns 500), retry will
+      // still attempt consumption since couponConsumedAt is not set.
+      const txMetadata = transaction.metadata as
+        | {
+            appliedCoupon?: {
+              code: string
+              discountType: string
+              discountValue: number
+              originalAmount?: number
+              discountedAmount?: number
+            } | null
+          }
+        | null
+        | undefined
+      if (!transaction.couponConsumedAt && txMetadata?.appliedCoupon) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await consumeCouponOnPayment(payload, transaction as any, transaction.tenant as string)
+        } catch (err) {
+          // Do NOT swallow — log and re-throw so the webhook returns 500 and provider retries.
+          // Entitlements are already granted (idempotent), so retry is safe for coupon consumption.
+          payload.logger.error(
+            { error: err, transactionId: transaction.id },
+            'Coupon consumption failed — returning 500 so provider retries',
+          )
+          throw err
+        }
+        // Consumption succeeded — record couponConsumedAt
+        await payload.update({
+          collection: 'transactions',
+          id: transaction.id,
+          data: { couponConsumedAt: new Date().toISOString() },
+          overrideAccess: true,
+        })
+      }
+      break
+    }
+
+    case 'checkout.session.async_payment_succeeded': {
+      const sessionId = event.data.object.id
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const session = event.data.object as any
+      const stripePaymentIntentId = session.payment_intent as string | null
+
+      const transactions = await payload.find({
         collection: 'transactions',
-        id: transaction.id,
-        data: { status: 'succeeded', entitlementsGrantedAt: new Date().toISOString() },
+        where: {
+          providerTransactionId: { equals: sessionId },
+        },
+        limit: 1,
+        depth: 0,
         overrideAccess: true,
       })
 
-      // Consume coupon atomically (if applied)
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await consumeCouponOnPayment(payload, transaction as any)
-      } catch (err) {
-        payload.logger.error(
-          { error: err, transactionId: transaction.id },
-          'Failed to consume coupon',
+      if (transactions.totalDocs === 0) {
+        payload.logger.warn(
+          { sessionId },
+          'Stripe webhook: transaction not found for async_payment_succeeded',
         )
+        return
       }
+
+      const transaction = transactions.docs[0]
+
+      // Idempotency: skip if entitlements already granted
+      if (!transaction.entitlementsGrantedAt) {
+        await grantProductEntitlements(
+          transaction.user as string,
+          transaction.product as string,
+          transaction.id,
+        )
+
+        await payload.update({
+          collection: 'transactions',
+          id: transaction.id,
+          data: {
+            status: 'succeeded',
+            entitlementsGrantedAt: new Date().toISOString(),
+            ...(stripePaymentIntentId ? { paymentIntentId: stripePaymentIntentId } : {}),
+          },
+          overrideAccess: true,
+        })
+      }
+
+      // Coupon consumption — independent from entitlementsGrantedAt, idempotent via couponConsumedAt.
+      // Attempt consumption if couponConsumedAt is null (regardless of entitlementsGrantedAt).
+      const asyncTxMetadata = transaction.metadata as
+        | {
+            appliedCoupon?: {
+              code: string
+              discountType: string
+              discountValue: number
+              originalAmount?: number
+              discountedAmount?: number
+            } | null
+          }
+        | null
+        | undefined
+      if (!transaction.couponConsumedAt && asyncTxMetadata?.appliedCoupon) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await consumeCouponOnPayment(payload, transaction as any, transaction.tenant as string)
+        } catch (err) {
+          payload.logger.error(
+            { error: err, transactionId: transaction.id },
+            'Coupon consumption failed — returning 500 so provider retries',
+          )
+          throw err
+        }
+        await payload.update({
+          collection: 'transactions',
+          id: transaction.id,
+          data: { couponConsumedAt: new Date().toISOString() },
+          overrideAccess: true,
+        })
+      }
+      break
+    }
+
+    case 'checkout.session.async_payment_failed': {
+      const sessionId = event.data.object.id
+
+      const transactions = await payload.find({
+        collection: 'transactions',
+        where: {
+          providerTransactionId: { equals: sessionId },
+        },
+        limit: 1,
+        depth: 0,
+        overrideAccess: true,
+      })
+
+      if (transactions.totalDocs === 0) {
+        payload.logger.warn(
+          { sessionId },
+          'Stripe webhook: transaction not found for async_payment_failed',
+        )
+        return
+      }
+
+      await payload.update({
+        collection: 'transactions',
+        id: transactions.docs[0].id,
+        data: { status: 'failed' },
+        overrideAccess: true,
+      })
       break
     }
 
@@ -269,15 +435,31 @@ async function handleEvent(
       const chargeAmount = event.data.object.amount as number | undefined
       const amountRefunded = event.data.object.amount_refunded as number | undefined
 
-      const transactions = await payload.find({
+      // Look up by paymentIntentId first (pi_...), fall back to providerTransactionId
+      // (cs_...) for backward compatibility with existing transactions created before
+      // this fix was deployed.
+      let transactions = await payload.find({
         collection: 'transactions',
         where: {
-          providerTransactionId: { equals: paymentIntentId },
+          paymentIntentId: { equals: paymentIntentId },
         },
         limit: 1,
         depth: 0,
         overrideAccess: true,
       })
+
+      if (transactions.totalDocs === 0) {
+        // Fallback: look up by providerTransactionId (legacy path for old transactions)
+        transactions = await payload.find({
+          collection: 'transactions',
+          where: {
+            providerTransactionId: { equals: paymentIntentId },
+          },
+          limit: 1,
+          depth: 0,
+          overrideAccess: true,
+        })
+      }
 
       if (transactions.totalDocs === 0) {
         payload.logger.warn(
@@ -304,7 +486,8 @@ async function handleEvent(
         chargeAmount !== undefined && amountRefunded !== undefined && amountRefunded >= chargeAmount
 
       if (isFullRefund) {
-        // Full refund: flip to refunded, set audit fields
+        // Full refund: flip to refunded, set audit fields.
+        // Omit refundedBy — do NOT overwrite an admin-set value from the admin refund route.
         await payload.update({
           collection: 'transactions',
           id: transaction.id,
@@ -312,20 +495,24 @@ async function handleEvent(
             status: 'refunded',
             refundedAmount: chargeAmount,
             refundedAt: new Date(event.created * 1000).toISOString(),
-            refundedBy: null,
           },
           overrideAccess: true,
         })
       } else {
-        // Partial refund: keep status as succeeded, update refundedAmount and audit timestamp
+        // Partial refund: keep status as succeeded, update refundedAmount and audit timestamp.
+        // Only set refundedBy if it's currently null (first partial refund);
+        // subsequent partial refunds should not overwrite the already-set value.
+        const updateData: Record<string, unknown> = {
+          refundedAmount: newRefundedAmount,
+          refundedAt: new Date(event.created * 1000).toISOString(),
+        }
+        if (!transaction.refundedBy) {
+          updateData.refundedBy = null
+        }
         await payload.update({
           collection: 'transactions',
           id: transaction.id,
-          data: {
-            refundedAmount: newRefundedAmount,
-            refundedAt: new Date(event.created * 1000).toISOString(),
-            refundedBy: null,
-          },
+          data: updateData,
           overrideAccess: true,
         })
       }
