@@ -173,6 +173,28 @@ describe('useNotebookChat', () => {
     expect(apiService.getConversation).toHaveBeenCalledWith('categories:admin')
   })
 
+  it('admin chat with adminMode and userId should load conversation history', async () => {
+    // This is the actual admin chat scenario at /admin/chat
+    const adminProps = {
+      ...defaultProps,
+      adminMode: true,
+      userId: 'admin-user-123',
+      exerciseId: undefined,
+      lessonId: undefined,
+      chapterId: undefined,
+      courseId: undefined,
+      categoryId: undefined,
+    }
+    const { result } = renderHook(() => useNotebookChat(adminProps))
+
+    // contextKey should be computed as users:{userId} for admin mode
+    expect(result.current.contextKey).toBe('users:admin-user-123')
+
+    // Wait for history to load
+    await waitFor(() => expect(result.current.isLoadingHistory).toBe(false))
+    expect(apiService.getConversation).toHaveBeenCalledWith('users:admin-user-123')
+  })
+
   it('generates correct contextKey for category', () => {
     const adminProps = {
       ...defaultProps,
