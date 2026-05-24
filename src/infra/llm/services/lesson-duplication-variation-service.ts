@@ -278,11 +278,12 @@ export async function generateVariation(
             messages: [{ role: 'user', content: '' }],
             model: deterministicConfig,
             acknowledgment: 'Deriving solution for exercise variation',
-            // Constrain pass-2 output to {solution, fullSolution, answer}.
-            // Pass 2 is small and well-bounded — the schema here is the
-            // strongest gate we have against the model returning prose,
-            // markdown, or an unexpected envelope.
-            outputSchema: SolutionDerivationOutputSchema,
+            // NOTE: outputSchema is intentionally omitted here.
+            // Gemini's responseSchema collapses the per-block array shape to
+            // a literal string array of property names (e.g. { "blocks": ["id", "solution", ...] })
+            // — the same collapse pattern observed for LessonVariationOutputSchema (pass 1).
+            // We parse text only and validate post-hoc with Zod's safeParse.
+            // See: issue #1748
             modelVersion: VARIATION_MODEL_VERSION,
           },
           payload,
@@ -290,7 +291,7 @@ export async function generateVariation(
         'pass-2-deterministic',
       )
 
-      pass2Patch = extractPass2Patch(result)
+      pass2Patch = extractPass2Patch(result, pass1Output)
 
       // Accumulate token usage from pass 2 (issue #1552)
       if (result.usage) {
@@ -502,18 +503,37 @@ function extractPass1Output(result: AdapterResult): Partial<Exercise> {
 }
 
 /**
- * Pull pass-2's solution patch out of the adapter result. Same precedence:
- * structured output first, text fallback.
+ * Pull pass-2's solution patch out of the adapter result.
  *
- * Normalizes legacy flat format (pass-2 returned one solution for all blocks)
- * to the current per-block format for backward compatibility with older
- * responses or malformed output.
+ * Since issue #1748 we intentionally omit outputSchema from the pass-2 call
+ * (Gemini's responseSchema collapses the per-block array shape). We parse
+ * result.text only and validate post-hoc with Zod's safeParse.
+ *
+ * Filters out any patch whose id doesn't match a known pass-1 question block
+ * (Gemini can hallucinate extra patches).
+ *
+ * Normalizes legacy flat format for backward compatibility with older cached
+ * responses replayed in tests.
  */
-function extractPass2Patch(result: AdapterResult): Pass2Patch {
-  if (result.output && typeof result.output === 'object') {
-    return normalizePass2Patch(result.output as Record<string, unknown>)
+function extractPass2Patch(result: AdapterResult, pass1Output: Partial<Exercise>): Pass2Patch {
+  const parsed = parseSolutionDerivationResponseFromText(result.text)
+  const normalized = normalizePass2Patch(parsed as unknown as Record<string, unknown>)
+
+  // Cross-check each returned block id against the set of question-block ids
+  // actually present in pass-1 output. Drop any patch whose id doesn't match
+  // a known pass-1 question block (Gemini occasionally hallucinates extras).
+  const pass1Blocks =
+    (pass1Output.content as { blocks?: Array<{ id: string; type: string }> } | undefined)?.blocks ??
+    []
+  const validIds = new Set(
+    pass1Blocks
+      .filter((b) => typeof b.type === 'string' && b.type.startsWith('question_'))
+      .map((b) => b.id),
+  )
+
+  return {
+    blocks: normalized.blocks.filter((block) => validIds.has(block.id)),
   }
-  return parseSolutionDerivationResponseFromText(result.text)
 }
 
 /**
@@ -554,7 +574,19 @@ function parseVariationResponseFromText(text: string): Partial<Exercise> {
 
 function parseSolutionDerivationResponseFromText(text: string): Pass2Patch {
   const cleaned = stripCodeFences(text)
-  return JSON.parse(cleaned) as Pass2Patch
+  const parsed = JSON.parse(cleaned)
+
+  // Validate against SolutionDerivationOutputSchema using safeParse.
+  // On failure, throw a SyntaxError-compatible error so the existing
+  // isJsonParseError retry envelope picks it up (same as a raw JSON parse failure).
+  const result = SolutionDerivationOutputSchema.safeParse(parsed)
+  if (!result.success) {
+    const err = new SyntaxError(`Zod validation failed: ${result.error.message}`)
+    throw err
+  }
+
+  // Zod validates the shape; the cast is safe since we know the runtime type matches.
+  return result.data as Pass2Patch
 }
 
 function stripCodeFences(text: string): string {
@@ -607,7 +639,7 @@ function mergePassOutputs(pass1Output: Partial<Exercise>, pass2Patch: Pass2Patch
       const existingAnswer = (result.answer as Record<string, unknown> | undefined) ?? {}
       result.answer = {
         ...existingAnswer,
-        correctOptionIds: patch.answer.correctOptionIds,
+        correctOptionIds: patch.answer!.correctOptionIds,
       }
     }
     return result
