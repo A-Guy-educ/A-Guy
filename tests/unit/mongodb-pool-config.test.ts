@@ -176,23 +176,23 @@ describe('MongoDB Connection Pool Guardrail', () => {
       }
     })
 
-    it('serverSelectionTimeoutMS and waitQueueTimeoutMS must NOT be set', () => {
-      // These were added in dbb3f648 (2026-04-19) and removed on 2026-04-27.
-      // With maxPoolSize=3 they converted ordinary cold-start contention into
-      // MongoWaitQueueTimeoutError, crashing the root layout and rendering
-      // global-error.tsx. Driver defaults (wait indefinitely / 30 s server
-      // selection) make cold starts slow but not user-visible failures.
-      // This guardrail prevents anyone from re-introducing the regression.
+    it('waitQueueTimeoutMS must NOT be set', () => {
+      // waitQueueTimeoutMS was removed on 2026-04-27 because with maxPoolSize=3
+      // it converted ordinary cold-start contention (4+ concurrent layout DB calls
+      // vs 3 pool slots racing connection-pool warmup) into MongoWaitQueueTimeoutError,
+      // crashing the root layout and rendering global-error.tsx.
+      // Driver defaults — wait indefinitely on the queue — make cold starts slow
+      // but not user-visible failures.
+      // This guardrail prevents anyone from re-introducing waitQueueTimeoutMS.
+      // NOTE: serverSelectionTimeoutMS IS allowed because it does NOT cause
+      // MongoWaitQueueTimeoutError — it controls server selection timeout (for when
+      // no server is available), not connection acquisition timeout.
       const configPath = resolve(__dirname, '../../src/payload.config.ts')
       const configSource = readFileSync(configPath, 'utf-8')
 
       // Strip block-comments so the explanatory NOTE doesn't trigger the match.
       const codeOnly = configSource.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '')
 
-      expect(
-        codeOnly,
-        'serverSelectionTimeoutMS must NOT be set — see history note in payload.config.ts',
-      ).not.toContain('serverSelectionTimeoutMS')
       expect(
         codeOnly,
         'waitQueueTimeoutMS must NOT be set — see history note in payload.config.ts',

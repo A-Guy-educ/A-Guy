@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Consider adding waitQueueTimeoutMS with higher value",
+    "body": "Currently waitQueueTimeoutMS is not set, meaning requests queue indefinitely when pool is exhausted. Consider setting waitQueueTimeoutMS: 30000 to fail after 30 seconds instead of hanging forever. However, this may cause MongoWaitQueueTimeoutError during cold starts - needs testing.",
+    "rationale": "Without waitQueueTimeoutMS, pool exhaustion causes indefinite queuing. A 30s timeout would provide bounded failure.",
+    "priority": "low"
+  }
+]

@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "mongodb-servertimeout-vs-waitqueue",
+    "hook": "serverSelectionTimeoutMS and waitQueueTimeoutMS have different failure modes",
+    "body": "serverSelectionTimeoutMS controls how long to wait when NO server is available (fails fast when DB is down). waitQueueTimeoutMS controls how long a request waits for a connection from the pool (causes MongoWaitQueueTimeoutError during pool exhaustion). Only waitQueueTimeoutMS causes MongoWaitQueueTimeoutError during cold starts.",
+    "why": "Prevented correct fix from being applied - serverSelectionTimeoutMS was incorrectly blocked along with waitQueueTimeoutMS",
+    "confidence": 0.95
+  }
+]
