@@ -7,51 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- #1581: Phase 7: Course data scope decision + brand smoke test ([#1757](https://github.com/A-Guy-educ/A-Guy/pull/1757)) — @aguyaharonyair · 🔄 QA (#1946)
-- #1812: [ExerciseWorksheet] Question label text should align vertically … ([#1815](https://github.com/A-Guy-educ/A-Guy/pull/1815)) — @aguyaharonyair
-- #1785: Remove bottom chat input bar from lesson page on mobile ([#1790](https://github.com/A-Guy-educ/A-Guy/pull/1790)) — @aguyaharonyair
-- #1741: [Mobile] Floating "שאל שאלה" button in bottom-left corner ([#1771](https://github.com/A-Guy-educ/A-Guy/pull/1771)) — @aguyaharonyair
-- #1767: [Mobile] No horizontal scroll in any lesson display mode ([#1768](https://github.com/A-Guy-educ/A-Guy/pull/1768)) — @aguyaharonyair
-- #1743: [Mobile] Hide Prev/Next navigation until 85% scroll progress ([#1766](https://github.com/A-Guy-educ/A-Guy/pull/1766)) — @aguyaharonyair
-- #1727: Enforce tenant isolation in checkout — block cross-tenant produc… ([#1731](https://github.com/A-Guy-educ/A-Guy/pull/1731)) — @aguyaharonyair
-- #1715: [Dashboard] וידג'ט הרשמות קורסים בדשבורד אדמין ([#1716](https://github.com/A-Guy-educ/A-Guy/pull/1716)) — @aguyaharonyair
-- #1733: Make pass-2 solution derivation per-block in lesson duplication ([#1735](https://github.com/A-Guy-educ/A-Guy/pull/1735)) — @aguyaharonyair
-- #1726: Stripe charge.refunded partial-refund — do not flip whole transa… ([#1732](https://github.com/A-Guy-educ/A-Guy/pull/1732)) — @aguyaharonyair
-- #1725: Move PayPal entitlement grant from CHECKOUT.ORDER.APPROVED to PA… ([#1728](https://github.com/A-Guy-educ/A-Guy/pull/1728)) — @aguyaharonyair
+- #1581: Phase 7: Course data scope decision + brand smoke test ([#1757](https://github.com/A-Guy-educ/A-Guy/pull/1757)) — @aguyaharonyair · ⚠️ QA 2026-05-23 (#1946)
+- #1812: [ExerciseWorksheet] Question label text should align vertically … ([#1815](https://github.com/A-Guy-educ/A-Guy/pull/1815)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1785: Remove bottom chat input bar from lesson page on mobile ([#1790](https://github.com/A-Guy-educ/A-Guy/pull/1790)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1741: [Mobile] Floating "שאל שאלה" button in bottom-left corner ([#1771](https://github.com/A-Guy-educ/A-Guy/pull/1771)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1767: [Mobile] No horizontal scroll in any lesson display mode ([#1768](https://github.com/A-Guy-educ/A-Guy/pull/1768)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1743: [Mobile] Hide Prev/Next navigation until 85% scroll progress ([#1766](https://github.com/A-Guy-educ/A-Guy/pull/1766)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1727: Enforce tenant isolation in checkout — block cross-tenant produc… ([#1731](https://github.com/A-Guy-educ/A-Guy/pull/1731)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1715: [Dashboard] וידג'ט הרשמות קורסים בדשבורד אדמין ([#1716](https://github.com/A-Guy-educ/A-Guy/pull/1716)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1733: Make pass-2 solution derivation per-block in lesson duplication ([#1735](https://github.com/A-Guy-educ/A-Guy/pull/1735)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1726: Stripe charge.refunded partial-refund — do not flip whole transa… ([#1732](https://github.com/A-Guy-educ/A-Guy/pull/1732)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1725: Move PayPal entitlement grant from CHECKOUT.ORDER.APPROVED to PA… ([#1728](https://github.com/A-Guy-educ/A-Guy/pull/1728)) — @aguyaharonyair · 🔄 QA (#1976)
 
-- #1720: Fix lesson-duplication prompts that omit hint / fullSolution fro… ([#1722](https://github.com/A-Guy-educ/A-Guy/pull/1722)) — @aguyaharonyair
+- #1720: Fix lesson-duplication prompts that omit hint / fullSolution fro… ([#1722](https://github.com/A-Guy-educ/A-Guy/pull/1722)) — @aguyaharonyair · 🔄 QA (#1976)
 - fix(prompts): Add missing hint/solution/fullSolution to example outputs ([#1724](https://github.com/A-Guy-educ/A-Guy/pull/1724)) — @aguyshayb
 - #1712: URL-encode cancelUrl params and validate productId as ObjectId ([#1719](https://github.com/A-Guy-educ/A-Guy/pull/1719)) — @aguyshayb
-- #1710: Grant entitlements before flipping Transaction to succeeded ([#1714](https://github.com/A-Guy-educ/A-Guy/pull/1714)) — @aguyaharonyair
-- #1711: Record refundedAmount, refundedBy, refundedAt on refund ([#1713](https://github.com/A-Guy-educ/A-Guy/pull/1713)) — @aguyaharonyair
-- #1699: Atomic coupon usage increment + move consumption to webhook succ… ([#1709](https://github.com/A-Guy-educ/A-Guy/pull/1709)) — @aguyaharonyair
-- #1695: Restrict Coupons read access to admins ([#1705](https://github.com/A-Guy-educ/A-Guy/pull/1705)) — @aguyaharonyair
-- #1697: Return 400/500 on webhook signature verification failure instead… ([#1704](https://github.com/A-Guy-educ/A-Guy/pull/1704)) — @aguyaharonyair
-- #1694: Switch PayPal API base on env flag + require webhook secrets at … ([#1703](https://github.com/A-Guy-educ/A-Guy/pull/1703)) — @aguyaharonyair
-- #1698: Prevent invalid Transaction status transitions via beforeChange … ([#1702](https://github.com/A-Guy-educ/A-Guy/pull/1702)) — @aguyaharonyair
-- #1696: Pass idempotencyKey to stripe.refunds.create ([#1701](https://github.com/A-Guy-educ/A-Guy/pull/1701)) — @aguyaharonyair
-- #1691: Render geometry / axis blocks to SVG strings in lesson export ([#1693](https://github.com/A-Guy-educ/A-Guy/pull/1693)) — @aguyaharonyair
+- #1710: Grant entitlements before flipping Transaction to succeeded ([#1714](https://github.com/A-Guy-educ/A-Guy/pull/1714)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1711: Record refundedAmount, refundedBy, refundedAt on refund ([#1713](https://github.com/A-Guy-educ/A-Guy/pull/1713)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1699: Atomic coupon usage increment + move consumption to webhook succ… ([#1709](https://github.com/A-Guy-educ/A-Guy/pull/1709)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1695: Restrict Coupons read access to admins ([#1705](https://github.com/A-Guy-educ/A-Guy/pull/1705)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1697: Return 400/500 on webhook signature verification failure instead… ([#1704](https://github.com/A-Guy-educ/A-Guy/pull/1704)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1694: Switch PayPal API base on env flag + require webhook secrets at … ([#1703](https://github.com/A-Guy-educ/A-Guy/pull/1703)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1698: Prevent invalid Transaction status transitions via beforeChange … ([#1702](https://github.com/A-Guy-educ/A-Guy/pull/1702)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1696: Pass idempotencyKey to stripe.refunds.create ([#1701](https://github.com/A-Guy-educ/A-Guy/pull/1701)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1691: Render geometry / axis blocks to SVG strings in lesson export ([#1693](https://github.com/A-Guy-educ/A-Guy/pull/1693)) — @aguyaharonyair · 🔄 QA (#1976)
 - fix(admin): Regenerate importMap for TransactionPaymentDetail ([#1700](https://github.com/A-Guy-educ/A-Guy/pull/1700)) — @aguyshayb
-- #1645: Build admin payment detail view ([#1674](https://github.com/A-Guy-educ/A-Guy/pull/1674)) — @aguyaharonyair
-- #1644: Add revenue and transaction widgets to admin dashboard UI ([#1653](https://github.com/A-Guy-educ/A-Guy/pull/1653)) — @aguyaharonyair
-- #1642: Create PaymentStats Payload collection ([#1651](https://github.com/A-Guy-educ/A-Guy/pull/1651)) — @aguyaharonyair
-- #1641: Add revenue metrics to admin dashboard API ([#1649](https://github.com/A-Guy-educ/A-Guy/pull/1649)) — @aguyaharonyair
-- #1519: Improve Mobile Lesson Viewing Experience ([#1683](https://github.com/A-Guy-educ/A-Guy/pull/1683)) — @aguyaharonyair
-- #1518: User Learning Agent Task ([#1686](https://github.com/A-Guy-educ/A-Guy/pull/1686)) — @aguyaharonyair
-- #1663: Per-exercise retry from review page ([#1673](https://github.com/A-Guy-educ/A-Guy/pull/1673)) — @aguyaharonyair
-- #1672: Export lessons in canonical content format ([#1680](https://github.com/A-Guy-educ/A-Guy/pull/1680)) — @aguyaharonyair
+- #1645: Build admin payment detail view ([#1674](https://github.com/A-Guy-educ/A-Guy/pull/1674)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1644: Add revenue and transaction widgets to admin dashboard UI ([#1653](https://github.com/A-Guy-educ/A-Guy/pull/1653)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1642: Create PaymentStats Payload collection ([#1651](https://github.com/A-Guy-educ/A-Guy/pull/1651)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1641: Add revenue metrics to admin dashboard API ([#1649](https://github.com/A-Guy-educ/A-Guy/pull/1649)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1519: Improve Mobile Lesson Viewing Experience ([#1683](https://github.com/A-Guy-educ/A-Guy/pull/1683)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1518: User Learning Agent Task ([#1686](https://github.com/A-Guy-educ/A-Guy/pull/1686)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1663: Per-exercise retry from review page ([#1673](https://github.com/A-Guy-educ/A-Guy/pull/1673)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1672: Export lessons in canonical content format ([#1680](https://github.com/A-Guy-educ/A-Guy/pull/1680)) — @aguyaharonyair · 🔄 QA (#1976)
 - fix(tests): Unblock stuck-record tests (6 failing on dev) ([#1682](https://github.com/A-Guy-educ/A-Guy/pull/1682)) — @aguyshayb
-- #1647: Add admin coupon management UI ([#1676](https://github.com/A-Guy-educ/A-Guy/pull/1676)) — @aguyaharonyair
-- #1664: Auto-fail stuck duplication records to unblock the cron queue ([#1670](https://github.com/A-Guy-educ/A-Guy/pull/1670)) — @aguyaharonyair
-- #1665: Smarter section selector for variations ([#1666](https://github.com/A-Guy-educ/A-Guy/pull/1666)) — @aguyaharonyair
-- #1662: Redesign lesson duplication review page ([#1667](https://github.com/A-Guy-educ/A-Guy/pull/1667)) — @aguyaharonyair
-- #1552: Track AI tokens, cost, and run duration on each LessonDuplicatio… ([#1561](https://github.com/A-Guy-educ/A-Guy/pull/1561)) — @aguyaharonyair
-- #1619: Secrets vault — payment provider keys ([#1639](https://github.com/A-Guy-educ/A-Guy/pull/1639)) — @aguyaharonyair
+- #1647: Add admin coupon management UI ([#1676](https://github.com/A-Guy-educ/A-Guy/pull/1676)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1664: Auto-fail stuck duplication records to unblock the cron queue ([#1670](https://github.com/A-Guy-educ/A-Guy/pull/1670)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1665: Smarter section selector for variations ([#1666](https://github.com/A-Guy-educ/A-Guy/pull/1666)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1662: Redesign lesson duplication review page ([#1667](https://github.com/A-Guy-educ/A-Guy/pull/1667)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1552: Track AI tokens, cost, and run duration on each LessonDuplicatio… ([#1561](https://github.com/A-Guy-educ/A-Guy/pull/1561)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1619: Secrets vault — payment provider keys ([#1639](https://github.com/A-Guy-educ/A-Guy/pull/1639)) — @aguyaharonyair · 🔄 QA (#1976)
 - feat(lesson-duplication): Process Now button for manual orchestrator trigger ([#1624](https://github.com/A-Guy-educ/A-Guy/pull/1624)) — @aguyshayb
-- #1621: Export lesson + ordered exercises as JSON from admin ([#1625](https://github.com/A-Guy-educ/A-Guy/pull/1625)) — @aguyaharonyair
+- #1621: Export lesson + ordered exercises as JSON from admin ([#1625](https://github.com/A-Guy-educ/A-Guy/pull/1625)) — @aguyaharonyair · 🔄 QA (#1976)
 - feat(lesson-duplication): Constrain Gemini output with Zod schemas ([#1602](https://github.com/A-Guy-educ/A-Guy/pull/1602)) — @aguyshayb
-- chore: Pin pnpm to 10.33.0 via packageManager field ([#1609](https://github.com/A-Guy-educ/A-Guy/pull/1609)) — @aguyaharonyair
-- #1595: [P2] Vercel feedback script blocked by CSP script-src directive … ([#1604](https://github.com/A-Guy-educ/A-Guy/pull/1604)) — @aguyaharonyair
+- chore: Pin pnpm to 10.33.0 via packageManager field ([#1609](https://github.com/A-Guy-educ/A-Guy/pull/1609)) — @aguyaharonyair · 🔄 QA (#1976)
+- #1595: [P2] Vercel feedback script blocked by CSP script-src directive … ([#1604](https://github.com/A-Guy-educ/A-Guy/pull/1604)) — @aguyaharonyair · 🔄 QA (#1976)
 <!-- semantic-release will automatically update this file with each release -->
 
 ## v0.25.8 — 2026-05-06
