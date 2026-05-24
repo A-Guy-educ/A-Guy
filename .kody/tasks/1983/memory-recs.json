@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "exercise-tenant-from-lesson-hook",
+    "hook":": exercises created via duplication rely on tenantField beforeValidate hook",
+    "body": "When exercises are created via duplication orchestrator (createOutputExercise), they are created without explicit tenant - relying on tenantField's beforeValidate hook to set default tenant. However, this sets the DEFAULT tenant, not the tenant from the lesson. The beforeChange hook now populates tenant from the lesson's tenant when not explicitly set.",
+    "why": "Ensures exercises created via all code paths (including duplication) get the correct tenant from their lesson, preventing orphaned exercises with no tenant.",
+    "confidence": 0.9
+  }
+]
