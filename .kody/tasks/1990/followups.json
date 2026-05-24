@@ -1,0 +1,8 @@
+[
+  {
+    "title": "E2E test needs CI execution",
+    "body": "The new test file tests/e2e/verification/search-ui-feedback.e2e.spec.ts requires a running Next.js server to execute. It was written as a regression test for CI runs and could not be verified locally in this session due to missing build/dev server.",
+    "rationale": "Ensures future CI catches any regression in search form submission behavior",
+    "priority": "low"
+  }
+]
