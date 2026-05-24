@@ -52,6 +52,8 @@ let studentUserTenantAId: string
 let studentUserTenantAEmail: string
 let adminUserTenantBId: string
 let studentUserTenantBId: string
+let studentUserNullTenantId: string
+let studentUserNullTenantEmail: string
 let productTenantAId: string
 let productTenantBId: string
 let couponTenantAId: string
@@ -151,6 +153,21 @@ beforeAll(async () => {
     overrideAccess: true,
   })
   studentUserTenantBId = studentTenantB.id
+
+  // Create student user with NO tenant (null tenant) — tests fail-closed behavior
+  const studentNullTenantEmail = `student-no-tenant-${Date.now()}@example.com`
+  const studentNullTenant = await payload.create({
+    collection: 'users',
+    data: {
+      email: studentNullTenantEmail,
+      password: 'test123456',
+      role: AccountRole.Student,
+      tenant: null, // explicitly null — user has no tenant
+    } as any,
+    overrideAccess: true,
+  })
+  studentUserNullTenantId = studentNullTenant.id
+  studentUserNullTenantEmail = studentNullTenantEmail
 
   // Create product in tenant A
   const productA = await payload.create({
@@ -260,6 +277,7 @@ afterAll(async () => {
     studentUserTenantAId,
     adminUserTenantBId,
     studentUserTenantBId,
+    studentUserNullTenantId,
   ]) {
     if (userId) {
       try {
@@ -440,6 +458,124 @@ describe.skipIf(!process.env.DATABASE_URL)('Checkout Tenant Isolation', () => {
 
     // Checkout of global product should work (no tenant to mismatch)
     const result = await callCheckoutEndpoint(studentUserTenantAEmail, globalProduct.id)
+    expect(result.status).toBe(200)
+    expect(result.data.success).toBe(true)
+    expect(result.data.checkoutUrl).toBeDefined()
+    expect(result.data.transactionId).toBeDefined()
+  })
+
+  /**
+   * Test 4: Null-tenant non-super-admin user cannot purchase a tenant-scoped product
+   *
+   * Bug: When userTenantId is null, the guard expression short-circuits to false,
+   * allowing the purchase to proceed. After the fix, this should return 404.
+   */
+  it('should block checkout with 404 when null-tenant user buys tenant-scoped product', async () => {
+    // Verify the null-tenant user has no tenant
+    const nullTenantUser = await payload.findByID({
+      collection: 'users',
+      id: studentUserNullTenantId,
+      overrideAccess: true,
+    })
+    expect((nullTenantUser as any).tenant).toBeNull()
+
+    // Verify the product has a tenant
+    const productA = await payload.findByID({
+      collection: 'products',
+      id: productTenantAId,
+      overrideAccess: true,
+    })
+    expect((productA as any).tenant).toMatchObject({ id: tenantAId })
+
+    // Null-tenant user tries to buy tenant-A product — should be blocked (404)
+    const result = await callCheckoutEndpoint(studentUserNullTenantEmail, productTenantAId)
+    expect(result.status).toBe(404)
+    expect(result.data.error).toBe('product_not_found')
+  })
+
+  /**
+   * Test 5: Null-tenant non-super-admin user cannot use a tenant-scoped coupon
+   *
+   * Bug: When userTenantId is null, the coupon guard also short-circuits to false,
+   * allowing the coupon to be used. After the fix, this should return 400.
+   */
+  it('should block coupon with 400 when null-tenant user uses tenant-scoped coupon', async () => {
+    // Verify the null-tenant user has no tenant
+    const nullTenantUser = await payload.findByID({
+      collection: 'users',
+      id: studentUserNullTenantId,
+      overrideAccess: true,
+    })
+    expect((nullTenantUser as any).tenant).toBeNull()
+
+    // Verify the coupon has a tenant
+    const couponA = await payload.findByID({
+      collection: 'coupons',
+      id: couponTenantAId,
+      overrideAccess: true,
+    })
+    expect((couponA as any).tenant).toMatchObject({ id: tenantAId })
+    const couponACode = (couponA as any).code
+
+    // Create a global product for this test (no tenant)
+    const globalProduct = await payload.create({
+      collection: 'products',
+      data: {
+        name: `Global Product Coupon Test ${Date.now()}`,
+        slug: `global-product-coupon-test-${Date.now()}`,
+        billingType: 'one_time',
+        price: 100,
+        currency: 'ILS',
+        isActive: true,
+        // No tenant = global product
+      } as any,
+      overrideAccess: true,
+    })
+    createdProductIds.push(globalProduct.id)
+
+    // Null-tenant user tries to use tenant-A coupon with global product — should be blocked (400)
+    const result = await callCheckoutEndpoint(
+      studentUserNullTenantEmail,
+      globalProduct.id,
+      couponACode,
+    )
+    expect(result.status).toBe(400)
+    expect(result.data.error).toBe('invalid_coupon')
+  })
+
+  /**
+   * Test 6: Null-tenant user can still buy global/tenant-less products (no regression)
+   *
+   * A product with no tenant is treated as global and should be accessible to any user,
+   * including null-tenant users.
+   */
+  it('should allow null-tenant user to buy global (tenant-less) product', async () => {
+    // Verify the null-tenant user has no tenant
+    const nullTenantUser = await payload.findByID({
+      collection: 'users',
+      id: studentUserNullTenantId,
+      overrideAccess: true,
+    })
+    expect((nullTenantUser as any).tenant).toBeNull()
+
+    // Create a global product (no tenant)
+    const globalProduct = await payload.create({
+      collection: 'products',
+      data: {
+        name: `Global Product Null User ${Date.now()}`,
+        slug: `global-product-null-user-${Date.now()}`,
+        billingType: 'one_time',
+        price: 75,
+        currency: 'ILS',
+        isActive: true,
+        // No tenant field = global product
+      } as any,
+      overrideAccess: true,
+    })
+    createdProductIds.push(globalProduct.id)
+
+    // Null-tenant user buys global product — should succeed
+    const result = await callCheckoutEndpoint(studentUserNullTenantEmail, globalProduct.id)
     expect(result.status).toBe(200)
     expect(result.data.success).toBe(true)
     expect(result.data.checkoutUrl).toBeDefined()
