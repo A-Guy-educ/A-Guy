@@ -1,14 +1,14 @@
 {
   "version": 1,
-  "rev": 46,
+  "rev": 47,
   "cursor": "waiting_on_qa_report",
   "data": {
     "inflightIssue": 2016,
     "inflightPr": 2006,
-    "lastFiredAt": "2026-05-24T10:55:55.269Z",
+    "lastFiredAt": "2026-05-24T11:32:02.275Z",
     "lastOutcome": "completed",
-    "nextEligibleISO": "2026-05-24T10:45:00Z",
-    "lastDurationMs": 31802
+    "nextEligibleISO": "2026-05-24T11:25:00Z",
+    "lastDurationMs": 24173
   },
   "done": false
 }
