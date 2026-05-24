@@ -1,15 +1,15 @@
 {
   "version": 1,
-  "rev": 76,
+  "rev": 77,
   "cursor": "clean",
   "data": {
-    "last_tick": "2026-05-24T18:39:09Z",
+    "last_tick": "2026-05-24T19:42:30Z",
     "tasks_seen": 23,
     "tasks_processed": 23,
     "written_this_session": 0,
-    "lastFiredAt": "2026-05-24T19:37:04.611Z",
+    "lastFiredAt": "2026-05-24T20:29:54.225Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 16254,
+    "lastDurationMs": 14530,
     "push_blocked": null
   },
   "done": false
