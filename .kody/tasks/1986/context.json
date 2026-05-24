@@ -1,0 +1,19 @@
+{
+  "taskId": "1986",
+  "taskType": "issue",
+  "target": "1986",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "All 3 bugs fixed: (1) paymentIntentId field added + used for Stripe refunds and charge.refunded lookup, (2) checkout.session.completed gated on payment_status=paid with async_payment_succeeded/failed handlers, (3) charge.refunded no longer overwrites refundedBy",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/collections/Transactions.ts",
+    "src/app/api/webhooks/stripe/route.ts",
+    "src/app/api/admin/transactions/[id]/refund/route.ts",
+    "tests/int/payment-webhook-entitlements.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/gh-26354191341-1/1986.jsonl",
+  "startedAt": "2026-05-24T06:35:00Z",
+  "finishedAt": "2026-05-24T06:51:00Z"
+}

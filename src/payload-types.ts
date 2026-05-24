@@ -2011,6 +2011,14 @@ export interface Transaction {
    */
   providerTransactionId: string;
   /**
+   * Stripe PaymentIntent ID (pi_...) — used for refunds and webhook lookup
+   */
+  paymentIntentId?: string | null;
+  /**
+   * PayPal Capture ID — used for refunds and refund webhook lookup
+   */
+  captureId?: string | null;
+  /**
    * Current status of the transaction
    */
   status: 'pending' | 'succeeded' | 'failed' | 'refunded';
@@ -2050,6 +2058,10 @@ export interface Transaction {
    * Timestamp when product entitlements were granted to the user
    */
   entitlementsGrantedAt?: string | null;
+  /**
+   * Timestamp when coupon was consumed on this transaction
+   */
+  couponConsumedAt?: string | null;
   /**
    * Amount refunded in agorot (smallest currency unit)
    */
@@ -4481,6 +4493,8 @@ export interface TransactionsSelect<T extends boolean = true> {
   product?: T;
   provider?: T;
   providerTransactionId?: T;
+  paymentIntentId?: T;
+  captureId?: T;
   status?: T;
   amount?: T;
   currency?: T;
@@ -4489,6 +4503,7 @@ export interface TransactionsSelect<T extends boolean = true> {
   cancelUrl?: T;
   errorMessage?: T;
   entitlementsGrantedAt?: T;
+  couponConsumedAt?: T;
   refundedAmount?: T;
   refundedBy?: T;
   refundedAt?: T;
