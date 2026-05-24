@@ -1,0 +1,20 @@
+[
+  {
+    "title": "Investigate populateLessonBlocks migration failures",
+    "body": "The populateLessonBlocks migration is failing for 106 lessons in production. The error is swallowed in a catch block without logging the actual error. Need to add proper error logging to understand why these lessons fail.",
+    "rationale": "These 106 lessons may be the ones causing the 'nearly empty' page issue when their blocks are not properly backfilled.",
+    "priority": "high"
+  },
+  {
+    "title": "Check visibleRenderers edge case",
+    "body": "If visibleRenderers is set to an empty array [], getVisibleTabs returns all tabs hidden, causing DualModeLessonView to render nothing. This edge case should be handled defensively.",
+    "rationale": "This could explain the 'nearly empty' page - all tabs would be hidden but the page structure would still render.",
+    "priority": "medium"
+  },
+  {
+    "title": "Add E2E test for lesson page rendering",
+    "body": "The integration test only tests queryLessonBlocks directly. Need an E2E test that navigates to a lesson page and verifies content renders.",
+    "rationale": "The current test doesn't catch rendering issues in DualModeLessonView, LessonPager, or AccessGateProvider.",
+    "priority": "medium"
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "taskId": "1979",
+  "taskType": "issue",
+  "target": "GitHub issue #1979: [P2] Lesson page renders nearly empty on frontend",
+  "outcome": "failure",
+  "exitCode": 1,
+  "reason": "Could not reproduce the 'nearly empty' page bug. Tests confirm queryLessonBlocks works correctly. Root cause not definitively identified - likely populateLessonBlocks migration failures for 106 lessons or visibleRenderers edge case causing all tabs to be hidden.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "tests/int/lesson-blocks-rendering.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/504ca155-9228-4fd3-b0e2-942de43f7c39.jsonl",
+  "startedAt": "2026-05-24T08:14:00Z",
+  "finishedAt": "2026-05-24T09:08:00Z"
+}
