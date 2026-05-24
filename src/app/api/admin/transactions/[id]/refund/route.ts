@@ -74,17 +74,28 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
 
   // 5. Call provider refund
-  const { provider, providerTransactionId, amount } = transaction as {
+  const { provider, providerTransactionId, amount, currency } = transaction as {
     provider: 'stripe' | 'paypal'
     providerTransactionId: string
     amount: number
+    currency: string
   }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const paymentIntentId = (transaction as any).paymentIntentId as string | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const captureId = (transaction as any).captureId as string | null
 
   try {
     if (provider === 'stripe') {
-      await refundStripe(id, providerTransactionId, amount)
+      // Use paymentIntentId (pi_...) if available, fall back to providerTransactionId (cs_...)
+      // for legacy transactions created before the paymentIntentId field was added.
+      const refundId = paymentIntentId ?? providerTransactionId
+      await refundStripe(id, refundId, amount)
     } else if (provider === 'paypal') {
-      await refundPayPal(providerTransactionId, amount)
+      // Use captureId if available (populated on PAYMENT.CAPTURE.COMPLETED), fall back to
+      // providerTransactionId for legacy transactions created before the captureId field was added.
+      const refundId = captureId ?? providerTransactionId
+      await refundPayPal(refundId, amount, currency as 'ILS' | 'USD' | 'EUR')
     } else {
       return NextResponse.json({ error: 'Unknown payment provider' }, { status: 400 })
     }
