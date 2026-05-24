@@ -95,6 +95,18 @@ export const Transactions: CollectionConfig = {
       },
     },
 
+    // Stripe PaymentIntent ID (pi_... / ch_...) — used for refunds and charge.refunded lookup.
+    // For Stripe, this is distinct from providerTransactionId (which is the Checkout Session ID, cs_...).
+    // Populated when checkout.session.completed fires with payment_status=paid, or when
+    // async_payment_succeeded fires. Used instead of providerTransactionId when calling stripe.refunds.create.
+    {
+      name: 'paymentIntentId',
+      type: 'text',
+      admin: {
+        description: 'Stripe PaymentIntent ID (pi_...) — used for refunds and webhook lookup',
+      },
+    },
+
     // Transaction status
     {
       name: 'status',

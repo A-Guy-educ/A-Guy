@@ -1921,6 +1921,10 @@ export interface Transaction {
    */
   providerTransactionId: string;
   /**
+   * Stripe PaymentIntent ID (pi_...) — used for refunds and webhook lookup
+   */
+  paymentIntentId?: string | null;
+  /**
    * Current status of the transaction
    */
   status: 'pending' | 'succeeded' | 'failed' | 'refunded';
@@ -4461,6 +4465,7 @@ export interface TransactionsSelect<T extends boolean = true> {
   product?: T;
   provider?: T;
   providerTransactionId?: T;
+  paymentIntentId?: T;
   status?: T;
   amount?: T;
   currency?: T;
