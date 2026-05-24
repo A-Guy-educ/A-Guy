@@ -732,8 +732,9 @@ describe('generateVariation', () => {
   it('uses adapter `output` when present, even with empty `text` (Gemini responseSchema path)', async () => {
     // Simulates the production failure path: Genkit's structured-output mode
     // populates `result.output` but `result.text` comes back empty / non-JSON.
-    // Before the fix, parseVariationResponseFromText would throw "Response
-    // missing required content.blocks field" on the empty text.
+    // For pass 1: extractPass1Output uses result.output when present.
+    // For pass 2: after issue #1748, we always parse result.text (outputSchema omitted),
+    // so pass 2's mock provides valid text.
     mockGenerateChatCompletion.mockImplementation(async () => {
       const callCount = mockGenerateChatCompletion.mock.calls.length
       if (callCount === 1) {
@@ -759,9 +760,9 @@ describe('generateVariation', () => {
           },
         }
       }
+      // Pass 2: outputSchema intentionally omitted (issue #1748) — provide valid text.
       return {
-        text: '',
-        output: {
+        text: JSON.stringify({
           blocks: [
             {
               id: 'block-1',
@@ -775,7 +776,7 @@ describe('generateVariation', () => {
               answer: { correctOptionIds: ['a'] },
             },
           ],
-        },
+        }),
       }
     })
 
@@ -844,7 +845,11 @@ describe('generateVariation', () => {
     expect(block.prompt.value).toBe('Fallback?')
   })
 
-  it('passes a per-exercise input-derived schema to pass 1 and a Zod schema to pass 2', async () => {
+  // NOTE: the old test 'passes a per-exercise input-derived schema to pass 1 and a Zod schema to pass 2'
+  // was removed because pass 2 no longer passes outputSchema (issue #1748).
+  // The test below ('pass2 intentionally omits outputSchema') verifies the new behavior.
+
+  it('pass2 intentionally omits outputSchema (issue #1748 — text-only + Zod safeParse validation)', async () => {
     const callInputs: Array<{
       outputSchema?: unknown
       outputJsonSchema?: unknown
@@ -907,7 +912,7 @@ describe('generateVariation', () => {
     )
 
     await generateVariation(
-      { exercise: makeMockExercise('ex-schema'), level: 'medium', subject: 'algebra' },
+      { exercise: makeMockExercise('ex-no-output-schema'), level: 'medium', subject: 'algebra' },
       mockPayload,
     )
 
@@ -915,16 +920,10 @@ describe('generateVariation', () => {
     // Pass 1: raw JSON schema derived from the input exercise.
     expect(callInputs[0].outputSchema).toBeUndefined()
     expect(callInputs[0].outputJsonSchema).toBeDefined()
-    const pass1Schema = callInputs[0].outputJsonSchema as {
-      type: string
-      properties?: { content?: { properties?: { blocks?: unknown } } }
-    }
-    expect(pass1Schema.type).toBe('object')
-    expect(pass1Schema.properties?.content?.properties?.blocks).toBeDefined()
-    // Pass 2: Zod schema for the small derivation envelope.
+    // Pass 2: outputSchema intentionally omitted — text-only, post-hoc Zod validation.
+    // Gemini's responseSchema collapses per-block shape (issue #1748).
+    expect(callInputs[1].outputSchema).toBeUndefined()
     expect(callInputs[1].outputJsonSchema).toBeUndefined()
-    expect(callInputs[1].outputSchema).toBeDefined()
-    expect(typeof (callInputs[1].outputSchema as { parse?: unknown }).parse).toBe('function')
     // Both passes pin gemini-3.1-pro-preview.
     expect(callInputs[0].modelVersion).toBe('gemini-3.1-pro-preview')
     expect(callInputs[1].modelVersion).toBe('gemini-3.1-pro-preview')
@@ -1272,7 +1271,7 @@ describe('generateVariation', () => {
     expect(q2.solution?.value).toBe('orig-sol')
   })
 
-  it('extractPass2Patch handles structured output in per-block format', async () => {
+  it('extractPass2Patch parses text and validates with Zod safeParse (issue #1748)', async () => {
     mockGenerateChatCompletion.mockImplementation(async () => {
       const callCount = mockGenerateChatCompletion.mock.calls.length
 
@@ -1293,33 +1292,33 @@ describe('generateVariation', () => {
           }),
         }
       }
-      // Structured output path: Genkit parsed per-block response into result.output
+      // Text-only path: no result.output (outputSchema intentionally omitted).
+      // Data comes through result.text and is validated post-hoc with Zod safeParse.
       return {
-        text: '',
-        output: {
+        text: JSON.stringify({
           blocks: [
             {
               id: 'block-1',
               solution: {
                 type: 'rich_text',
                 format: 'md-math-v1',
-                value: 'structured-sol',
+                value: 'text-parsed-sol',
                 mediaIds: [],
               },
               fullSolution: {
                 type: 'rich_text',
                 format: 'md-math-v1',
-                value: 'structured-full',
+                value: 'text-parsed-full',
                 mediaIds: [],
               },
               answer: { correctOptionIds: ['b'] },
             },
           ],
-        },
+        }),
       }
     })
 
-    const exercise = makeMockExercise('ex-structured-output')
+    const exercise = makeMockExercise('ex-text-parse')
     const result = await generateVariation(
       { exercise, level: 'medium', subject: 'algebra' },
       mockPayload,
@@ -1329,7 +1328,7 @@ describe('generateVariation', () => {
       solution?: { value: string }
       answer?: { correctOptionIds: string[] }
     }
-    expect(block.solution?.value).toBe('structured-sol')
+    expect(block.solution?.value).toBe('text-parsed-sol')
     expect(block.answer?.correctOptionIds).toEqual(['b'])
   })
 
@@ -1492,5 +1491,267 @@ describe('generateVariation', () => {
     expect(rt1.type).toBe('rich_text')
     expect(svg1.type).toBe('svg')
     // q1 gets the patch applied (tested by other tests)
+  })
+
+  // ── Issue #1748: id-filtering, malformed JSON, empty blocks ─────────────────
+
+  it('given pass-2 response with 3 patches where one id is unknown, only the 2 valid patches are applied (id filter — issue #1748)', async () => {
+    mockGenerateChatCompletion.mockImplementation(async () => {
+      const callCount = mockGenerateChatCompletion.mock.calls.length
+
+      if (callCount === 1) {
+        return {
+          text: JSON.stringify({
+            content: {
+              blocks: [
+                {
+                  id: 'q1',
+                  type: 'question_select',
+                  variant: 'mcq',
+                  prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Q1', mediaIds: [] },
+                  answer: { options: [], correctOptionIds: ['a'] },
+                },
+                {
+                  id: 'q2',
+                  type: 'question_select',
+                  variant: 'mcq',
+                  prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Q2', mediaIds: [] },
+                  answer: { options: [], correctOptionIds: ['a'] },
+                },
+              ],
+            },
+          }),
+        }
+      }
+      // Pass 2 returns 3 patches: q1, q2, and a hallucinated q3.
+      return {
+        text: JSON.stringify({
+          blocks: [
+            {
+              id: 'q1',
+              solution: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: 'sol-q1',
+                mediaIds: [],
+              },
+              fullSolution: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: 'full-q1',
+                mediaIds: [],
+              },
+              answer: { correctOptionIds: ['a'] },
+            },
+            {
+              id: 'q2',
+              solution: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: 'sol-q2',
+                mediaIds: [],
+              },
+              fullSolution: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: 'full-q2',
+                mediaIds: [],
+              },
+              answer: { correctOptionIds: ['b'] },
+            },
+            {
+              // This id does NOT exist in pass-1 output — should be dropped.
+              id: 'q3-hallucinated',
+              solution: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: 'hallucinated-sol',
+                mediaIds: [],
+              },
+              fullSolution: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: 'hallucinated-full',
+                mediaIds: [],
+              },
+              answer: { correctOptionIds: ['c'] },
+            },
+          ],
+        }),
+      }
+    })
+
+    const exercise = makeMockExercise('ex-id-filter')
+    exercise.content = {
+      blocks: [
+        {
+          id: 'q1',
+          type: 'question_select',
+          variant: 'mcq',
+          prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Q1', mediaIds: [] },
+          answer: { options: [], correctOptionIds: ['a'] },
+        },
+        {
+          id: 'q2',
+          type: 'question_select',
+          variant: 'mcq',
+          prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Q2', mediaIds: [] },
+          answer: { options: [], correctOptionIds: ['a'] },
+        },
+      ],
+    } as Exercise['content']
+
+    const result = await generateVariation(
+      { exercise, level: 'deep', subject: 'mixed' },
+      mockPayload,
+    )
+
+    const blocks = (result.exercise.content as { blocks: unknown[] }).blocks as Array<{
+      id: string
+      solution?: { value: string }
+    }>
+
+    const q1 = blocks.find((b) => b.id === 'q1')!
+    const q2 = blocks.find((b) => b.id === 'q2')!
+    const q3 = blocks.find((b) => b.id === 'q3-hallucinated')
+
+    // q1 and q2 get their patches applied.
+    expect(q1.solution?.value).toBe('sol-q1')
+    expect(q2.solution?.value).toBe('sol-q2')
+    // q3 was hallucinated — no block with that id should exist in output.
+    expect(q3).toBeUndefined()
+  })
+
+  it('malformed JSON in pass-2 result.text throws SyntaxError so the retry envelope picks it up (issue #1748)', async () => {
+    let callCount = 0
+    mockGenerateChatCompletion.mockImplementation(async () => {
+      callCount++
+      if (callCount === 1) {
+        return {
+          text: JSON.stringify({
+            content: {
+              blocks: [
+                {
+                  id: 'block-1',
+                  type: 'question_select',
+                  variant: 'mcq',
+                  prompt: { type: 'rich_text', format: 'md-math-v1', value: 'Q1', mediaIds: [] },
+                  answer: { options: [], correctOptionIds: ['a'] },
+                },
+              ],
+            },
+          }),
+        }
+      }
+      if (callCount === 2) {
+        // Pass 2: malformed JSON → should trigger retry.
+        return { text: 'not json {' }
+      }
+      // Pass 2 retry: valid JSON this time.
+      return {
+        text: JSON.stringify({
+          blocks: [
+            {
+              id: 'block-1',
+              solution: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: 'fixed-sol',
+                mediaIds: [],
+              },
+              fullSolution: {
+                type: 'rich_text',
+                format: 'md-math-v1',
+                value: 'fixed-full',
+                mediaIds: [],
+              },
+              answer: { correctOptionIds: ['a'] },
+            },
+          ],
+        }),
+      }
+    })
+
+    const exercise = makeMockExercise('ex-malformed-json')
+    const result = await generateVariation(
+      { exercise, level: 'medium', subject: 'algebra' },
+      mockPayload,
+    )
+
+    const block = (result.exercise.content as { blocks: unknown[] }).blocks[0] as {
+      solution?: { value: string }
+    }
+    // After retry with valid JSON, the solution should be applied.
+    expect(block.solution?.value).toBe('fixed-sol')
+    // 3 calls: pass1, pass2 (malformed), pass2 retry (valid)
+    expect(mockGenerateChatCompletion).toHaveBeenCalledTimes(3)
+  })
+
+  it('empty blocks: [] from Gemini is valid and preserved (issue #1748 edge case)', async () => {
+    // When an exercise has zero question blocks (only non-question blocks like rich_text),
+    // pass 2 correctly returns blocks: []. This must not error — the Zod schema
+    // accepts empty blocks arrays (exercise with no question blocks is valid).
+    mockGenerateChatCompletion.mockImplementation(async () => {
+      const callCount = mockGenerateChatCompletion.mock.calls.length
+
+      if (callCount === 1) {
+        // Pass 1: exercise with only a non-question block (rich_text), no question blocks.
+        return {
+          text: JSON.stringify({
+            content: {
+              blocks: [
+                {
+                  id: 'rt1',
+                  type: 'rich_text',
+                  content: {
+                    type: 'rich_text',
+                    format: 'md-math-v1',
+                    value: 'Intro text',
+                    mediaIds: [],
+                  },
+                },
+              ],
+            },
+          }),
+        }
+      }
+      // Pass 2: empty blocks array — no question blocks to derive solutions for.
+      return {
+        text: JSON.stringify({
+          blocks: [],
+        }),
+      }
+    })
+
+    const exercise = makeMockExercise('ex-empty-blocks')
+    exercise.content = {
+      blocks: [
+        {
+          id: 'rt1',
+          type: 'rich_text',
+          content: {
+            type: 'rich_text',
+            format: 'md-math-v1',
+            value: 'Intro text',
+            mediaIds: [],
+          },
+        },
+      ],
+    } as Exercise['content']
+
+    // Should not throw — empty blocks is a valid response for zero-question exercises.
+    const result = await generateVariation(
+      { exercise, level: 'medium', subject: 'algebra' },
+      mockPayload,
+    )
+
+    // The non-question block from pass 1 is preserved.
+    const blocks = (result.exercise.content as { blocks: unknown[] }).blocks as Array<{
+      id: string
+      type: string
+    }>
+    expect(blocks).toHaveLength(1)
+    expect(blocks[0].id).toBe('rt1')
+    expect(blocks[0].type).toBe('rich_text')
   })
 })
