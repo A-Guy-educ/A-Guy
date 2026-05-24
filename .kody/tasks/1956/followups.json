@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Streak API 500 on exercise pages - root cause not fully identified",
+    "body": "The streak API works correctly in integration tests, but the issue describes a 500 error specifically on exercise pages. The root cause was not conclusively identified. The fix adds error handling to prevent unhandled exceptions, but the actual triggering condition in the exercise page context remains unknown. Consider: 1) The issue URL shows '/api/stats/streak:0' which may indicate a client-side URL construction bug; 2) There may be a serverless cold-start issue in production; 3) Check Sentry for actual error messages from the streak endpoint.",
+    "rationale": "The 500 error on exercise pages was not reproducible in tests, suggesting it may be environment-specific or related to a rare edge case that wasn't covered in the test suite.",
+    "priority": "high"
+  }
+]
