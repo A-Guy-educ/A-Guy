@@ -1,0 +1,17 @@
+{
+  "taskId": "2039",
+  "taskType": "issue",
+  "target": "2039-p2-admin-dashboard-recent-transactions-widget-show",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Created missing /api/collections/transactions route that the RecentTransactionsWidget was fetching from, causing 404 errors.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/collections/transactions/route.ts",
+    "tests/int/admin-recent-transactions-api.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/live-1778148544303-xpdzdi.jsonl",
+  "startedAt": "2026-05-24T19:59:00Z",
+  "finishedAt": "2026-05-24T20:14:00Z"
+}
