@@ -1,0 +1,8 @@
+[
+  {
+    "title": "E2E test for admin bar mobile visibility needs verification",
+    "body": "tests/e2e/admin-bar-mobile-hidden.e2e.spec.ts was written but could not be executed due to a pre-existing Node.js 22 + Playwright ESM + JSON import issue (src/brands/aguy/messages/en.json needs 'type: json' import attribute). The test logic is correct and should be run manually or the infrastructure issue resolved to verify the fix.",
+    "rationale": "QA requires automated verification of the fix at 375px mobile viewport.",
+    "priority": "medium"
+  }
+]
