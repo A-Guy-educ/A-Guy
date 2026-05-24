@@ -2122,6 +2122,164 @@ describe('Coupon consumption on webhook payment completion', () => {
       await cleanupCoupon(couponId)
     }
   })
+
+  it('should set couponConsumedAt on successful coupon consumption (couponConsumedAt field added by fix)', async () => {
+    // This test verifies the couponConsumedAt field is set after successful consumption.
+    // It tests the correct behavior after the fix is applied.
+
+    const coupon = await createCoupon(1, `CONSUMED-AT-${Date.now()}`)
+    const couponId = coupon.id
+    const couponCode = coupon.code
+
+    try {
+      const tx = await payload.create({
+        collection: 'transactions',
+        data: {
+          user: userId,
+          product: productId,
+          provider: 'stripe',
+          providerTransactionId: `cs_consumed_at_${Date.now()}`,
+          status: 'pending',
+          amount: 1000,
+          currency: 'ILS',
+          tenant: tenantId,
+          metadata: {
+            appliedCoupon: {
+              code: couponCode,
+              discountType: 'percentage',
+              discountValue: 10,
+            },
+          },
+        } as any,
+        overrideAccess: true,
+      })
+
+      const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+      vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+        id: 'evt_consumed_at',
+        type: 'checkout.session.completed',
+        data: { object: { id: (tx as any).providerTransactionId, payment_status: 'paid' } },
+      } as any)
+
+      const req = new NextRequest('http://localhost/api/webhooks/stripe', {
+        method: 'POST',
+        headers: { 'stripe-signature': 'sig_test' },
+      })
+      const res = await stripeWebhookHandler(req)
+      expect(res.status).toBe(200)
+
+      const updated = await payload.findByID({
+        collection: 'transactions',
+        id: tx.id,
+        depth: 0,
+        overrideAccess: true,
+      })
+      expect(updated.status).toBe('succeeded')
+      expect((updated as any).entitlementsGrantedAt).toBeDefined()
+      // After fix: couponConsumedAt should be set
+      expect((updated as any).couponConsumedAt).toBeDefined()
+
+      // Verify coupon was consumed
+      const couponFinal = await payload.findByID({
+        collection: 'coupons',
+        id: couponId,
+        depth: 0,
+        overrideAccess: true,
+      })
+      expect(couponFinal.usesCount).toBe(1)
+
+      await payload
+        .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+        .catch(() => {})
+    } finally {
+      await cleanupCoupon(couponId)
+    }
+  })
+
+  it('should consume tenant-scoped coupon correctly (tenant filter in consumeCouponOnPayment)', async () => {
+    // Test that consumeCouponOnPayment correctly scopes to the transaction's tenant.
+    // This test uses a tenant-specific coupon (not a global one).
+
+    const admin = await getAdminUser()
+    const coupon = await payload.create({
+      collection: 'coupons',
+      data: {
+        code: `TENANT-SPECIFIC-${Date.now()}`,
+        discountType: 'percentage',
+        discountValue: 10,
+        currency: 'ILS',
+        maxUses: 10,
+        usesCount: 0,
+        isActive: true,
+        tenant: tenantId, // Tenant-specific
+      },
+      user: admin as any,
+      overrideAccess: false,
+    })
+    const couponId = coupon.id
+    const couponCode = coupon.code
+
+    try {
+      const tx = await payload.create({
+        collection: 'transactions',
+        data: {
+          user: userId,
+          product: productId,
+          provider: 'stripe',
+          providerTransactionId: `cs_tenant_specific_${Date.now()}`,
+          status: 'pending',
+          amount: 1000,
+          currency: 'ILS',
+          tenant: tenantId, // Same tenant as coupon
+          metadata: {
+            appliedCoupon: {
+              code: couponCode,
+              discountType: 'percentage',
+              discountValue: 10,
+            },
+          },
+        } as any,
+        overrideAccess: true,
+      })
+
+      const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+      vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+        id: 'evt_tenant_specific',
+        type: 'checkout.session.completed',
+        data: { object: { id: (tx as any).providerTransactionId, payment_status: 'paid' } },
+      } as any)
+
+      const req = new NextRequest('http://localhost/api/webhooks/stripe', {
+        method: 'POST',
+        headers: { 'stripe-signature': 'sig_test' },
+      })
+      const res = await stripeWebhookHandler(req)
+      expect(res.status).toBe(200)
+
+      const updated = await payload.findByID({
+        collection: 'transactions',
+        id: tx.id,
+        depth: 0,
+        overrideAccess: true,
+      })
+      expect(updated.status).toBe('succeeded')
+      expect((updated as any).couponConsumedAt).toBeDefined()
+
+      const couponFinal = await payload.findByID({
+        collection: 'coupons',
+        id: couponId,
+        depth: 0,
+        overrideAccess: true,
+      })
+      expect(couponFinal.usesCount).toBe(1)
+
+      await payload
+        .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+        .catch(() => {})
+    } finally {
+      await cleanupCoupon(couponId)
+    }
+  })
 })
 
 // ─── Stripe webhook signature failure tests ───────────────────────────────────
