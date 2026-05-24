@@ -1,0 +1,14 @@
+[
+  {
+    "title": "TransactionEditView still uses /api/collections/transactions/{id}",
+    "body": "src/ui/admin/TransactionEditView/index.tsx:693 fetches `/api/collections/transactions/${id}?depth=2` directly. If this pattern was also broken (404), the same fix would be needed — adding a dedicated endpoint or using MetricsProvider for single-transaction view. However, this was not reported in the bug, so may be working fine (e.g., GET on specific ID may be permitted while list is blocked).",
+    "rationale": "Consistency — if /api/collections/transactions returns 404 for the list endpoint, the single-ID fetch may have the same issue.",
+    "priority": "low"
+  },
+  {
+    "title": "CouponUsageModal uses /api/collections/transactions",
+    "body": "src/ui/admin/Coupons/CouponUsageModal/index.tsx:319 uses `/admin/collections/transactions/${transactionId}` for an href (not a fetch), which is fine since it links to the admin panel UI, not the REST API. No action needed.",
+    "rationale": "No bug reported for this component — it's a link, not a fetch call.",
+    "priority": "low"
+  }
+]

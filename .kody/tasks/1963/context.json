@@ -1,0 +1,18 @@
+{
+  "taskId": "1963",
+  "taskType": "issue",
+  "target": "1963",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed HTTP 404 in RecentTransactionsWidget by routing it through MetricsProvider instead of the non-existent /api/collections/transactions endpoint",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/admin/dashboard-metrics/route.ts",
+    "src/ui/admin/RecentTransactionsWidget/index.tsx",
+    "tests/int/admin-recent-transactions-1963.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/-home-runner-work-A-Guy-A-Guy.jsonl",
+  "startedAt": "2026-05-24T04:00:00Z",
+  "finishedAt": "2026-05-24T04:12:00Z"
+}
