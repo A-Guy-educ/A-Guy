@@ -439,4 +439,114 @@ describe('POST /api/admin/transactions/{id}/refund', () => {
     const body = await res.json()
     expect(body.error).toBe('העסקה כבר הוחזרה')
   })
+
+  it('PayPal refund uses captureId and forwards transaction.currency', async () => {
+    // Create a PayPal transaction with captureId (simulating post-fix state)
+    const paypalCaptureTx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: adminUserId,
+        product: (
+          await payload.find({
+            collection: 'products',
+            where: { name: { contains: 'Refund Test Product' } },
+            limit: 1,
+            overrideAccess: true,
+          })
+        ).docs[0].id,
+        provider: 'paypal',
+        providerTransactionId: `PP_order_${Date.now()}`,
+        captureId: `PP_capture_${Date.now()}`,
+        status: 'succeeded',
+        amount: 1500,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    const { refundPayPal } = await import('@/lib/payment/paypal')
+    vi.mocked(refundPayPal).mockClear()
+
+    const req = new NextRequest(
+      `http://localhost:3000/api/admin/transactions/${paypalCaptureTx.id}/refund`,
+      {
+        method: 'POST',
+        headers: { Authorization: `JWT ${adminToken}` },
+      },
+    )
+    const res = await transactionRefundHandler(req, {
+      params: Promise.resolve({ id: paypalCaptureTx.id }),
+    })
+    expect(res.status).toBe(200)
+
+    // Verify refundPayPal was called with captureId (not providerTransactionId)
+    expect(vi.mocked(refundPayPal).mock.calls.length).toBeGreaterThan(0)
+    const lastCall = vi.mocked(refundPayPal).mock.lastCall
+    expect(lastCall).not.toBeNull()
+    const [firstArg] = lastCall!
+    expect(firstArg).toBe((paypalCaptureTx as any).captureId)
+
+    // Verify currency was forwarded (ILS, not default USD)
+    expect(lastCall![2]).toBe('ILS')
+
+    await payload
+      .delete({ collection: 'transactions', id: paypalCaptureTx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+
+  it('PayPal refund falls back to providerTransactionId when captureId is absent (legacy transaction)', async () => {
+    // Legacy transactions created before the captureId field was added have no captureId.
+    // The admin refund should use providerTransactionId as a fallback.
+    const legacyPaypalTx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: adminUserId,
+        product: (
+          await payload.find({
+            collection: 'products',
+            where: { name: { contains: 'Refund Test Product' } },
+            limit: 1,
+            overrideAccess: true,
+          })
+        ).docs[0].id,
+        provider: 'paypal',
+        providerTransactionId: `PP_legacy_order_${Date.now()}`,
+        // No captureId — legacy transaction
+        status: 'succeeded',
+        amount: 1500,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    const { refundPayPal } = await import('@/lib/payment/paypal')
+    vi.mocked(refundPayPal).mockClear()
+
+    const req = new NextRequest(
+      `http://localhost:3000/api/admin/transactions/${legacyPaypalTx.id}/refund`,
+      {
+        method: 'POST',
+        headers: { Authorization: `JWT ${adminToken}` },
+      },
+    )
+    const res = await transactionRefundHandler(req, {
+      params: Promise.resolve({ id: legacyPaypalTx.id }),
+    })
+    expect(res.status).toBe(200)
+
+    // Verify refundPayPal was called with providerTransactionId (fallback)
+    expect(vi.mocked(refundPayPal).mock.calls.length).toBeGreaterThan(0)
+    const lastCall = vi.mocked(refundPayPal).mock.lastCall
+    expect(lastCall).not.toBeNull()
+    const [firstArg] = lastCall!
+    expect(firstArg).toBe((legacyPaypalTx as any).providerTransactionId)
+    // Currency should still be forwarded
+    expect(lastCall![2]).toBe('ILS')
+
+    await payload
+      .delete({ collection: 'transactions', id: legacyPaypalTx.id, overrideAccess: true })
+      .catch(() => {})
+  })
 })
