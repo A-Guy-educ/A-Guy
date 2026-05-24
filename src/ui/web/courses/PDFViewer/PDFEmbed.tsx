@@ -13,6 +13,9 @@ export function PDFEmbed({ pdfUrl, title }: PDFEmbedProps) {
   const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const fallbackShownRef = useRef(false)
 
+  // Detect empty or invalid URL
+  const isEmptyUrl = !pdfUrl || pdfUrl.trim() === ''
+
   const handleLoad = () => {
     // Clear the timeout since load succeeded
     if (loadTimeoutRef.current) {
@@ -62,6 +65,13 @@ export function PDFEmbed({ pdfUrl, title }: PDFEmbedProps) {
     setShowFallback(false)
     fallbackShownRef.current = false
 
+    // If URL is empty, show fallback immediately
+    if (isEmptyUrl) {
+      fallbackShownRef.current = true
+      setShowFallback(true)
+      return
+    }
+
     // Set timeout to detect blocking (if iframe hasn't loaded by then)
     loadTimeoutRef.current = setTimeout(() => {
       // Only show fallback if not already showing it
@@ -76,32 +86,38 @@ export function PDFEmbed({ pdfUrl, title }: PDFEmbedProps) {
         clearTimeout(loadTimeoutRef.current)
       }
     }
-  }, [pdfUrl])
+  }, [pdfUrl, isEmptyUrl])
 
   if (showFallback) {
     return (
       <div className="border rounded-lg overflow-hidden bg-gray-50 p-card-padding">
         <div className="flex flex-col items-center justify-center py-section-xs text-center">
-          <p className="text-muted-foreground mb-3">
-            PDF cannot be displayed inline due to browser restrictions.
-          </p>
-          <a
-            href={pdfUrl}
-            download
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-              />
-            </svg>
-            Download PDF
-          </a>
+          {isEmptyUrl ? (
+            <p className="text-muted-foreground mb-3">No PDF URL provided.</p>
+          ) : (
+            <>
+              <p className="text-muted-foreground mb-3">
+                PDF cannot be displayed inline due to browser restrictions.
+              </p>
+              <a
+                href={pdfUrl}
+                download
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
+                Download PDF
+              </a>
+            </>
+          )}
         </div>
       </div>
     )
