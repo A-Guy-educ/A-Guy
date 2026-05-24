@@ -2247,3 +2247,147 @@ describe('PayPal webhook signature failure responses', () => {
     expect(res.status).toBe(400)
   })
 })
+
+// ─── PayPal captureId persistence and 400 on parse failure ─────────────────────
+
+describe('PayPal captureId persistence for refunds', () => {
+  it('PAYMENT.CAPTURE.COMPLETED should persist captureId from event.resource.id', async () => {
+    // The orderId is stored as providerTransactionId (Order ID), but the captureId
+    // (from event.resource.id) is what PayPal's refund endpoint requires.
+    const orderId = `PP_order_${Date.now()}`
+    const captureId = `PP_capture_${Date.now()}`
+    const { verifyPayPalWebhook } = await import('@/lib/payment/paypal')
+    vi.mocked(verifyPayPalWebhook).mockResolvedValueOnce(true)
+
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'paypal',
+        providerTransactionId: orderId,
+        status: 'pending',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    const req = new NextRequest('http://localhost/api/webhooks/paypal', {
+      method: 'POST',
+      headers: {
+        'paypal-transmission-id': 'test-tx-id',
+        'paypal-transmission-time': new Date().toISOString(),
+        'paypal-transmission-sig': 'test-sig',
+        'paypal-cert-url': 'https://cert.url',
+        'paypal-auth-algo': 'SHA256withRSA',
+      },
+      body: JSON.stringify({
+        event_type: 'PAYMENT.CAPTURE.COMPLETED',
+        resource: {
+          id: captureId,
+          supplementary_data: {
+            related_ids: { order_id: orderId },
+          },
+        },
+      }),
+    })
+
+    const res = await paypalWebhookHandler(req)
+    expect(res.status).toBe(200)
+
+    const updated = await payload.findByID({
+      collection: 'transactions',
+      id: tx.id,
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect(updated.status).toBe('succeeded')
+    // captureId must be persisted so refundPayPal can use it
+    expect((updated as any).captureId).toBe(captureId)
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+
+  it('PAYMENT.CAPTURE.REFUNDED should find transaction via captureId (not providerTransactionId)', async () => {
+    // Real-world scenario: providerTransactionId = Order ID, captureId = Capture ID.
+    // PAYMENT.CAPTURE.REFUNDED fires with captureId as event.resource.id.
+    // The handler must look up by captureId, not by providerTransactionId.
+    const orderId = `PP_order_${Date.now()}`
+    const captureId = `PP_capture_${Date.now()}`
+    const { verifyPayPalWebhook } = await import('@/lib/payment/paypal')
+    vi.mocked(verifyPayPalWebhook).mockResolvedValueOnce(true)
+
+    // Create transaction with Order ID as providerTransactionId and captureId set
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'paypal',
+        providerTransactionId: orderId,
+        captureId: captureId,
+        status: 'succeeded',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    const req = new NextRequest('http://localhost/api/webhooks/paypal', {
+      method: 'POST',
+      headers: {
+        'paypal-transmission-id': 'test-tx-id',
+        'paypal-transmission-time': new Date().toISOString(),
+        'paypal-transmission-sig': 'test-sig',
+        'paypal-cert-url': 'https://cert.url',
+        'paypal-auth-algo': 'SHA256withRSA',
+      },
+      body: JSON.stringify({
+        event_type: 'PAYMENT.CAPTURE.REFUNDED',
+        resource: { id: captureId },
+      }),
+    })
+
+    const res = await paypalWebhookHandler(req)
+    expect(res.status).toBe(200)
+
+    const updated = await payload.findByID({
+      collection: 'transactions',
+      id: tx.id,
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect(updated.status).toBe('refunded')
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+})
+
+describe('PayPal webhook JSON parse failure', () => {
+  it('should return 400 (not 200) on malformed JSON body', async () => {
+    const req = new NextRequest('http://localhost/api/webhooks/paypal', {
+      method: 'POST',
+      headers: {
+        'paypal-transmission-id': 'test-tx-id',
+        'paypal-transmission-time': new Date().toISOString(),
+        'paypal-transmission-sig': 'test-sig',
+        'paypal-cert-url': 'https://cert.url',
+        'paypal-auth-algo': 'SHA256withRSA',
+      },
+      body: 'not valid json {{{',
+    })
+
+    const res = await paypalWebhookHandler(req)
+    // Must return 400 so PayPal does NOT retry malformed deliveries
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.error).toBe('invalid_body')
+  })
+})
