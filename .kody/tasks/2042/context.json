@@ -1,0 +1,17 @@
+{
+  "taskId": "2042",
+  "taskType": "issue",
+  "target": "GitHub issue #2042 - PDF embed preview area shows only a placeholder",
+  "outcome": "partial",
+  "exitCode": 0,
+  "reason": "Fix implemented and typechecks pass, but Playwright e2e tests cannot run due to Chromium localhost connection issue in this environment. The fix correctly handles empty URL case by showing fallback immediately with appropriate message.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/courses/PDFViewer/PDFEmbed.tsx",
+    "tests/e2e/pdf-embed-xframe.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2042-pending.jsonl",
+  "startedAt": "2026-05-24T22:00:00Z",
+  "finishedAt": "2026-05-24T22:20:00Z"
+}

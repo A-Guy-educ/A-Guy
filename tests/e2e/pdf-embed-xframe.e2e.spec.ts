@@ -46,4 +46,29 @@ test.describe('PDF Embed X-Frame-Options Issue', () => {
     // Check that the URL is displayed in the parameters section
     await expect(page.locator('code').first()).toContainText(BLOCKED_URL)
   })
+
+  test('page title should not show "No Title" when no title param is provided', async ({
+    page,
+  }) => {
+    await page.goto('/test/pdf-embed', { waitUntil: 'domcontentloaded' })
+
+    // The page should not display "No Title" in the document title
+    const title = await page.locator('meta[name="title"]').getAttribute('content')
+    expect(title).not.toContain('No Title')
+  })
+
+  test('should show fallback immediately when URL is empty string', async ({ page }) => {
+    // Navigate with empty URL parameter (empty string, not missing)
+    const testUrl = '/test/pdf-embed?url=&title=Test'
+    await page.goto(testUrl, { waitUntil: 'domcontentloaded' })
+
+    // Wait a short time - the fallback should already be showing for empty URL
+    // We should NOT see a blank white iframe
+    await page.waitForTimeout(500)
+
+    // The page should show the fallback UI (download button) for empty URL
+    // because empty URL means the PDF cannot be displayed
+    const downloadButton = page.locator('a:has-text("Download")').first()
+    await expect(downloadButton).toBeVisible()
+  })
 })

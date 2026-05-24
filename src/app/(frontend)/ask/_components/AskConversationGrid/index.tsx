@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { MessageSquare, Sparkles, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getUserProfile } from '@/client/state/localStorage/userProfile'
+import { getOnboardingRedirect } from '@/infra/onboarding/redirect'
 import { useExamCountdown } from '@/client/hooks/useExamCountdown'
 import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import { SystemLink } from '@/infra/loading/components/SystemLink'
@@ -84,7 +85,7 @@ export function AskConversationGrid() {
     async function loadData() {
       const profile = getUserProfile()
       if (!profile?.gradeLevel) {
-        window.location.href = '/'
+        window.location.href = getOnboardingRedirect(window.location.pathname)
         return
       }
 

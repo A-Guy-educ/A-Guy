@@ -57,6 +57,6 @@ export default async function PDFEmbedPage({ searchParams }: PDFEmbedPageProps) 
 export async function generateMetadata({ searchParams }: PDFEmbedPageProps) {
   const params = await searchParams
   return {
-    title: `PDF Embed Test - ${params.title || 'No Title'}`,
+    title: `PDF Embed Test - ${params.title || 'Test PDF'}`,
   }
 }

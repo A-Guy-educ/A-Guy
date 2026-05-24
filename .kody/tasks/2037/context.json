@@ -1,0 +1,17 @@
+{
+  "taskId": "2037",
+  "taskType": "issue",
+  "target": "2037",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed RequireCourseSelection bug causing blank /ask page content",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/guards/RequireCourseSelection.tsx",
+    "tests/e2e/ask-page.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2037.jsonl",
+  "startedAt": "2026-05-24T19:00:00.000Z",
+  "finishedAt": "2026-05-24T19:20:00.000Z"
+}
