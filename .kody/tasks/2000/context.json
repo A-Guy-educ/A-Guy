@@ -1,0 +1,17 @@
+{
+  "taskId": "2000",
+  "taskType": "issue",
+  "target": "2000-short-circuit-lesson-duplication-for-levelnone-wit",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Implemented fast-path for level=none in orchestrator: bulk-parallel clone without trimming/validation, single DB update for outputExercises, handles zero-exercise and partial-failure edge cases",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/services/lesson-duplication/orchestrator.ts",
+    "tests/int/lesson-duplication-orchestrator-none.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/0327E94F-0086-444C-A019-777A2FEAA414.jsonl",
+  "startedAt": "2026-05-24T07:00:00Z",
+  "finishedAt": "2026-05-24T07:18:00Z"
+}

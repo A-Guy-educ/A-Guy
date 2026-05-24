@@ -95,6 +95,30 @@ export const Transactions: CollectionConfig = {
       },
     },
 
+    // Stripe PaymentIntent ID (pi_... / ch_...) — used for refunds and charge.refunded lookup.
+    // For Stripe, this is distinct from providerTransactionId (which is the Checkout Session ID, cs_...).
+    // Populated when checkout.session.completed fires with payment_status=paid, or when
+    // async_payment_succeeded fires. Used instead of providerTransactionId when calling stripe.refunds.create.
+    {
+      name: 'paymentIntentId',
+      type: 'text',
+      admin: {
+        description: 'Stripe PaymentIntent ID (pi_...) — used for refunds and webhook lookup',
+      },
+    },
+
+    // PayPal Capture ID — required for PayPal refund and PAYMENT.CAPTURE.REFUNDED lookup.
+    // For PayPal, providerTransactionId stores the Order ID, but the refund endpoint and
+    // PAYMENT.CAPTURE.REFUNDED event key on the Capture ID (event.resource.id).
+    // Populated when PAYMENT.CAPTURE.COMPLETED fires.
+    {
+      name: 'captureId',
+      type: 'text',
+      admin: {
+        description: 'PayPal Capture ID — used for refunds and refund webhook lookup',
+      },
+    },
+
     // Transaction status
     {
       name: 'status',
@@ -181,6 +205,20 @@ export const Transactions: CollectionConfig = {
         readOnly: true,
         description: 'Timestamp when product entitlements were granted to the user',
       },
+    },
+
+    // Timestamp when coupon was consumed on this transaction (set by webhook handlers).
+    // Used for idempotency — replayed webhooks skip re-consumption if set.
+    // Independent from entitlementsGrantedAt so retry-safe: if coupon consumption fails
+    // on first delivery (returns 500), retry will still attempt consumption.
+    {
+      name: 'couponConsumedAt',
+      type: 'date',
+      admin: {
+        readOnly: true,
+        description: 'Timestamp when coupon was consumed on this transaction',
+      },
+      index: true,
     },
 
     // Refund audit fields (set when transaction is refunded)

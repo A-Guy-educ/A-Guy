@@ -45,8 +45,11 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json()
   } catch {
-    payload.logger.error('Failed to parse PayPal webhook body')
-    return NextResponse.json({ received: true }, { status: 200 })
+    const sourceIp =
+      request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    const bodySnippet = request.headers.get('content-type') || ''
+    payload.logger.warn({ sourceIp, bodySnippet }, 'PayPal webhook: failed to parse JSON body')
+    return NextResponse.json({ error: 'invalid_body' }, { status: 400 })
   }
 
   // 2. Extract PayPal headers for signature verification
@@ -122,8 +125,13 @@ export async function POST(request: NextRequest) {
  * The coupon-usages row is created only if the atomic increment succeeds,
  * and the afterChange hook is skipped via context to avoid double-incrementing.
  *
+ * Tenant scoping: the coupon lookup is filtered by the transaction's tenant.
+ * Global (tenant-less) coupons also match — they are found via
+ * `tenant: { exists: false }` in the OR clause.
+ *
  * @param payload - Payload instance
  * @param transaction - The succeeded transaction with appliedCoupon in metadata
+ * @param tenantId - The tenant ID to scope coupon lookup
  */
 async function consumeCouponOnPayment(
   payload: Awaited<ReturnType<typeof getPayload>>,
@@ -141,21 +149,26 @@ async function consumeCouponOnPayment(
     user?: string | { id: string }
     product?: string | { id: string }
   },
+  tenantId: string,
 ): Promise<void> {
   const appliedCoupon = transaction.metadata?.appliedCoupon
   if (!appliedCoupon) return
 
-  // Find the coupon by code
+  // Find the coupon by code, scoped to the transaction's tenant.
+  // Also match global (tenant-less) coupons via the OR clause.
   const coupons = await payload.find({
     collection: 'coupons',
-    where: { code: { equals: appliedCoupon.code } },
+    where: {
+      code: { equals: appliedCoupon.code },
+      or: [{ tenant: { equals: tenantId } }, { tenant: { exists: false } }],
+    },
     limit: 1,
     depth: 0,
     overrideAccess: true,
   })
 
   if (coupons.totalDocs === 0) {
-    payload.logger.warn({ code: appliedCoupon.code }, 'Coupon not found for consumption')
+    payload.logger.warn({ code: appliedCoupon.code, tenantId }, 'Coupon not found for consumption')
     return
   }
 
@@ -248,6 +261,7 @@ async function handleEvent(
       // The capture ID is in resource.id, but we need the order ID to find the transaction.
       // Try to get the order ID from supplementary_data.related_ids.order_id
       const orderId = event.resource.supplementary_data?.related_ids?.order_id || event.resource.id
+      const captureId = event.resource.id
 
       const transactions = await payload.find({
         collection: 'transactions',
@@ -270,35 +284,59 @@ async function handleEvent(
       const transaction = transactions.docs[0]
 
       // Idempotency: skip if entitlements already granted (replayed webhook)
-      if (transaction.entitlementsGrantedAt) {
-        return
+      if (!transaction.entitlementsGrantedAt) {
+        // Grant entitlements BEFORE flipping status to succeeded — fail-safe:
+        // if grant throws we do NOT set status=succeeded so the provider retries.
+        await grantProductEntitlements(
+          transaction.user as string,
+          transaction.product as string,
+          transaction.id,
+        )
+
+        // Grant succeeded — atomically flip status and record the grant timestamp and captureId
+        await payload.update({
+          collection: 'transactions',
+          id: transaction.id,
+          data: {
+            status: 'succeeded',
+            entitlementsGrantedAt: new Date().toISOString(),
+            captureId,
+          },
+          overrideAccess: true,
+        })
       }
 
-      // Grant entitlements BEFORE flipping status to succeeded — fail-safe:
-      // if grant throws we do NOT set status=succeeded so the provider retries.
-      await grantProductEntitlements(
-        transaction.user as string,
-        transaction.product as string,
-        transaction.id,
-      )
-
-      // Grant succeeded — atomically flip status and record the grant timestamp
-      await payload.update({
-        collection: 'transactions',
-        id: transaction.id,
-        data: { status: 'succeeded', entitlementsGrantedAt: new Date().toISOString() },
-        overrideAccess: true,
-      })
-
-      // Consume coupon atomically (if applied)
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await consumeCouponOnPayment(payload, transaction as any)
-      } catch (err) {
-        payload.logger.error(
-          { error: err, transactionId: transaction.id },
-          'Failed to consume coupon',
-        )
+      // Coupon consumption — independent from entitlementsGrantedAt, idempotent via couponConsumedAt.
+      // Attempt consumption if couponConsumedAt is null (regardless of entitlementsGrantedAt).
+      const paypalTxMetadata = transaction.metadata as
+        | {
+            appliedCoupon?: {
+              code: string
+              discountType: string
+              discountValue: number
+              originalAmount?: number
+              discountedAmount?: number
+            } | null
+          }
+        | null
+        | undefined
+      if (!transaction.couponConsumedAt && paypalTxMetadata?.appliedCoupon) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await consumeCouponOnPayment(payload, transaction as any, transaction.tenant as string)
+        } catch (err) {
+          payload.logger.error(
+            { error: err, transactionId: transaction.id },
+            'Coupon consumption failed — returning 500 so provider retries',
+          )
+          throw err
+        }
+        await payload.update({
+          collection: 'transactions',
+          id: transaction.id,
+          data: { couponConsumedAt: new Date().toISOString() },
+          overrideAccess: true,
+        })
       }
       break
     }
@@ -306,10 +344,11 @@ async function handleEvent(
     case 'PAYMENT.CAPTURE.REFUNDED': {
       const captureId = event.resource.id
 
+      // Primary lookup via captureId (populated on PAYMENT.CAPTURE.COMPLETED)
       const transactions = await payload.find({
         collection: 'transactions',
         where: {
-          providerTransactionId: { equals: captureId },
+          captureId: { equals: captureId },
         },
         limit: 1,
         depth: 0,
@@ -317,11 +356,31 @@ async function handleEvent(
       })
 
       if (transactions.totalDocs === 0) {
-        payload.logger.warn(
-          { captureId },
-          'PayPal webhook: transaction not found for PAYMENT.CAPTURE.REFUNDED',
-        )
-        return
+        // Fallback for legacy transactions created before captureId was added.
+        // These have providerTransactionId set to the capture ID value (before the bug was fixed).
+        const fallback = await payload.find({
+          collection: 'transactions',
+          where: {
+            providerTransactionId: { equals: captureId },
+          },
+          limit: 1,
+          depth: 0,
+          overrideAccess: true,
+        })
+        if (fallback.totalDocs === 0) {
+          payload.logger.warn(
+            { captureId },
+            'PayPal webhook: transaction not found for PAYMENT.CAPTURE.REFUNDED',
+          )
+          return
+        }
+        await payload.update({
+          collection: 'transactions',
+          id: fallback.docs[0].id,
+          data: { status: 'refunded' },
+          overrideAccess: true,
+        })
+        break
       }
 
       await payload.update({
