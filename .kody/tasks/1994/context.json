@@ -1,0 +1,17 @@
+{
+  "taskId": "1994",
+  "taskType": "issue",
+  "target": "issue #1994",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added gravatar.com to img-src CSP directive for /admin routes, test passes, quality gates green",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "next.config.js",
+    "tests/int/csp-vercel-feedback-admin.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1994.jsonl",
+  "startedAt": "2026-05-24T11:35:00Z",
+  "finishedAt": "2026-05-24T11:36:30Z"
+}
