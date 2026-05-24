@@ -139,7 +139,7 @@ export function StudyContent({
 
       try {
         const res = await fetch(
-          `/api/chapters/by-grade?grade=${profile.gradeLevel}&locale=${locale}`,
+          `/api/chapters/by-grade?grade=${profile.gradeLevel}&locale=${locale}&lessonType=${lessonType}`,
         )
         if (res.ok) {
           const data = await res.json()
@@ -181,7 +181,7 @@ export function StudyContent({
     }
 
     loadData()
-  }, [locale, prefetchedData])
+  }, [locale, prefetchedData, lessonType])
 
   /**
    * Filter lessons by the current lessonType (practice/learn/exam).
