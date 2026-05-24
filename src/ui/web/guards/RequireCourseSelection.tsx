@@ -1,22 +1,20 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 import { getUserProfile } from '@/client/state/localStorage/userProfile'
 
 export function RequireCourseSelection({ children }: { children: React.ReactNode }) {
-  const router = useRouter()
   const [hasSelection, setHasSelection] = useState<boolean | null>(null)
 
   useEffect(() => {
     const profile = getUserProfile()
     if (!profile?.gradeLevel) {
-      router.replace('/')
+      window.location.replace('/')
       return
     }
     setHasSelection(true)
-  }, [router])
+  }, [])
 
   if (hasSelection === null) {
     return (
