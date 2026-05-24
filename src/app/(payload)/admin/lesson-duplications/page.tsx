@@ -14,7 +14,7 @@ import { useRouter } from 'next/navigation'
 export default function LessonDuplicationsIndexPage() {
   const router = useRouter()
   useEffect(() => {
-    router.replace('/admin/collections/lesson-duplications')
+    router.replace('/admin/lesson-duplications')
   }, [router])
   return null
 }

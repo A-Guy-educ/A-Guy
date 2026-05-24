@@ -1,0 +1,19 @@
+{
+  "taskId": "1995",
+  "taskType": "issue",
+  "target": "GitHub Issue #1995",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed lesson-duplications list row links to use correct URL format /admin/lesson-duplications/:id instead of /admin/collections/lesson-duplications/:id",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/collections/LessonDuplications.ts",
+    "src/app/(payload)/admin/lesson-duplications/page.tsx",
+    "src/ui/admin/LessonDuplicationReview/index.tsx",
+    "tests/e2e/lesson-duplications-list-row-links.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1995-session.jsonl",
+  "startedAt": "2026-05-24T12:00:00Z",
+  "finishedAt": "2026-05-24T12:10:00Z"
+}

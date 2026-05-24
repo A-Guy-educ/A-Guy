@@ -1,0 +1,8 @@
+[
+  {
+    "title": "E2E test for lesson-duplications row links needs dev server to run",
+    "body": "The new test file tests/e2e/lesson-duplications-list-row-links.e2e.spec.ts requires a running dev server (Playwright webServer). It could not be validated in this session because docker/dev server wasn't available. The test logic is sound and follows the existing E2E test patterns.",
+    "rationale": "The test was written correctly following existing test patterns but E2E tests need a running dev server which wasn't available in this environment.",
+    "priority": "low"
+  }
+]
