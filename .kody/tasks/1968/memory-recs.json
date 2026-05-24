@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "admin-widgets-use-metrics-context-not-direct-api",
+    "hook": "Dashboard widgets must use useMetricsContext, not direct /api/collections/* fetches",
+    "body": "Admin dashboard widgets bundled in DashboardWidgets.tsx must use useMetricsContext() from MetricsProvider for data fetching. Direct fetches to /api/collections/* endpoints return 404 because those are Payload admin routes not accessible from the frontend. The RecentTransactionsWidget was fetching /api/collections/transactions directly, causing HTTP 404 errors.\n\nWhy: The Payload REST API at /api/collections/* requires admin session/auth that the browser-based fetch from a client component cannot satisfy in this deployment configuration.\n\nHow to apply: When adding new dashboard widgets, always use useMetricsContext() or create a dedicated API endpoint under /api/admin/* that the widget can fetch from.",
+    "why": "The RecentTransactionsWidget was making direct fetches to /api/collections/transactions which returned HTTP 404, while all other widgets (RevenueWidget, TopProductsWidget, CourseEnrollmentsWidget) used useMetricsContext() successfully.",
+    "confidence": 0.95
+  }
+]

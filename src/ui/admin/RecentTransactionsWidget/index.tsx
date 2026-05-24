@@ -9,10 +9,11 @@
 'use client'
 
 import { ExternalLink } from 'lucide-react'
-import React, { useCallback, useEffect, useState } from 'react'
+import React from 'react'
 import type { CSSProperties } from 'react'
 import { useTranslation } from '@payloadcms/ui'
 
+import { useMetricsContext } from '@/ui/admin/ConversionTracking/MetricsProvider'
 import { getStrings } from '@/ui/admin/ConversionTracking/strings'
 import {
   errorStyle,
@@ -26,28 +27,6 @@ import {
 } from '@/ui/admin/ConversionTracking/styles'
 
 type TransactionStatus = 'pending' | 'succeeded' | 'failed' | 'refunded'
-
-interface TransactionUser {
-  email?: string
-}
-
-interface TransactionProduct {
-  name?: string
-}
-
-interface Transaction {
-  id: string
-  createdAt: string
-  amount: number
-  currency: string
-  status: TransactionStatus
-  user?: TransactionUser
-  product?: TransactionProduct
-}
-
-interface TransactionsResponse {
-  docs: Transaction[]
-}
 
 const panelStyle: CSSProperties = {
   padding: 20,
@@ -83,37 +62,9 @@ function formatDate(iso: string): string {
 const RecentTransactionsWidget: React.FC = () => {
   const { i18n } = useTranslation()
   const s = getStrings(i18n.language)
+  const { data, loading, error } = useMetricsContext()
 
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchTransactions = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await fetch('/api/collections/transactions?limit=5&sort=-createdAt&depth=2', {
-        credentials: 'include',
-      })
-      if (!res.ok) {
-        if (res.status === 403) {
-          setError('admin-only')
-          return
-        }
-        throw new Error(`HTTP ${res.status}`)
-      }
-      const json = (await res.json()) as TransactionsResponse
-      setTransactions(json.docs ?? [])
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    void fetchTransactions()
-  }, [fetchTransactions])
+  if (error === 'admin-only') return null
 
   if (loading) {
     return (
@@ -124,9 +75,7 @@ const RecentTransactionsWidget: React.FC = () => {
     )
   }
 
-  if (error === 'admin-only') return null
-
-  if (error) {
+  if (error || !data?.recentTransactions) {
     return (
       <div style={widgetContainerStyle}>
         <h3 style={widgetTitleStyle}>{s.recentTransactions}</h3>
@@ -137,16 +86,18 @@ const RecentTransactionsWidget: React.FC = () => {
     )
   }
 
+  const { recentTransactions } = data
+
   return (
     <div style={widgetContainerStyle}>
       <h3 style={widgetTitleStyle}>{s.recentTransactions}</h3>
       <div style={panelStyle}>
-        {transactions.length === 0 ? (
+        {recentTransactions.length === 0 ? (
           <div style={{ fontSize: 13, color: 'var(--theme-elevation-400)' }}>
             {s.noTransactionsYet}
           </div>
         ) : (
-          transactions.map((tx) => (
+          recentTransactions.map((tx) => (
             <div key={tx.id} style={transactionRowStyle}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
                 <span
@@ -166,7 +117,7 @@ const RecentTransactionsWidget: React.FC = () => {
                 </span>
                 <span
                   style={{
-                    ...STATUS_BADGE_STYLE[tx.status],
+                    ...STATUS_BADGE_STYLE[tx.status as TransactionStatus],
                     padding: '2px 8px',
                     borderRadius: 12,
                     fontSize: 11,

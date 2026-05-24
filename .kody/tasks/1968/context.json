@@ -1,0 +1,18 @@
+{
+  "taskId": "1968",
+  "taskType": "issue",
+  "target": "1968",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed HTTP 404 on RecentTransactionsWidget by adding recentTransactions to DashboardMetricsResponse and refactoring widget to use useMetricsContext() instead of direct /api/collections/transactions fetch",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/admin/dashboard-metrics/route.ts",
+    "src/ui/admin/RecentTransactionsWidget/index.tsx",
+    "tests/int/admin-dashboard-recent-transactions-1968.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1968-p1-admin-dashboard-recent-transactions-widget-retu.jsonl",
+  "startedAt": "2026-05-24T05:23:00Z",
+  "finishedAt": "2026-05-24T05:27:00Z"
+}
