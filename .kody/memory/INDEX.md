@@ -42,3 +42,5 @@ git activity belongs in `git log`, not here.
 - [Stripe Session Vs Payment Intent](stripe-session-vs-payment-intent.md) — Stripe Checkout Session ID (cs_...) != PaymentIntent ID (pi_...) (type: lesson)
 
 - [Payment Status Gate Entitlements](payment-status-gate-entitlements.md) — Gate entitlement grant on payment_status=paid not checkout.session.completed (type: decision)
+
+- [Enum Preservation In Derive Json Schema](enum-preservation-in-derive-json-schema.md) — deriveJsonSchemaFromValue now preserves identifier strings as enum (type: decision)
