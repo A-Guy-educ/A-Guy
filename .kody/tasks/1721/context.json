@@ -1,0 +1,14 @@
+{
+  "taskId": "1721",
+  "taskType": "pr",
+  "target": "1721",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "format check failed on kody.config.json - fixed with prettier --write",
+  "prUrl": null,
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26364461713",
+  "filesTouched": ["kody.config.json"],
+  "sessionLog": null,
+  "startedAt": "2026-05-24T14:54:26.1578643Z",
+  "finishedAt": "2026-05-24T15:30:00.000Z"
+}
