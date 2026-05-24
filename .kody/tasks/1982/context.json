@@ -1,0 +1,17 @@
+{
+  "taskId": "1982",
+  "taskType": "issue",
+  "target": "issue #1982 - Practice page shows incorrect lesson heading levels",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed off-by-one bug in StudyContent filteredLessons by adding explicit sort by order field within each chapter",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/study/_components/StudyContent/index.tsx",
+    "tests/int/chapters-by-grade-lesson-order.int.spec.ts"
+  ],
+  "sessionLog": null,
+  "startedAt": "2026-05-24T10:55:00Z",
+  "finishedAt": "2026-05-24T11:10:00Z"
+}
