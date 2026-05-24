@@ -30,3 +30,17 @@ git activity belongs in `git log`, not here.
 - [First chat-driven memory written by LLM session](writer1-chat-proof.md) — First LLM-authored sticky note following prose contract in AGENTS.md (type: lesson)
 
 - [Write context.json and memory-recs.json at end of every kody task](task-memory-protocol-bootstrap.md) — Write context.json and memory-recs.json at end of every kody task (type: lesson)
+
+- [Viewport Export Cannot Be Async](viewport-export-cannot-be-async.md) — Next.js viewport export must be synchronous (type: lesson)
+
+- [Ogimage Type Requires Object](ogimage-type-requires-object.md) — OGImage/TwitterImage strings need {url} wrapper (type: lesson)
+
+- [Brand Logo Inline Svg Pattern](brand-logo-inline-svg-pattern.md) — Brand Logo as inline SVG component in brand bundle (type: decision)
+
+- [Gemini Responseschema Collapses Complex Shapes](gemini-responseschema-collapses-complex-shapes.md) — Don't pass complex Zod schemas to Gemini responseSchema (type: lesson)
+
+- [Stripe Session Vs Payment Intent](stripe-session-vs-payment-intent.md) — Stripe Checkout Session ID (cs_...) != PaymentIntent ID (pi_...) (type: lesson)
+
+- [Payment Status Gate Entitlements](payment-status-gate-entitlements.md) — Gate entitlement grant on payment_status=paid not checkout.session.completed (type: decision)
+
+- [Enum Preservation In Derive Json Schema](enum-preservation-in-derive-json-schema.md) — deriveJsonSchemaFromValue now preserves identifier strings as enum (type: decision)
