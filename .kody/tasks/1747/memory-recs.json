@@ -1,0 +1,9 @@
+[
+  {
+    "type": "decision",
+    "name": "enum-preservation-in-derive-json-schema",
+    "hook": "deriveJsonSchemaFromValue now preserves identifier strings as enum",
+    "body": "When deriveJsonSchemaFromValue encounters a short alphanumeric string (identifier-like), it now produces `{ type: 'string', enum: [value] }` instead of plain `{ type: 'string' }`. This enables reliable block-type detection in augmentBlocksSchema without a generic string fallback. Longer strings (>64 chars) remain plain `{ type: 'string' }`. **Why:** Without this, isQuestionBlockSchema could not distinguish question_* blocks from rich_text blocks in a heterogeneous array since both would produce identical `{ type: 'string' }` for their `type` field. **How to apply:** If you change deriveJsonSchemaFromValue's string handling, ensure block-type detection still works by verifying the heterogeneous-blocks test still passes.",
+    "confidence": 0.9
+  }
+]
