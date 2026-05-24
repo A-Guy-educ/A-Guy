@@ -1,24 +1,25 @@
 {
   "version": 1,
-  "rev": 5,
+  "rev": 6,
   "cursor": "reviewed",
   "data": {
-    "lastRunISO": "2026-05-24T07:40:12Z",
-    "nextEligibleISO": "2026-05-24T13:40:12Z",
+    "lastRunISO": "2026-05-24T14:30:00Z",
+    "nextEligibleISO": "2026-05-24T20:30:00Z",
     "cycle": 1,
     "reviewed": [
       "approval-gate",
       "architecture-audit",
       "cleanup-branches",
-      "coverage-floor"
+      "coverage-floor",
+      "dead-code-sweep"
     ],
     "lastReviewed": {
-      "slug": "coverage-floor",
-      "verdict": "broken"
+      "slug": "dead-code-sweep",
+      "verdict": "warn"
     },
-    "lastFiredAt": "2026-05-24T14:19:57.438Z",
+    "lastFiredAt": "2026-05-24T20:24:22.857Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 17960
+    "lastDurationMs": 108739
   },
   "done": false
 }
