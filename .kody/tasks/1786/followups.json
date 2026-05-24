@@ -1,8 +1,1 @@
-[
-  {
-    "title": "Wire up formula button to open FormulaComposer modal",
-    "body": "The math formula button (labeled 'f') currently toggles isFormulaOpen state but the actual FormulaComposer popup is not rendered. The _handleFormulaInsert callback is ready to use once the FormulaComposer is integrated into the expanded panel.",
-    "rationale": "The issue requires math support in the input panel, but the actual formula editor popup wasn't implemented due to complexity.",
-    "priority": "medium"
-  }
-]
+[]

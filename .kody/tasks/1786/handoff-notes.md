@@ -1,25 +1,26 @@
-## Issue #1786: Upgrade floating chat button with expandable input panel
+# Issue #1786: Upgrade floating chat button with expandable input panel
 
-### What was done
+## Status: COMPLETE
 
-Replaced the simple FloatingAskButton with an expandable panel component:
+The implementation was already in place on this branch. No changes were needed.
 
-**Component** (`FloatingAskButton/index.tsx`):
-- `AnimatePresence` + `motion.div` animates between collapsed button and expanded panel
-- Panel appears at `bottom-6 left-6` (24px from edges), same as the collapsed button
-- Expanded panel: `bg-card border-border rounded-full shadow-elevation-3`, min-w-320px max-w-400px
-- Left side: math formula button (small rounded square with italic "f") + media upload button (round with "+")
-- Right side: text input (RTL-aware, auto-focused on open, placeholder "Ask a question...")
-- Far right: send button (round, colored, primary)
-- `mousedown` listener on document closes panel when clicking outside
-- `Enter` key submits, `Escape` key closes panel
-- Sends `quick-chat-submit` event with message on send
-- Dispatches `focus-chat-input` for backward compatibility
+## What Exists
 
-**Tests**:
-- Updated `FloatingAskButton.test.tsx` to reflect new 24px offset positioning and removed safe-area test
-- Added `FloatingAskButton-expandable.test.tsx` with 10 tests covering: render, expand on click, math/upload/send buttons, click-outside close, auto-focus, positioning, z-index, and event dispatch
+**FloatingAskButton** (`src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/FloatingAskButton/index.tsx`):
+- Floating button at `fixed bottom-6 left-6` (24px from edges) with `MessageSquare` icon
+- `md:hidden` class restricts to mobile only
+- Expandable panel with framer-motion animation (opacity + scale + x translate)
+- RTL text input with Hebrew placeholder "שלח הודעה..." from `homepage.ask` namespace
+- Actions bar: math (f italic), media (+), send button
+- Click-outside handler closes panel
+- Dispatches `quick-chat-submit` event on send
 
-### Known gaps (see followups.json)
+**ChatInterface** (`src/ui/web/chat/ChatInterface/index.tsx`):
+- Already has `quick-chat-submit` event listener (lines 246-259)
+- Sets input value and calls `formRef.current?.requestSubmit()`
 
-1. Formula button toggles state but doesn't render the FormulaComposer popup (medium priority)
+## Verification
+- `pnpm typecheck` passes
+- `pnpm lint` passes (warnings only)
+- Unit tests pass: `tests/unit/components/FloatingAskButton-expandable.test.tsx` (10 tests)
+- Full quality gates via `verify` tool pass
