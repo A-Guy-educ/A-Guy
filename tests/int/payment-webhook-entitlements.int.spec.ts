@@ -372,11 +372,12 @@ describe('Stripe webhook handler', () => {
   it('checkout.session.completed should update transaction to succeeded and grant entitlements', async () => {
     // Update the mock to return a session ID matching our test transaction
     const sessionId = `cs_stripe_success_${Date.now()}`
+    const paymentIntentId = `pi_stripe_success_${Date.now()}`
     const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
     vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
       id: 'evt_success',
       type: 'checkout.session.completed',
-      data: { object: { id: sessionId } },
+      data: { object: { id: sessionId, payment_status: 'paid', payment_intent: paymentIntentId } },
     } as any)
 
     // Create a transaction with this session ID
@@ -411,6 +412,9 @@ describe('Stripe webhook handler', () => {
     })
     expect(updated.status).toBe('succeeded')
 
+    // Verify paymentIntentId was persisted
+    expect((updated as any).paymentIntentId).toBe(paymentIntentId)
+
     // Verify entitlements were granted
     const user = await payload.findByID({
       collection: 'users',
@@ -435,7 +439,7 @@ describe('Stripe webhook handler', () => {
     vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
       id: 'evt_idem',
       type: 'checkout.session.completed',
-      data: { object: { id: sessionId } },
+      data: { object: { id: sessionId, payment_status: 'paid' } },
     } as any)
 
     const tx = await payload.create({
@@ -779,7 +783,7 @@ describe('Stripe webhook handler', () => {
     vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
       id: 'evt_grant_fail',
       type: 'checkout.session.completed',
-      data: { object: { id: sessionId } },
+      data: { object: { id: sessionId, payment_status: 'paid' } },
     } as any)
     vi.mocked(grantProductEntitlements).mockRejectedValueOnce(new Error('Grant failed'))
 
@@ -827,7 +831,7 @@ describe('Stripe webhook handler', () => {
     vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
       id: 'evt_grant_ok',
       type: 'checkout.session.completed',
-      data: { object: { id: sessionId } },
+      data: { object: { id: sessionId, payment_status: 'paid' } },
     } as any)
 
     const tx = await payload.create({
@@ -874,7 +878,7 @@ describe('Stripe webhook handler', () => {
     vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
       id: 'evt_replay',
       type: 'checkout.session.completed',
-      data: { object: { id: sessionId } },
+      data: { object: { id: sessionId, payment_status: 'paid' } },
     } as any)
 
     const tx = await payload.create({
@@ -909,6 +913,234 @@ describe('Stripe webhook handler', () => {
 
     // grantProductEntitlements should NOT have been called since entitlementsGrantedAt is set
     expect(vi.mocked(grantProductEntitlements)).not.toHaveBeenCalled()
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+
+  it('checkout.session.completed with payment_status !== paid should NOT grant entitlements and keep status pending', async () => {
+    // For async payment methods (Klarna, ACH, SEPA), checkout.session.completed fires
+    // before payment actually goes through. payment_status is 'unpaid' or 'pending'.
+    // Entitlements must NOT be granted until payment_status === 'paid'.
+    const sessionId = `cs_stripe_async_${Date.now()}`
+    const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+    vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+      id: 'evt_async',
+      type: 'checkout.session.completed',
+      // payment_status is unpaid — payment not yet received (async payment method)
+      data: { object: { id: sessionId, payment_status: 'unpaid' } },
+    } as any)
+
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'stripe',
+        providerTransactionId: sessionId,
+        status: 'pending',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    const req = new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig_test' },
+    })
+
+    const res = await stripeWebhookHandler(req)
+    expect(res.status).toBe(200)
+
+    // Transaction should stay pending — entitlements not granted for async payments
+    const updated = await payload.findByID({
+      collection: 'transactions',
+      id: tx.id,
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect(updated.status).toBe('pending')
+
+    // Entitlements should NOT have been granted
+    const user = await payload.findByID({
+      collection: 'users',
+      id: userId,
+      depth: 0,
+      overrideAccess: true,
+    })
+    const courseEntitlements = (user as any).courseEntitlements || []
+    const hasLessonEntitlement = courseEntitlements.some(
+      (e: any) => e.course?.toString() === lessonId || e.course === lessonId,
+    )
+    expect(hasLessonEntitlement).toBe(false)
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+
+  it('checkout.session.async_payment_succeeded should grant entitlements and flip to succeeded', async () => {
+    // Async payment succeeded — payment now received, entitlements should be granted.
+    const sessionId = `cs_stripe_async_ok_${Date.now()}`
+    const paymentIntentId = `pi_stripe_async_ok_${Date.now()}`
+    const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+    vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+      id: 'evt_async_ok',
+      type: 'checkout.session.async_payment_succeeded',
+      data: { object: { id: sessionId, payment_intent: paymentIntentId } },
+    } as any)
+
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'stripe',
+        providerTransactionId: sessionId,
+        status: 'pending',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    const req = new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig_test' },
+    })
+
+    const res = await stripeWebhookHandler(req)
+    expect(res.status).toBe(200)
+
+    const updated = await payload.findByID({
+      collection: 'transactions',
+      id: tx.id,
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect(updated.status).toBe('succeeded')
+    expect((updated as any).paymentIntentId).toBe(paymentIntentId)
+    expect((updated as any).entitlementsGrantedAt).toBeDefined()
+
+    // Entitlements should have been granted
+    const user = await payload.findByID({
+      collection: 'users',
+      id: userId,
+      depth: 0,
+      overrideAccess: true,
+    })
+    const courseEntitlements = (user as any).courseEntitlements || []
+    const hasLessonEntitlement = courseEntitlements.some(
+      (e: any) => e.course?.toString() === lessonId || e.course === lessonId,
+    )
+    expect(hasLessonEntitlement).toBe(true)
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+
+  it('checkout.session.async_payment_failed should flip transaction to failed', async () => {
+    const sessionId = `cs_stripe_async_fail_${Date.now()}`
+    const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+    vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+      id: 'evt_async_fail',
+      type: 'checkout.session.async_payment_failed',
+      data: { object: { id: sessionId } },
+    } as any)
+
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'stripe',
+        providerTransactionId: sessionId,
+        status: 'pending',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    const req = new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig_test' },
+    })
+
+    const res = await stripeWebhookHandler(req)
+    expect(res.status).toBe(200)
+
+    const updated = await payload.findByID({
+      collection: 'transactions',
+      id: tx.id,
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect(updated.status).toBe('failed')
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+
+  it('charge.refunded: full refund should NOT overwrite refundedBy set by admin', async () => {
+    // When an admin initiates a refund via the admin route, refundedBy is set to the admin.
+    // When charge.refunded fires afterward, it should NOT null out refundedBy.
+    const paymentIntentId = `pi_stripe_refund_by_${Date.now()}`
+    const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+
+    // Pre-create transaction with refundedBy already set (simulating admin refund happened first)
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'stripe',
+        providerTransactionId: paymentIntentId,
+        paymentIntentId: paymentIntentId,
+        status: 'succeeded',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+        refundedAmount: 0,
+        refundedBy: adminUserId, // Admin already initiated refund — this must be preserved
+        refundedAt: new Date().toISOString(),
+      } as any,
+      overrideAccess: true,
+    })
+
+    // Now charge.refunded webhook fires (Stripe processed the refund)
+    vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+      id: 'evt_refund_by',
+      type: 'charge.refunded',
+      created: Math.floor(Date.now() / 1000),
+      data: { object: { payment_intent: paymentIntentId, amount: 1000, amount_refunded: 1000 } },
+    } as any)
+
+    const req = new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig_test' },
+    })
+
+    const res = await stripeWebhookHandler(req)
+    expect(res.status).toBe(200)
+
+    const updated = await payload.findByID({
+      collection: 'transactions',
+      id: tx.id,
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect(updated.status).toBe('refunded')
+    // refundedBy must NOT be nulled — admin identity must be preserved
+    expect((updated as any).refundedBy).toBeDefined()
+    expect((updated as any).refundedBy).not.toBeNull()
 
     await payload
       .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
@@ -1644,7 +1876,7 @@ describe('Coupon consumption on webhook payment completion', () => {
       vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
         id: 'evt_concurrent_1',
         type: 'checkout.session.completed',
-        data: { object: { id: (tx1 as any).providerTransactionId } },
+        data: { object: { id: (tx1 as any).providerTransactionId, payment_status: 'paid' } },
       } as any)
 
       const req1 = new NextRequest('http://localhost/api/webhooks/stripe', {
@@ -1658,7 +1890,7 @@ describe('Coupon consumption on webhook payment completion', () => {
       vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
         id: 'evt_concurrent_2',
         type: 'checkout.session.completed',
-        data: { object: { id: (tx2 as any).providerTransactionId } },
+        data: { object: { id: (tx2 as any).providerTransactionId, payment_status: 'paid' } },
       } as any)
 
       const req2 = new NextRequest('http://localhost/api/webhooks/stripe', {
@@ -1825,7 +2057,7 @@ describe('Coupon consumption on webhook payment completion', () => {
       vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
         id: 'evt_idem_1',
         type: 'checkout.session.completed',
-        data: { object: { id: (tx as any).providerTransactionId } },
+        data: { object: { id: (tx as any).providerTransactionId, payment_status: 'paid' } },
       } as any)
 
       const req1 = new NextRequest('http://localhost/api/webhooks/stripe', {
@@ -1856,7 +2088,7 @@ describe('Coupon consumption on webhook payment completion', () => {
       vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
         id: 'evt_idem_2',
         type: 'checkout.session.completed',
-        data: { object: { id: (tx as any).providerTransactionId } },
+        data: { object: { id: (tx as any).providerTransactionId, payment_status: 'paid' } },
       } as any)
 
       const req2 = new NextRequest('http://localhost/api/webhooks/stripe', {
@@ -1882,6 +2114,164 @@ describe('Coupon consumption on webhook payment completion', () => {
         overrideAccess: true,
       })
       expect(usages.totalDocs).toBe(1) // Still 1 row
+
+      await payload
+        .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+        .catch(() => {})
+    } finally {
+      await cleanupCoupon(couponId)
+    }
+  })
+
+  it('should set couponConsumedAt on successful coupon consumption (couponConsumedAt field added by fix)', async () => {
+    // This test verifies the couponConsumedAt field is set after successful consumption.
+    // It tests the correct behavior after the fix is applied.
+
+    const coupon = await createCoupon(1, `CONSUMED-AT-${Date.now()}`)
+    const couponId = coupon.id
+    const couponCode = coupon.code
+
+    try {
+      const tx = await payload.create({
+        collection: 'transactions',
+        data: {
+          user: userId,
+          product: productId,
+          provider: 'stripe',
+          providerTransactionId: `cs_consumed_at_${Date.now()}`,
+          status: 'pending',
+          amount: 1000,
+          currency: 'ILS',
+          tenant: tenantId,
+          metadata: {
+            appliedCoupon: {
+              code: couponCode,
+              discountType: 'percentage',
+              discountValue: 10,
+            },
+          },
+        } as any,
+        overrideAccess: true,
+      })
+
+      const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+      vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+        id: 'evt_consumed_at',
+        type: 'checkout.session.completed',
+        data: { object: { id: (tx as any).providerTransactionId, payment_status: 'paid' } },
+      } as any)
+
+      const req = new NextRequest('http://localhost/api/webhooks/stripe', {
+        method: 'POST',
+        headers: { 'stripe-signature': 'sig_test' },
+      })
+      const res = await stripeWebhookHandler(req)
+      expect(res.status).toBe(200)
+
+      const updated = await payload.findByID({
+        collection: 'transactions',
+        id: tx.id,
+        depth: 0,
+        overrideAccess: true,
+      })
+      expect(updated.status).toBe('succeeded')
+      expect((updated as any).entitlementsGrantedAt).toBeDefined()
+      // After fix: couponConsumedAt should be set
+      expect((updated as any).couponConsumedAt).toBeDefined()
+
+      // Verify coupon was consumed
+      const couponFinal = await payload.findByID({
+        collection: 'coupons',
+        id: couponId,
+        depth: 0,
+        overrideAccess: true,
+      })
+      expect(couponFinal.usesCount).toBe(1)
+
+      await payload
+        .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+        .catch(() => {})
+    } finally {
+      await cleanupCoupon(couponId)
+    }
+  })
+
+  it('should consume tenant-scoped coupon correctly (tenant filter in consumeCouponOnPayment)', async () => {
+    // Test that consumeCouponOnPayment correctly scopes to the transaction's tenant.
+    // This test uses a tenant-specific coupon (not a global one).
+
+    const admin = await getAdminUser()
+    const coupon = await payload.create({
+      collection: 'coupons',
+      data: {
+        code: `TENANT-SPECIFIC-${Date.now()}`,
+        discountType: 'percentage',
+        discountValue: 10,
+        currency: 'ILS',
+        maxUses: 10,
+        usesCount: 0,
+        isActive: true,
+        tenant: tenantId, // Tenant-specific
+      },
+      user: admin as any,
+      overrideAccess: false,
+    })
+    const couponId = coupon.id
+    const couponCode = coupon.code
+
+    try {
+      const tx = await payload.create({
+        collection: 'transactions',
+        data: {
+          user: userId,
+          product: productId,
+          provider: 'stripe',
+          providerTransactionId: `cs_tenant_specific_${Date.now()}`,
+          status: 'pending',
+          amount: 1000,
+          currency: 'ILS',
+          tenant: tenantId, // Same tenant as coupon
+          metadata: {
+            appliedCoupon: {
+              code: couponCode,
+              discountType: 'percentage',
+              discountValue: 10,
+            },
+          },
+        } as any,
+        overrideAccess: true,
+      })
+
+      const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+      vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+        id: 'evt_tenant_specific',
+        type: 'checkout.session.completed',
+        data: { object: { id: (tx as any).providerTransactionId, payment_status: 'paid' } },
+      } as any)
+
+      const req = new NextRequest('http://localhost/api/webhooks/stripe', {
+        method: 'POST',
+        headers: { 'stripe-signature': 'sig_test' },
+      })
+      const res = await stripeWebhookHandler(req)
+      expect(res.status).toBe(200)
+
+      const updated = await payload.findByID({
+        collection: 'transactions',
+        id: tx.id,
+        depth: 0,
+        overrideAccess: true,
+      })
+      expect(updated.status).toBe('succeeded')
+      expect((updated as any).couponConsumedAt).toBeDefined()
+
+      const couponFinal = await payload.findByID({
+        collection: 'coupons',
+        id: couponId,
+        depth: 0,
+        overrideAccess: true,
+      })
+      expect(couponFinal.usesCount).toBe(1)
 
       await payload
         .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
@@ -2013,5 +2403,149 @@ describe('PayPal webhook signature failure responses', () => {
 
     const res = await paypalWebhookHandler(req)
     expect(res.status).toBe(400)
+  })
+})
+
+// ─── PayPal captureId persistence and 400 on parse failure ─────────────────────
+
+describe('PayPal captureId persistence for refunds', () => {
+  it('PAYMENT.CAPTURE.COMPLETED should persist captureId from event.resource.id', async () => {
+    // The orderId is stored as providerTransactionId (Order ID), but the captureId
+    // (from event.resource.id) is what PayPal's refund endpoint requires.
+    const orderId = `PP_order_${Date.now()}`
+    const captureId = `PP_capture_${Date.now()}`
+    const { verifyPayPalWebhook } = await import('@/lib/payment/paypal')
+    vi.mocked(verifyPayPalWebhook).mockResolvedValueOnce(true)
+
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'paypal',
+        providerTransactionId: orderId,
+        status: 'pending',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    const req = new NextRequest('http://localhost/api/webhooks/paypal', {
+      method: 'POST',
+      headers: {
+        'paypal-transmission-id': 'test-tx-id',
+        'paypal-transmission-time': new Date().toISOString(),
+        'paypal-transmission-sig': 'test-sig',
+        'paypal-cert-url': 'https://cert.url',
+        'paypal-auth-algo': 'SHA256withRSA',
+      },
+      body: JSON.stringify({
+        event_type: 'PAYMENT.CAPTURE.COMPLETED',
+        resource: {
+          id: captureId,
+          supplementary_data: {
+            related_ids: { order_id: orderId },
+          },
+        },
+      }),
+    })
+
+    const res = await paypalWebhookHandler(req)
+    expect(res.status).toBe(200)
+
+    const updated = await payload.findByID({
+      collection: 'transactions',
+      id: tx.id,
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect(updated.status).toBe('succeeded')
+    // captureId must be persisted so refundPayPal can use it
+    expect((updated as any).captureId).toBe(captureId)
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+
+  it('PAYMENT.CAPTURE.REFUNDED should find transaction via captureId (not providerTransactionId)', async () => {
+    // Real-world scenario: providerTransactionId = Order ID, captureId = Capture ID.
+    // PAYMENT.CAPTURE.REFUNDED fires with captureId as event.resource.id.
+    // The handler must look up by captureId, not by providerTransactionId.
+    const orderId = `PP_order_${Date.now()}`
+    const captureId = `PP_capture_${Date.now()}`
+    const { verifyPayPalWebhook } = await import('@/lib/payment/paypal')
+    vi.mocked(verifyPayPalWebhook).mockResolvedValueOnce(true)
+
+    // Create transaction with Order ID as providerTransactionId and captureId set
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'paypal',
+        providerTransactionId: orderId,
+        captureId: captureId,
+        status: 'succeeded',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    const req = new NextRequest('http://localhost/api/webhooks/paypal', {
+      method: 'POST',
+      headers: {
+        'paypal-transmission-id': 'test-tx-id',
+        'paypal-transmission-time': new Date().toISOString(),
+        'paypal-transmission-sig': 'test-sig',
+        'paypal-cert-url': 'https://cert.url',
+        'paypal-auth-algo': 'SHA256withRSA',
+      },
+      body: JSON.stringify({
+        event_type: 'PAYMENT.CAPTURE.REFUNDED',
+        resource: { id: captureId },
+      }),
+    })
+
+    const res = await paypalWebhookHandler(req)
+    expect(res.status).toBe(200)
+
+    const updated = await payload.findByID({
+      collection: 'transactions',
+      id: tx.id,
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect(updated.status).toBe('refunded')
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+})
+
+describe('PayPal webhook JSON parse failure', () => {
+  it('should return 400 (not 200) on malformed JSON body', async () => {
+    const req = new NextRequest('http://localhost/api/webhooks/paypal', {
+      method: 'POST',
+      headers: {
+        'paypal-transmission-id': 'test-tx-id',
+        'paypal-transmission-time': new Date().toISOString(),
+        'paypal-transmission-sig': 'test-sig',
+        'paypal-cert-url': 'https://cert.url',
+        'paypal-auth-algo': 'SHA256withRSA',
+      },
+      body: 'not valid json {{{',
+    })
+
+    const res = await paypalWebhookHandler(req)
+    // Must return 400 so PayPal does NOT retry malformed deliveries
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.error).toBe('invalid_body')
   })
 })
