@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- #1988: Make coupon consumption retry-safe and tenant-scoped on webhook … ([#2006](https://github.com/A-Guy-educ/A-Guy/pull/2006)) — @kodyade · 🔄 QA (#2016)
+- #1988: Make coupon consumption retry-safe and tenant-scoped on webhook … ([#2006](https://github.com/A-Guy-educ/A-Guy/pull/2006)) — @kodyade
 - #1987: Persist PayPal capture ID for refunds + forward currency from ad… ([#2003](https://github.com/A-Guy-educ/A-Guy/pull/2003)) — @kodyade
 - #1747: Force pass-1 schema to include hint/solution/fullSolution slots … ([#1751](https://github.com/A-Guy-educ/A-Guy/pull/1751)) — @aguyaharonyair
 - #2000: Short-circuit lesson duplication for level=none with fast clone … ([#2002](https://github.com/A-Guy-educ/A-Guy/pull/2002)) — @kodyade
