@@ -207,6 +207,20 @@ export const Transactions: CollectionConfig = {
       },
     },
 
+    // Timestamp when coupon was consumed on this transaction (set by webhook handlers).
+    // Used for idempotency — replayed webhooks skip re-consumption if set.
+    // Independent from entitlementsGrantedAt so retry-safe: if coupon consumption fails
+    // on first delivery (returns 500), retry will still attempt consumption.
+    {
+      name: 'couponConsumedAt',
+      type: 'date',
+      admin: {
+        readOnly: true,
+        description: 'Timestamp when coupon was consumed on this transaction',
+      },
+      index: true,
+    },
+
     // Refund audit fields (set when transaction is refunded)
     {
       name: 'refundedAmount',
