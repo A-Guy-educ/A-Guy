@@ -100,7 +100,7 @@ export const Conversations: CollectionConfig = {
       name: 'contextRef',
       type: 'relationship',
       relationTo: ['courses', 'chapters', 'lessons', 'exercises', 'tenants'],
-      required: true,
+      required: false,
       index: true,
       admin: {
         description: 'Polymorphic context reference (Course/Chapter/Lesson/Exercise/Tenant)',

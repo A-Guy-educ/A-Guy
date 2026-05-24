@@ -1218,27 +1218,27 @@ export interface Conversation {
   /**
    * Polymorphic context reference (Course/Chapter/Lesson/Exercise/Tenant)
    */
-  contextRef:
-    | {
+  contextRef?:
+    | ({
         relationTo: 'courses';
         value: string | Course;
-      }
-    | {
+      } | null)
+    | ({
         relationTo: 'chapters';
         value: string | Chapter;
-      }
-    | {
+      } | null)
+    | ({
         relationTo: 'lessons';
         value: string | Lesson;
-      }
-    | {
+      } | null)
+    | ({
         relationTo: 'exercises';
         value: string | Exercise;
-      }
-    | {
+      } | null)
+    | ({
         relationTo: 'tenants';
         value: string | Tenant;
-      };
+      } | null);
   /**
    * Derived key for indexing (e.g., "exercises:abc123")
    */
