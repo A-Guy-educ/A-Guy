@@ -1,1 +1,2 @@
 {"ts":"2026-05-24T00:10:08.772Z","action":"Ran duty: Approval Gate","duty":"approval-gate","dutyTitle":"Approval Gate","staff":"cto","staffTitle":"CTO","trigger":"schedule","outcome":"failed","durationMs":189660,"runUrl":"https://github.com/A-Guy-educ/A-Guy/actions/runs/26347044552"}
+{"ts":"2026-05-24T00:10:44.820Z","action":"Ran duty: job-gap-scan","duty":"job-gap-scan","dutyTitle":"job-gap-scan","staff":"ceo","staffTitle":"CEO","trigger":"schedule","outcome":"completed","durationMs":25318,"runUrl":"https://github.com/A-Guy-educ/A-Guy/actions/runs/26347044552"}
