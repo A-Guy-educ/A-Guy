@@ -182,6 +182,26 @@ describe('LoginForm - Password enabled mode', () => {
   })
 })
 
+describe('LoginForm brand.heroSubtitle translation', () => {
+  it('renders brand.heroSubtitle as translated Hebrew text, not raw key', () => {
+    renderWithI18n('he', <LoginForm />)
+
+    // Should show Hebrew translation, NOT the raw i18n key "auth.login.brand.heroSubtitle"
+    expect(screen.getByText('A-Guy המורה הפרטי שלכם')).toBeTruthy()
+    // Should NOT show the raw key
+    expect(screen.queryByText('auth.login.brand.heroSubtitle')).toBeNull()
+  })
+
+  it('renders brand.heroSubtitle as translated English text, not raw key', () => {
+    renderWithI18n('en', <LoginForm />)
+
+    // Should show English translation, NOT the raw i18n key "auth.login.brand.heroSubtitle"
+    expect(screen.getByText('A-Guy Your Personal Tutor')).toBeTruthy()
+    // Should NOT show the raw key
+    expect(screen.queryByText('auth.login.brand.heroSubtitle')).toBeNull()
+  })
+})
+
 describe('Functionality preservation', () => {
   it('registration link opens /signup in same window', () => {
     const { container } = render(

@@ -1,0 +1,17 @@
+{
+  "taskId": "2031",
+  "taskType": "issue",
+  "target": "2031-p2-i18n-key-leaked-as-visible-text-on-login-page",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed i18n key leak by adding tBrand = useTranslations() for top-level brand keys and using tBrand('brand.heroSubtitle') instead of t('brand.heroSubtitle')",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/login/LoginForm.tsx",
+    "tests/unit/login-page-redesign.test.tsx"
+  ],
+  "sessionLog": ".kody/sessions/2031-p2-i18n-key-leaked-as-visible-text-on-login-page.jsonl",
+  "startedAt": "2026-05-24T17:54:30Z",
+  "finishedAt": "2026-05-24T17:57:40Z"
+}
