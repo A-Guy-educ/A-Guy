@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Integration test infrastructure: populateLessonBlocks runs on every Payload init",
+    "body": "tests/int/lesson-duplication-orchestrator.int.spec.ts and the new lesson-duplication-orchestrator-none.int.spec.ts both time out in beforeAll because runPopulateLessonBlocksOnInit (hooked on Payload init in payload.config.ts) iterates over ALL existing lessons in the DB. With 283 lessons in the test DB, this adds ~60s to every integration test's beforeAll. The beforeAll hooks have a 120s timeout, which is exceeded by the combination of populateLessonBlocks + test setup. Fix: either skip the migration in test environment, or reduce the test dataset size, or increase the beforeAll timeout for these specific test files.",
+    "rationale": "Without this fix, the new integration tests and existing orchestrator tests cannot run to completion, making it impossible to verify the fast-path behavior end-to-end in CI.",
+    "priority": "high"
+  }
+]
