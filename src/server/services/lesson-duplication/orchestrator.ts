@@ -379,6 +379,97 @@ export async function createOutputExercise(
 }
 
 /**
+ * Clone a batch of exercises in parallel for the level=none fast path.
+ *
+ * Each source exercise is copied with:
+ *  - Same content.blocks (no trimming — exact copy)
+ *  - New title referencing source ID
+ *  - lesson field set to the output lesson
+ *  - status: draft
+ *
+ * Failures are collected but do not abort the batch — other exercises still land.
+ * This matches the issue requirement: "if one source exercise fails to clone,
+ * the other exercises must still land."
+ *
+ * @returns mappings  — successful clones ready for outputExercises array
+ * @returns failures  — GENERATION_FAILURE_CODE entries for any that threw
+ */
+async function cloneExercisesFastPath(
+  payload: Payload,
+  outputLessonId: string,
+  sourceExercises: ExerciseDoc[],
+): Promise<{ mappings: OutputExerciseMapping[]; failures: FailureEntry[] }> {
+  const results = await Promise.allSettled(
+    sourceExercises.map(async (src) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const {
+        id: _id,
+        createdAt: _c,
+        updatedAt: _u,
+        ...srcData
+      } = src as Record<string, unknown> & {
+        id?: unknown
+        createdAt?: unknown
+        updatedAt?: unknown
+      }
+      void _id
+      void _c
+      void _u
+
+      // Cloned exercise title uses source ID so the orphan-recovery regex in the
+      // slow path can match it if needed (see orphan-recovery block in the
+      // orchestrator). Keep the "Variation of <id>" naming for consistency.
+      const cloned = await payload.create({
+        collection: 'exercises',
+        data: {
+          ...(srcData as Record<string, unknown>),
+          title: `Variation of ${src.id}`,
+          lesson: outputLessonId,
+          status: 'draft',
+        } as never,
+        overrideAccess: true,
+      })
+
+      return {
+        sourceExerciseId: src.id,
+        outputExerciseId: cloned.id,
+        // 'ai' is the convention used for level=none in outputExercises (matches
+        // orphan-recovery path). These entries are only used for bookkeeping;
+        // level=none has no failures so this field is never read for correctness.
+        strategy: 'ai' as DuplicationStrategy,
+      } satisfies OutputExerciseMapping
+    }),
+  )
+
+  const mappings: OutputExerciseMapping[] = []
+  const failures: FailureEntry[] = []
+
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i]
+    const src = sourceExercises[i]
+    if (result.status === 'fulfilled') {
+      mappings.push(result.value)
+    } else {
+      const message = result.reason instanceof Error ? result.reason.message : 'Unknown clone error'
+      logger.error(
+        { exerciseRef: src.id, err: result.reason },
+        '[fast-path] exercise clone failed — will record GENERATION_FAILED and continue',
+      )
+      failures.push({
+        exerciseRef: src.id,
+        sectionIndex: 0,
+        code: GENERATION_FAILURE_CODE,
+        message: `Clone failed: ${message}`,
+        suggestedAction: 'skip',
+        resolved: false,
+      })
+    }
+  }
+
+  return { mappings, failures }
+}
+
+/**
  * Process a single exercise through the duplication pipeline.
  *
  * Steps:
@@ -740,6 +831,53 @@ export async function runDuplicationOrchestrator(
     const duplicationLevel = duplication.level as 'none' | 'light' | 'medium' | 'deep'
     const duplicationSubject =
       (duplication.subject as DuplicationSubject | null | undefined) ?? 'mixed'
+
+    // ─── FAST PATH: level=none ───────────────────────────────────────────────
+    // For level=none the variation strategies already return the source exercise
+    // unchanged — no AI, no script. The slow per-exercise pipeline (trim,
+    // validation, serial create) is pure overhead: no per-exercise failure is
+    // possible since nothing is being varied.
+    //
+    // The fast path:
+    //  1. Create output lesson (same as slow path)
+    //  2. Fetch all source exercises in one query
+    //  3. Bulk-create cloned exercises in parallel — NO trimming, no validators
+    //  4. Populate outputExercises array in ONE update (not per-exercise $push)
+    //  5. Mark succeeded immediately
+    //
+    // Edge cases handled:
+    //  - Zero exercises: create empty output lesson, mark succeeded
+    //  - One exercise fails to clone: record GENERATION_FAILURE_CODE for that
+    //    exercise, still mark succeeded so the other exercises land
+    //  - Source lesson has >5 blocks per exercise: NOT trimmed (exact copy)
+    if (duplicationLevel === 'none') {
+      const allSourceExercises = await getSourceExercisesForLesson(payload, sourceLessonId)
+
+      const { mappings, failures } = await cloneExercisesFastPath(
+        payload,
+        outputLessonId,
+        allSourceExercises,
+      )
+
+      // Record all mappings + any failures in a single update
+      await payload.update({
+        collection: 'lesson-duplications',
+        id: duplicationId,
+        data: {
+          status: failures.length === 0 ? 'succeeded' : 'needs_review',
+          outputExercises: mappings as never,
+          failures: failures.length > 0 ? failures : ([] as never),
+        } as never,
+        overrideAccess: true,
+      })
+
+      logger.info(
+        { duplicationId, cloned: mappings.length, failures: failures.length },
+        'Duplication orchestrator (fast path, level=none) completed',
+      )
+      return failures.length === 0 ? 'succeeded' : 'needs_review'
+    }
+    // ─── END FAST PATH ──────────────────────────────────────────────────────
 
     // Process exercises one at a time (CONCURRENCY_LIMIT = 1 — appendEntry's
     // read-modify-write isn't safe under parallel writes; see compile-time
