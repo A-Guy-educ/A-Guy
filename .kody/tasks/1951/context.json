@@ -1,0 +1,17 @@
+{
+  "taskId": "1951",
+  "taskType": "issue",
+  "target": "1951-p3-gravatar-avatar-images-blocked-by-content-secur",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added *.gravatar.com to img-src directive in /admin route CSP header in next.config.js",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "next.config.js",
+    "tests/int/csp-gravatar-admin.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/-home-runner-work-A-Guy-A-Guy.jsonl",
+  "startedAt": "2026-05-24T01:25:00Z",
+  "finishedAt": "2026-05-24T01:31:00Z"
+}
