@@ -163,17 +163,21 @@ export default buildConfig({
       maxIdleTimeMS: 10000,
       // Fail fast if MongoDB is unreachable — don't hang serverless functions
       connectTimeoutMS: 5000,
+      // Fail fast when no server is available within 5 seconds.
+      // Without this, the driver defaults to 30s for server selection, which
+      // causes 60s Vercel timeouts when the database is unavailable.
+      // serverSelectionTimeoutMS alone does NOT cause MongoWaitQueueTimeoutError —
+      // that was caused by waitQueueTimeoutMS: 3000 during cold starts (see guardrail).
+      serverSelectionTimeoutMS: 5000,
       // Socket timeout for long-running operations
       socketTimeoutMS: 30000,
-      // NOTE: serverSelectionTimeoutMS and waitQueueTimeoutMS were removed
-      // (2026-04-27). Set together with maxPoolSize=3 they converted ordinary
-      // cold-start contention (4+ concurrent layout DB calls vs 3 pool slots
-      // racing connection-pool warmup) into MongoWaitQueueTimeoutError, which
-      // crashed the root layout and rendered global-error.tsx ("Something went
-      // wrong!"). Driver defaults — wait indefinitely on the queue, 30 s for
-      // server selection — make cold starts slow but not user-visible
-      // failures. Pool exhaustion is still bounded by maxPoolSize at the
-      // Atlas connection level.
+      // NOTE: waitQueueTimeoutMS was removed (2026-04-27). With maxPoolSize=3
+      // it converted ordinary cold-start contention into MongoWaitQueueTimeoutError,
+      // crashing the root layout and rendering global-error.tsx ("Something went
+      // wrong!"). Driver defaults — wait indefinitely on the queue — make cold
+      // starts slow but not user-visible failures. Pool exhaustion is still bounded
+      // by maxPoolSize at the Atlas connection level.
+      // serverSelectionTimeoutMS is kept at 5000 to fail fast when database is unavailable.
     },
     afterOpenConnection: async () => {
       const maxPoolSize = process.env.MONGODB_MAX_POOL_SIZE ?? (process.env.VITEST ? '5' : '3')
