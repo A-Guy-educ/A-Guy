@@ -24,6 +24,19 @@ test.describe('Scenario #3 – Site-wide Search', () => {
     )
     await expect(searchInput.first()).toBeVisible({ timeout: 10_000 })
   })
+
+  test('search submit button is directly clickable by mouse', async ({ page }) => {
+    await loginAsStudent(page)
+    await page.goto('/search')
+    await page.waitForLoadState('domcontentloaded')
+
+    // The submit button should be visible and clickable, not sr-only
+    const submitButton = page.locator('button[type="submit"]')
+    await expect(submitButton).toBeVisible({ timeout: 10_000 })
+
+    // Verify the button is actually clickable (not intercepted by other elements)
+    await submitButton.click()
+  })
 })
 
 test.describe('Scenario #4 – Catalog Navigation', () => {
