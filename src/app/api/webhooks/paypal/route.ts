@@ -45,8 +45,11 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json()
   } catch {
-    payload.logger.error('Failed to parse PayPal webhook body')
-    return NextResponse.json({ received: true }, { status: 200 })
+    const sourceIp =
+      request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    const bodySnippet = request.headers.get('content-type') || ''
+    payload.logger.warn({ sourceIp, bodySnippet }, 'PayPal webhook: failed to parse JSON body')
+    return NextResponse.json({ error: 'invalid_body' }, { status: 400 })
   }
 
   // 2. Extract PayPal headers for signature verification
@@ -248,6 +251,7 @@ async function handleEvent(
       // The capture ID is in resource.id, but we need the order ID to find the transaction.
       // Try to get the order ID from supplementary_data.related_ids.order_id
       const orderId = event.resource.supplementary_data?.related_ids?.order_id || event.resource.id
+      const captureId = event.resource.id
 
       const transactions = await payload.find({
         collection: 'transactions',
@@ -282,11 +286,15 @@ async function handleEvent(
         transaction.id,
       )
 
-      // Grant succeeded — atomically flip status and record the grant timestamp
+      // Grant succeeded — atomically flip status and record the grant timestamp and captureId
       await payload.update({
         collection: 'transactions',
         id: transaction.id,
-        data: { status: 'succeeded', entitlementsGrantedAt: new Date().toISOString() },
+        data: {
+          status: 'succeeded',
+          entitlementsGrantedAt: new Date().toISOString(),
+          captureId,
+        },
         overrideAccess: true,
       })
 
@@ -306,10 +314,11 @@ async function handleEvent(
     case 'PAYMENT.CAPTURE.REFUNDED': {
       const captureId = event.resource.id
 
+      // Primary lookup via captureId (populated on PAYMENT.CAPTURE.COMPLETED)
       const transactions = await payload.find({
         collection: 'transactions',
         where: {
-          providerTransactionId: { equals: captureId },
+          captureId: { equals: captureId },
         },
         limit: 1,
         depth: 0,
@@ -317,11 +326,31 @@ async function handleEvent(
       })
 
       if (transactions.totalDocs === 0) {
-        payload.logger.warn(
-          { captureId },
-          'PayPal webhook: transaction not found for PAYMENT.CAPTURE.REFUNDED',
-        )
-        return
+        // Fallback for legacy transactions created before captureId was added.
+        // These have providerTransactionId set to the capture ID value (before the bug was fixed).
+        const fallback = await payload.find({
+          collection: 'transactions',
+          where: {
+            providerTransactionId: { equals: captureId },
+          },
+          limit: 1,
+          depth: 0,
+          overrideAccess: true,
+        })
+        if (fallback.totalDocs === 0) {
+          payload.logger.warn(
+            { captureId },
+            'PayPal webhook: transaction not found for PAYMENT.CAPTURE.REFUNDED',
+          )
+          return
+        }
+        await payload.update({
+          collection: 'transactions',
+          id: fallback.docs[0].id,
+          data: { status: 'refunded' },
+          overrideAccess: true,
+        })
+        break
       }
 
       await payload.update({
