@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Verify coupon-related REST API endpoints",
+    "body": "The CreateCouponModal and CouponUsageModal were updated to use /api/coupons and /api/coupon-usages instead of /api/collections/coupons and /api/collections/coupon-usages. These changes should be verified to ensure the coupons functionality works correctly after the URL fix.",
+    "rationale": "The coupons widgets were using the same incorrect /api/collections/ prefix pattern. While the fix follows the same logic as the transactions fix, these endpoints weren't specifically tested.",
+    "priority": "medium"
+  }
+]

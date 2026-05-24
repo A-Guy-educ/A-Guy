@@ -102,7 +102,7 @@ export const CreateCouponModal: React.FC<CreateCouponModalProps> = ({
     setError(null)
 
     try {
-      const response = await fetch('/api/collections/coupons', {
+      const response = await fetch('/api/coupons', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
