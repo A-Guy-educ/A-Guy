@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- #1988: Make coupon consumption retry-safe and tenant-scoped on webhook … ([#2006](https://github.com/A-Guy-educ/A-Guy/pull/2006)) — @kodyade · 🔄 QA (#2016)
 - #1987: Persist PayPal capture ID for refunds + forward currency from ad… ([#2003](https://github.com/A-Guy-educ/A-Guy/pull/2003)) — @kodyade
 - #1747: Force pass-1 schema to include hint/solution/fullSolution slots … ([#1751](https://github.com/A-Guy-educ/A-Guy/pull/1751)) — @aguyaharonyair
 - #2000: Short-circuit lesson duplication for level=none with fast clone … ([#2002](https://github.com/A-Guy-educ/A-Guy/pull/2002)) — @kodyade
@@ -56,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - #1621: Export lesson + ordered exercises as JSON from admin ([#1625](https://github.com/A-Guy-educ/A-Guy/pull/1625)) — @aguyaharonyair
 - feat(lesson-duplication): Constrain Gemini output with Zod schemas ([#1602](https://github.com/A-Guy-educ/A-Guy/pull/1602)) — @aguyshayb
 - chore: Pin pnpm to 10.33.0 via packageManager field ([#1609](https://github.com/A-Guy-educ/A-Guy/pull/1609)) — @aguyaharonyair
-- #1595: [P2] Vercel feedback script blocked by CSP script-src directive … ([#1604](https://github.com/A-Guy-educ/A-Guy/pull/1604)) — @aguyaharonyair · 🔄 QA (#1985)
+- #1595: [P2] Vercel feedback script blocked by CSP script-src directive … ([#1604](https://github.com/A-Guy-educ/A-Guy/pull/1604)) — @aguyaharonyair
 <!-- semantic-release will automatically update this file with each release -->
 
 ## v0.25.8 — 2026-05-06
