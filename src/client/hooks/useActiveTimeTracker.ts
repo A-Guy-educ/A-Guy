@@ -33,14 +33,24 @@ export function useActiveTimeTracker({
     async (seconds: number) => {
       try {
         const lessonId = getLessonId?.() ?? null
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
+
         await fetch('/api/stats/heartbeat', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ seconds, ...(lessonId ? { lessonId } : {}) }),
+          signal: controller.signal,
         })
+
+        clearTimeout(timeoutId)
       } catch (error) {
+        // Don't log timeout errors - they're expected when server is busy
+        if (error instanceof Error && error.name === 'AbortError') {
+          return
+        }
         console.error('Failed to send heartbeat:', error)
       }
     },
@@ -51,15 +61,25 @@ export function useActiveTimeTracker({
     if (streakSentRef.current) return // Already sent today
 
     try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
+
       await fetch('/api/stats/streak', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({}),
+        signal: controller.signal,
       })
+
+      clearTimeout(timeoutId)
       streakSentRef.current = true
     } catch (error) {
+      // Don't log timeout errors - they're expected when server is busy
+      if (error instanceof Error && error.name === 'AbortError') {
+        return
+      }
       console.error('Failed to send streak update:', error)
     }
   }, [])
