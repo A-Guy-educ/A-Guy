@@ -12,7 +12,9 @@ export function RequireCourseSelection({ children }: { children: React.ReactNode
   useEffect(() => {
     const profile = getUserProfile()
     if (!profile?.gradeLevel) {
-      router.replace('/')
+      // Redirect to /courses (grade selection page) instead of / (which falls through to /start)
+      // This allows both authenticated and unauthenticated users to select a course
+      router.replace('/courses')
       return
     }
     setHasSelection(true)
