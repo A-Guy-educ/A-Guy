@@ -1,5 +1,38 @@
-CI failure on PR #1564 was a Prettier format drift on kody.config.json. Fixed with `pnpm format`, which runs Prettier --write across the project. Verify tool confirmed green (typecheck, lint, format-check all pass).
+## Fix Summary
 
-Two merge conflict sessions were also resolved during this session: Transactions.ts had asymmetric conflict (HEAD added entitlementsGrantedAt, origin/dev added refundedAmount/refundedBy/refundedAt — kept both), and payload-types.ts was regenerated via `pnpm generate:types`. The .kody/last-run.jsonl session log conflict was also resolved by staging the working-tree version.
+Fixed CI failure on PR #1564 by restoring the correct mock approach in the
+orchestrator integration test.
 
-No follow-up work needed.
+### Problem
+The test "orchestrator does not abort when one exercise fails — remaining
+exercises are processed" was receiving `status: 'succeeded'` instead of
+`status: 'needs_review'`, indicating the forced failure via mock wasn't
+triggering and no failures were being recorded.
+
+### Root Cause
+A previous refactor attempt changed the mock from:
+- `vi.mock('@/infra/llm/services/lesson-duplication-variation-service')` (correct)
+to:
+- `vi.mock('@/server/services/lesson-duplication/orchestrator')` (incorrect)
+
+The orchestrator-level mock never applied (h.callCount stayed at 0), even
+though the factory ran without errors. This left the real LLM call path
+intact, but without a forced failure, the orchestrator processed all
+exercises successfully.
+
+### Fix
+Restored the variation-service mock approach. The mock uses a hoisted call
+counter (h.vgCallCount) to deterministically throw on the 3rd exercise.
+The test passes reliably with this approach.
+
+### Files Changed
+- tests/int/lesson-duplication-orchestrator.int.spec.ts (restored mock)
+
+### Key Insight
+Vi.mock for an already-imported module (orchestrator) may not reliably
+replace exports in all import paths. Mocking the deeper dependency
+(variation-service) that is dynamically imported works correctly.
+
+### Environment Note
+When running tests locally, ensure DATABASE_URL points to the local MongoDB:
+`DATABASE_URL=mongodb://127.0.0.1/a-guy pnpm test:int`

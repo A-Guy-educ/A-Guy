@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "title": "Investigate why vi.mock('@/server/services/lesson-duplication/orchestrator') didn't apply",
+    "body": "The test file had an attempted refactor that mocked runStrategy at the orchestrator module level using vi.mock + importOriginal. The mock factory ran (no errors) but h.callCount stayed at 0, meaning runStrategy was never replaced. This may be a Vitest issue with mocking modules that are imported by other modules in the same test file. Investigate whether this is expected behavior or a Vitest bug.",
+    "rationale": "Understanding this would help write more reliable mocks in other integration tests",
+    "priority": "low"
+  },
+  {
+    "title": "Ensure CI uses DATABASE_URL pointing to local MongoDB",
+    "body": "When running integration tests, DATABASE_URL was set to a remote MongoDB Atlas cluster (mongodb+srv://office:...@aguy.tj3mrps.mongodb.net/A-Guy-Test) in the environment, overriding the .env file. The tests passed when run with DATABASE_URL=mongodb://127.0.0.1/a-guy. The CI workflow (GitHub Actions) should ensure DATABASE_URL is set correctly for integration tests.",
+    "rationale": "The tests might have been passing against the remote Atlas cluster all along, which could cause data pollution or flaky tests due to network issues",
+    "priority": "medium"
+  }
+]

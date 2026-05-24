@@ -1,14 +1,14 @@
 {
   "taskId": "1564",
   "taskType": "pr",
-  "target": "1564",
+  "target": "PR #1564",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Format check failed on kody.config.json; fixed with pnpm format",
-  "prUrl": null,
+  "reason": "Fixed integration test mock by restoring the variation-service mock (was incorrectly changed to mock the orchestrator module directly, which didn't apply)",
+  "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/1564",
   "runUrl": null,
-  "filesTouched": ["kody.config.json"],
-  "sessionLog": ".kody/last-run.jsonl",
-  "startedAt": "2026-05-23T00:00:00.000Z",
-  "finishedAt": "2026-05-23T00:00:00.000Z"
+  "filesTouched": ["tests/int/lesson-duplication-orchestrator.int.spec.ts"],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-05-24T12:00:00.000Z",
+  "finishedAt": "2026-05-24T13:44:00.000Z"
 }
