@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Investigate why duplicate chapter entries appear in chapters array",
+    "body": "The deduplication fix handles duplicate lessons, but the root cause may be duplicate chapters in the data. Check if there are duplicate chapter entries causing lessons to appear multiple times in filteredLessons.",
+    "rationale": "Without understanding why duplicates occur, the symptom is fixed but the root cause remains.",
+    "priority": "medium"
+  }
+]

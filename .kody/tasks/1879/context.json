@@ -1,0 +1,18 @@
+{
+  "taskId": "1879",
+  "taskType": "issue",
+  "target": "1879-p2-admin-recent-transactions-widget-shows-http-404",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Created /api/admin/transactions/recent endpoint and updated widget to use it instead of /api/collections/transactions",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/admin/transactions/recent/route.ts",
+    "src/ui/admin/RecentTransactionsWidget/index.tsx",
+    "tests/int/admin-recent-transactions.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1879-p2-admin-recent-transactions-widget-shows-http-404.jsonl",
+  "startedAt": "2026-05-23T10:42:00Z",
+  "finishedAt": "2026-05-23T10:46:33Z"
+}

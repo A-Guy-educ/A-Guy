@@ -221,6 +221,19 @@ export function StudyContent({
       }
     }
 
+    // Deduplicate lessons by ID within each group. This guards against:
+    // 1. Duplicate chapter entries in the chapters array causing the same lesson
+    //    to appear multiple times in filteredLessons.
+    // 2. Duplicate entries in chapter.lessons from inconsistent data.
+    for (const group of groups) {
+      const seen = new Set<string>()
+      group.lessons = group.lessons.filter((lesson) => {
+        if (seen.has(lesson.id)) return false
+        seen.add(lesson.id)
+        return true
+      })
+    }
+
     return groups
   }, [filteredLessons])
 

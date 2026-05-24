@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Consider renaming 'Study' page to avoid confusion",
+    "body": "The '/study' route is labeled 'Study' in the UI but now surfaces 'practice' type lessons (the same content as '/practice'). The naming is misleading — users expect to find learning/study material, not practice exercises. Consider renaming the route to '/practice' or '/practice' to '/exercises' to align naming with content type.",
+    "rationale": "The current naming creates user confusion — the 'Study' tab shows the same practice lessons as the 'Practice' tab, which contradicts user expectations for a learning platform.",
+    "priority": "low"
+  },
+  {
+    "title": "Evaluate if 'learning' lesson type is used anywhere in production",
+    "body": "The fix changes the Study page to use 'practice' lessons, effectively making the 'learning' lesson type unused by any page. Audit whether 'learning' lessons are created in the CMS and if they serve any purpose, or if this is dead content that should be migrated to 'practice' type.",
+    "rationale": "If 'learning' lessons exist in production data but are never displayed on any page, they are effectively invisible to users and may represent content debt or a deprecated feature.",
+    "priority": "low"
+  }
+]
