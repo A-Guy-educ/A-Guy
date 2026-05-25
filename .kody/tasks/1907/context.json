@@ -1,0 +1,18 @@
+{
+  "taskId": "1907",
+  "taskType": "issue",
+  "target": "1907-p2-fix-404-on-transactions-api-endpoint-in-admin-d",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed 404 on /api/collections/transactions by correcting widget URLs to /api/transactions — Payload REST API uses /api/{slug} not /api/collections/{slug}",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/RecentTransactionsWidget/index.tsx",
+    "src/ui/admin/TransactionEditView/index.tsx",
+    "tests/int/admin-transactions-rest-api-1907.int.spec.ts"
+  ],
+  "sessionLog": null,
+  "startedAt": "2026-05-23T13:00:00Z",
+  "finishedAt": "2026-05-23T14:00:00Z"
+}

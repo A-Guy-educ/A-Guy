@@ -1,0 +1,8 @@
+[
+  {
+    "title": "CreateCouponModal may have same /api/collections/ URL bug",
+    "body": "src/ui/admin/Coupons/CreateCouponModal/index.tsx:105 fetches from '/api/collections/coupons' which may also return 404. The same fix pattern should be applied — change to '/api/coupons'.",
+    "rationale": "Same root cause pattern as the transactions bug — Payload REST API uses /api/{slug} not /api/collections/{slug}",
+    "priority": "medium"
+  }
+]

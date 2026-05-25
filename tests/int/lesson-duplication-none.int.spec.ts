@@ -283,4 +283,45 @@ describe('Lesson duplication — none (deep clone)', () => {
     })
     expect(sourceAfter.docs).toHaveLength(2)
   })
+
+  it('produces a clean slug WITHOUT " - Copy" artifacts when duplicating a lesson', async () => {
+    /**
+     * BUG REPRODUCTION TEST (issue #1904):
+     * When deepCloneLesson creates a duplicate with title "Original - Copy",
+     * the beforeChange hook must generate a clean slug without triple hyphens
+     * or the literal " - Copy" suffix.
+     *
+     * Bug: title "Power - Copy" → slug "power---copy" (triple hyphens)
+     * Expected: title "Power - Copy" → slug "power" (clean)
+     */
+    const source = await payload.findByID({
+      collection: 'lessons',
+      id: sourceLessonId,
+      depth: 0,
+      overrideAccess: true,
+    })
+
+    // Simulate what deepCloneLesson does: set title with " - Copy" suffix, no slug
+    const newLesson = await payload.create({
+      collection: 'lessons',
+      data: {
+        ...(source as unknown as Record<string, unknown>),
+        id: undefined,
+        title: `${(source as { title: string }).title} - Copy`,
+        slug: undefined as unknown,
+        status: 'draft',
+        createdAt: undefined,
+        updatedAt: undefined,
+      } as never,
+      overrideAccess: true,
+    })
+    cleanupLessonIds.push(newLesson.id)
+
+    // Slug must NOT contain " - Copy" (the original bug - space in URL)
+    expect(newLesson.slug).not.toMatch(/ - Copy/)
+    // Slug must NOT contain triple hyphens (slugify artifact from " - Copy")
+    expect(newLesson.slug).not.toMatch(/---/)
+    // Slug must NOT contain the word "copy" at all
+    expect(newLesson.slug).not.toMatch(/copy/)
+  })
 })

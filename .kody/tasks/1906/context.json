@@ -1,0 +1,17 @@
+{
+  "taskId": "1906",
+  "taskType": "issue",
+  "target": "1906",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed CSP img-src directive to allowlist *.gravatar.com for /admin routes",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "next.config.js",
+    "tests/int/csp-vercel-feedback-admin.int.spec.ts"
+  ],
+  "sessionLog": null,
+  "startedAt": "2026-05-23T12:42:00Z",
+  "finishedAt": "2026-05-23T12:48:00Z"
+}

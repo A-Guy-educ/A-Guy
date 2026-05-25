@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Verify chapter heading spacing in actual browser",
+    "body": "The chapter heading fix adds a literal space character inside the span after chapterLabel. The original code used mr-2 (margin-right) which should create visual spacing, but the QA report said '2Chapter 2' with no space. The fix ensures a literal space is present. Verify in browser that the heading renders correctly with visible spacing.",
+    "rationale": "CSS margin may not always create visible space in all rendering contexts. The literal space ensures proper separation.",
+    "priority": "low"
+  }
+]

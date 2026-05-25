@@ -1,0 +1,17 @@
+{
+  "taskId": "1904",
+  "taskType": "issue",
+  "target": "GitHub issue #1904 — duplicate lesson entry with '- Copy' suffix in URL",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed beforeChange hook to strip ' - Copy' suffix from titles before slug generation; repro test passes; all quality gates green",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/collections/Lessons.ts",
+    "tests/int/lesson-duplication-none.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/-home-runner-work-A-Guy-A-Guy-1904.jsonl",
+  "startedAt": "2026-05-23T11:20:00Z",
+  "finishedAt": "2026-05-23T11:37:00Z"
+}

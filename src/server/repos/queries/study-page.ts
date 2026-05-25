@@ -87,6 +87,13 @@ export const prefetchStudyData = cache(
         }
       })
 
+      // Sort lessons within each chapter by their order field
+      // This ensures correct ordering even if database returned them interleaved
+      // (e.g., if different chapters have overlapping lesson order values)
+      Object.keys(lessonsByChapter).forEach((chapterId) => {
+        lessonsByChapter[chapterId].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+      })
+
       const chaptersWithLessons = chapters.map((chapter) => ({
         ...chapter,
         lessons: lessonsByChapter[chapter.id] || [],

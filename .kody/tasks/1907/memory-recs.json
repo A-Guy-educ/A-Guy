@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "payload-rest-api-url-structure",
+    "hook": "Payload REST API is /api/{slug}, not /api/collections/{slug}",
+    "body": "Payload CMS REST API endpoints are at `/api/{slug}` (e.g. `/api/transactions`), NOT `/api/collections/{slug}`. The catch-all route at `src/app/(payload)/api/[...slug]/route.ts` routes requests to Payload's REST handler based on the first URL segment matched against registered collection slugs.\n\n**Why:** Multiple widgets (RecentTransactionsWidget, TransactionEditView) were using the wrong URL pattern, causing 404s. Issue #1792 fixed the same bug on a different branch.\n\n**How to apply:** When adding widgets that fetch Payload collection data via REST API, use `/api/{collection-slug}` format (e.g., `/api/transactions`, `/api/coupons`).",
+    "why": "Payload CMS convention — the `routes.api` default is '/api' and collections are accessed directly at that path, not under a 'collections' subdirectory",
+    "confidence": 1.0
+  }
+]
