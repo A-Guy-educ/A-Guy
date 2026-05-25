@@ -1,0 +1,16 @@
+{
+  "taskId": "2058",
+  "taskType": "issue",
+  "target": "#2058",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Issue #2058 is a duplicate of #2053. The bug (widgets calling /api/collections/transactions instead of /api/transactions) was already fixed in commit 581f346c0. The fix changed API URLs from /api/collections/{entity} to /api/{entity} in RecentTransactionsWidget, TransactionEditView, CreateCouponModal, and CouponUsageModal. The branch already contains the fix and all quality gates pass.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "tests/int/collections-rest-api.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/<current-session>.jsonl",
+  "startedAt": "2026-05-25T04:02:00Z",
+  "finishedAt": "2026-05-25T04:05:00Z"
+}
