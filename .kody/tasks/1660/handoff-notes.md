@@ -1,5 +1,5 @@
-Resolved merge conflict in CHANGELOG.md between release/v0.25.9 (HEAD) and origin/dev.
+Resolved the CHANGELOG.md merge conflict from `git merge origin/dev` into `release/v0.25.9`.
 
-The conflict was in the `[Unreleased]` section. HEAD had 18 entries (#1988 through #1725) plus #2011 with QA (#2052). origin/dev had only #2011 with the newer QA number (#2062). Resolution: kept all 18 HEAD entries and updated #2011's QA number to #2062.
+The conflict was asymmetric: HEAD (PR #1660) added the standard Keep a Changelog header and `[Unreleased]` section with the #2011 entry including a QA status indicator (`· 🔄 QA (#2062)`), while origin/dev had only the bare #2011 entry without those additions. Took HEAD's version since it represents the proper changelog format for a release branch.
 
-No other files were modified.
+No conflict markers remain in the file.
