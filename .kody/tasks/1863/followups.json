@@ -1,0 +1,14 @@
+[
+  {
+    "title": "DEFAULT_LESSON_TYPE is 'learning' but Study/Practice both use 'practice'",
+    "body": "The constant DEFAULT_LESSON_TYPE in src/server/constants/lesson-types.ts is 'learning', but both Study and Practice pages use 'practice'. This constant may be unused by these pages or used elsewhere — worth auditing to understand if it should be changed to 'practice' for consistency.",
+    "rationale": "DEFAULT_LESSON_TYPE being 'learning' while actual usage is 'practice' suggests a potential misalignment or that the constant is used in a different context (e.g., StudyContent component's default prop)",
+    "priority": "low"
+  },
+  {
+    "title": "Consider adding lessonType parameter to /api/chapters/by-grade fallback",
+    "body": "The client-side fallback in StudyContent (used when no grade cookie) calls /api/chapters/by-grade without a lessonType parameter. This API hardcodes 'practice'. If Study page were ever changed to use a different lessonType, the server prefetch would differ from client fallback. Consider adding lessonType as a query parameter to the API for consistency.",
+    "rationale": "The API endpoint already accepts lessonType (line 25-31 in route.ts) but the client fallback never passes it, creating a potential inconsistency if the Study page lessonType ever diverges from 'practice'",
+    "priority": "low"
+  }
+]

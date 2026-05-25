@@ -177,9 +177,12 @@ async function buildLessonProgressMap(
     overrideAccess: true,
   })
 
-  const progressRecords: Array<{ recordType: string; recordId: string; status: string }> =
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload dynamic field
-    (userProgressResult.docs[0] as any)?.progressRecords || []
+  const progressRecords: Array<{
+    recordType: string
+    recordId: string
+    status: string
+    completionPercentage?: number | null
+  }> = (userProgressResult.docs[0] as any)?.progressRecords || [] // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload dynamic field
 
   // Count completed exercises per lesson
   const lessonCompletedExercises = new Map<string, number>()
@@ -192,11 +195,18 @@ async function buildLessonProgressMap(
     }
   }
 
-  // Also check lesson-level completion records
-  const completedLessons = new Set<string>()
+  // Build lesson-level progress map (for block-based lessons and in-progress lessons)
+  // This captures lesson-level completionPercentage saved by useExercisesPager
+  const lessonLevelProgress = new Map<
+    string,
+    { status: string; completionPercentage?: number | null }
+  >()
   for (const record of progressRecords) {
-    if (record.recordType === 'lesson' && record.status === 'completed') {
-      completedLessons.add(record.recordId)
+    if (record.recordType === 'lesson') {
+      lessonLevelProgress.set(record.recordId, {
+        status: record.status,
+        completionPercentage: record.completionPercentage,
+      })
     }
   }
 
@@ -206,11 +216,24 @@ async function buildLessonProgressMap(
     const total = lessonExerciseCounts.get(lessonId) || 0
     const completed = lessonCompletedExercises.get(lessonId) || 0
 
-    // If lesson marked completed OR all exercises done, show 100%
-    // If total exercises is 0, check lesson-level completion
+    // Check for lesson-level progress first (handles block-based lessons and in-progress lessons)
+    const lessonProgress = lessonLevelProgress.get(lessonId)
+    if (
+      lessonProgress?.completionPercentage !== undefined &&
+      lessonProgress.completionPercentage !== null
+    ) {
+      // Use lesson-level completionPercentage directly (set by useExercisesPager)
+      // This correctly handles block-based lessons where exercises are not in the exercises collection
+      const percent =
+        lessonProgress.status === 'completed' ? 100 : lessonProgress.completionPercentage
+      result[lessonId] = { completed, total, percent }
+      continue
+    }
+
+    // Fallback: calculate from exercise counts (legacy path)
     let percent: number
     if (total === 0) {
-      percent = completedLessons.has(lessonId) ? 100 : 0
+      percent = 0
     } else {
       percent = Math.round((completed / total) * 100)
     }

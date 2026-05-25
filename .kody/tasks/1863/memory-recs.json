@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "study-practice-lesson-type-mismatch",
+    "hook": "Study/Practice page lessonType mismatch causes empty page",
+    "body": "The Study page (src/app/(frontend)/study/page.tsx) was passing 'learning' as the lessonType to prefetchStudyData while Practice page relied on default 'practice'. When a course only has 'practice' lessons, Study shows 'No topics available' while Practice shows the full course. Both pages should use the same lessonType.\n\n**Why:** The prefetchStudyData function's default is 'practice', so if Study explicitly passes 'learning' and the course has no learning lessons, it returns empty chapters.\n\n**How to apply:** When adding new lesson types to study/practice pages, ensure both use the same lessonType filter.",
+    "why": "Root cause of Bug #1863 — a simple argument mismatch caused the Study page to show empty for any course without 'learning' lessons",
+    "confidence": 0.9
+  }
+]

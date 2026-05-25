@@ -12,11 +12,11 @@ export default async function TestPage() {
   const locale = await getSystemLocale()
   const contentLocale = isValidContentLocale(locale) ? locale : undefined
 
-  const prefetchedData = grade ? await prefetchStudyData(grade, contentLocale, 'exam') : null
+  const prefetchedData = grade ? await prefetchStudyData(grade, contentLocale) : null
 
   return (
     <div>
-      <StudyContent lessonType="exam" prefetchedData={prefetchedData} />
+      <StudyContent lessonType="practice" prefetchedData={prefetchedData} />
     </div>
   )
 }

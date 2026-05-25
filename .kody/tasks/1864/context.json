@@ -1,0 +1,17 @@
+{
+  "taskId": "1864",
+  "taskType": "issue",
+  "target": "1864-p1-test-page-shows-empty-for-course-that-has-conte",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed /test page to use 'practice' lessonType instead of 'exam', matching /practice page behavior. The page was querying for 'exam' type lessons which don't exist in courses that only have 'practice' lessons.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/test/page.tsx",
+    "tests/int/test-page-prefetch.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/c256fa94-5448-452e-87fc-efa0bf7f055d.jsonl",
+  "startedAt": "2026-05-23T06:23:00Z",
+  "finishedAt": "2026-05-23T06:28:00Z"
+}

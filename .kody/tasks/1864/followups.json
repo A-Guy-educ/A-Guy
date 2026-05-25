@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Consider renaming Test page lessonType or clarifying UX",
+    "body": "The /test page now shows 'practice' lessonType content. This may be semantically confusing since a 'Test' page shows 'Practice' content. Consider either: (1) Renaming the page route to avoid confusion, or (2) Documenting that 'Test' is a practice/test mode, or (3) Creating actual 'exam' type lessons for courses.",
+    "rationale": "The fix matches expected behavior per issue #1864, but the naming mismatch (Test page showing Practice content) may confuse future developers.",
+    "priority": "low"
+  }
+]

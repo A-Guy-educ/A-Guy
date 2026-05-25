@@ -221,6 +221,19 @@ export function StudyContent({
       }
     }
 
+    // Deduplicate lessons by ID within each group. This guards against:
+    // 1. Duplicate chapter entries in the chapters array causing the same lesson
+    //    to appear multiple times in filteredLessons.
+    // 2. Duplicate entries in chapter.lessons from inconsistent data.
+    for (const group of groups) {
+      const seen = new Set<string>()
+      group.lessons = group.lessons.filter((lesson) => {
+        if (seen.has(lesson.id)) return false
+        seen.add(lesson.id)
+        return true
+      })
+    }
+
     return groups
   }, [filteredLessons])
 
@@ -296,6 +309,13 @@ export function StudyContent({
         <div className="w-full py-section-sm px-6 bg-gradient-to-b from-primary/[0.04] via-background/50 to-background border-b border-border/50 dark:bg-gradient-to-b dark:from-primary/10 dark:to-transparent dark:border-border/60">
           <div className="max-w-5xl mx-auto text-center">
             <ExamReminderBubble courseId={courseInfo?.courseId ?? ''} />
+
+            {/* Grade badge */}
+            {courseInfo?.courseLabel && (
+              <span className="text-body-sm md:text-body-md font-extrabold text-primary uppercase tracking-[0.3em]">
+                {t('grade')} {courseInfo.courseLabel}
+              </span>
+            )}
 
             <h1 className="text-heading-xl md:text-4xl font-black text-foreground mt-4 section-accent inline-block">
               {sectionTitle}

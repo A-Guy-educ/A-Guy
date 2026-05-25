@@ -1,0 +1,17 @@
+{
+  "taskId": "1863",
+  "taskType": "issue",
+  "target": "1863-p1-study-page-shows-empty-for-course-that-has-cont",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Study page lessonType changed from 'learning' to 'practice' (default) to match Practice page; both pages now show consistent content",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/study/page.tsx",
+    "tests/int/study-page-prefetch.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1241.jsonl",
+  "startedAt": "2026-05-23T05:04:00Z",
+  "finishedAt": "2026-05-23T05:39:46Z"
+}

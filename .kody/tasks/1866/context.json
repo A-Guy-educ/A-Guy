@@ -1,0 +1,17 @@
+{
+  "taskId": "1866",
+  "taskType": "issue",
+  "target": "1866-p2-admin-dashboard-multiple-widgets-stuck-in-loadi",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Root cause: MetricsProvider fetch had no timeout — a slow/cold server caused infinite loading. Fix: added AbortController + 30s setTimeout + AbortError handling that calls setError('timeout').",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/ConversionTracking/MetricsProvider.tsx",
+    "tests/unit/ui/admin/metrics-provider.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1866-0523.jsonl",
+  "startedAt": "2026-05-23T08:31:00Z",
+  "finishedAt": "2026-05-23T08:42:30Z"
+}

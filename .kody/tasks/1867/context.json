@@ -1,0 +1,17 @@
+{
+  "taskId": "1867",
+  "taskType": "issue",
+  "target": "1867-p2-grade-badge-displays-as-single-character-t-inst",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fix verified: added courseLabel badge rendering to StudyContent. Integration tests pass. Quality gates pass.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/study/_components/StudyContent/index.tsx",
+    "tests/int/study-page-grade-badge.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1867.jsonl",
+  "startedAt": "2026-05-23T00:00:00.000Z",
+  "finishedAt": "2026-05-23T00:00:00.000Z"
+}

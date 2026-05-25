@@ -124,6 +124,8 @@ export function AskConversationGrid() {
     loadData()
   }, [locale])
 
+  const { hasUpcomingExam, daysUntil } = useExamCountdown(courseInfo?.courseId ?? '')
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-section-md">
@@ -133,150 +135,134 @@ export function AskConversationGrid() {
   }
 
   return (
-    <>
-      {/* Grade + Exam Reminder */}
-      <GradeSection
-        courseId={courseInfo?.courseId ?? ''}
-        courseLabel={courseInfo?.courseLabel ?? ''}
-      />
-
-      {/* Main Content */}
-      <main className="container mx-auto px-6 py-10 max-w-5xl">
-        <section className="mb-8 text-right px-2">
-          <h2 className="text-heading-xl md:text-display-sm font-black text-foreground leading-tight">
-            {t('sectionTitle.ask')}
-          </h2>
-        </section>
-
-        <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-content-gap">
-          {/* New Question Card */}
-          <StaggerItem>
-            <button
-              disabled={isCreating}
-              onClick={handleNewQuestion}
-              className={cn(
-                'bg-primary text-primary-foreground rounded-2xl p-5 shadow-elevation-1',
-                'flex items-center justify-between',
-                'border border-border/40 hover:opacity-95',
-                'transition-all duration-normal cursor-pointer hover:shadow-card-hover hover:-translate-y-0.5',
-                'text-right overflow-hidden',
-              )}
-            >
-              <div className="flex flex-col">
-                <span className="text-label font-bold text-primary-foreground/60 mb-1 uppercase tracking-wide">
-                  {t('quickAction')}
-                </span>
-                <h3 className="text-heading-lg font-bold">{t('newQuestion')}</h3>
-                <p className="text-body-xs text-primary-foreground/70 mt-1">
-                  {t('newQuestionSub')}
+    <main className="container mx-auto px-6 py-10 max-w-5xl">
+      {/* Page header with grade badge and exam reminder */}
+      <div className="w-full py-content-gap border-b border-border mb-8">
+        <div className="max-w-5xl mx-auto px-6">
+          {/* Grade badge */}
+          {courseInfo?.courseLabel && (
+            <div className="text-center">
+              <span className="text-body-sm md:text-body-md font-extrabold text-primary uppercase tracking-[0.3em]">
+                {t('grade')} {courseInfo.courseLabel}
+              </span>
+            </div>
+          )}
+          {/* Exam reminder */}
+          {hasUpcomingExam && daysUntil !== null && (
+            <div className="flex items-center justify-end gap-3 mt-3 animate-in fade-in">
+              <div className="bg-card shadow-card border border-primary/10 rounded-2xl rounded-tr-none px-4 py-2">
+                <p className="text-body-xs md:text-body-sm font-bold text-primary">
+                  {t('examReminder').replace('{days}', String(daysUntil))}
                 </p>
               </div>
-              <div className="w-14 h-14 bg-primary-foreground/20 rounded-full flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-primary-foreground fill-current" />
+              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-elevation-2 shrink-0">
+                <Sparkles className="w-4 h-4 text-primary-foreground fill-current" />
               </div>
-            </button>
-          </StaggerItem>
-
-          {/* Past Conversation Cards */}
-          {conversations.map((conv, idx) => (
-            <StaggerItem key={conv.id}>
-              <div className="relative">
-                <SystemLink
-                  href={`/ask?chat=${conv.id}&ctx=${encodeURIComponent(conv.contextKey ?? '')}`}
-                  className={cn(
-                    'bg-card rounded-2xl p-5 shadow-elevation-1',
-                    'flex items-center justify-between',
-                    'border border-border/40 border-s-4 border-s-success',
-                    'transition-all duration-normal cursor-pointer hover:shadow-card-hover hover:-translate-y-0.5',
-                    'overflow-hidden',
-                  )}
-                >
-                  <div className="flex flex-col">
-                    <span className="text-label font-bold text-muted-foreground mb-1 uppercase tracking-wide">
-                      {t('question')} {conversations.length - idx}
-                    </span>
-                    <h3 className="text-heading-md font-bold text-card-foreground">
-                      {conv.title || '...'}
-                    </h3>
-                    <p className="text-body-sm text-muted-foreground mt-1">
-                      {conv.messageCount} {conv.messageCount === 1 ? 'message' : 'messages'}
-                    </p>
-                  </div>
-                  <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center border border-border">
-                    <MessageSquare className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                </SystemLink>
-                <button
-                  type="button"
-                  aria-label={t('deleteQuestion')}
-                  title={t('deleteQuestion')}
-                  disabled={deletingId === conv.id}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    handleDelete(conv)
-                  }}
-                  className={cn(
-                    'absolute top-2 end-2 z-10',
-                    'w-8 h-8 rounded-full flex items-center justify-center',
-                    'bg-card/80 backdrop-blur-sm border border-border/40',
-                    'text-muted-foreground hover:text-error hover:border-error/40',
-                    'transition-colors duration-normal',
-                    'disabled:opacity-50 disabled:cursor-not-allowed',
-                  )}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </StaggerItem>
-          ))}
-        </StaggerGrid>
-
-        {/* Footer */}
-        <div className="mt-16 pt-8 border-t border-border text-center">
-          <div className="flex flex-wrap justify-center gap-content-gap">
-            <button className="text-body-sm font-bold text-muted-foreground bg-card shadow-card px-8 py-3 rounded-full hover:bg-muted transition-all duration-normal text-nowrap">
-              {t('viewStats')}
-            </button>
-            <button className="text-body-sm font-bold text-primary-foreground bg-primary px-8 py-3 rounded-full shadow-card hover:opacity-90 transition-all duration-normal text-nowrap">
-              {t('continueLastPoint')}
-            </button>
-          </div>
-        </div>
-      </main>
-    </>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/* Grade section with exam reminder                                    */
-/* ------------------------------------------------------------------ */
-
-function GradeSection({ courseId, courseLabel }: { courseId: string; courseLabel: string }) {
-  const t = useTranslations('coursePage')
-  const { hasUpcomingExam, daysUntil } = useExamCountdown(courseId)
-
-  return (
-    <div className="w-full bg-card/50 py-content-gap border-b border-border">
-      <div className="max-w-5xl mx-auto px-6 flex flex-col">
-        <div className="text-center">
-          <span className="text-body-sm md:text-body-md font-extrabold text-primary uppercase tracking-[0.3em]">
-            {t('grade')} {courseLabel}
-          </span>
-        </div>
-        {hasUpcomingExam && daysUntil !== null && (
-          <div className="flex items-center justify-end gap-3 mt-3 animate-in fade-in">
-            <div className="bg-card shadow-card border border-primary/10 rounded-2xl rounded-tr-none px-4 py-2">
-              <p className="text-body-xs md:text-body-sm font-bold text-primary">
-                {t('examReminder').replace('{days}', String(daysUntil))}
-              </p>
             </div>
-            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-elevation-2 shrink-0">
-              <Sparkles className="w-4 h-4 text-primary-foreground fill-current" />
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Section title */}
+      <section className="mb-8 text-right px-2">
+        <h2 className="text-heading-xl md:text-display-sm font-black text-foreground leading-tight">
+          {t('sectionTitle.ask')}
+        </h2>
+      </section>
+
+      <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-content-gap">
+        {/* New Question Card */}
+        <StaggerItem>
+          <button
+            disabled={isCreating}
+            onClick={handleNewQuestion}
+            className={cn(
+              'bg-primary text-primary-foreground rounded-2xl p-5 shadow-elevation-1',
+              'flex items-center justify-between',
+              'border border-border/40 hover:opacity-95',
+              'transition-all duration-normal cursor-pointer hover:shadow-card-hover hover:-translate-y-0.5',
+              'text-right overflow-hidden',
+            )}
+          >
+            <div className="flex flex-col">
+              <span className="text-label font-bold text-primary-foreground/60 mb-1 uppercase tracking-wide">
+                {t('quickAction')}
+              </span>
+              <h3 className="text-heading-lg font-bold">{t('newQuestion')}</h3>
+              <p className="text-body-xs text-primary-foreground/70 mt-1">{t('newQuestionSub')}</p>
+            </div>
+            <div className="w-14 h-14 bg-primary-foreground/20 rounded-full flex items-center justify-center">
+              <Sparkles className="w-6 h-6 text-primary-foreground fill-current" />
+            </div>
+          </button>
+        </StaggerItem>
+
+        {/* Past Conversation Cards */}
+        {conversations.map((conv, idx) => (
+          <StaggerItem key={conv.id}>
+            <div className="relative">
+              <SystemLink
+                href={`/ask?chat=${conv.id}&ctx=${encodeURIComponent(conv.contextKey ?? '')}`}
+                className={cn(
+                  'bg-card rounded-2xl p-5 shadow-elevation-1',
+                  'flex items-center justify-between',
+                  'border border-border/40 border-s-4 border-s-success',
+                  'transition-all duration-normal cursor-pointer hover:shadow-card-hover hover:-translate-y-0.5',
+                  'overflow-hidden',
+                )}
+              >
+                <div className="flex flex-col">
+                  <span className="text-label font-bold text-muted-foreground mb-1 uppercase tracking-wide">
+                    {t('question')} {conversations.length - idx}
+                  </span>
+                  <h3 className="text-heading-md font-bold text-card-foreground">
+                    {conv.title || '...'}
+                  </h3>
+                  <p className="text-body-sm text-muted-foreground mt-1">
+                    {conv.messageCount} {conv.messageCount === 1 ? 'message' : 'messages'}
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center border border-border">
+                  <MessageSquare className="w-5 h-5 text-muted-foreground" />
+                </div>
+              </SystemLink>
+              <button
+                type="button"
+                aria-label={t('deleteQuestion')}
+                title={t('deleteQuestion')}
+                disabled={deletingId === conv.id}
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  handleDelete(conv)
+                }}
+                className={cn(
+                  'absolute top-2 end-2 z-10',
+                  'w-8 h-8 rounded-full flex items-center justify-center',
+                  'bg-card/80 backdrop-blur-sm border border-border/40',
+                  'text-muted-foreground hover:text-error hover:border-error/40',
+                  'transition-colors duration-normal',
+                  'disabled:opacity-50 disabled:cursor-not-allowed',
+                )}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </StaggerItem>
+        ))}
+      </StaggerGrid>
+
+      {/* Footer */}
+      <div className="mt-16 pt-8 border-t border-border text-center">
+        <div className="flex flex-wrap justify-center gap-content-gap">
+          <button className="text-body-sm font-bold text-muted-foreground bg-card shadow-card px-8 py-3 rounded-full hover:bg-muted transition-all duration-normal text-nowrap">
+            {t('viewStats')}
+          </button>
+          <button className="text-body-sm font-bold text-primary-foreground bg-primary px-8 py-3 rounded-full shadow-card hover:opacity-90 transition-all duration-normal text-nowrap">
+            {t('continueLastPoint')}
+          </button>
+        </div>
+      </div>
+    </main>
   )
 }
