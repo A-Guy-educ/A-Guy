@@ -1,0 +1,18 @@
+{
+  "taskId": "2064",
+  "taskType": "issue",
+  "target": "2064-p2-posts-page-title-shows-generic-payload-cms-temp",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed hardcoded 'Payload Website Template Posts' title to use brand-driven pageMetadata() on /posts and /posts/page/[pageNumber] routes",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/posts/page.tsx",
+    "src/app/(frontend)/posts/page/[pageNumber]/page.tsx",
+    "tests/e2e/posts-page-title.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-05-25T02:33:00Z",
+  "finishedAt": "2026-05-25T02:34:30Z"
+}

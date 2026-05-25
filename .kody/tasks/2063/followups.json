@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Consider retry mechanism for guest session claim after timeout",
+    "body": "After the 5s timeout, the guest session upgrade is skipped and the login succeeds. However, the cookie is retained (GUEST_SESSION_COOKIE_NAME is not cleared), which allows for retry. Consider implementing a background retry mechanism or a deferred claim that runs after login completes, so guest sessions can still be upgraded even after a timeout.",
+    "rationale": "Currently, if the guest claim times out, the user keeps their guest session cookie and their conversations are not transferred to their account. A retry mechanism would ensure these users can still upgrade their sessions.",
+    "priority": "low"
+  }
+]

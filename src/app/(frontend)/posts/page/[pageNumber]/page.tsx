@@ -1,5 +1,6 @@
 import type { Metadata } from 'next/types'
 
+import { pageMetadata } from '@/infra/seo/pageMetadata'
 import { CollectionArchive } from '@/ui/web/CollectionArchive'
 import { PageRange } from '@/ui/web/PageRange'
 import { Pagination } from '@/ui/web/Pagination'
@@ -7,7 +8,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import React from 'react'
 import PageClient from './page.client'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 
 export const revalidate = 600
 
@@ -23,6 +24,11 @@ export default async function Page({ params: paramsPromise }: Args) {
   const sanitizedPageNumber = Number(pageNumber)
 
   if (!Number.isInteger(sanitizedPageNumber)) notFound()
+
+  // page 1 is the default posts page — redirect to /posts to avoid duplicate content
+  if (sanitizedPageNumber === 1) {
+    redirect('/posts')
+  }
 
   let posts
   try {
@@ -81,9 +87,7 @@ export default async function Page({ params: paramsPromise }: Args) {
 
 export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
   const { pageNumber } = await paramsPromise
-  return {
-    title: `Payload Website Template Posts Page ${pageNumber || ''}`,
-  }
+  return pageMetadata({ title: `Posts — Page ${pageNumber || ''}` })
 }
 
 export async function generateStaticParams() {
@@ -98,10 +102,10 @@ export async function generateStaticParams() {
 
     const pages: { pageNumber: string }[] = []
 
-    // Limit static generation to the first 5 pages to save build time
-    const pagesToBuild = Math.min(totalPages, 5)
+    // Limit static generation to pages 2-5 (page 1 redirects to /posts)
+    const pagesToBuild = Math.min(Math.max(totalPages - 1, 0), 4)
 
-    for (let i = 1; i <= pagesToBuild; i++) {
+    for (let i = 2; i <= pagesToBuild + 1; i++) {
       pages.push({ pageNumber: String(i) })
     }
 
