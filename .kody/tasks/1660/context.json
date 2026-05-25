@@ -4,11 +4,11 @@
   "target": "release/v0.25.9",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Single asymmetric conflict in CHANGELOG.md — origin/dev added duplicate #2011 entry plus spurious test content; HEAD full changelog preserved as-is",
+  "reason": "Single conflict in CHANGELOG.md: HEAD had full unreleased section with 18 entries; origin/dev had same section with only #2011 + updated QA number (#2062 vs #2052). Merged HEAD's 18 entries with dev's newer QA number.",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/1660",
   "runUrl": null,
   "filesTouched": ["CHANGELOG.md"],
   "sessionLog": ".kody/sessions/1660.jsonl",
-  "startedAt": "2026-05-24T16:50:00Z",
-  "finishedAt": "2026-05-24T17:05:00Z"
+  "startedAt": "2026-05-25T00:00:00.000Z",
+  "finishedAt": "2026-05-25T00:00:00.000Z"
 }

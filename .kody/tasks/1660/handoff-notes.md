@@ -1,5 +1,5 @@
 Resolved merge conflict in CHANGELOG.md between release/v0.25.9 (HEAD) and origin/dev.
 
-Resolution: Kept HEAD's full changelog content (6075 lines of changelog entries). origin/dev had added a duplicate #2011 entry (already present in HEAD's [Unreleased] with QA note) plus spurious "test content" placeholder — both discarded. The #2011 entry with QA notation from HEAD is preserved.
+The conflict was in the `[Unreleased]` section. HEAD had 18 entries (#1988 through #1725) plus #2011 with QA (#2052). origin/dev had only #2011 with the newer QA number (#2062). Resolution: kept all 18 HEAD entries and updated #2011's QA number to #2062.
 
 No other files were modified.
