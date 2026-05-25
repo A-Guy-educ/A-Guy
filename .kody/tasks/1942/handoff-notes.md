@@ -2,26 +2,21 @@
 
 ## What was done
 
-Fixed the RTL alignment issue in QuestionCard component where section labels (א, ב, ג) appeared on the left physical side instead of the right in Hebrew.
+Verified that the RTL alignment fix in QuestionCard was already applied in a previous session. Added a regression test to prevent future regressions.
 
-**File changed:** `src/ui/web/exerciserenderer/components/QuestionCard/index.tsx`
+**Files touched:**
+- `src/ui/web/exerciserenderer/components/QuestionCard/index.tsx` - already fixed (no changes made)
+- `tests/int/exerciserenderer/QuestionCardRTL.int.spec.tsx` - new regression test added
 
-**Change:** In the RTL branch of the questionLabel div, removed `flex-row-reverse` and changed `justify-end text-right` to just `justify-start`. Since `justify-start` in RTL already aligns to the logical right edge, the extra `justify-end text-right flex-row-reverse` was causing the circle to appear on the left physical side.
-
-**Before (line 77-79):**
-```tsx
-dir === 'rtl'
-  ? 'justify-end text-right flex-row-reverse gap-content-gap-xs'
-  : 'justify-start text-left gap-content-gap-xs',
-```
-
-**After:**
+**Existing fix (already in place at line 77-79):**
 ```tsx
 dir === 'rtl'
   ? 'justify-start gap-content-gap-xs'
   : 'justify-start text-left gap-content-gap-xs',
 ```
 
-## Followup
+The RTL branch no longer has `flex-row-reverse` which was causing the circle to appear on the left physical side instead of the right in Hebrew.
 
-ExerciseWorksheet has the same pattern at line 303 and may need the same fix applied for consistency.
+## Followup needed
+
+ExerciseWorksheet (`src/ui/web/exerciserenderer/ExerciseWorksheet/index.tsx` line 303) has the same pattern and should be fixed with the same change.

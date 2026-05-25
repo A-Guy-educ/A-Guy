@@ -4,11 +4,14 @@
   "target": "issue #1942",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Fixed RTL section label alignment in QuestionCard by removing flex-row-reverse from RTL branch",
+  "reason": "RTL alignment fix already applied in QuestionCard. Added regression test to verify RTL branch uses justify-start without flex-row-reverse.",
   "prUrl": null,
   "runUrl": null,
-  "filesTouched": ["src/ui/web/exerciserenderer/components/QuestionCard/index.tsx"],
-  "sessionLog": ".kody/runs/gh-26340560278-1/events.jsonl",
-  "startedAt": "2026-05-23T19:15:00.000Z",
-  "finishedAt": "2026-05-23T19:15:30.000Z"
+  "filesTouched": [
+    "src/ui/web/exerciserenderer/components/QuestionCard/index.tsx",
+    "tests/int/exerciserenderer/QuestionCardRTL.int.spec.tsx"
+  ],
+  "sessionLog": null,
+  "startedAt": "2026-05-25T05:40:00.000Z",
+  "finishedAt": "2026-05-25T05:48:00.000Z"
 }

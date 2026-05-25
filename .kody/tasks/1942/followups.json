@@ -1,8 +1,8 @@
 [
   {
     "title": "ExerciseWorksheet has same flex-row-reverse RTL issue",
-    "body": "The file src/ui/web/exerciserenderer/ExerciseWorksheet/index.tsx line 303 has the same pattern that was just fixed in QuestionCard: 'justify-end text-right flex-row-reverse gap-content-gap-xs'. The same fix should be applied.",
-    "rationale": "Consistency: both components should behave the same way in RTL",
+    "body": "The file src/ui/web/exerciserenderer/ExerciseWorksheet/index.tsx line 303 has the same pattern that was just fixed in QuestionCard: 'justify-end text-right flex-row-reverse gap-content-gap-xs'. The same fix (remove flex-row-reverse, change justify-end to justify-start) should be applied.",
+    "rationale": "ExerciseWorksheet uses the same component pattern and will have the same RTL label alignment bug in Hebrew.",
     "priority": "medium"
   }
 ]
