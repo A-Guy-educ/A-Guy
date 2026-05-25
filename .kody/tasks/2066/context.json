@@ -1,0 +1,17 @@
+{
+  "taskId": "2066",
+  "taskType": "bug",
+  "target": "2066-p2-study-plan-silently-fails-api-calls-with-401-an",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed /study-plan silent 401: useStudyPlan now redirects to /login instead of silently failing",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/study-plan/_components/useStudyPlan.ts",
+    "tests/e2e/study-plan-auth-redirect.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/instruction.jsonl",
+  "startedAt": "2026-05-25T05:38:00Z",
+  "finishedAt": "2026-05-25T05:47:05Z"
+}
