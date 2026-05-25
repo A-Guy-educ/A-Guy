@@ -1,0 +1,18 @@
+{
+  "taskId": "1953",
+  "taskType": "bug",
+  "target": "1953-p2-practice-page-shows-duplicate-lesson-labels-in",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed duplicate lesson labels bug by deduplicating chapters in chapters/by-grade API and study-page query",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/chapters/by-grade/route.ts",
+    "src/server/repos/queries/study-page.ts",
+    "tests/int/practice-duplicate-lesson-labels-1953.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1953.jsonl",
+  "startedAt": "2026-05-24T03:58:00Z",
+  "finishedAt": "2026-05-24T04:08:00Z"
+}

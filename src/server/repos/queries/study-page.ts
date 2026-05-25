@@ -52,7 +52,16 @@ export const prefetchStudyData = cache(
           ? (courseObj.accessType ?? DEFAULT_ACCESS_TYPE)
           : DEFAULT_ACCESS_TYPE
 
-      const chapterIds = chapters.map((chapter) => chapter.id)
+      // Deduplicate chapters by ID to prevent duplicate lessons
+      // (same chapter can appear multiple times if chapters table has duplicates)
+      const seenChapterIds = new Set<string>()
+      const uniqueChapters = chapters.filter((chapter) => {
+        if (seenChapterIds.has(chapter.id)) return false
+        seenChapterIds.add(chapter.id)
+        return true
+      })
+
+      const chapterIds = uniqueChapters.map((chapter) => chapter.id)
       let lessons: Lesson[] = []
 
       if (chapterIds.length > 0) {
@@ -87,7 +96,7 @@ export const prefetchStudyData = cache(
         }
       })
 
-      const chaptersWithLessons = chapters.map((chapter) => ({
+      const chaptersWithLessons = uniqueChapters.map((chapter) => ({
         ...chapter,
         lessons: lessonsByChapter[chapter.id] || [],
       }))
