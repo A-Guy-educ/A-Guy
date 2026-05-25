@@ -1,25 +1,26 @@
 {
   "version": 1,
-  "rev": 6,
+  "rev": 7,
   "cursor": "reviewed",
   "data": {
-    "lastRunISO": "2026-05-24T14:30:00Z",
-    "nextEligibleISO": "2026-05-24T20:30:00Z",
+    "lastRunISO": "2026-05-25T14:30:00Z",
+    "nextEligibleISO": "2026-05-25T20:30:00Z",
     "cycle": 1,
     "reviewed": [
       "approval-gate",
       "architecture-audit",
       "cleanup-branches",
       "coverage-floor",
-      "dead-code-sweep"
+      "dead-code-sweep",
+      "dependency-bump"
     ],
     "lastReviewed": {
-      "slug": "dead-code-sweep",
-      "verdict": "warn"
+      "slug": "dependency-bump",
+      "verdict": "broken"
     },
-    "lastFiredAt": "2026-05-24T20:24:22.857Z",
+    "lastFiredAt": "2026-05-25T02:30:53.970Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 108739
+    "lastDurationMs": 118533
   },
   "done": false
 }
