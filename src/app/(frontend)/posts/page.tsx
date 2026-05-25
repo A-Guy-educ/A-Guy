@@ -1,5 +1,6 @@
 import type { Metadata } from 'next/types'
 
+import { pageMetadata } from '@/infra/seo/pageMetadata'
 import { queryPublishedPosts } from '@/server/repos/queries/posts'
 import { CollectionArchive } from '@/ui/web/CollectionArchive'
 import { PageRange } from '@/ui/web/PageRange'
@@ -41,7 +42,5 @@ export default async function Page() {
 }
 
 export function generateMetadata(): Metadata {
-  return {
-    title: `Payload Website Template Posts`,
-  }
+  return pageMetadata({ title: 'Posts' })
 }
