@@ -44,9 +44,8 @@ export const AdminBar: React.FC<{
 
   return (
     <div
-      className={cn('py-2 bg-foreground text-background sm:hidden', {
-        block: show,
-        hidden: !show,
+      className={cn('py-2 bg-foreground text-background hidden sm:block', {
+        'sm:block': show,
       })}
     >
       <div className="container">

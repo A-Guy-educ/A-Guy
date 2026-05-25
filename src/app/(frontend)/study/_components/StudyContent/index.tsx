@@ -101,6 +101,7 @@ export function StudyContent({
   const [isLoading, setIsLoading] = useState(!prefetchedData)
   const [requiresEntitlement, setRequiresEntitlement] = useState<boolean | undefined>(undefined)
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | undefined>(undefined)
+  const [requiresCourseSelection, setRequiresCourseSelection] = useState(false)
 
   const tabForLessonType: CourseTab =
     lessonType === 'practice' ? 'practice' : lessonType === 'exam' ? 'exams' : 'learn'
@@ -133,7 +134,8 @@ export function StudyContent({
     async function loadData() {
       const profile = getUserProfile()
       if (!profile?.gradeLevel) {
-        window.location.href = '/'
+        setRequiresCourseSelection(true)
+        setIsLoading(false)
         return
       }
 
@@ -407,6 +409,21 @@ export function StudyContent({
                   </section>
                 )
               })}
+            </div>
+          ) : requiresCourseSelection ? (
+            <div className="text-center py-section-lg">
+              <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+                <BookOpen className="w-8 h-8 text-muted-foreground/50" />
+              </div>
+              <p className="text-body-lg font-medium text-muted-foreground">
+                {ts('selectCourseToAccess')}
+              </p>
+              <p className="text-body-sm text-muted-foreground/60 mt-1">
+                {ts('selectCourseToAccessMessage')}
+              </p>
+              <Button className="mt-6" onClick={() => (window.location.href = '/courses')}>
+                {ts('browseCourses')}
+              </Button>
             </div>
           ) : (
             <div className="text-center py-section-lg">

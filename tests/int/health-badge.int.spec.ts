@@ -4,27 +4,28 @@ import { cleanup, render, screen } from '@testing-library/react'
 import React from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+// Actual API response shape (from /api/health/route.ts)
 interface HealthResponse {
   ok: boolean
+  checks: { database: boolean }
+  version: string
   gitSha: string
-  payloadVersion: string
-  projectVersion: string
   timestamp: string
 }
 
 const healthyResponse: HealthResponse = {
   ok: true,
+  checks: { database: true },
+  version: '0.6.0',
   gitSha: 'abc123def456',
-  payloadVersion: '3.73.0',
-  projectVersion: '0.6.0',
   timestamp: '2026-07-02T12:00:00.000Z',
 }
 
 const unhealthyResponse: HealthResponse = {
   ok: false,
+  checks: { database: false },
+  version: '0.6.0',
   gitSha: 'abc123def456',
-  payloadVersion: '3.73.0',
-  projectVersion: '0.6.0',
   timestamp: '2026-07-02T12:00:00.000Z',
 }
 

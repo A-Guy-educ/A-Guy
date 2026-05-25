@@ -154,12 +154,31 @@ interface RevenueMetrics {
   topProducts: TopProduct[]
 }
 
+interface RecentTransactionUser {
+  email: string
+}
+
+interface RecentTransactionProduct {
+  name: string
+}
+
+export interface RecentTransaction {
+  id: string
+  createdAt: string
+  amount: number
+  currency: string
+  status: string
+  user: RecentTransactionUser
+  product: RecentTransactionProduct
+}
+
 export interface DashboardMetricsResponse {
   period: Period
   userMetrics: UserMetrics
   contentCounts: ContentCounts
   engagement: EngagementMetrics
   revenueMetrics: RevenueMetrics
+  recentTransactions: RecentTransaction[]
 }
 
 function startOfDay(date: Date): Date {
@@ -296,6 +315,7 @@ export async function GET(req: Request) {
     returningUsersResult,
     totalUsersInPeriod,
     allTransactions,
+    recentTransactionsResult,
   ] = await Promise.all([
     // Active users today/yesterday
     payload.find({
@@ -550,6 +570,21 @@ export async function GET(req: Request) {
           totalPages: number
         }>,
     ),
+    // Recent transactions: 5 most recent for the RecentTransactionsWidget
+    payload.find({
+      collection: 'transactions',
+      limit: 5,
+      sort: '-createdAt',
+      depth: 2,
+      overrideAccess: true,
+      select: {
+        id: true,
+        createdAt: true,
+        amount: true,
+        currency: true,
+        status: true,
+      },
+    }),
   ])
 
   // Calculate avg time spent (allUserStats is already a flat array from findAll)
@@ -723,6 +758,29 @@ export async function GET(req: Request) {
     })
     .sort((a, b) => b.count - a.count)
 
+  // Build recent transactions for the RecentTransactionsWidget
+  // recentTransactionsResult already has depth=2, so user.email and product.name are populated
+  const recentTransactions: RecentTransaction[] = recentTransactionsResult.docs.map((tx) => {
+    const txDoc = tx as unknown as {
+      id: string
+      createdAt: string
+      amount: number
+      currency: string
+      status: string
+      user?: { email?: string }
+      product?: { name?: string }
+    }
+    return {
+      id: txDoc.id,
+      createdAt: txDoc.createdAt,
+      amount: txDoc.amount,
+      currency: txDoc.currency,
+      status: txDoc.status,
+      user: { email: txDoc.user?.email ?? '—' },
+      product: { name: txDoc.product?.name ?? '—' },
+    }
+  })
+
   const response: DashboardMetricsResponse = {
     period,
     userMetrics: {
@@ -774,6 +832,7 @@ export async function GET(req: Request) {
       successRate,
       topProducts,
     },
+    recentTransactions,
   }
 
   return Response.json(response)

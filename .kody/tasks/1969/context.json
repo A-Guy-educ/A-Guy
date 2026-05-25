@@ -1,0 +1,20 @@
+{
+  "taskId": "1969",
+  "taskType": "issue",
+  "target": "issue #1969",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed auth-gated routes /ask, /practice, /test that were silently redirecting to / instead of showing an appropriate message when user lacks a gradeLevel",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/guards/RequireCourseSelection.tsx",
+    "src/app/(frontend)/study/_components/StudyContent/index.tsx",
+    "src/i18n/en.json",
+    "src/i18n/he.json",
+    "tests/e2e/auth-gated-routes-redirect.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1969-p1-auth-gated-routes-ask-practice-test-redirect-si.jsonl",
+  "startedAt": "2026-05-24T12:00:00.000Z",
+  "finishedAt": "2026-05-24T12:30:00.000Z"
+}

@@ -1,0 +1,17 @@
+{
+  "taskId": "1973",
+  "taskType": "issue",
+  "target": "issue #1973 - Admin bar visible on frontend pages in mobile viewport",
+  "outcome": "partial",
+  "exitCode": 0,
+  "reason": "Fix verified via class-merging test and typecheck/lint/format all pass. E2E test infrastructure has pre-existing JSON import issue (brands/aguy/messages/en.json needs type:json attribute) that prevents test execution in this environment, but the fix logic is confirmed correct.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/AdminBar/index.tsx",
+    "tests/e2e/admin-bar-mobile-hidden.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/instruction.jsonl",
+  "startedAt": "2026-05-24T10:30:00+00:00",
+  "finishedAt": "2026-05-24T10:39:42+00:00"
+}

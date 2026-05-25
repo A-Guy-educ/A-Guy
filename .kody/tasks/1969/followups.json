@@ -1,0 +1,8 @@
+[
+  {
+    "title": "E2E test needs DB/server to run",
+    "body": "The test file tests/e2e/auth-gated-routes-redirect.e2e.spec.ts requires a running Next.js server with MongoDB. It could not be executed in this session due to environment constraints. The test should be run as part of CI.",
+    "rationale": "The test verifies the fix works correctly but needs full environment to run",
+    "priority": "medium"
+  }
+]

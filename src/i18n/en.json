@@ -503,7 +503,10 @@
     "moreCourses": "More courses",
     "loading": "Loading...",
     "deleteConversation": "Delete conversation",
-    "deleteConfirm": "Are you sure you want to delete this conversation?"
+    "deleteConfirm": "Are you sure you want to delete this conversation?",
+    "selectCourseToAccess": "Select a course to access this page",
+    "selectCourseToAccessMessage": "You need to select a course and grade level before you can access questions, practice, and exam features.",
+    "browseCourses": "Browse Courses"
   },
   "stats": {
     "title": "My Statistics",

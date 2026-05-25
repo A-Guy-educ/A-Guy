@@ -1,5 +1,6 @@
 /**
  * Unit Tests for Issue #1662: Redesign Lesson Duplication Review Page
+ * Issue #1972: sectionIndex not displayed in failure/warning rows
  *
  * These tests verify the redesigned review page requirements by checking
  * the component's rendered output structure.
@@ -8,6 +9,9 @@
  * 1. Status banner shows succeeded / needs-review / failed counts at the top
  * 2. Exercise pairs are grouped by state (tabs for Succeeded / Needs Review / Failed / Pending)
  * 3. Auto-refresh (or refresh button) for running records
+ *
+ * REQUIREMENTS FROM ISSUE #1972:
+ * - sectionIndex must be displayed in failure/warning rows alongside code and message
  *
  * The current component implementation does NOT have these features.
  * These tests will FAIL until the component is updated.
@@ -123,6 +127,39 @@ describe('Issue #1662: Lesson Duplication Review Redesign - Component Verificati
       const hasRefreshButton = /refresh.*button|button.*refresh/i.test(componentSource)
 
       expect(hasRefreshButton).toBe(true)
+    })
+  })
+
+  /**
+   * ISSUE #1972: sectionIndex not displayed in failure/warning rows
+   *
+   * The failure/warning rows must display sectionIndex alongside code and message.
+   * Currently the component uses sectionIndex only in React keys but never renders
+   * it as visible text in the failure/warning row output.
+   */
+  describe('Section Index Display in Failure/Warning Rows', () => {
+    it('should render sectionIndex in failure rows (alongside code and message)', () => {
+      // The failure row rendering must include sectionIndex as displayed text.
+      // sectionIndex must appear as JSX content (e.g. {failure.sectionIndex}) inside the
+      // failureRowStyle div, NOT just in the React key attribute.
+      // This pattern checks that sectionIndexStyle span contains failure.sectionIndex.
+      const hasSectionIndexInFailureRows =
+        /sectionIndexStyle.*>Section.*failure\.sectionIndex|Section.*failure\.sectionIndex.*sectionIndexStyle/i.test(
+          componentSource,
+        )
+
+      expect(hasSectionIndexInFailureRows).toBe(true)
+    })
+
+    it('should render sectionIndex in warning rows (alongside code and message)', () => {
+      // The warning row rendering must include sectionIndex as displayed text.
+      // w.sectionIndex must appear as JSX content inside a span in the warning rows.
+      const hasSectionIndexInWarningRows =
+        /sectionIndexStyle.*>Section.*w\.sectionIndex|Section.*w\.sectionIndex.*sectionIndexStyle/i.test(
+          componentSource,
+        )
+
+      expect(hasSectionIndexInWarningRows).toBe(true)
     })
   })
 

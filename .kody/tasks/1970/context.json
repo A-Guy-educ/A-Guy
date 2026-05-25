@@ -1,0 +1,17 @@
+{
+  "taskId": "1970",
+  "taskType": "issue",
+  "target": "1970-p2-gravatar-images-blocked-by-content-security-pol",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed CSP img-src directive for /admin routes to include www.gravatar.com",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "next.config.js",
+    "tests/int/csp-vercel-feedback-admin.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-05-24T07:41:00Z",
+  "finishedAt": "2026-05-24T07:45:00Z"
+}

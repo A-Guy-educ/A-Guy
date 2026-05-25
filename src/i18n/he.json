@@ -503,7 +503,10 @@
     "moreCourses": "קורסים נוספים",
     "loading": "טוען...",
     "deleteConversation": "מחק שיחה",
-    "deleteConfirm": "האם אתה בטוח שברצונך למחוק שיחה זו?"
+    "deleteConfirm": "האם אתה בטוח שברצונך למחוק שיחה זו?",
+    "selectCourseToAccess": "בחר קורס כדי לגשת לדף זה",
+    "selectCourseToAccessMessage": "עליך לבחור קורס ורמת כיתה לפני שתוכל לגשת לשאלות, תרגול ותכונות מבחן.",
+    "browseCourses": "עיון בקורסים"
   },
   "stats": {
     "title": "הסטטיסטיקה שלי",
