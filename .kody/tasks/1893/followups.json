@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Clean up redundant first fallback in study-page.ts",
+    "body": "The prefetchStudyData function in src/server/repos/queries/study-page.ts has two fallback mechanisms: (1) a course-wide fallback when lessons.length === 0, and (2) a per-chapter fallback. The first is redundant since the per-chapter fallback handles the same case. Consider removing the first fallback to simplify the code.",
+    "rationale": "Redundant code that adds complexity without functional benefit. The per-chapter fallback correctly handles all cases.",
+    "priority": "low"
+  }
+]

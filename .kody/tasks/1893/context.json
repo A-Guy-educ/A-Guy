@@ -1,0 +1,18 @@
+{
+  "taskId": "1893",
+  "taskType": "issue",
+  "target": "1893",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed study page empty state by adding per-chapter fallback from learning to practice lesson type",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/repos/queries/study-page.ts",
+    "src/app/api/chapters/by-grade/route.ts",
+    "tests/int/study-page-learning-fallback.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/live-1778149397247-m4aa1p.jsonl",
+  "startedAt": "2026-05-23T10:00:00Z",
+  "finishedAt": "2026-05-23T10:07:00Z"
+}

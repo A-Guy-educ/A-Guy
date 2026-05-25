@@ -1,0 +1,17 @@
+{
+  "taskId": "1897",
+  "taskType": "issue",
+  "target": "1897-p2-search-form-submit-does-not-display-results-or",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed search component to initialize state from URL params, preventing the useEffect from overwriting the URL on mount",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/search/Component.tsx",
+    "tests/int/search-posts.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1897.jsonl",
+  "startedAt": "2026-05-23T16:10:00Z",
+  "finishedAt": "2026-05-23T16:32:30Z"
+}

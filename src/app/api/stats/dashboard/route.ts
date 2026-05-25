@@ -168,13 +168,22 @@ export async function GET(req: Request) {
   let filteredRecords = progressRecords
 
   // Filter by course (include both lesson and exercise records)
+  // Note: when relevantLessonIds is null (no chapters found), include all records.
+  // When relevantLessonIds is an empty Set (chapters found but no lessons matched),
+  // we also include all records to avoid incorrectly filtering out user progress.
   if (relevantLessonIds || relevantExerciseIds) {
     filteredRecords = filteredRecords.filter((r: ProgressRecord) => {
       if (r.recordType === 'lesson') {
-        return !relevantLessonIds || relevantLessonIds.has(r.recordId)
+        return (
+          !relevantLessonIds || relevantLessonIds.size === 0 || relevantLessonIds.has(r.recordId)
+        )
       }
       if (r.recordType === 'exercise') {
-        return !relevantExerciseIds || relevantExerciseIds.has(r.recordId)
+        return (
+          !relevantExerciseIds ||
+          relevantExerciseIds.size === 0 ||
+          relevantExerciseIds.has(r.recordId)
+        )
       }
       return true
     })

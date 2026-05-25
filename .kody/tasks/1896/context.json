@@ -1,0 +1,18 @@
+{
+  "taskId": "1896",
+  "taskType": "issue",
+  "target": "GitHub Issue #1896 - Practice page lesson card heading does not match lesson number",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "All tests pass - the index calculation formula is correct. The code correctly produces sequential lesson numbering across chapters (startIndex = cumulative lessons from previous chapters, index = startIndex + idx + 1). Integration tests verify API returns correct lesson grouping; unit tests verify the calculation logic and CourseLessonCard rendering.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "tests/unit/study-content-index-calculation.test.ts",
+    "tests/unit/components/CourseLessonCard.test.tsx",
+    "tests/int/practice-page-lesson-numbering.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-05-23T13:00:00.000Z",
+  "finishedAt": "2026-05-23T14:10:00.000Z"
+}

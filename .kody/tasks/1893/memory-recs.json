@@ -1,0 +1,10 @@
+[
+  {
+    "type": "decision",
+    "name": "study-page-learning-to-practice-fallback",
+    "hook": "Study page falls back to practice when no learning lessons exist",
+    "body": "When the Study page (/study) queries for lessonType='learning' and a chapter has zero learning lessons, it now falls back to fetching practice lessons for that chapter. This applies both to prefetchStudyData (server-side) and the /api/chapters/by-grade route (client-side fallback). The per-chapter fallback is necessary because some chapters may have learning lessons while others don't.\n\n**Why:** Issue #1893 — Translate Test (EN) course had only practice lessons, causing Study page to show empty state while Practice page showed content.\n\n**How to apply:** In prefetchStudyData and /api/chapters/by-grade, when lessonType='learning' and a chapter's lessons array is empty after the initial query, run a second query for lessonType='practice' scoped to that chapter's ID.",
+    "why": "Courses may have mixed lesson types across chapters. A blanket fallback to practice when ANY chapter has no learning lessons would incorrectly show practice lessons for ALL chapters even when some have dedicated learning content. The per-chapter approach is correct.",
+    "confidence": 0.95
+  }
+]
