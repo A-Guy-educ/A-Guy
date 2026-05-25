@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "rev": 7,
+  "rev": 8,
   "cursor": "reviewed",
   "data": {
     "lastRunISO": "2026-05-25T14:30:00Z",
@@ -18,9 +18,9 @@
       "slug": "dependency-bump",
       "verdict": "broken"
     },
-    "lastFiredAt": "2026-05-25T02:30:53.970Z",
+    "lastFiredAt": "2026-05-25T08:44:14.556Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 118533
+    "lastDurationMs": 18184
   },
   "done": false
 }
