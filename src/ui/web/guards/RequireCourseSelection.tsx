@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 import { getUserProfile } from '@/client/state/localStorage/userProfile'
+import { getOnboardingRedirect } from '@/infra/onboarding/redirect'
 
 export function RequireCourseSelection({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -12,7 +13,7 @@ export function RequireCourseSelection({ children }: { children: React.ReactNode
   useEffect(() => {
     const profile = getUserProfile()
     if (!profile?.gradeLevel) {
-      router.replace('/')
+      router.replace(getOnboardingRedirect(window.location.pathname))
       return
     }
     setHasSelection(true)
