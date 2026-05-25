@@ -1,0 +1,17 @@
+{
+  "taskId": "1958",
+  "taskType": "issue",
+  "target": "1958-p2-fix-floating-open-learning-assistant-button-int",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed z-index stacking between FloatingAgentButton (z-[60]) and ChatInterface input container by adding z-[70] to the input container div, matching existing z-index convention",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/chat/ChatInterface/index.tsx",
+    "tests/unit/components/chat/z-index-stacking.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/gh-26352692155-1/session.jsonl",
+  "startedAt": "2026-05-24T05:18:00Z",
+  "finishedAt": "2026-05-24T05:20:00Z"
+}

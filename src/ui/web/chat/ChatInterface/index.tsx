@@ -617,7 +617,7 @@ export function ChatInterface({
 
       {/* Input Container */}
       <div
-        className="flex-grow-0 flex-shrink-0 bg-card border-t border-border p-5 pb-8 relative"
+        className="flex-grow-0 flex-shrink-0 bg-card border-t border-border p-5 pb-8 relative z-[70]"
         data-math-controls
       >
         {/* Formula Composer Popup */}
