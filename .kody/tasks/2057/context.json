@@ -1,0 +1,18 @@
+{
+  "taskId": "2057",
+  "taskType": "issue",
+  "target": "GitHub issue #2057 - login page displays untranslated i18n key",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed by adding brand.heroSubtitle under auth.login in i18n/en.json and i18n/he.json",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/i18n/en.json",
+    "src/i18n/he.json",
+    "tests/unit/login-page-redesign.test.tsx"
+  ],
+  "sessionLog": ".kody/sessions/2057-p2-login-page-displays-untranslated-i18n-key-as-vi.jsonl",
+  "startedAt": "2026-05-25T02:30:00Z",
+  "finishedAt": "2026-05-25T02:35:30Z"
+}

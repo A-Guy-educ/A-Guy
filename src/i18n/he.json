@@ -147,6 +147,9 @@
       "loggingIn": "מתחבר...",
       "noAccount": "אין לך חשבון?",
       "signupLink": "הירשם",
+      "brand": {
+        "heroSubtitle": "A-Guy המורה הפרטי שלכם"
+      },
       "errors": {
         "invalidCredentials": "אימייל או סיסמה שגויים"
       }
