@@ -1,0 +1,17 @@
+{
+  "taskId": "1964",
+  "taskType": "issue",
+  "target": "GitHub Issue #1964: [P2] Fix chat Send button not enabling after text input",
+  "outcome": "partial",
+  "exitCode": 1,
+  "reason": "E2E tests cannot navigate to /ask due to middleware auth guard (payload-token cookie + localStorage profile) - cannot reproduce bug in current environment",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "tests/e2e/ask-send-button-simple.e2e.spec.ts",
+    "tests/e2e/ask-send-button.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-05-24T05:00:00.000Z",
+  "finishedAt": "2026-05-24T07:15:00.000Z"
+}

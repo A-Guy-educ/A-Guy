@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "payload-find-generics-require-collection-name",
+    "hook": "payload.find<T> first arg must be collection name string, not a data type",
+    "body": "When calling payload.find<T> in this Payload 3.x codebase, the first generic must be one of the collection name string literals ('transactions', 'users', etc.), NOT a data interface like RecentTransaction. Use `as Promise<{ docs: MyType[] }>` cast instead of a second generic type parameter. This avoids TS2344 errors about constraint satisfaction.",
+    "why": "TypeScript error TS2344 on line 574 of dashboard-metrics/route.ts showed that the first generic to payload.find must satisfy the constraint of being a valid collection name. All existing calls in this file use `as Promise<...>` casts instead of generics.",
+    "confidence": 0.95
+  }
+]

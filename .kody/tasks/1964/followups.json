@@ -1,0 +1,20 @@
+[
+  {
+    "title": "Debug E2E test auth flow for /ask route",
+    "body": "The test sets up authentication via setupAuthenticatedUser() and localStorage profile, but still redirects to login. Need to verify the payload-token cookie is being sent with requests to /ask. May need to check cookie domain/secure flags match the request URL.",
+    "rationale": "Cannot verify bug without passing the middleware auth guard.",
+    "priority": "high"
+  },
+  {
+    "title": "Consider alternative testing approach",
+    "body": "Instead of full E2E with auth, consider testing the send button disabled logic via: (1) Unit test of the disabled condition, (2) API-level test with direct cookie setting, (3) Simplifying the /ask route auth requirements for testing",
+    "rationale": "The auth + middleware complexity makes E2E testing the send button very difficult.",
+    "priority": "medium"
+  },
+  {
+    "title": "Investigate potential isLoading state issue",
+    "body": "If the bug exists, a likely cause is isLoading remaining true after an error or failed API call. Check the sendMessage function and error handling in useNotebookChat to see if isLoading is properly reset on error.",
+    "rationale": "The input's disabled={isLoading} at line 743 could prevent input changes if isLoading is stuck true.",
+    "priority": "medium"
+  }
+]
