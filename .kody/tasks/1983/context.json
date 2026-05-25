@@ -1,0 +1,14 @@
+{
+  "taskId": "1983",
+  "taskType": "issue",
+  "target": "Exercise listing shows orphaned records with no Lesson or Tenant",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed the beforeChange hook in Exercises collection to populate tenant from the lesson's tenant when not explicitly set",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": ["src/server/payload/collections/Exercises/index.ts"],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-05-24T11:30:00Z",
+  "finishedAt": "2026-05-24T12:00:00Z"
+}

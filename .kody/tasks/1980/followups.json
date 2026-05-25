@@ -1,0 +1,8 @@
+[
+  {
+    "title": "E2E test needs DB to run",
+    "body": "The test at tests/e2e/admin-bar-mobile-visibility.e2e.spec.ts requires a running MongoDB instance. It could not be verified locally due to missing docker. The test should be run in CI where the database is available.",
+    "rationale": "Test was written but could not be verified locally due to environment constraints",
+    "priority": "medium"
+  }
+]

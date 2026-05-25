@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Add integration test verifying exercise tenant matches lesson tenant",
+    "body": "Add a test that creates an exercise via createOutputExercise or create-exercises-from-extraction and verifies the exercise's tenant matches the lesson's tenant",
+    "rationale": "No existing test verifies tenant inheritance from lesson for exercises created without explicit tenant",
+    "priority": "medium"
+  }
+]

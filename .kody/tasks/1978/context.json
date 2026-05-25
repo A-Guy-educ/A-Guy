@@ -1,0 +1,18 @@
+{
+  "taskId": "1978",
+  "taskType": "issue",
+  "target": "1978",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed the 404 by creating the missing /api/admin/recent-transactions endpoint and updating the widget to call it",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/admin/recent-transactions/route.ts",
+    "src/ui/admin/RecentTransactionsWidget/index.tsx",
+    "tests/int/admin-recent-transactions-1978.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1978-p1-admin-dashboard-recent-transactions-returns-404.jsonl",
+  "startedAt": "2026-05-24T06:30:00.000Z",
+  "finishedAt": "2026-05-24T06:46:00.000Z"
+}

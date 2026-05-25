@@ -1,0 +1,14 @@
+{
+  "taskId": "1981",
+  "taskType": "issue",
+  "target": "1981-p2-gravatar-images-blocked-by-csp-in-admin-panel",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed CSP in next.config.js to include secure.gravatar.com in img-src directive for /admin routes",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": ["next.config.js", "tests/int/csp-vercel-feedback-admin.int.spec.ts"],
+  "sessionLog": ".kody/sessions/-home-runner-work-A-Guy-A-Guy.jsonl",
+  "startedAt": "2026-05-24T10:15:00.000Z",
+  "finishedAt": "2026-05-24T10:19:30.000Z"
+}

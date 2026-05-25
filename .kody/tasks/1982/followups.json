@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Remove the integration test file created in this task",
+    "body": "The file tests/int/chapters-by-grade-lesson-order.int.spec.ts was created to reproduce the bug. It should be evaluated whether it's worth keeping as a regression test or removed if it proves flaky/brittle.",
+    "rationale": "The test creates its own MongoDB container and exercises prefetchStudyData with out-of-order lessons, which is complex. It may not catch real regressions if the DB always returns lessons in order anyway.",
+    "priority": "low"
+  }
+]

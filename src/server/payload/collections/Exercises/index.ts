@@ -56,7 +56,7 @@ const isAdminOrOwner: Access = ({ req }) => {
 const exerciseHooks: CollectionConfig['hooks'] = {
   beforeChange: [
     enforceContentStructure,
-    // Auto-populate course from lesson -> chapter -> course
+    // Auto-populate tenant, course from lesson -> chapter -> course
     async ({ data, req }) => {
       if (data?.lesson) {
         try {
@@ -66,8 +66,12 @@ const exerciseHooks: CollectionConfig['hooks'] = {
               collection: 'lessons',
               id: lessonId,
               depth: 0,
-              select: { chapter: true },
+              select: { chapter: true, tenant: true },
             })
+            // Populate tenant from lesson if not already set
+            if (!data.tenant && lesson?.tenant) {
+              data.tenant = typeof lesson.tenant === 'string' ? lesson.tenant : lesson.tenant?.id
+            }
             const chapterId =
               typeof lesson?.chapter === 'string' ? lesson.chapter : lesson?.chapter?.id
             if (chapterId) {
