@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "guest-session-claim-timeout-required",
+    "hook": "claimGuestConversations needs a timeout wrapper to prevent login hangs",
+    "body": "The guest session upgrade flow (claimGuestConversations) can hang if database operations stall, causing loginAction to hang indefinitely. The fix adds a withTimeout wrapper with a 5-second timeout. This is a best-effort operation (guest upgrade failure should not block login success).\n\nWhy: Without the timeout, a stalled database operation during guest claiming would cause the login button to show 'Logging in...' forever with no error or redirect.\n\nHow to apply: When adding new async operations to auth flows, consider wrapping with withTimeout if they are best-effort and should not block the overall operation.",
+    "why": "The QA test revealed that if claimGuestConversations hangs, loginAction hangs. The fix demonstrates that best-effort operations should be wrapped with timeouts to prevent cascade failures.",
+    "confidence": 0.85
+  }
+]

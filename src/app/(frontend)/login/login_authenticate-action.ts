@@ -24,6 +24,32 @@ type CookieStore = {
   delete: (name: string, options?: { path: string }) => void
 }
 
+/**
+ * Wraps a promise with a timeout. If the promise doesn't resolve within timeoutMs,
+ * it rejects with a timeout error. This prevents operations like guest session
+ * claiming from hanging indefinitely and blocking the login response.
+ */
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  timeoutErrorMessage: string,
+): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(timeoutErrorMessage))
+    }, timeoutMs)
+    promise
+      .then((value) => {
+        clearTimeout(timer)
+        resolve(value)
+      })
+      .catch((error) => {
+        clearTimeout(timer)
+        reject(error)
+      })
+  })
+}
+
 export async function loginAction(formData: FormData, cookieStore?: CookieStore) {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
@@ -84,11 +110,10 @@ export async function loginAction(formData: FormData, cookieStore?: CookieStore)
           const currentCookies = await cookies()
           const guestToken = currentCookies.get(GUEST_SESSION_COOKIE_NAME)?.value
           if (guestToken) {
-            const claimResult = await claimGuestConversations(
-              payload,
-              result.user.id,
-              guestToken,
-              headers,
+            const claimResult = await withTimeout(
+              claimGuestConversations(payload, result.user.id, guestToken, headers),
+              5000, // 5 second timeout - guest claim should be fast; if it hangs, don't block login
+              'Guest session claim timed out after 5s',
             )
             // Only clear cookie if claim succeeded (claimed >= 0)
             if (claimResult.claimed >= 0) {
@@ -103,7 +128,16 @@ export async function loginAction(formData: FormData, cookieStore?: CookieStore)
             }
           }
         } catch (claimError) {
-          if (claimError instanceof GuestSessionClaimingInProgressError) {
+          if (
+            claimError instanceof Error &&
+            claimError.message === 'Guest session claim timed out after 5s'
+          ) {
+            // Timeout - log warning but don't fail the login (guest upgrade is best-effort)
+            logger.warn(
+              { userId: result.user.id },
+              'Guest session claim timed out - login succeeded but guest upgrade skipped',
+            )
+          } else if (claimError instanceof GuestSessionClaimingInProgressError) {
             // Another user is claiming - this shouldn't happen for same user, but handle gracefully
             logger.warn(
               { userId: result.user.id },
