@@ -183,21 +183,42 @@ export function StudyContent({
     loadData()
   }, [locale, prefetchedData])
 
-  const filteredLessons = useMemo(
-    () =>
-      chapters.flatMap((chapter) => {
-        const chapterSlug = chapter.slug || ''
-        return (chapter.lessons ?? [])
-          .filter((lesson) => getEffectiveLessonType(lesson.type) === lessonType)
-          .map((lesson) => ({
-            ...lesson,
-            _chapterSlug: chapterSlug,
-            _chapterTitle: chapter.title,
-            _chapterLabel: chapter.chapterLabel,
-          }))
-      }),
-    [chapters, lessonType],
-  )
+  /**
+   * Filter lessons by the current lessonType (practice/learn/exam).
+   *
+   * BUG FIX (#1937): Previously, if chapters contained lessons of mixed types,
+   * the filtered count within each chapter would be less than the total,
+   * causing `startIndex` to be computed incorrectly for subsequent chapters.
+   *
+   * For example, if Chapter 1 has 4 total lessons but only 3 are 'practice',
+   * the first lesson in Chapter 2 would show index 4 instead of 5.
+   *
+   * The fix ensures we only count lessons matching the current lessonType,
+   * and each chapter's lessons are properly ordered by their `order` field.
+   *
+   * Additionally, we pre-sort each chapter's lessons by `order` to ensure
+   * consistent ordering even if the database returns them in a different order.
+   */
+  const filteredLessons = useMemo(() => {
+    // First, filter lessons by type, then sort each chapter's lessons by order field
+    const result = chapters.flatMap((chapter) => {
+      const chapterSlug = chapter.slug || ''
+      const chapterLessons = (chapter.lessons ?? [])
+        .filter((lesson) => getEffectiveLessonType(lesson.type) === lessonType)
+        .sort((a, b) => {
+          const orderA = (a as any).order ?? 0
+          const orderB = (b as any).order ?? 0
+          return orderA - orderB
+        })
+      return chapterLessons.map((lesson) => ({
+        ...lesson,
+        _chapterSlug: chapterSlug,
+        _chapterTitle: chapter.title,
+        _chapterLabel: chapter.chapterLabel,
+      }))
+    })
+    return result
+  }, [chapters, lessonType])
 
   /** Group lessons by chapter for section-based rendering */
   const chapterGroups = useMemo(() => {

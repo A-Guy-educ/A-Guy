@@ -1,0 +1,15 @@
+{
+  "taskId": "1936",
+  "taskType": "issue",
+  "target": "1936-p1-admin-dashboard-recent-transactions-returns-htt",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed wrong API URL in RecentTransactionsWidget",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/RecentTransactionsWidget/index.tsx",
+    "tests/int/admin-recent-transactions-widget-1936.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1936-p1-admin-dashboard-recent-transactions-returns-htt.jsonl"
+}

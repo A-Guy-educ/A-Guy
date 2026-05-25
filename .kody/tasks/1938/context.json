@@ -1,0 +1,18 @@
+{
+  "taskId": "1938",
+  "taskType": "issue",
+  "target": "1938",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed duplicate lesson entry with -copy slug in Practice page by adding not_like filter to lesson queries in study-page.ts and lessons.ts",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/repos/queries/study-page.ts",
+    "src/server/repos/queries/lessons.ts",
+    "tests/int/lesson-duplicate-copy-slug-1938.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-05-23T21:19:00Z",
+  "finishedAt": "2026-05-23T21:28:00Z"
+}

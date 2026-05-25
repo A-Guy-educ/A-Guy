@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Consider adding -copy filter to queryLessonBySlug",
+    "body": "The queryLessonBySlug function in src/server/repos/queries/lessons.ts does not filter out lessons with '-copy' slugs. If a student navigates directly to a duplicate lesson URL, they could still access it. Consider adding the same slug: { not_like: '-copy' } filter to prevent direct access to duplicate lessons.",
+    "rationale": "Students should not be able to access incomplete duplicate lessons even via direct URL, though this is a lower priority than the listing fix.",
+    "priority": "low"
+  }
+]

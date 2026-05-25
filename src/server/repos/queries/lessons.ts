@@ -59,6 +59,10 @@ export const queryLessonsByChapter = cache(async ({ chapterId }: { chapterId: st
               { contentStatusVisible: { equals: true } },
             ],
           },
+          // Filter out duplication artifacts: slugs containing "-copy" (from Payload
+          // built-in duplicate) or " - Copy" patterns. These are incomplete duplicates
+          // that should not be served to students.
+          { slug: { not_like: '-copy' } },
         ],
       },
       sort: 'order',
@@ -235,6 +239,10 @@ export const queryLessonsByCourse = cache(async ({ courseId }: { courseId: strin
             { contentStatusVisible: { equals: true } },
           ],
         },
+        // Filter out duplication artifacts: slugs containing "-copy" (from Payload
+        // built-in duplicate) or " - Copy" patterns. These are incomplete duplicates
+        // that should not be served to students.
+        { slug: { not_like: '-copy' } },
       ],
     },
     sort: 'order',

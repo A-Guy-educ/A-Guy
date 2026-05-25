@@ -1,0 +1,14 @@
+{
+  "taskId": "1948",
+  "taskType": "pr",
+  "target": "1939-p3-admin-footer-shows-vdev-instead-of-version-numb",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Skipped HTTP-dependent sub-test when SERVER_URL is not set, following existing project pattern",
+  "prUrl": null,
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26370753650",
+  "filesTouched": ["tests/int/admin-recent-transactions-widget-1936.int.spec.ts"],
+  "sessionLog": ".kody/sessions/1948.jsonl",
+  "startedAt": "2026-05-24T19:50:00Z",
+  "finishedAt": "2026-05-24T19:52:00Z"
+}

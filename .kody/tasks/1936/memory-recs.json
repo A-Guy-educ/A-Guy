@@ -1,0 +1,18 @@
+[
+  {
+    "type": "lesson",
+    "name": "payload-v3-rest-api-url-structure",
+    "hook": "Payload v3 REST API is /api/{slug}, not /api/collections/{slug}",
+    "body": "Payload v3 REST API uses /api/{collection-slug} format, NOT /api/collections/{collection-slug} (which was a Payload v2 convention). When adding widgets that fetch from Payload collection REST endpoints, use /api/transactions not /api/collections/transactions. Verified in node_modules/@payloadcms/next/dist/routes/rest/index.js and node_modules/payload/dist/config/defaults.js (routes.api defaults to '/api').",
+    "why": "The bug was a wrong URL path in RecentTransactionsWidget that would have been caught earlier if the correct Payload v3 URL structure was known.",
+    "confidence": 0.95
+  },
+  {
+    "type": "lesson",
+    "name": "http-403-vs-404-in-payload-rest",
+    "hook": "HTTP 403 from /api/transactions vs 404 from /api/collections/transactions",
+    "body": "Confirmed via curl that /api/transactions returns 403 (auth required, endpoint exists) while /api/collections/transactions returns 404 (endpoint doesn't exist). In Payload v3, the REST catch-all at src/app/(payload)/api/[...slug]/route.ts handles /api/{slug} but /api/collections/transactions is not a registered route.",
+    "why": "Understanding the difference between 403 (auth/access denied) and 404 (not found) helped confirm the root cause was a wrong URL, not an access control issue.",
+    "confidence": 0.95
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "taskId": "1939",
+  "taskType": "issue",
+  "target": "1939",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed admin footer to read version from package.json instead of env var fallback",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/VersionInfo/index.tsx",
+    "tests/e2e/admin-version-footer.e2e.spec.ts"
+  ],
+  "sessionLog": null,
+  "startedAt": "2026-05-23T21:38:00Z",
+  "finishedAt": "2026-05-23T21:41:00Z"
+}
