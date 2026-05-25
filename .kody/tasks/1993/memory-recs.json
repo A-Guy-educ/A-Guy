@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "lessonType-mismatch-in-client-fetch",
+    "hook": "StudyContent client-side fetch must pass lessonType to match server prefetch",
+    "body": "When StudyContent falls back to client-side fetch (no grade cookie), it must pass the same lessonType that was used for the server-side prefetch. Otherwise the API returns 'practice' lessons (default) but the component filters for 'learning' lessons (default), resulting in an empty 'No topics available' state.",
+    "why": "The prefetchStudyData function has lessonType as its third arg (default 'practice'). StudyContent uses lessonType prop (default 'learning'). When prefetch fails and client fetches, not passing lessonType to API causes type mismatch.",
+    "confidence": 0.95
+  }
+]

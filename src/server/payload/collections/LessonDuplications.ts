@@ -70,6 +70,7 @@ export const LessonDuplications: CollectionConfig = {
     useAsTitle: 'id',
     defaultColumns: ['sourceLesson', 'level', 'subject', 'status', 'outputLesson', 'createdAt'],
     group: 'System',
+    formatDocURL: (args) => `/admin/lesson-duplications/${args.doc.id as string}`,
     description:
       'Job records for the lesson-duplication pipeline. Use the review screen at /admin/lesson-duplications/<id> to skip / regenerate / keep individual exercise failures.',
     components: {

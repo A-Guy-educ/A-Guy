@@ -1,0 +1,17 @@
+{
+  "taskId": "1993",
+  "taskType": "issue",
+  "target": "GitHub issue #1993",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed contradictory empty state between /study and /practice by passing lessonType to client-side fetch URL",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/study/_components/StudyContent/index.tsx",
+    "tests/int/study-practice-empty-state.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1993.jsonl",
+  "startedAt": "2026-05-24T10:50:00Z",
+  "finishedAt": "2026-05-24T10:59:00Z"
+}

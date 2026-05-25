@@ -20,6 +20,8 @@ export const Search: React.FC = () => {
       <form
         onSubmit={(e) => {
           e.preventDefault()
+          const query = value.trim()
+          router.push(`/search${query ? `?q=${query}` : ''}`)
         }}
       >
         <Label htmlFor="search" className="sr-only">

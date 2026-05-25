@@ -392,7 +392,7 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
       <div style={pageStyle}>
         <div style={resolvedBannerStyle}>
           ✓ All failures resolved — duplication finalized to <em>succeeded</em>.{' '}
-          <Link href="/admin/collections/lesson-duplications" style={{ color: 'inherit' }}>
+          <Link href="/admin/lesson-duplications" style={{ color: 'inherit' }}>
             Back to list
           </Link>
         </div>
@@ -416,7 +416,7 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
         <div style={headerStyle}>
           <p style={breadcrumbStyle}>
             <Link href="/admin">Dashboard</Link> /{' '}
-            <Link href="/admin/collections/lesson-duplications">Lesson Duplications</Link> / Review
+            <Link href="/admin/lesson-duplications">Lesson Duplications</Link> / Review
           </p>
           <h1 style={titleStyle}>Lesson Duplication Review</h1>
           <p style={metaStyle}>
@@ -482,7 +482,7 @@ export function LessonDuplicationReview({ duplicationId }: { duplicationId: stri
       <div style={headerStyle}>
         <p style={breadcrumbStyle}>
           <Link href="/admin">Dashboard</Link> /{' '}
-          <Link href="/admin/collections/lesson-duplications">Lesson Duplications</Link> / Review
+          <Link href="/admin/lesson-duplications">Lesson Duplications</Link> / Review
         </p>
         <h1 style={titleStyle}>Lesson Duplication Review</h1>
         <p style={metaStyle}>

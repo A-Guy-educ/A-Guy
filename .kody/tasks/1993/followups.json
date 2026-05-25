@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Add lessonType to prefetchStudyData cache key",
+    "body": "prefetchStudyData is a React cache() function with lessonType as a parameter. However, all cached invocations share the same cache entry if only gradeLevel and locale differ. Since different lessonType values should produce different results, the cache may return stale data. Consider using a compound cache key or splitting into separate cached functions per lessonType.",
+    "rationale": "The cache() call does not include lessonType in its arguments — only gradeLevel and locale. If /study and /practice are rendered in the same session, the first call's lessonType could be cached and returned for the second call.",
+    "priority": "medium"
+  }
+]

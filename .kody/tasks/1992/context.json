@@ -1,0 +1,17 @@
+{
+  "taskId": "1992",
+  "taskType": "issue",
+  "target": "1992",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed off-by-one lesson card heading misalignment by adding explicit sort by order field in StudyContent filteredLessons",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/study/_components/StudyContent/index.tsx",
+    "tests/int/chapters-by-grade-lesson-order.int.spec.ts"
+  ],
+  "sessionLog": null,
+  "startedAt": "2026-05-24T10:16:00.777Z",
+  "finishedAt": "2026-05-24T10:30:00.000Z"
+}

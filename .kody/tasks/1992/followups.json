@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Verify merge of fix from #1937 into dev",
+    "body": "Commit df31412c8 fixed the same off-by-one bug for issue #1937 but was never merged into the dev branch. Investigate why — was it closed without merging, or was there a regression? The fix should be in dev.",
+    "rationale": "The root cause fix was already found and implemented but didn't make it to dev. This indicates a process gap where a valid fix was not merged.",
+    "priority": "medium"
+  }
+]

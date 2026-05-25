@@ -1,0 +1,17 @@
+{
+  "taskId": "1989",
+  "taskType": "issue",
+  "target": "github-issue-1989",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed heartbeat fetch timeout issue that could cause /ask page to get stuck on loading",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/client/hooks/useActiveTimeTracker.ts",
+    "tests/unit/hooks/useActiveTimeTracker.test.ts"
+  ],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-05-24T07:50:00Z",
+  "finishedAt": "2026-05-24T07:51:00Z"
+}
