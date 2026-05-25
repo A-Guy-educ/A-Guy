@@ -124,6 +124,9 @@
       "loggingIn": "Logging in...",
       "noAccount": "Don't have an account?",
       "signupLink": "Sign up",
+      "brand": {
+        "heroSubtitle": "A-Guy Your Personal Tutor"
+      },
       "errors": {
         "invalidCredentials": "Invalid email or password"
       }

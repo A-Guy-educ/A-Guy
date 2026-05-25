@@ -1,0 +1,18 @@
+[
+  {
+    "type": "lesson",
+    "name": "same-fix-already-on-another-branch",
+    "hook": "When a bug matches a prior-art branch diff, check if it's merged to base",
+    "body": "The exact same bug (#2038) was already fixed on branch 2038-p1-frontend-routes-ask-practice-stats-test-study-a (commit b6ec366ed) with the same fix. When encountering a bug, check if prior-art branches already contain the fix and whether those branches are ancestors of the current HEAD.",
+    "why": "This bug was already fixed elsewhere but not merged. Checking prior-art diffs would have immediately revealed the fix pattern.",
+    "confidence": 0.95
+  },
+  {
+    "type": "decision",
+    "name": "redirect-to-onboarding-not-root",
+    "hook": "Missing gradeLevel should redirect to /onboarding/persona, not /",
+    "body": "Routes gated on gradeLevel (RequireCourseSelection, StudyContent) must redirect to /onboarding/persona when gradeLevel is missing, NOT to /. The homepage (/) falls back to /start when no home page exists in the CMS, creating a silent redirect chain that confuses QA.",
+    "why": "The redirect chain / -> /start hides the fact that onboarding is required, making the bug invisible until manual QA.",
+    "confidence": 0.95
+  }
+]

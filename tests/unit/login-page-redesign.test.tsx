@@ -111,6 +111,21 @@ describe('LoginForm - Google only mode (password disabled)', () => {
     expect(screen.getByText('כניסה מהירה')).toBeTruthy()
   })
 
+  it('renders brand heroSubtitle in Hebrew (not literal key)', () => {
+    renderWithPasswordDisabled(<LoginForm />)
+
+    // The bug: auth.login.brand.heroSubtitle was displayed as literal text
+    // The fix: should render the actual Hebrew translation
+    expect(screen.getByText('A-Guy המורה הפרטי שלכם')).toBeTruthy()
+  })
+
+  it('does NOT render the literal i18n key auth.login.brand.heroSubtitle', () => {
+    renderWithPasswordDisabled(<LoginForm />)
+
+    // The bug caused this literal key to appear as text
+    expect(screen.queryByText('auth.login.brand.heroSubtitle')).toBeNull()
+  })
+
   it('renders Google SSO button', () => {
     renderWithPasswordDisabled(<LoginForm />)
 

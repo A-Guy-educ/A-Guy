@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Investigate /stats route redirect to /start",
+    "body": "The /stats page (src/app/(frontend)/stats/page.tsx) was listed in the issue but uses a different auth pattern (getMeUser, not RequireCourseSelection/StudyContent). The fix applied addresses /ask, /practice, /test, /study. /stats was not modified. If /stats still exhibits the redirect-to-/start bug, it needs a separate investigation.",
+    "rationale": "The issue body lists /stats as one of the 5 affected routes, but the fix only addresses client-side grade-level guards, not server-side auth. If the bug is present on /stats, it has a different root cause.",
+    "priority": "medium"
+  }
+]

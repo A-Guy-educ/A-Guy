@@ -89,7 +89,7 @@ export const CouponUsageModal: React.FC<CouponUsageModalProps> = ({ coupon, isOp
 
       try {
         const response = await fetch(
-          `/api/collections/coupon-usages?where[coupon][equals]=${coupon.id}&depth=2`,
+          `/api/coupon-usages?where[coupon][equals]=${coupon.id}&depth=2`,
           { credentials: 'include' },
         )
 

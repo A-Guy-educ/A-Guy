@@ -1,0 +1,20 @@
+{
+  "taskId": "2053",
+  "taskType": "issue",
+  "target": "#2053",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed widget API URLs from /api/collections/{entity} to /api/{entity}. The widgets were calling Payload REST API at /api/collections/transactions but the correct endpoint is /api/transactions (without the 'collections' prefix). The handleEndpoints logic treats the first URL segment after /api/ as the collection name, so /api/collections/transactions looked for a 'collections' collection which doesn't exist.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/RecentTransactionsWidget/index.tsx",
+    "src/ui/admin/TransactionEditView/index.tsx",
+    "src/ui/admin/Coupons/CreateCouponModal/index.tsx",
+    "src/ui/admin/Coupons/CouponUsageModal/index.tsx",
+    "tests/int/collections-rest-api.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/<current-session>.jsonl",
+  "startedAt": "2026-05-24T22:28:00Z",
+  "finishedAt": "2026-05-24T22:52:00Z"
+}

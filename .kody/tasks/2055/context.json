@@ -1,0 +1,18 @@
+{
+  "taskId": "2055",
+  "taskType": "issue",
+  "target": "qa-fail-2026-05-24-3",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed redirect chain: RequireCourseSelection and StudyContent now redirect to /onboarding/persona instead of / when gradeLevel is missing, preventing silent redirect to /start",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/guards/RequireCourseSelection.tsx",
+    "src/app/(frontend)/study/_components/StudyContent/index.tsx",
+    "tests/e2e/2055-route-redirect-to-start.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2055-p1-frontend-routes-ask-practice-stats-test-study-a.jsonl",
+  "startedAt": "2026-05-25T00:44:00Z",
+  "finishedAt": "2026-05-25T01:00:00Z"
+}

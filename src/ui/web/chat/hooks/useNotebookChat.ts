@@ -203,8 +203,12 @@ export function useNotebookChat({
       const minLoadingTime = Promise.all([new Promise((resolve) => setTimeout(resolve, 100))])
 
       try {
-        const retryDelayMs = 500
-        const maxRetries = 10
+        // Use short retries: the "conversation exists but messages empty" race
+        // condition resolves within ~600ms in normal chat. Admin chat has no async
+        // message creation so it won't resolve at all — long retries just delay
+        // the spinner. 2 retries with 300ms cap = ~600ms total retry delay.
+        const retryDelayMs = 300
+        const maxRetries = 2
         let attempt = 0
         let result = (
           await Promise.all([apiService.getConversation(contextKey), minLoadingTime])
