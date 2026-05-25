@@ -1,0 +1,17 @@
+{
+  "taskId": "1924",
+  "taskType": "issue",
+  "target": "1924",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed CSP img-src directive in next.config.js to allow *.gravatar.com on /admin routes",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "next.config.js",
+    "tests/int/csp-admin-gravatar.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1924.jsonl",
+  "startedAt": "2026-05-23T13:59:00Z",
+  "finishedAt": "2026-05-23T14:00:30Z"
+}

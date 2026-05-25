@@ -154,12 +154,23 @@ interface RevenueMetrics {
   topProducts: TopProduct[]
 }
 
+interface RecentTransaction {
+  id: string
+  createdAt: string
+  amount: number
+  currency: string
+  status: 'pending' | 'succeeded' | 'failed' | 'refunded'
+  user?: { email?: string }
+  product?: { name?: string }
+}
+
 export interface DashboardMetricsResponse {
   period: Period
   userMetrics: UserMetrics
   contentCounts: ContentCounts
   engagement: EngagementMetrics
   revenueMetrics: RevenueMetrics
+  recentTransactions: RecentTransaction[]
 }
 
 function startOfDay(date: Date): Date {
@@ -296,6 +307,7 @@ export async function GET(req: Request) {
     returningUsersResult,
     totalUsersInPeriod,
     allTransactions,
+    recentTransactionsResult,
   ] = await Promise.all([
     // Active users today/yesterday
     payload.find({
@@ -550,6 +562,24 @@ export async function GET(req: Request) {
           totalPages: number
         }>,
     ),
+    // Recent transactions for the RecentTransactionsWidget — not filtered by period
+    payload.find({
+      collection: 'transactions',
+      limit: 5,
+      sort: '-createdAt',
+      depth: 2,
+      overrideAccess: true,
+    }) as Promise<{
+      docs: Array<{
+        id: string
+        createdAt: string
+        amount: number
+        currency: string
+        status: 'pending' | 'succeeded' | 'failed' | 'refunded'
+        user?: { email?: string }
+        product?: { name?: string }
+      }>
+    }>,
   ])
 
   // Calculate avg time spent (allUserStats is already a flat array from findAll)
@@ -774,6 +804,15 @@ export async function GET(req: Request) {
       successRate,
       topProducts,
     },
+    recentTransactions: recentTransactionsResult.docs.map((tx) => ({
+      id: tx.id,
+      createdAt: tx.createdAt,
+      amount: tx.amount,
+      currency: tx.currency,
+      status: tx.status,
+      user: tx.user as { email?: string } | undefined,
+      product: tx.product as { name?: string } | undefined,
+    })),
   }
 
   return Response.json(response)
