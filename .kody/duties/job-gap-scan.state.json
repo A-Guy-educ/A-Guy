@@ -1,18 +1,18 @@
 {
   "version": 1,
-  "rev": 59,
+  "rev": 60,
   "cursor": "idle",
   "data": {
-    "lastRunISO": "2026-05-26T14:35:00Z",
+    "lastRunISO": "2026-05-26T17:48:00Z",
     "proposed": {
       "bundle-size-diff": {
         "firstSuggestedISO": "2026-05-23T21:06:45Z",
         "openIssue": 2106
       }
     },
-    "lastFiredAt": "2026-05-26T16:24:17.532Z",
+    "lastFiredAt": "2026-05-26T17:12:14.012Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 16666
+    "lastDurationMs": 19238
   },
   "done": false
 }
