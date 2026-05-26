@@ -1,14 +1,14 @@
 {
   "taskId": "1660",
-  "taskType": "pr",
+  "taskType": "merge-conflict",
   "target": "release/v0.25.9",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Single asymmetric conflict in CHANGELOG.md resolved by taking HEAD's changelog header and QA indicator",
+  "reason": "CHANGELOG.md asymmetric conflict resolved: kept all HEAD entries, updated #2011 QA marker to dev's newer value (⚠️ QA 2026-05-25)",
   "prUrl": null,
   "runUrl": null,
   "filesTouched": ["CHANGELOG.md"],
   "sessionLog": ".kody/sessions/1660.jsonl",
-  "startedAt": "2026-05-25T00:00:00Z",
-  "finishedAt": "2026-05-25T00:00:00Z"
+  "startedAt": "2026-05-26T00:00:00Z",
+  "finishedAt": "2026-05-26T00:00:00Z"
 }

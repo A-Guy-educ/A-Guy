@@ -1,9 +1,9 @@
 {
   "proposed": {
     "bundle-size-diff": {
-      "firstSuggestedISO": "2026-05-23T21:06:45Z",
-      "openIssue": 1945
+      "firstSuggestedISO": "2026-05-26T08:39:30Z",
+      "openIssue": 2106
     }
   },
-  "lastRunISO": "2026-05-23T21:06:45Z"
+  "lastRunISO": "2026-05-26T08:39:30Z"
 }

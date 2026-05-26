@@ -6,8 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- #2011: Fail closed in checkout tenant guard when user has no tenant ([#2012](https://github.com/A-Guy-educ/A-Guy/pull/2012)) — @kodyade · 🔄 QA (#2062)
-
+- #2011: Fail closed in checkout tenant guard when user has no tenant ([#2012](https://github.com/A-Guy-educ/A-Guy/pull/2012)) — @kodyade · ⚠️ QA 2026-05-25 (#2079)
 - #1988: Make coupon consumption retry-safe and tenant-scoped on webhook … ([#2006](https://github.com/A-Guy-educ/A-Guy/pull/2006)) — @kodyade
 - #1987: Persist PayPal capture ID for refunds + forward currency from ad… ([#2003](https://github.com/A-Guy-educ/A-Guy/pull/2003)) — @kodyade
 - #1747: Force pass-1 schema to include hint/solution/fullSolution slots … ([#1751](https://github.com/A-Guy-educ/A-Guy/pull/1751)) — @aguyaharonyair
