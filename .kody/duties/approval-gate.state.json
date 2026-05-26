@@ -1,13 +1,14 @@
 {
   "version": 1,
-  "rev": 65,
+  "rev": 66,
   "cursor": "idle",
   "data": {
     "prs": {},
     "nextEligibleISO": "2026-05-25T08:03:00Z",
-    "lastFiredAt": "2026-05-25T08:43:51.355Z",
-    "lastOutcome": "completed",
-    "lastDurationMs": 21819
+    "lastFiredAt": "2026-05-26T08:37:20.557Z",
+    "lastOutcome": "failed",
+    "lastDurationMs": 183708,
+    "lastError": "agent did not emit a `kody-job-next-state` fenced block"
   },
   "done": false
 }
