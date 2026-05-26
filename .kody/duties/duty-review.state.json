@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "rev": 9,
+  "rev": 10,
   "cursor": "reviewed",
   "data": {
-    "lastRunISO": "2026-05-26T00:30:00Z",
-    "nextEligibleISO": "2026-05-26T06:30:00Z",
+    "lastRunISO": "2026-05-26T08:45:00Z",
+    "nextEligibleISO": "2026-05-26T14:45:00Z",
     "cycle": 1,
     "reviewed": [
       "approval-gate",
@@ -13,15 +13,16 @@
       "coverage-floor",
       "dead-code-sweep",
       "dependency-bump",
-      "clear-empty-goals"
+      "clear-empty-goals",
+      "design-review"
     ],
     "lastReviewed": {
-      "slug": "clear-empty-goals",
+      "slug": "design-review",
       "verdict": "broken"
     },
-    "lastFiredAt": "2026-05-26T08:39:12.517Z",
+    "lastFiredAt": "2026-05-26T15:08:20.610Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 99912
+    "lastDurationMs": 106177
   },
   "done": false
 }
