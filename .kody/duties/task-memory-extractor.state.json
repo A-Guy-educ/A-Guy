@@ -1,16 +1,17 @@
 {
   "version": 1,
-  "rev": 93,
+  "rev": 94,
   "cursor": "clean",
   "data": {
-    "last_tick": "2026-05-26T18:30:00.000Z",
+    "last_tick": "2026-05-26T18:38:00.000Z",
     "tasks_seen": 31,
     "tasks_processed": 31,
     "written_this_session": 4,
-    "lastFiredAt": "2026-05-26T18:22:24.192Z",
+    "lastFiredAt": "2026-05-26T19:16:55.378Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 28011,
-    "push_blocked": null
+    "lastDurationMs": 18184,
+    "push_blocked": null,
+    "note": "task 2110 has invalid JSON in memory-recs.json (Invalid \\\\escape: line 6 column 562)"
   },
   "done": false
 }
