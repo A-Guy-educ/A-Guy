@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "rev": 10,
+  "rev": 11,
   "cursor": "reviewed",
   "data": {
-    "lastRunISO": "2026-05-26T08:45:00Z",
-    "nextEligibleISO": "2026-05-26T14:45:00Z",
+    "lastRunISO": "2026-05-26T21:20:59Z",
+    "nextEligibleISO": "2026-05-27T03:20:59Z",
     "cycle": 1,
     "reviewed": [
       "approval-gate",
@@ -14,15 +14,16 @@
       "dead-code-sweep",
       "dependency-bump",
       "clear-empty-goals",
-      "design-review"
+      "design-review",
+      "doc-drift"
     ],
     "lastReviewed": {
-      "slug": "design-review",
+      "slug": "doc-drift",
       "verdict": "broken"
     },
-    "lastFiredAt": "2026-05-26T15:08:20.610Z",
+    "lastFiredAt": "2026-05-26T21:23:01.796Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 106177
+    "lastDurationMs": 153254
   },
   "done": false
 }
