@@ -21,6 +21,7 @@ export const PageRange: React.FC<{
     singular?: string
   }
   currentPage?: number
+  isSearch?: boolean
   limit?: number
   totalDocs?: number
   isSearchResult?: boolean
@@ -30,6 +31,7 @@ export const PageRange: React.FC<{
     collection,
     collectionLabels: collectionLabelsFromProps,
     currentPage,
+    isSearch,
     limit,
     totalDocs,
     isSearchResult,
@@ -49,14 +51,18 @@ export const PageRange: React.FC<{
 
   return (
     <div className={cn('font-semibold', className)}>
-      {isSearchResult &&
-        (typeof totalDocs === 'undefined' || totalDocs === 0) &&
+      {(isSearchResult || isSearch) &&
+        typeof totalDocs !== 'undefined' &&
+        totalDocs === 0 &&
         'Search produced no results.'}
+      {!isSearchResult &&
+        !isSearch &&
+        typeof totalDocs !== 'undefined' &&
+        totalDocs === 0 &&
+        `No ${plural} yet.`}
       {typeof totalDocs !== 'undefined' &&
         totalDocs > 0 &&
-        `Showing ${indexStart}${indexStart > 0 ? ` - ${indexEnd}` : ''} of ${totalDocs} ${
-          totalDocs > 1 ? plural : singular
-        }`}
+        `Showing ${indexStart}${indexStart > 0 ? ` - ${indexEnd}` : ''} of ${totalDocs} ${totalDocs > 1 ? plural : singular}`}
     </div>
   )
 }
