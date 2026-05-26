@@ -1,4 +1,9 @@
 {
+  "git": {
+    "deploymentEnabled": {
+      "kody-state": false
+    }
+  },
   "crons": [
     {
       "path": "/api/cron/warmup",
