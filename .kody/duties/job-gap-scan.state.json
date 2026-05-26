@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "rev": 57,
+  "rev": 58,
   "cursor": "idle",
   "data": {
     "lastRunISO": "2026-05-26T14:35:00Z",
@@ -10,9 +10,9 @@
         "openIssue": 2106
       }
     },
-    "lastFiredAt": "2026-05-26T15:08:51.077Z",
+    "lastFiredAt": "2026-05-26T15:57:05.530Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 18765
+    "lastDurationMs": 22924
   },
   "done": false
 }
