@@ -716,5 +716,55 @@
       "authRequired": "אנא התחבר כדי להשתמש בעוזר הלמידה",
       "sendFailed": "שליחת ההודעה נכשלה. אנא נסה שוב."
     }
+  },
+  "products": {
+    "catalogTitle": "מוצרים",
+    "catalogDescription": "עיין במוצרים הזמינים שלנו והתחל ללמוד עוד היום.",
+    "noProducts": "אין מוצרים זמינים כרגע.",
+    "oneTimeLabel": "רכישה חד-פעמית",
+    "subscriptionLabel": "מנוי",
+    "perMonth": "לחודש",
+    "perYear": "לשנה",
+    "includedItems": "מה כלול במוצר?",
+    "buyButton": "רכוש עכשיו",
+    "loginToBuy": "התחבר כדי לרכוש",
+    "redirecting": "מעביר לתשלום...",
+    "couponLabel": "קוד קופון",
+    "couponPlaceholder": "הזן קוד קופון",
+    "applyCoupon": "החל",
+    "couponApplied": "הקופון הוחל: {code} — מחיר סופי: {amount}",
+    "remove": "הסר",
+    "errors": {
+      "authRequired": "אנא התחבר כדי לבצע רכישה.",
+      "productNotFound": "מוצר זה אינו זמין עוד.",
+      "productNotActive": "מוצר זה אינו זמין עוד.",
+      "invalidCoupon": "קוד הקופון אינו תקף או פג תוקף.",
+      "checkoutFailed": "לא ניתן להתחיל את התשלום. אנא נסה שוב."
+    }
+  },
+  "checkout": {
+    "success": {
+      "missingSession": "לא נמצאה ישיבת תשלום",
+      "noSessionDescription": "לא הצלחנו למצוא את ישיבת התשלום שלך. אם השלמת תשלום, אנא צור קשר עם התמיכה.",
+      "processing": "מעבד תשלום...",
+      "processingDescription": "התשלום שלך מעובד. הדף יתעדכן אוטומטית.",
+      "refresh": "רענן",
+      "confirmedTitle": "התשלום אושר!",
+      "confirmedDescription": "התשלום התקבל והגישה שלך הוענקה. ברוך הבא!",
+      "productLabel": "מוצר: {product}",
+      "pendingTitle": "התשלום התקבל",
+      "pendingDescription": "קיבלנו את התשלום שלך. הגישה שלך מוקמת — בדרך כלל זה לוקח כמה רגעים.",
+      "paymentFailed": "התשלום נכשל",
+      "paymentFailedDescription": "לא ניתן היה לעבד את התשלום. אנא נסה שוב או צור קשר עם התמיכה.",
+      "backToProducts": "עיין במוצרים",
+      "goHome": "לעמוד הבית"
+    },
+    "cancel": {
+      "title": "התשלום בוטל",
+      "description": "אין בעיה — התשלום שלך בוטל ולא חויבת.",
+      "productLabel": "המוצר שניסית לרכוש: {product}",
+      "backToProduct": "נסה שוב",
+      "browseProducts": "עיין בכל המוצרים"
+    }
   }
 }

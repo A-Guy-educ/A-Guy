@@ -27,9 +27,10 @@ browser cost.
 
 `disabled: true` only to avoid auto-activating QA — this repo is already set up:
 `CHANGELOG.md` has a populated `## [Unreleased]` section, `qa.fallbackUrl` in
-`kody.config.json` (`https://dev.aguy.co.il`) resolves the target URL, and
-`.kody/qa-guide.md` carries login credentials + the route list. Flip to
-`disabled: false` to go live; no other setup needed.
+`kody.config.json` (`https://dev.aguy.co.il`) resolves the target URL, the
+`LOGIN_USER` variable + `LOGIN_PASSWORD` secret carry the QA credentials, and
+the `.kody/context/*.md` entries tagged for `qa-engineer` carry the route list
++ flows. Flip to `disabled: false` to go live; no other setup needed.
 
 **Per tick (one action max):**
 
