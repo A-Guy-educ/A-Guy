@@ -17,9 +17,10 @@ never revisits.
 
 `disabled: true` only to avoid auto-activating QA — this repo is already set up:
 `qa.fallbackUrl` in `kody.config.json` (`https://dev.aguy.co.il`) resolves the
-target URL, and `.kody/qa-guide.md` carries login credentials + the route list,
-so `qa-engineer` can log in and browse. Flip to `disabled: false` to go live; no
-other setup needed.
+target URL, the `LOGIN_USER` variable + `LOGIN_PASSWORD` secret carry the QA
+credentials, and the `.kody/context/*.md` entries tagged for `qa-engineer`
+carry the route list + flows, so `qa-engineer` can log in and browse. Flip to
+`disabled: false` to go live; no other setup needed.
 
 **Cadence.** Set by the `every:` frontmatter (the dashboard schedule dropdown)
 and enforced by the engine — the duty won't tick more often than its interval.

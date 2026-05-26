@@ -106,6 +106,7 @@ export interface Config {
     'access-codes': AccessCode;
     transactions: Transaction;
     payment_stats: PaymentStat;
+    'webhook-events': WebhookEvent;
     'mcp-audit-logs': McpAuditLog;
     redirects: Redirect;
     forms: Form;
@@ -158,6 +159,7 @@ export interface Config {
     'access-codes': AccessCodesSelect<false> | AccessCodesSelect<true>;
     transactions: TransactionsSelect<false> | TransactionsSelect<true>;
     payment_stats: PaymentStatsSelect<false> | PaymentStatsSelect<true>;
+    'webhook-events': WebhookEventsSelect<false> | WebhookEventsSelect<true>;
     'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -2919,6 +2921,35 @@ export interface PaymentStat {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "webhook-events".
+ */
+export interface WebhookEvent {
+  id: string;
+  /**
+   * Payment provider that sent this webhook event
+   */
+  provider: 'stripe' | 'paypal';
+  /**
+   * Provider-assigned event ID used for deduplication
+   */
+  eventId: string;
+  /**
+   * Type of webhook event
+   */
+  eventType: string;
+  /**
+   * Timestamp when this event was first received
+   */
+  receivedAt: string;
+  /**
+   * Whether this event was successfully processed
+   */
+  processed?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "mcp-audit-logs".
  */
 export interface McpAuditLog {
@@ -3376,6 +3407,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'payment_stats';
         value: string | PaymentStat;
+      } | null)
+    | ({
+        relationTo: 'webhook-events';
+        value: string | WebhookEvent;
       } | null)
     | ({
         relationTo: 'mcp-audit-logs';
@@ -4506,6 +4541,19 @@ export interface PaymentStatsSelect<T extends boolean = true> {
   refundedCount?: T;
   failedCount?: T;
   newCustomersCount?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "webhook-events_select".
+ */
+export interface WebhookEventsSelect<T extends boolean = true> {
+  provider?: T;
+  eventId?: T;
+  eventType?: T;
+  receivedAt?: T;
+  processed?: T;
   updatedAt?: T;
   createdAt?: T;
 }

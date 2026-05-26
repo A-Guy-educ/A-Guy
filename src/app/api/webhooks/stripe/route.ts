@@ -24,6 +24,30 @@ import config from '@payload-config'
 import { grantProductEntitlements } from '@/lib/payment/grant-entitlements'
 import { verifyStripeWebhook } from '@/lib/payment/stripe'
 
+/**
+ * Detects duplicate-key errors from MongoDB (code 11000) and Payload CMS
+ * ValidationError (wraps MongoDB duplicate key as "Value must be unique").
+ */
+function isDuplicateKeyError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false
+  const e = err as { code?: number; message?: string; errors?: unknown[]; data?: unknown }
+  if (e.code === 11000) return true
+  if (/E11000|duplicate key/i.test(e.message ?? '')) return true
+  // Payload CMS ValidationError: message contains "unique"
+  if (/unique/i.test(e.message ?? '')) return true
+  // Payload ValidationError stores errors in data.errors or directly in errors
+  const errors = (e.data as { errors?: unknown[] })?.errors ?? e.errors
+  if (Array.isArray(errors)) {
+    return errors.some(
+      (err2: unknown) =>
+        typeof err2 === 'object' &&
+        err2 !== null &&
+        /unique/i.test((err2 as { message?: string }).message ?? ''),
+    )
+  }
+  return false
+}
+
 export async function POST(request: NextRequest) {
   const payload = await getPayload({ config })
 
@@ -41,7 +65,7 @@ export async function POST(request: NextRequest) {
   // 3. Verify webhook signature
   let event: Stripe.Event
   try {
-    event = await verifyStripeWebhook(rawBody, signature)
+    event = await verifyStripeWebhook(rawBody, signature, 300)
   } catch (err) {
     const sourceIp =
       request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
@@ -67,12 +91,51 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Verification failed' }, { status: 500 })
   }
 
-  // 4. Route event by type
+  // 4. Dedup gate — attempt to create WebhookEvents doc.
+  // On duplicate-key error the event was already received → return 200 immediately.
+  let webhookEventId: string | null = null
+  try {
+    const doc = await payload.create({
+      collection: 'webhook-events',
+      data: {
+        provider: 'stripe',
+        eventId: event.id,
+        eventType: event.type as string,
+        processed: false,
+      } as any,
+      draft: false,
+      overrideAccess: true,
+    })
+    webhookEventId = doc.id
+  } catch (err) {
+    if (isDuplicateKeyError(err)) {
+      payload.logger.info({ eventId: event.id }, 'Stripe webhook: event already received — deduped')
+      return NextResponse.json({ received: true, deduped: true }, { status: 200 })
+    }
+    // Unexpected error — log and return 500 so provider retries
+    payload.logger.error(
+      { error: err, eventId: event.id },
+      'Stripe webhook: unexpected error during dedup gate',
+    )
+    return NextResponse.json({ error: 'Dedup gate error' }, { status: 500 })
+  }
+
+  // 5. Route event by type
   try {
     await handleEvent(payload, event)
   } catch (err) {
     payload.logger.error({ error: err, eventType: event.type }, 'Stripe webhook handler error')
     return NextResponse.json({ error: 'Handler error' }, { status: 500 })
+  }
+
+  // 6. Mark event as processed
+  if (webhookEventId) {
+    await payload.update({
+      collection: 'webhook-events',
+      id: webhookEventId,
+      data: { processed: true },
+      overrideAccess: true,
+    })
   }
 
   return NextResponse.json({ received: true }, { status: 200 })

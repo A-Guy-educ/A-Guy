@@ -33,8 +33,32 @@ interface PayPalWebhookResource {
 }
 
 interface PayPalWebhookEvent {
+  id: string
   event_type: string
   resource: PayPalWebhookResource
+}
+
+/**
+ * MongoDB duplicate-key error detection (code 11000 or E11000 in message).
+ */
+function isDuplicateKeyError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false
+  const e = err as { code?: number; message?: string; errors?: unknown[]; data?: unknown }
+  if (e.code === 11000) return true
+  if (/E11000|duplicate key/i.test(e.message ?? '')) return true
+  // Payload CMS ValidationError: message contains "unique"
+  if (/unique/i.test(e.message ?? '')) return true
+  // Payload ValidationError stores errors in data.errors or directly in errors
+  const errors = (e.data as { errors?: unknown[] })?.errors ?? e.errors
+  if (Array.isArray(errors)) {
+    return errors.some(
+      (err2: unknown) =>
+        typeof err2 === 'object' &&
+        err2 !== null &&
+        /unique/i.test((err2 as { message?: string }).message ?? ''),
+    )
+  }
+  return false
 }
 
 export async function POST(request: NextRequest) {
@@ -101,8 +125,40 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Verification failed' }, { status: 500 })
   }
 
-  // 4. Route event by type
+  // 4. Dedup gate — attempt to create WebhookEvents doc.
+  // On duplicate-key error the event was already received → return 200 immediately.
   const event = body as PayPalWebhookEvent
+  let webhookEventId: string | null = null
+  try {
+    const doc = await payload.create({
+      collection: 'webhook-events',
+      data: {
+        provider: 'paypal',
+        eventId: event.id,
+        eventType: event.event_type as string,
+        processed: false,
+      } as any,
+      draft: false,
+      overrideAccess: true,
+    })
+    webhookEventId = doc.id
+  } catch (err) {
+    if (isDuplicateKeyError(err)) {
+      payload.logger.info(
+        { eventId: event.id, eventType: event.event_type },
+        'PayPal webhook: event already received — deduped',
+      )
+      return NextResponse.json({ received: true, deduped: true }, { status: 200 })
+    }
+    // Unexpected error — log and return 500 so provider retries
+    payload.logger.error(
+      { error: err, eventId: event.id },
+      'PayPal webhook: unexpected error during dedup gate',
+    )
+    return NextResponse.json({ error: 'Dedup gate error' }, { status: 500 })
+  }
+
+  // 5. Route event by type
   try {
     await handleEvent(payload, event)
   } catch (err) {
@@ -111,6 +167,16 @@ export async function POST(request: NextRequest) {
       'PayPal webhook handler error',
     )
     return NextResponse.json({ error: 'Handler error' }, { status: 500 })
+  }
+
+  // 6. Mark event as processed
+  if (webhookEventId) {
+    await payload.update({
+      collection: 'webhook-events',
+      id: webhookEventId,
+      data: { processed: true },
+      overrideAccess: true,
+    })
   }
 
   return NextResponse.json({ received: true }, { status: 200 })

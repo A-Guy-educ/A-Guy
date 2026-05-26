@@ -40,6 +40,7 @@ import { TeacherProfiles } from '@/server/payload/collections/TeacherProfiles'
 import { Tenants } from '@/server/payload/collections/Tenants'
 import { Transactions } from '@/server/payload/collections/Transactions'
 import { PaymentStats } from '@/server/payload/collections/PaymentStats'
+import { WebhookEvents } from '@/server/payload/collections/WebhookEvents'
 import { UploadSessions } from '@/server/payload/collections/UploadSessions'
 import { UserProgress } from '@/server/payload/collections/UserProgress'
 import { Users } from '@/server/payload/collections/Users'
@@ -219,6 +220,7 @@ export default buildConfig({
     AccessCodes,
     Transactions,
     PaymentStats,
+    WebhookEvents,
     MCPAuditLogs,
   ],
   cors: [getServerSideURL()].filter(Boolean),

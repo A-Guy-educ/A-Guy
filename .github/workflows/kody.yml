@@ -9,14 +9,13 @@
 # ANTHROPIC_API_KEY). kody reads any *_API_KEY secret automatically via
 # toJSON(secrets) — no need to list them here.
 #
-# Recommended: KODY_TOKEN secret — a fine-grained PAT or GitHub App token
-# with `repo` + `read:org` + `workflow` scopes. Without it, kody's
-# commits/PR-creation still work via github.token, but three things degrade:
-#   1. PR body updates fail with "token lacks read:org scope" (cosmetic).
-#   2. Pushes from kody won't trigger downstream workflows.
-#   3. Any commit that modifies `.github/workflows/*` is REJECTED by
-#      GitHub — the default GITHUB_TOKEN can't touch workflow files.
-# Set KODY_TOKEN in repo Settings → Secrets → Actions.
+# Auth: a GitHub App installation token, minted fresh each run from the
+# KODY_APP_ID + KODY_APP_PRIVATE_KEY secrets. This replaces the old static
+# KODY_TOKEN PAT — the App has its own per-install 5,000+/hr budget that
+# GitHub won't flag for abuse, and (unlike the default GITHUB_TOKEN) it can
+# push to `.github/workflows/*` and trigger downstream workflows.
+# Set KODY_APP_ID + KODY_APP_PRIVATE_KEY in repo Settings → Secrets → Actions.
+# (Install the App on the org first; it auto-resolves the installation.)
 
 name: kody
 
@@ -70,11 +69,18 @@ jobs:
       contents: write
       actions: read
     steps:
+      - name: Mint GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.KODY_APP_ID }}
+          private-key: ${{ secrets.KODY_APP_PRIVATE_KEY }}
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.base.ref || github.ref }}
-          token: ${{ secrets.KODY_TOKEN || github.token }}
+          token: ${{ steps.app-token.outputs.token || github.token }}
 
       - uses: actions/setup-node@v4
         with:
@@ -91,6 +97,10 @@ jobs:
 
       - env:
           ALL_SECRETS: ${{ toJSON(secrets) }}
+          # The App token wins: set explicitly so it beats any leftover
+          # KODY_TOKEN unpacked from ALL_SECRETS (the engine's resolver skips
+          # env keys that are already set).
+          KODY_TOKEN: ${{ steps.app-token.outputs.token || github.token }}
           SESSION_ID: ${{ inputs.sessionId }}
           INIT_MESSAGE: ${{ inputs.message }}
           MODEL: ${{ inputs.model }}
