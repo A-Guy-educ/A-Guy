@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "rev": 4,
+  "rev": 5,
   "cursor": "done",
   "data": {
     "lastRelease": {
@@ -8,9 +8,9 @@
       "issueNumber": 2128,
       "triggeredAt": "2026-05-26T20:45:00.000Z"
     },
-    "lastFiredAt": "2026-05-26T20:20:37.919Z",
+    "lastFiredAt": "2026-05-26T20:27:43.495Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 48159
+    "lastDurationMs": 21598
   },
   "done": false
 }
