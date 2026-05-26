@@ -1,6 +1,15 @@
 'use client'
 
-import DOMPurify from 'dompurify'
+/**
+ * @fileType component
+ * @ai-summary Quill HTML editor for HtmlBlock - admin-only content creation
+ *
+ * SECURITY NOTE: This component is admin-only - only authorized content creators (teachers)
+ * have access to it. The content is not sanitized here to allow rich HTML including
+ * style attributes, details/summary tags, and other HTML. Content displayed to students
+ * goes through separate rendering logic with proper escaping.
+ */
+
 import { useField } from '@payloadcms/ui'
 import dynamic from 'next/dynamic'
 import React, { useMemo, useState } from 'react'
@@ -35,62 +44,6 @@ const QUILL_FORMATS = [
   'direction',
 ]
 
-const SANITIZE_CONFIG = {
-  ALLOWED_TAGS: [
-    'p',
-    'br',
-    'hr',
-    'span',
-    'h1',
-    'h2',
-    'h3',
-    'h4',
-    'h5',
-    'h6',
-    'strong',
-    'b',
-    'em',
-    'i',
-    'u',
-    's',
-    'del',
-    'ins',
-    'mark',
-    'sub',
-    'sup',
-    'ul',
-    'ol',
-    'li',
-    'blockquote',
-    'pre',
-    'code',
-    'a',
-    'img',
-    'div',
-    'section',
-    'table',
-    'thead',
-    'tbody',
-    'tr',
-    'th',
-    'td',
-  ],
-  ALLOWED_ATTR: [
-    'href',
-    'src',
-    'alt',
-    'title',
-    'class',
-    'id',
-    'rel',
-    'width',
-    'height',
-    'colspan',
-    'rowspan',
-    'dir',
-  ],
-}
-
 export const QuillField: React.FC<{ path: string }> = ({ path }) => {
   const { value, setValue } = useField<string>({ path })
   const [showSource, setShowSource] = useState(false)
@@ -107,12 +60,7 @@ export const QuillField: React.FC<{ path: string }> = ({ path }) => {
   }
 
   const handleToggleSource = () => {
-    if (showSource && value) {
-      const sanitized = DOMPurify.sanitize(value, SANITIZE_CONFIG)
-      if (sanitized !== value) {
-        setValue(sanitized)
-      }
-    }
+    // No sanitization - admin-only content, rich HTML allowed
     setShowSource(!showSource)
   }
 
