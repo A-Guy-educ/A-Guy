@@ -1,15 +1,15 @@
 {
   "version": 1,
-  "rev": 96,
+  "rev": 97,
   "cursor": "clean",
   "data": {
     "last_tick": "2026-05-26T18:45:00.378Z",
     "tasks_seen": 31,
     "tasks_processed": 31,
     "written_this_session": 4,
-    "lastFiredAt": "2026-05-26T20:47:06.226Z",
+    "lastFiredAt": "2026-05-26T21:31:40.480Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 29882,
+    "lastDurationMs": 19239,
     "push_blocked": null,
     "note": "task 2110 has invalid JSON in memory-recs.json (Invalid \\escape: line 6 column 562) — persists this tick, no new extractions possible",
     "current_tick": "2026-05-26T19:00:00.000Z",
