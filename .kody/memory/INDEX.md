@@ -44,3 +44,15 @@ git activity belongs in `git log`, not here.
 - [Payment Status Gate Entitlements](payment-status-gate-entitlements.md) — Gate entitlement grant on payment_status=paid not checkout.session.completed (type: decision)
 
 - [Enum Preservation In Derive Json Schema](enum-preservation-in-derive-json-schema.md) — deriveJsonSchemaFromValue now preserves identifier strings as enum (type: decision)
+
+- [Inline Exercise Editor Per Exercise Save Via Rest](inline-exercise-editor-per-exercise-save-via-rest.md) — Per-exercise inline save uses Payload REST API PATCH, not lesson form (type: decision)
+
+- [Lazy Load Geometry Axis Editors Inline](lazy-load-geometry-axis-editors-inline.md) — Geometry/Axis editors lazy-loaded in InlineExerciseEditor (type: decision)
+
+- [Translation Template Replace Pattern](translation-template-replace-pattern.md) — Translation interpolations use .replace('{key}', value) not object args (type: lesson)
+
+- [Thin App Payload Restriction Exception](thin-app-payload-restriction-exception.md) — Server actions (*-action.ts) are exempt from Payload getPayload restriction (type: decision)
+
+- [User Transaction Api At Account Namespace](user-transaction-api-at-account-namespace.md) — User-facing transaction fetch API placed at /api/account/transactions/[id] not /api/transactions/[id] (type: decision)
+
+- [Nextrequest Vs Request In Handler Tests](nextrequest-vs-request-in-handler-tests.md) — Route handlers accept NextRequest, not Request — use NextRequest in handler tests (type: lesson)

@@ -15,6 +15,11 @@ import type { CollectionConfig } from 'payload'
 import { adminOnly } from '../access/adminOnly'
 import { createdByField } from '../fields/createdBy'
 import { optionalTenantField } from '../fields/tenant'
+import {
+  afterReadCouponStatus,
+  afterReadCouponUsageDisplay,
+  afterReadCouponExpiresDisplay,
+} from '../hooks/coupons/computeListDisplayFields-hook'
 
 export const Coupons: CollectionConfig = {
   slug: 'coupons',
@@ -22,11 +27,11 @@ export const Coupons: CollectionConfig = {
     useAsTitle: 'code',
     defaultColumns: [
       'code',
+      'status',
+      'usageDisplay',
       'discountType',
       'discountValue',
-      'usesCount',
-      'maxUses',
-      'validUntil',
+      'expiresDisplay',
       'isActive',
     ],
     group: 'Payments',
@@ -175,6 +180,55 @@ export const Coupons: CollectionConfig = {
       hasMany: true,
       admin: {
         description: 'אם ריק — חל על כל המוצרים',
+      },
+    },
+    // ─── Usage progress bar (detail view) ────────────────────────────────────────
+    // Shows a progress bar when maxUses > 0
+    {
+      name: 'usageProgress',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/ui/admin/Coupons/UsageProgressField#CouponUsageProgress',
+        },
+      },
+    },
+    // ─── Virtual derived fields for admin list view ───────────────────────────
+    // These fields are computed via afterRead hooks and are read-only.
+    {
+      name: 'status',
+      type: 'text',
+      admin: {
+        components: {
+          Cell: '@/ui/admin/Coupons/Cells/StatusCell#CouponStatusCell',
+        },
+      },
+      hooks: {
+        afterRead: [afterReadCouponStatus],
+      },
+    },
+    {
+      name: 'usageDisplay',
+      type: 'text',
+      admin: {
+        components: {
+          Cell: '@/ui/admin/Coupons/Cells/UsageCell#CouponUsageCell',
+        },
+      },
+      hooks: {
+        afterRead: [afterReadCouponUsageDisplay as any],
+      },
+    },
+    {
+      name: 'expiresDisplay',
+      type: 'text',
+      admin: {
+        components: {
+          Cell: '@/ui/admin/Coupons/Cells/ExpiresCell#CouponExpiresCell',
+        },
+      },
+      hooks: {
+        afterRead: [afterReadCouponExpiresDisplay as any],
       },
     },
     createdByField,

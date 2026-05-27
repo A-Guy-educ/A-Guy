@@ -17,9 +17,10 @@ never revisits.
 
 `disabled: true` only to avoid auto-activating QA — this repo is already set up:
 `qa.fallbackUrl` in `kody.config.json` (`https://dev.aguy.co.il`) resolves the
-target URL, and `.kody/qa-guide.md` carries login credentials + the route list,
-so `qa-engineer` can log in and browse. Flip to `disabled: false` to go live; no
-other setup needed.
+target URL, the `LOGIN_USER` variable + `LOGIN_PASSWORD` secret carry the QA
+credentials, and the `.kody/context/*.md` entries tagged for `qa-engineer`
+carry the route list + flows, so `qa-engineer` can log in and browse. Flip to
+`disabled: false` to go live; no other setup needed.
 
 **Cadence.** Set by the `every:` frontmatter (the dashboard schedule dropdown)
 and enforced by the engine — the duty won't tick more often than its interval.
@@ -57,18 +58,19 @@ that mention is the only thing that routes it into the dashboard inbox:
 
 <one or two sentences: routes covered, verdict, finding count>
 
-<!-- kody-cmd: @kody bug --issue <finding> -->
+<!-- kody-cmd: @kody qa-goal --issue <tracking> --scope "sweep" -->
 
 _Confirm or dismiss in the dashboard inbox. QA will not act on its own._
 ```
 
 `<action>` is `fix` when the sweep opened findings, or `note` for a clean
-sweep. **On findings**, the `kody-cmd` MUST be a real engine verb pointed at
-the logged finding issue: `@kody bug --issue <finding>` (the engine's `bug`
-flow reproduces, fixes, and opens a PR — `--issue` is required, so file the
-finding as an issue first via `gh issue create`). **On a clean sweep, omit the
-`kody-cmd:` line** — it's informational; the operator just dismisses. **Never
-emit `@kody approve`** — the engine has no `approve` verb and rejects it.
+sweep. **On findings**, the `kody-cmd` is
+`@kody qa-goal --issue <tracking> --scope "sweep"` — qa-engineer already posted
+the sweep report on the tracking issue; on approve, `qa-goal` promotes it into
+a fix goal (one ticket per finding). **On a clean sweep, omit the `kody-cmd:`
+line** — it's informational; the operator just dismisses. **Never emit
+`@kody approve`** — the engine has no `approve` verb. QA never creates the goal
+itself; it's gated behind your approval.
 
 ## Allowed Commands
 

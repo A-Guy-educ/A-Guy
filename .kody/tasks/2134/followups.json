@@ -1,0 +1,14 @@
+[
+  {
+    "title": "E2E test for /account/purchases page",
+    "body": "Add a Playwright E2E test at tests/e2e/ that verifies: (1) unauthenticated user gets redirected to login, (2) authenticated user sees their transaction list, (3) clicking a transaction navigates to the detail page.",
+    "rationale": "The integration test covers the API endpoint but not the full page render and navigation flow.",
+    "priority": "medium"
+  },
+  {
+    "title": "Receipt download link",
+    "body": "The issue mentions 'receipt download link' but this was not implemented. A future issue should add receipt PDF generation and download (e.g., /api/account/transactions/[id]/receipt route).",
+    "rationale": "The issue spec explicitly calls out receipt download link as a required field per transaction row.",
+    "priority": "low"
+  }
+]
