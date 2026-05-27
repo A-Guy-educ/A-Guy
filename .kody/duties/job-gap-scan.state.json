@@ -1,34 +1,18 @@
 {
   "version": 1,
-  "rev": 87,
+  "rev": 88,
   "cursor": "idle",
   "data": {
-    "lastRunISO": "2026-05-27T20:32:18.584Z",
+    "lastRunISO": "2026-05-26T08:39:30Z",
     "proposed": {
       "bundle-size-diff": {
         "firstSuggestedISO": "2026-05-26T08:39:30Z",
         "openIssue": 2106
-      },
-      "issue-auto-triage": {
-        "firstSuggestedISO": "2026-05-20T14:00:00Z",
-        "openIssue": 1744
-      },
-      "secret-leak-scan": {
-        "firstSuggestedISO": "2026-05-20T14:00:00Z",
-        "openIssue": 1738
-      },
-      "sentry-digest": {
-        "firstSuggestedISO": "2026-05-20T14:00:00Z",
-        "openIssue": 1736
-      },
-      "stale-pr-janitor": {
-        "firstSuggestedISO": "2026-05-20T14:00:00Z",
-        "openIssue": 1739
       }
     },
-    "lastFiredAt": "2026-05-27T22:27:14.008Z",
+    "lastFiredAt": "2026-05-27T22:38:15.939Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 18745
+    "lastDurationMs": 31873
   },
   "done": false
 }
