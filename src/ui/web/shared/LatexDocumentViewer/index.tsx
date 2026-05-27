@@ -82,7 +82,7 @@ export function LatexDocumentViewer({
         className,
       )}
     >
-      <div className="px-12 py-10 font-serif sm:px-16 sm:py-12">
+      <div className="px-4 py-10 sm:px-12 sm:py-12 font-serif">
         {title && (
           <h1 className="text-foreground mb-8 text-center text-heading-xl font-bold">{title}</h1>
         )}

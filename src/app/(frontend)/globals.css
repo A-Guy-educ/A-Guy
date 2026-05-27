@@ -218,6 +218,7 @@
       sans-serif;
     overscroll-behavior-y: contain;
     position: relative;
+    overflow-x: hidden;
   }
 }
 
@@ -327,6 +328,7 @@ html {
   opacity: 0;
   /* Background on html prevents white flash on mobile scroll bounce / pull-to-refresh */
   background-color: hsl(var(--background));
+  overflow-x: hidden;
 }
 
 html[data-theme='dark'],

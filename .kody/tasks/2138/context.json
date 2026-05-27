@@ -1,0 +1,19 @@
+{
+  "taskId": "2138",
+  "taskType": "issue",
+  "target": "2138-eliminate-horizontal-scroll-across-the-site-mobile",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "All fixes applied and verified: overflow-x:hidden on html/body, responsive padding on LatexDocumentViewer, overflow-x-auto on ConsolidatedLatexLessonView article, typecheck and lint passing.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/globals.css",
+    "src/ui/web/shared/LatexDocumentViewer/index.tsx",
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ConsolidatedLatexLessonView/index.tsx",
+    "tests/e2e/lesson-horizontal-scroll-2138.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-05-27T11:35:00Z",
+  "finishedAt": "2026-05-27T11:45:00Z"
+}

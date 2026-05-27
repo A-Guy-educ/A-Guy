@@ -1,0 +1,16 @@
+[
+  {
+    "type": "lesson",
+    "name": "html-body-overflow-x-hidden-prevents-document-level-scroll",
+    "hook": "Global overflow-x:hidden on html+body prevents horizontal scroll at document root",
+    "body": "Always set `overflow-x: hidden` on both html and body elements in globals.css. Without this, any overflowing child element (KaTeX, wide tables, fixed-width cards, padded LaTeX viewers) creates page-level horizontal scroll. Inner containers that legitimately need horizontal scroll (tables, code blocks, math overflow) keep their own overflow-x:auto. \n\n**Why:** KaTeX-display has overflow-x:auto internally, but if the document root allows horizontal scroll, the browser shows scrollbars at the page level even though inner content could scroll on its own. The global overflow-x:hidden on html/body prevents document-level scroll while inner containers with overflow-x:auto handle their own horizontal scroll correctly.\n\n**How to apply:** Add `overflow-x: hidden` to html and body in globals.css @layer base. This is a foundational CSS fix that should be in every project.",
+    "confidence": 0.95
+  },
+  {
+    "type": "lesson",
+    "name": "mobile-padding-must-be-responsive",
+    "hook": "Fixed large padding (px-12) on mobile causes overflow with max-w containers",
+    "body": "Fixed pixel padding like px-12 (48px per side) combined with max-w-[794px] creates 890px total width — wider than 360px mobile viewports. Always use responsive padding like px-4 sm:px-12 for mobile-first components that also have max-width constraints.\n\n**Why:** Issue #2138 edge case: LatexDocumentViewer used px-12 py-10 which is 48px horizontal padding. With max-w-[794px] inner content, the container overflows 360px viewports. The fix is px-4 sm:px-12 (16px on mobile, 48px on sm+).\n\n**How to apply:** When adding padding to components that also have max-width or fixed-width constraints, always use sm: or md: responsive breakpoints for larger padding values.",
+    "confidence": 0.9
+  }
+]

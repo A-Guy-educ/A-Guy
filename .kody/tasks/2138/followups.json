@@ -1,0 +1,14 @@
+[
+  {
+    "title": "NotebookWorkspace sidebar w-[360px] may overflow 320px viewports",
+    "body": "The NotebookWorkspace sidebar uses w-[360px] which is wider than 320px mobile viewports. This is a separate entry point (NotebookWorkspace, not ExerciseWorkspace) and lower priority than the LaTeX lesson pages addressed in #2138. Consider adding overflow handling or a mobile drawer pattern for this component.",
+    "rationale": "Lower priority because NotebookWorkspace is used for a different workflow (inline exercise editing) and the sidebar is intentional full-height UI. The main lesson view horizontal scroll issue (#2138) is the priority.",
+    "priority": "low"
+  },
+  {
+    "title": "Verify JSXGraphBoard pixel widths don't overflow on mobile",
+    "body": "JSXGraphBoard renders with CSS width/height from props (pixel values like 400x300). While the container has maxWidth:'100%', the inner SVG may still overflow on narrow viewports. The flex layout with min-w-0 should contain it, but mobile edge cases should be verified with the existing lesson-horizontal-scroll e2e test once it runs on actual graph-heavy content.",
+    "rationale": "JSXGraphBoard uses keepAspectRatio:false so wide graphs could potentially overflow. The graph-child div uses min-w-0 and max-w-full which should handle this via flex shrinking, but edge cases with very wide bounding boxes need verification.",
+    "priority": "low"
+  }
+]
