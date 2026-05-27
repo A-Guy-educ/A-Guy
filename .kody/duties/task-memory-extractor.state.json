@@ -1,26 +1,20 @@
 {
   "version": 1,
-  "rev": 108,
+  "rev": 109,
   "cursor": "clean",
   "data": {
-    "last_tick": "2026-05-27T11:21:06.273Z",
-    "tasks_seen": 37,
-    "tasks_processed": 37,
-    "written_this_session": 6,
-    "lastFiredAt": "2026-05-27T16:28:26.285Z",
+    "last_tick": "2026-05-27T11:28:47.000Z",
+    "tasks_seen": 43,
+    "tasks_processed": 38,
+    "written_this_session": 7,
+    "lastFiredAt": "2026-05-27T17:46:02.794Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 18925,
-    "push_blocked": null,
-    "note": "task 2110 has invalid JSON in memory-recs.json (Invalid \\escape: line 6 column 562) — persists this tick, no new extractions possible",
-    "current_tick": "2026-05-27T11:28:47.000Z",
-    "currentFiredAt": "2026-05-27T11:28:47.001Z",
+    "lastDurationMs": 84968,
+    "push_blocked": "remote advanced - origin/dev has unreferenced commits (eaa19069c..3dc5c4f64)",
+    "current_tick": "2026-05-27T17:44:47.000Z",
+    "currentFiredAt": "2026-05-27T17:44:47.001Z",
     "currentDurationMs": 2341,
-    "last_issue_note": "task 2110 invalid JSON persists — same error as prior tick, no new extractions possible",
-    "new_writes": [
-      ".kody/memory/user-transaction-api-at-account-namespace.md",
-      ".kody/memory/nextrequest-vs-request-in-handler-tests.md"
-    ],
-    "tick_note": "all 37 tasks already extracted, no new work this tick"
+    "tick_note": "task 1822 already committed in prior run; .extracted marker confirms; push blocked by stale remote"
   },
   "done": false
 }
