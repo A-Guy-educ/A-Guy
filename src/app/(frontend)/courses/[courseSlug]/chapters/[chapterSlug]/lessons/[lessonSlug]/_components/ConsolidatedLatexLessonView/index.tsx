@@ -38,7 +38,7 @@ export function ConsolidatedLatexLessonView({
           {headerSlot}
           <div className="flex-1 overflow-auto max-w-full bg-gradient-to-b from-muted via-muted to-border/40 py-section-md px-4 print:bg-background print:overflow-visible print:p-0">
             <article className="mx-auto max-w-[794px] overflow-x-auto overflow-y-hidden rounded-md border border-border bg-card shadow-modal print:shadow-none print:border-0 print:rounded-none print:max-w-full">
-              <header className="flex items-center justify-between border-b border-border/60 bg-card px-12 py-3 print:hidden">
+              <header className="flex items-center justify-between border-b border-border/60 bg-card px-4 py-3 sm:px-12 print:hidden">
                 <span className="truncate text-body-sm font-medium text-muted-foreground">
                   {lessonTitle}
                 </span>
@@ -53,9 +53,9 @@ export function ConsolidatedLatexLessonView({
                 latex={consolidatedLatex}
                 title={lessonTitle}
                 showPrintButton={false}
-                className="max-w-full rounded-none border-0 shadow-none overflow-visible"
+                className="max-w-full rounded-none border-0 shadow-none overflow-x-auto overflow-y-hidden"
               />
-              <footer className="flex items-center justify-between border-t border-border/60 bg-card px-12 py-2 text-body-xs text-muted-foreground/70 print:hidden">
+              <footer className="flex items-center justify-between border-t border-border/60 bg-card px-4 py-2 sm:px-12 text-body-xs text-muted-foreground/70 print:hidden">
                 <span className="truncate">{lessonTitle}</span>
                 <span className="font-mono tracking-[0.3em]">· · ·</span>
               </footer>

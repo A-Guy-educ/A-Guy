@@ -1,0 +1,16 @@
+{
+  "taskId": "2153",
+  "taskType": "pr",
+  "target": "2138-eliminate-horizontal-scroll-across-the-site-mobile",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed two remaining gaps: (1) LatexDocumentViewer overflow-visible bypasses article scroll container, changed to overflow-x-auto overflow-y-hidden; (2) header and footer px-12 fixed padding causes overflow on mobile, changed to px-4 sm:px-12.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ConsolidatedLatexLessonView/index.tsx"
+  ],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-05-27T12:00:00Z",
+  "finishedAt": "2026-05-27T12:05:00Z"
+}
