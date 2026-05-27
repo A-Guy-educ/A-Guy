@@ -1,16 +1,16 @@
 {
   "version": 1,
-  "rev": 5,
+  "rev": 6,
   "cursor": "done",
   "data": {
     "lastRelease": {
-      "date": "2026-05-26",
-      "issueNumber": 2128,
-      "triggeredAt": "2026-05-26T20:45:00.000Z"
+      "date": "2026-05-27",
+      "issueNumber": 2130,
+      "triggeredAt": "2026-05-27T00:00:00.000Z"
     },
-    "lastFiredAt": "2026-05-26T20:27:43.495Z",
+    "lastFiredAt": "2026-05-27T04:30:12.323Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 21598
+    "lastDurationMs": 30646
   },
   "done": false
 }
