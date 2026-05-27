@@ -82,7 +82,7 @@ export function LatexDocumentViewer({
         className,
       )}
     >
-      <div className="px-4 py-8 sm:px-8 sm:py-10">
+      <div className="overflow-x-auto px-4 py-8 sm:px-8 sm:py-10">
         {title && (
           <h1 className="text-foreground mb-8 text-center text-heading-xl font-bold">{title}</h1>
         )}
