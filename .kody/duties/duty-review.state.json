@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "rev": 14,
+  "rev": 15,
   "cursor": "reviewed",
   "data": {
-    "lastRunISO": "2026-05-27T18:38:46Z",
-    "nextEligibleISO": "2026-05-28T00:38:46Z",
     "cycle": 1,
+    "lastRunISO": "2026-05-27T23:11:14Z",
+    "nextEligibleISO": "2026-05-28T05:11:14Z",
     "reviewed": [
       "approval-gate",
       "architecture-audit",
@@ -18,15 +18,18 @@
       "doc-drift",
       "flaky-test-quarantine",
       "health-check",
-      "docs-code"
+      "docs-code",
+      "ceo-performance-review"
     ],
-    "lastReviewed": {
-      "slug": "docs-code",
-      "verdict": "warn"
+    "verdicts": {
+      "ceo-performance-review": {
+        "note": "state.json never created; report exists so duty ran, but promised state file was never persisted",
+        "verdict": "broken"
+      }
     },
-    "lastFiredAt": "2026-05-27T18:41:54.782Z",
+    "lastFiredAt": "2026-05-27T23:11:30.828Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 179555
+    "lastDurationMs": 160379
   },
   "done": false
 }
