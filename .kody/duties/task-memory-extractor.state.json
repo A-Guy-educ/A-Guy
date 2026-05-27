@@ -1,20 +1,28 @@
 {
   "version": 1,
-  "rev": 109,
+  "rev": 110,
   "cursor": "clean",
   "data": {
-    "last_tick": "2026-05-27T11:28:47.000Z",
+    "last_tick": "2026-05-27T17:44:47.000Z",
     "tasks_seen": 43,
     "tasks_processed": 38,
     "written_this_session": 7,
-    "lastFiredAt": "2026-05-27T17:46:02.794Z",
+    "lastFiredAt": "2026-05-27T18:49:39.415Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 84968,
-    "push_blocked": "remote advanced - origin/dev has unreferenced commits (eaa19069c..3dc5c4f64)",
+    "lastDurationMs": 21121,
     "current_tick": "2026-05-27T17:44:47.000Z",
     "currentFiredAt": "2026-05-27T17:44:47.001Z",
     "currentDurationMs": 2341,
-    "tick_note": "task 1822 already committed in prior run; .extracted marker confirms; push blocked by stale remote"
+    "tick_note": "task 1822 already committed in prior run; .extracted marker confirms; push blocked by stale remote",
+    "session": {
+      "started": "2026-05-27T17:44:47.000Z",
+      "tasks_seen_this_session": 43,
+      "tasks_processed_this_session": 38,
+      "memory_files_written": [
+        "fetch-requests-in-hooks-need-timeouts.md"
+      ],
+      "push_state": "succeeded"
+    }
   },
   "done": false
 }
