@@ -34,32 +34,34 @@ export function ConsolidatedLatexLessonView({
       exerciseTitle={lessonTitle}
       backUrl={backUrl}
       primaryContent={
-        <div className="flex h-full flex-col">
-          {headerSlot}
-          <div className="flex-1 overflow-auto max-w-full bg-gradient-to-b from-muted via-muted to-border/40 py-section-md px-4 print:bg-background print:overflow-visible print:p-0">
-            <article className="mx-auto max-w-[794px] overflow-x-auto overflow-y-hidden rounded-md border border-border bg-card shadow-modal print:shadow-none print:border-0 print:rounded-none print:max-w-full">
-              <header className="flex items-center justify-between border-b border-border/60 bg-card px-4 py-3 sm:px-12 print:hidden">
-                <span className="truncate text-body-sm font-medium text-muted-foreground">
-                  {lessonTitle}
-                </span>
-                <span
-                  aria-hidden
-                  className="font-mono text-body-xs tracking-[0.4em] text-muted-foreground/50"
-                >
-                  —
-                </span>
-              </header>
-              <LatexDocumentViewer
-                latex={consolidatedLatex}
-                title={lessonTitle}
-                showPrintButton={false}
-                className="max-w-full rounded-none border-0 shadow-none overflow-x-auto overflow-y-hidden"
-              />
-              <footer className="flex items-center justify-between border-t border-border/60 bg-card px-4 py-2 sm:px-12 text-body-xs text-muted-foreground/70 print:hidden">
-                <span className="truncate">{lessonTitle}</span>
-                <span className="font-mono tracking-[0.3em]">· · ·</span>
-              </footer>
-            </article>
+        <div className="w-full max-w-full overflow-hidden">
+          <div className="flex h-full flex-col">
+            {headerSlot}
+            <div className="flex-1 overflow-auto max-w-full bg-gradient-to-b from-muted via-muted to-border/40 py-section-md px-4 print:bg-background print:overflow-visible print:p-0">
+              <article className="mx-auto max-w-[794px] overflow-x-auto overflow-y-hidden rounded-md border border-border bg-card shadow-modal print:shadow-none print:border-0 print:rounded-none print:max-w-full">
+                <header className="flex items-center justify-between border-b border-border/60 bg-card px-4 py-3 sm:px-12 print:hidden">
+                  <span className="truncate text-body-sm font-medium text-muted-foreground">
+                    {lessonTitle}
+                  </span>
+                  <span
+                    aria-hidden
+                    className="font-mono text-body-xs tracking-[0.4em] text-muted-foreground/50"
+                  >
+                    —
+                  </span>
+                </header>
+                <LatexDocumentViewer
+                  latex={consolidatedLatex}
+                  title={lessonTitle}
+                  showPrintButton={false}
+                  className="max-w-full rounded-none border-0 shadow-none overflow-x-auto overflow-y-hidden"
+                />
+                <footer className="flex items-center justify-between border-t border-border/60 bg-card px-4 py-2 sm:px-12 text-body-xs text-muted-foreground/70 print:hidden">
+                  <span className="truncate">{lessonTitle}</span>
+                  <span className="font-mono tracking-[0.3em]">· · ·</span>
+                </footer>
+              </article>
+            </div>
           </div>
         </div>
       }

@@ -218,7 +218,7 @@
       sans-serif;
     overscroll-behavior-y: contain;
     position: relative;
-    overflow-x: hidden;
+    max-width: 100vw;
   }
 }
 
@@ -328,7 +328,6 @@ html {
   opacity: 0;
   /* Background on html prevents white flash on mobile scroll bounce / pull-to-refresh */
   background-color: hsl(var(--background));
-  overflow-x: hidden;
 }
 
 html[data-theme='dark'],
@@ -406,14 +405,24 @@ html[data-theme='light'] {
   }
 
   img {
-    @apply max-w-full h-auto rounded-lg my-4;
+    max-width: 100%;
+    width: 100%;
+    height: auto;
+    display: block;
   }
 
   table {
-    @apply w-full border-collapse my-4 overflow-x-auto;
+    width: 100%;
+    table-layout: fixed;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    @apply border-collapse my-4;
 
     th,
     td {
+      max-width: 100%;
+      word-break: break-word;
+      overflow-wrap: break-word;
       @apply p-2 border border-border text-left;
     }
 

@@ -78,11 +78,11 @@ export function LatexDocumentViewer({
     <div
       dir={dir}
       className={cn(
-        'bg-background border-border mx-auto max-w-4xl overflow-auto rounded-lg border shadow-lg',
+        'bg-background border-border mx-auto max-w-4xl rounded-lg border shadow-lg font-serif',
         className,
       )}
     >
-      <div className="px-4 py-10 sm:px-12 sm:py-12 font-serif">
+      <div className="px-4 py-8 sm:px-8 sm:py-10">
         {title && (
           <h1 className="text-foreground mb-8 text-center text-heading-xl font-bold">{title}</h1>
         )}
