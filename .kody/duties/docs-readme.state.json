@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "rev": 1,
+  "cursor": "idle",
+  "data": {
+    "lastCheckedMergedAt": "2026-05-27T18:38:35Z",
+    "lastFiredAt": "2026-05-27T18:38:43.688Z",
+    "lastOutcome": "completed",
+    "lastDurationMs": 54228
+  },
+  "done": false
+}
