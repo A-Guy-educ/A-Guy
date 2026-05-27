@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "rev": 75,
+  "rev": 76,
   "cursor": "idle",
   "data": {
     "lastRunISO": "2026-05-27T08:30:00Z",
@@ -9,14 +9,6 @@
         "firstSuggestedISO": "2026-05-26T08:39:30Z",
         "openIssue": 2106
       },
-      "sentry-digest": {
-        "firstSuggestedISO": "2026-05-20T14:00:00Z",
-        "openIssue": 1736
-      },
-      "stale-pr-janitor": {
-        "firstSuggestedISO": "2026-05-20T14:00:00Z",
-        "openIssue": 1739
-      },
       "issue-auto-triage": {
         "firstSuggestedISO": "2026-05-20T14:00:00Z",
         "openIssue": 1744
@@ -24,11 +16,19 @@
       "secret-leak-scan": {
         "firstSuggestedISO": "2026-05-20T14:00:00Z",
         "openIssue": 1738
+      },
+      "sentry-digest": {
+        "firstSuggestedISO": "2026-05-20T14:00:00Z",
+        "openIssue": 1736
+      },
+      "stale-pr-janitor": {
+        "firstSuggestedISO": "2026-05-20T14:00:00Z",
+        "openIssue": 1739
       }
     },
-    "lastFiredAt": "2026-05-27T09:48:06.388Z",
+    "lastFiredAt": "2026-05-27T11:13:18.889Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 17426
+    "lastDurationMs": 25332
   },
   "done": false
 }
