@@ -109,3 +109,11 @@ Verdicts gate downstream automation: a `CONCERNS` sends the PR back into a `fix`
 - No file edits. No `git`/`gh` writes. Read-only investigation.
 - Every citation must come from a file a subagent actually read — no citations from memory or grep snippets.
 - **FAIL** only for clear correctness / security / regression risk. **CONCERNS** for test-coverage / doc / structural gaps that shouldn't block. **PASS** when the PR meets spec with no blocking issues.
+
+## Map the code first (codegraph)
+Before exploring with grep/Read, use the codegraph tools to locate symbols and trace call paths — they're faster and more precise:
+- `codegraph_search <name>` — find a symbol
+- `codegraph_callees` / `codegraph_callers` — see what a function calls or who calls it
+- `codegraph_trace <from> <to>` — the call path between two symbols
+Use grep only for things codegraph can't answer (strings, comments, config).
+

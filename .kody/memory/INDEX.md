@@ -56,3 +56,5 @@ git activity belongs in `git log`, not here.
 - [User Transaction Api At Account Namespace](user-transaction-api-at-account-namespace.md) — User-facing transaction fetch API placed at /api/account/transactions/[id] not /api/transactions/[id] (type: decision)
 
 - [Nextrequest Vs Request In Handler Tests](nextrequest-vs-request-in-handler-tests.md) — Route handlers accept NextRequest, not Request — use NextRequest in handler tests (type: lesson)
+
+- [Fetch Requests In Hooks Need Timeouts](fetch-requests-in-hooks-need-timeouts.md) — Always add AbortController+timeout to fetch in useEffect hooks to prevent infinite loading states (type: lesson)

@@ -61,3 +61,11 @@ If a prior-art block is present above, READ THE DIFFS — those are failed or su
 - Pre-existing quality-gate failures are NOT your responsibility unless your edits touched related code.
 - Keep the plan and reasoning concise. Long monologues waste turns.
 {{systemPromptAppend}}
+
+## Map the code first (codegraph)
+Before exploring with grep/Read, use the codegraph tools to locate symbols and trace call paths — they're faster and more precise:
+- `codegraph_search <name>` — find a symbol
+- `codegraph_callees` / `codegraph_callers` — see what a function calls or who calls it
+- `codegraph_trace <from> <to>` — the call path between two symbols
+Use grep only for things codegraph can't answer (strings, comments, config).
+

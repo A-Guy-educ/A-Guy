@@ -1491,12 +1491,12 @@
 ## [Unreleased]
 
 - #1823: [P2] Stats page chart area renders empty ([#1860](https://github.com/A-Guy-educ/A-Guy/pull/1860)) — @aguyaharonyair
-- #2135: Fix PaymentStats race condition with atomic $inc upsert and uniq… ([#2142](https://github.com/A-Guy-educ/A-Guy/pull/2142)) — @kodyade[bot] · 🔄 QA (#2158)
+- #2135: Fix PaymentStats race condition with atomic $inc upsert and uniq… ([#2142](https://github.com/A-Guy-educ/A-Guy/pull/2142)) — @kodyade[bot]
 - #2134: User can see their purchases and active entitlements at /account… ([#2146](https://github.com/A-Guy-educ/A-Guy/pull/2146)) — @kodyade[bot]
 - #1764: [Admin] Block management — add, reorder, delete in lesson worksh… ([#1765](https://github.com/A-Guy-educ/A-Guy/pull/1765)) — @aguyaharonyair
 - #2111: Improve admin Coupons list and detail views — show usage stats a… ([#2115](https://github.com/A-Guy-educ/A-Guy/pull/2115)) — @aguyaharonyair
 - #1534: יצירת כפתור צ'אט באדמין לגישה לסוכן AI ([#1591](https://github.com/A-Guy-educ/A-Guy/pull/1591)) — @aguyaharonyair
-- #2110: Add WebhookEvents collection and dedup all webhook handlers on (… ([#2118](https://github.com/A-Guy-educ/A-Guy/pull/2118)) — @aguyaharonyair
+- #2110: Add WebhookEvents collection and dedup all webhook handlers on (… ([#2118](https://github.com/A-Guy-educ/A-Guy/pull/2118)) — @aguyaharonyair · 🔄 QA (#2163)
 ## [v0.25.9] - 2026-05-26
 
 - chore: release v0.25.9 ([#2121](https://github.com/A-Guy-educ/A-Guy/pull/2121)) — @kodyade[bot]
