@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "rev": 13,
+  "rev": 14,
   "cursor": "reviewed",
   "data": {
-    "lastRunISO": "2026-05-27T12:00:00Z",
-    "nextEligibleISO": "2026-05-27T18:00:00Z",
+    "lastRunISO": "2026-05-27T18:38:46Z",
+    "nextEligibleISO": "2026-05-28T00:38:46Z",
     "cycle": 1,
     "reviewed": [
       "approval-gate",
@@ -17,15 +17,16 @@
       "design-review",
       "doc-drift",
       "flaky-test-quarantine",
-      "health-check"
+      "health-check",
+      "docs-code"
     ],
     "lastReviewed": {
-      "slug": "health-check",
+      "slug": "docs-code",
       "verdict": "warn"
     },
-    "lastFiredAt": "2026-05-27T12:26:56.340Z",
+    "lastFiredAt": "2026-05-27T18:41:54.782Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 106214
+    "lastDurationMs": 179555
   },
   "done": false
 }
