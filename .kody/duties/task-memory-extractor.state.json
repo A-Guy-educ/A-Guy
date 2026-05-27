@@ -1,16 +1,16 @@
 {
   "version": 1,
-  "rev": 114,
+  "rev": 115,
   "cursor": "idle",
   "data": {
     "last_tick": "2026-05-27T20:39:05.000Z",
     "tasks_seen": 43,
     "tasks_processed": 43,
-    "lastFiredAt": "2026-05-27T22:13:04.907Z",
+    "lastFiredAt": "2026-05-27T23:24:56.019Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 15459,
-    "current_tick": "2026-05-27T20:39:05.000Z",
-    "currentFiredAt": "2026-05-27T21:26:13.494Z",
+    "lastDurationMs": 19407,
+    "current_tick": "2026-05-27T21:26:13.494Z",
+    "currentFiredAt": "2026-05-27T22:13:04.907Z",
     "currentDurationMs": 14846,
     "tick_note": "all 43 tasks already extracted; nothing new to write",
     "session": {
