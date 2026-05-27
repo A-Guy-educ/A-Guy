@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "pino-child-logger-debug-type-narrowing",
+    "hook": "Pino child logger debug() only accepts (obj, message?) not (message, args)",
+    "body": "When using `logger.child({...})`, the resulting child logger's `debug` method has narrowed type signature: it only accepts `(obj: object, message?: string)`, NOT `(message: string, ...args)`. \n\n**Wrong:** `childLogger.debug('message string', params)` — TypeScript error S2769\n**Correct:** `childLogger.debug({ ...params, detail: 'message' })`\n\nThis is because the child logger's type already includes the bindings as the implicit first argument context, so the first explicit arg must be an object (to merge with bindings).",
+    "why": "Encountered this during issue #2103 when fetchLessonContext's log.debug call failed typecheck with S2769. The error message was misleading - it said 'No overload matches this call' which doesn't clearly indicate the child logger type narrowing issue.",
+    "confidence": 0.9
+  }
+]

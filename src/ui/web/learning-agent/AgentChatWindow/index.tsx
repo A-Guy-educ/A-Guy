@@ -58,6 +58,25 @@ export function AgentChatWindow({ isOpen, onClose }: AgentChatWindowProps) {
   const handleSend = useCallback(async () => {
     if (!inputValue.trim() || isLoading) return
 
+    // Determine mode from current URL
+    const pathname = window.location.pathname
+    const isLessonOrExam =
+      /\/courses\/[^/]+\/chapters\/[^/]+\/lessons\/[^/]+/.test(pathname) ||
+      /\/courses\/[^/]+\/exams/.test(pathname)
+    const mode = isLessonOrExam ? 'teacher' : 'guide'
+
+    // Extract context params from URL
+    let courseSlug: string | undefined
+    let chapterSlug: string | undefined
+    let lessonSlug: string | undefined
+
+    const lessonMatch = pathname.match(/\/courses\/([^/]+)\/chapters\/([^/]+)\/lessons\/([^/]+)/)
+    if (lessonMatch) {
+      courseSlug = lessonMatch[1]
+      chapterSlug = lessonMatch[2]
+      lessonSlug = lessonMatch[3]
+    }
+
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
@@ -80,6 +99,10 @@ export function AgentChatWindow({ isOpen, onClose }: AgentChatWindowProps) {
           acknowledgment: 'Understood',
           conversationId,
           gradeLevel,
+          mode,
+          courseSlug,
+          chapterSlug,
+          lessonSlug,
         }),
       })
 

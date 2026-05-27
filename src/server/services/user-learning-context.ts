@@ -50,6 +50,20 @@ interface StudyPlanSnapshot {
 }
 
 /**
+ * Lesson context for agent prompt injection
+ */
+export interface LessonContext {
+  lessonId: string
+  lessonTitle: string
+  lessonSlug: string
+  courseSlug: string
+  chapterSlug: string
+  exerciseCount: number
+  topicDescription: string
+  lessonUrl: string
+}
+
+/**
  * User learning context for agent prompt injection
  */
 export interface UserLearningContext {
@@ -61,6 +75,7 @@ export interface UserLearningContext {
   recentActivity: RecentActivity[]
   currentStreak: number
   studyPlan: StudyPlanSnapshot | null
+  lessonContext: LessonContext | null
 }
 
 /**
@@ -93,6 +108,7 @@ export async function fetchUserLearningContext(
   payload: Payload,
   userId: string,
   gradeLevel: string,
+  lessonContextParams?: { courseSlug: string; lessonSlug: string; chapterSlug: string },
 ): Promise<UserLearningContext> {
   const log = logger.child({ module: 'UserLearningContext', userId })
 
@@ -113,6 +129,11 @@ export async function fetchUserLearningContext(
 
     if (!progressDoc || !progressDoc.progressRecords) {
       log.debug('No progress records found for user')
+      // Fetch lesson context if params provided
+      const lessonContext = lessonContextParams
+        ? await fetchLessonContext(payload, lessonContextParams, log)
+        : null
+
       return {
         activeCourses: [],
         completedLessons: 0,
@@ -122,6 +143,7 @@ export async function fetchUserLearningContext(
         recentActivity: [],
         currentStreak: 0,
         studyPlan: null,
+        lessonContext,
       }
     }
 
@@ -170,6 +192,11 @@ export async function fetchUserLearningContext(
     // Get most recent study plan
     const studyPlan = studyPlans.length > 0 ? studyPlans[0] : null
 
+    // Fetch lesson context if params provided
+    const lessonContext = lessonContextParams
+      ? await fetchLessonContext(payload, lessonContextParams, log)
+      : null
+
     return {
       activeCourses,
       completedLessons,
@@ -179,6 +206,7 @@ export async function fetchUserLearningContext(
       recentActivity,
       currentStreak,
       studyPlan,
+      lessonContext,
     }
   } catch (error) {
     log.error({ err: error }, 'Failed to fetch user learning context')
@@ -192,6 +220,7 @@ export async function fetchUserLearningContext(
       recentActivity: [],
       currentStreak: 0,
       studyPlan: null,
+      lessonContext: null,
     }
   }
 }
@@ -315,6 +344,76 @@ function calculateStreak(records: ProgressRecord[]): number {
 }
 
 /**
+ * Fetch lesson context for a specific lesson (guide mode)
+ */
+export async function fetchLessonContext(
+  payload: Payload,
+  params: { courseSlug: string; lessonSlug: string; chapterSlug: string },
+  log: typeof logger,
+): Promise<LessonContext | null> {
+  try {
+    // Fetch the lesson by finding it through chapter and course slugs
+    const lessonsResult = await payload.find({
+      collection: 'lessons',
+      where: {
+        and: [
+          { 'chapter.slug': { equals: params.chapterSlug } },
+          { 'chapter.course.slug': { equals: params.courseSlug } },
+          { slug: { equals: params.lessonSlug } },
+        ],
+      },
+      depth: 2,
+      limit: 1,
+      overrideAccess: true,
+    })
+
+    if (lessonsResult.docs.length === 0) {
+      log.debug({ ...params, detail: 'No lesson found for context' })
+      return null
+    }
+
+    const lesson = lessonsResult.docs[0] as {
+      id: string
+      title?: string
+      slug?: string
+      topic?: string
+      topicDescription?: string
+      exercises?: unknown[]
+      chapter?: {
+        slug?: string
+        course?: { slug?: string }
+      }
+    }
+
+    // Count exercises from the lesson content
+    let exerciseCount = 0
+    if (lesson.exercises && Array.isArray(lesson.exercises)) {
+      exerciseCount = lesson.exercises.length
+    }
+
+    // Build lesson URL
+    const chapterSlug = lesson.chapter?.slug || params.chapterSlug
+    const courseSlug = lesson.chapter?.course?.slug || params.courseSlug
+    const lessonSlug = lesson.slug || params.lessonSlug
+    const lessonUrl = `/courses/${courseSlug}/chapters/${chapterSlug}/lessons/${lessonSlug}`
+
+    return {
+      lessonId: lesson.id,
+      lessonTitle: lesson.title || 'Untitled Lesson',
+      lessonSlug,
+      courseSlug,
+      chapterSlug,
+      exerciseCount,
+      topicDescription: lesson.topicDescription || lesson.topic || '',
+      lessonUrl,
+    }
+  } catch (error) {
+    log.error({ err: error }, 'Failed to fetch lesson context')
+    return null
+  }
+}
+
+/**
  * Build user context block for system prompt injection
  */
 export function buildUserContextBlock(context: UserLearningContext): string {
@@ -376,6 +475,18 @@ export function buildUserContextBlock(context: UserLearningContext): string {
         : 'Unknown'
       lines.push(`- ${activity.type}: ${activity.label} (${date})`)
     }
+  }
+
+  if (context.lessonContext) {
+    const lc = context.lessonContext
+    lines.push('')
+    lines.push('### Current Lesson')
+    lines.push(`- Title: ${lc.lessonTitle}`)
+    lines.push(`- Exercises: ${lc.exerciseCount}`)
+    if (lc.topicDescription) {
+      lines.push(`- Topic: ${lc.topicDescription}`)
+    }
+    lines.push(`- Link: ${lc.lessonUrl}`)
   }
 
   if (lines.length === 1) {

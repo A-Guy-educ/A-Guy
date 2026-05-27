@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Welcome messages per mode (guide vs teacher)",
+    "body": "AgentChatWindow has a single welcome message but the issue spec says guide mode and teacher mode should have different greetings:\n- Guide mode: 'היי היי, אשמח לעזור לך להחליט מה לעשות היום'\n- Teacher mode: 'היי היי, אני המורה הפרטי שלך, אשמח לעזור לך'\n\nLocation: src/ui/web/learning-agent/AgentChatWindow/index.tsx welcome message",
+    "rationale": "The spec explicitly calls for mode-specific greetings, but implementing them requires passing the mode to the welcome message which is set in useState on mount (before mode detection). Needs a different approach - perhaps detecting mode once on mount and storing it in state.",
+    "priority": "medium"
+  },
+  {
+    "title": "gradeLevel in AgentChatWindow is hardcoded",
+    "body": "AgentChatWindow uses a hardcoded gradeLevel='7'. The user's actual gradeLevel should come from their profile or the user object. The FloatingAgentButton has access to useCurrentUser() which could provide this.",
+    "rationale": "While not a regression (it was already hardcoded before this change), the learning context is less personalized without the correct gradeLevel.",
+    "priority": "low"
+  }
+]

@@ -1,0 +1,19 @@
+{
+  "taskId": "2103",
+  "taskType": "issue",
+  "target": "2103",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Implemented guide/teacher mode for floating agent button with lesson context support",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/services/user-learning-context.ts",
+    "src/server/payload/endpoints/agent/learning-chat.ts",
+    "src/ui/web/learning-agent/AgentChatWindow/index.tsx",
+    "tests/unit/server/services/user-learning-context.test.ts"
+  ],
+  "sessionLog": null,
+  "startedAt": "2026-05-27T00:00:00.000Z",
+  "finishedAt": "2026-05-27T00:00:00.000Z"
+}

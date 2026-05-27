@@ -42,6 +42,12 @@ const learningChatRequestSchema = z.object({
   gradeLevel: z.string().min(1),
   mediaIds: z.array(z.string()).max(5).optional(),
   chatAssetIds: z.array(z.string()).max(5).optional(),
+  // Guide mode context (passed when in guide mode)
+  courseSlug: z.string().optional(),
+  lessonSlug: z.string().optional(),
+  chapterSlug: z.string().optional(),
+  // Agent mode: 'guide' | 'teacher' (default: 'teacher' for backward compat)
+  mode: z.enum(['guide', 'teacher']).optional().default('teacher'),
 })
 
 type LearningChatRequest = z.infer<typeof learningChatRequestSchema>
@@ -139,10 +145,23 @@ export async function agentLearningChat(
     })
 
     // Fetch user learning context
+    const lessonContextParams =
+      validated.mode === 'guide' &&
+      validated.courseSlug &&
+      validated.lessonSlug &&
+      validated.chapterSlug
+        ? {
+            courseSlug: validated.courseSlug,
+            lessonSlug: validated.lessonSlug,
+            chapterSlug: validated.chapterSlug,
+          }
+        : undefined
+
     const userLearningContext = await fetchUserLearningContext(
       req.payload,
       userId,
       validated.gradeLevel,
+      lessonContextParams,
     )
     const userContextBlock = buildUserContextBlock(userLearningContext)
 
@@ -171,6 +190,7 @@ export async function agentLearningChat(
     const systemInstructions = buildLearningChatSystemInstructions(
       agentBehaviorBlock,
       userContextBlock,
+      validated.mode,
     )
 
     // Build ComposedPrompt with messages and metadata
@@ -292,34 +312,70 @@ export async function agentLearningChat(
 function buildLearningChatSystemInstructions(
   agentBehaviorBlock: string,
   userContextBlock: string,
+  mode: 'guide' | 'teacher',
 ): string {
   const lines: string[] = []
 
-  lines.push('## Learning Agent System Prompt')
-  lines.push('')
-  lines.push(
-    'You are a personal AI learning assistant. You help students with their learning journey by providing:',
-  )
-  lines.push('- Personalized guidance and recommendations')
-  lines.push('- Help with course content and questions')
-  lines.push('- Motivation and encouragement')
-  lines.push('- Study plan suggestions')
-  lines.push('- Progress tracking and reminders')
-  lines.push('')
-  lines.push(
-    "Be friendly, supportive, and encouraging. Celebrate the student's progress and help them stay motivated.",
-  )
-  lines.push('')
-  lines.push(agentBehaviorBlock)
-  lines.push('')
-  lines.push(userContextBlock)
-  lines.push('')
-  lines.push('## Response Guidelines')
-  lines.push('- Always be encouraging and positive')
-  lines.push('- Provide specific, actionable recommendations')
-  lines.push("- Reference the student's progress when relevant")
-  lines.push('- Suggest next steps for their learning journey')
-  lines.push('- Use examples and explanations appropriate to their level')
+  if (mode === 'guide') {
+    lines.push('## Guide Agent System Prompt')
+    lines.push('')
+    lines.push(
+      'You are a personal learning guide. You help students navigate their learning journey by answering questions about:',
+    )
+    lines.push('- How many exercises are in a lesson')
+    lines.push('- The topic and subject of a lesson or course')
+    lines.push('- Recent learning activity and progress')
+    lines.push('- Course structure and next steps')
+    lines.push('- Direct links to lessons and content')
+    lines.push('')
+    lines.push(
+      'When answering questions, provide the number of exercises, topic description, and include direct links when relevant.',
+    )
+    lines.push('Use the lesson context provided to give accurate, up-to-date information.')
+    lines.push('')
+    lines.push('Example responses:')
+    lines.push('- "This lesson has 12 exercises covering quadratic equations"')
+    lines.push(
+      '- "Topic: Linear Functions - here\'s a link to the lesson: /courses/algebra-1/chapters/chapter-1/lessons/linear-equations"',
+    )
+    lines.push('')
+    lines.push(agentBehaviorBlock)
+    lines.push('')
+    lines.push(userContextBlock)
+    lines.push('')
+    lines.push('## Response Guidelines')
+    lines.push('- Be concise and informative')
+    lines.push('- Always provide exercise counts when available')
+    lines.push('- Include direct links to lessons and content')
+    lines.push('- Reference the lesson context to personalize answers')
+    lines.push("- Use the student's name or be friendly when appropriate")
+  } else {
+    lines.push('## Teacher Agent System Prompt')
+    lines.push('')
+    lines.push(
+      'You are a personal AI learning assistant. You help students with their learning journey by providing:',
+    )
+    lines.push('- Personalized guidance and recommendations')
+    lines.push('- Help with course content and questions')
+    lines.push('- Motivation and encouragement')
+    lines.push('- Study plan suggestions')
+    lines.push('- Progress tracking and reminders')
+    lines.push('')
+    lines.push(
+      "Be friendly, supportive, and encouraging. Celebrate the student's progress and help them stay motivated.",
+    )
+    lines.push('')
+    lines.push(agentBehaviorBlock)
+    lines.push('')
+    lines.push(userContextBlock)
+    lines.push('')
+    lines.push('## Response Guidelines')
+    lines.push('- Always be encouraging and positive')
+    lines.push('- Provide specific, actionable recommendations')
+    lines.push("- Reference the student's progress when relevant")
+    lines.push('- Suggest next steps for their learning journey')
+    lines.push('- Use examples and explanations appropriate to their level')
+  }
 
   return lines.join('\n')
 }
