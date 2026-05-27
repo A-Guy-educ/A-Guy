@@ -1,21 +1,25 @@
 {
   "version": 1,
-  "rev": 104,
+  "rev": 105,
   "cursor": "clean",
   "data": {
     "last_tick": "2026-05-27T00:00:00.000Z",
-    "tasks_seen": 35,
-    "tasks_processed": 31,
-    "written_this_session": 4,
-    "lastFiredAt": "2026-05-27T11:19:54.608Z",
+    "tasks_seen": 37,
+    "tasks_processed": 33,
+    "written_this_session": 6,
+    "lastFiredAt": "2026-05-27T12:32:54.753Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 16832,
+    "lastDurationMs": 23383,
     "push_blocked": null,
     "note": "task 2110 has invalid JSON in memory-recs.json (Invalid \\escape: line 6 column 562) — persists this tick, no new extractions possible",
     "current_tick": "2026-05-27T07:03:06.273Z",
-    "currentFiredAt": "2026-05-27T07:03:06.273Z",
+    "currentFiredAt": "2026-05-27T11:21:06.274Z",
     "currentDurationMs": 2341,
-    "last_issue_note": "task 2110 invalid JSON persists — same error as prior tick, no new extractions possible this run"
+    "last_issue_note": "task 2110 invalid JSON persists — same error as prior tick, no new extractions possible this run",
+    "new_writes": [
+      ".kody/memory/user-transaction-api-at-account-namespace.md",
+      ".kody/memory/nextrequest-vs-request-in-handler-tests.md"
+    ]
   },
   "done": false
 }
