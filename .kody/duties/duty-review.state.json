@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "rev": 15,
+  "rev": 16,
   "cursor": "reviewed",
   "data": {
     "cycle": 1,
-    "lastRunISO": "2026-05-27T23:11:14Z",
-    "nextEligibleISO": "2026-05-28T05:11:14Z",
+    "lastRunISO": "2026-05-28T06:24:25Z",
+    "nextEligibleISO": "2026-05-28T12:24:25Z",
     "reviewed": [
       "approval-gate",
       "architecture-audit",
@@ -19,17 +19,26 @@
       "flaky-test-quarantine",
       "health-check",
       "docs-code",
-      "ceo-performance-review"
+      "ceo-performance-review",
+      "qa-sweep"
     ],
     "verdicts": {
+      "approval-gate": {
+        "note": "state.json never created; history shows 2 commits to duty body but 0 to state; duty cannot track per-PR state across ticks",
+        "verdict": "broken"
+      },
       "ceo-performance-review": {
         "note": "state.json never created; report exists so duty ran, but promised state file was never persisted",
         "verdict": "broken"
+      },
+      "qa-sweep": {
+        "note": "lastRunISO frozen at 2026-05-23; history shows rev 3→12 May 22-23 then complete silence; cursor idle with no open issue — duty completed cleanly but engine stopped invoking it 5 days ago",
+        "verdict": "broken"
       }
     },
-    "lastFiredAt": "2026-05-27T23:11:30.828Z",
+    "lastFiredAt": "2026-05-28T06:35:04.973Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 160379
+    "lastDurationMs": 286973
   },
   "done": false
 }
