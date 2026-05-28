@@ -1,14 +1,14 @@
 {
   "version": 1,
-  "rev": 12,
-  "cursor": "idle",
+  "rev": 13,
+  "cursor": "awaiting-result",
   "data": {
-    "inflightPr": null,
-    "inflightSinceISO": null,
-    "nextEligibleISO": "2026-05-28T03:30:00Z",
-    "lastFiredAt": "2026-05-28T05:02:20.688Z",
+    "inflightPr": 1873,
+    "inflightSinceISO": "2026-05-28T05:09:00Z",
+    "nextEligibleISO": "2026-05-28T06:39:00Z",
+    "lastFiredAt": "2026-05-28T06:39:40.404Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 89040
+    "lastDurationMs": 47783
   },
   "done": false
 }
