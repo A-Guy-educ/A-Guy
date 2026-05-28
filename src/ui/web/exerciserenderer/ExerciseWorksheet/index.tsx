@@ -323,9 +323,11 @@ function WorksheetQuestionLabel({ label, dir, children }: WorksheetQuestionLabel
   // DOM order is [badge, children]:
   //   - LTR: badge on the left, children on the right
   //   - RTL: badge on the right, children on the left (inherited dir flips it)
+  // dir is intentionally NOT set on the wrapper — that lets the document's
+  // inherited dir drive visual reversal, and avoids shadowing inner
+  // GraphWithPrompt containers that downstream tests query by [dir="ltr"].
   return (
     <div
-      dir={dir}
       className={cn(
         'w-full flex items-center justify-start gap-content-gap-xs',
         dir === 'rtl' ? 'text-right' : 'text-left',
