@@ -4,15 +4,14 @@
   "target": "2138-eliminate-horizontal-scroll-across-the-site-mobile",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Applied feedback fixes: (1) JSXGraphBoard now uses ResizeObserver to measure container width and calls resizeContainer to scale board proportionally on mobile; (2) LatexDocumentViewer max-w-4xl changed to max-w-full sm:max-w-4xl for responsive mobile containment; (3) Added resize method to JXGBoard type declarations.",
+  "reason": "Applied remaining feedback fixes: (1) Added overflow-x:hidden to html and body in globals.css; (2) Added overflow-x:auto to table element in globals.css; (3) Fixed JSXGraphBoard container style to use boardDimensions instead of fixed aspectRatio.",
   "prUrl": null,
   "runUrl": null,
   "filesTouched": [
-    "src/ui/web/exerciserenderer/graphics/JSXGraphBoard.tsx",
-    "src/ui/web/shared/LatexDocumentViewer/index.tsx",
-    "src/types/jsxgraph.d.ts"
+    "src/app/(frontend)/globals.css",
+    "src/ui/web/exerciserenderer/graphics/JSXGraphBoard.tsx"
   ],
   "sessionLog": ".kody/sessions/current.jsonl",
   "startedAt": "2026-05-28T17:00:00Z",
-  "finishedAt": "2026-05-28T17:07:00Z"
+  "finishedAt": "2026-05-28T17:15:00Z"
 }

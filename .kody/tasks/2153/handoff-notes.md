@@ -1,37 +1,59 @@
-# PR #2153 — Fix round 2: remaining horizontal scroll gaps on mobile
+# PR #2153 — Fix round 3: Feedback-driven overflow and responsive fixes
 
-## Previous round (rounded 2)
-Two gaps remained after the initial overflow-x:hidden fix:
+## This round: remaining global CSS and JSXGraphBoard container fixes
 
-### Gap 1: LatexDocumentViewer overflow-visible bypasses scroll container
-The LatexDocumentViewer had `overflow-visible` which let KaTeX content overflow out of the rounded card corners instead of scrolling within the article's `overflow-x-auto` container. Changed to `overflow-x-auto overflow-y-hidden` so wide content scrolls inside the card while vertical overflow is still hidden.
+### globals.css: html and body overflow-x hidden
+`html` element (line ~261) and `body` element (line ~207) were missing `overflow-x: hidden`. Added to both:
+```css
+html {
+  overflow-x: hidden;
+}
+body {
+  overflow-x: hidden;
+}
+```
+This is the foundational fix — prevents document-level horizontal scroll even when child elements overflow.
 
-### Gap 2: Card header and footer use fixed px-12 on mobile
-The article header (line 41) and footer (line 58) used `px-12` (48px per side) which overflows at 320-360px viewports. Both changed to `px-4 sm:px-12` — 16px on mobile, 48px on sm+ — matching the LatexDocumentViewer padding fix from the initial PR.
+### globals.css: table overflow-x-auto
+The `table` element (line ~414) was missing `overflow-x: auto`. Added:
+```css
+table {
+  overflow-x: auto;
+  /* existing: width: 100%; table-layout: fixed; word-break: break-word; */
+}
+```
+Tables now scroll horizontally before overflowing their container.
+
+### JSXGraphBoard container style fix
+Container style changed from:
+```jsx
+style={{ width: '100%', aspectRatio: `${width} / ${height}` }}
+```
+To:
+```jsx
+style={boardDimensions.width === 0 ? undefined : { width: boardDimensions.width, height: boardDimensions.height }}
+```
+The `aspectRatio` approach caused JSXGraphBoard to read a different clientWidth than the CSS-constrained container size, leading to mismatched board/sVG dimensions. The new approach uses ResizeObserver-measured `boardDimensions` directly, and falls back to no explicit style (w-full from className handles it) when dimensions are 0 (initial state before JSXGraphBoard reads container).
 
 ---
 
-## This round (round 3): Feedback-driven JSXGraphBoard and LatexDocumentViewer fixes
+## Previous rounds (documented for context)
 
-### JSXGraphBoard: ResizeObserver for proportional scaling
-The JSXGraphBoard container was using `w-full` + `maxWidth: '100%'` but the `width`/`height` props were completely ignored (renamed to `_width`/`_height`). JSXGraph reads the container element size at init time, so if the container had no explicit dimensions, the board could be incorrectly sized.
+### Round 2 (prior kody session)
+- JSXGraphBoard ResizeObserver for proportional mobile scaling
+- LatexDocumentViewer `max-w-full sm:max-w-4xl` for responsive containment
+- JXGBoard.resize() type declaration added
 
-**Fix**: Added ResizeObserver to JSXGraphBoard that:
-1. Measures the container's actual `clientWidth` on mount and on resize
-2. Calculates scaled dimensions: `Math.min(originalWidth, measuredWidth)` for width, proportional height via aspect ratio
-3. Updates state → triggers `board.resizeContainer(width, height)` to resize the JSXGraph SVG
+### Round 1 (initial PR)
+- `overflow-x: hidden` on html/body (this was the main fix — added in round 3)
+- LatexDocumentViewer responsive padding `px-4 sm:px-12`
+- ConsolidatedLatexLessonView article `overflow-x-auto`
+- KaTeX `.katex-display overflow-x-auto` (already present)
 
-Container div changed from `style={{ maxWidth: '100%' }}` to `style={{ width: '100%', aspectRatio: '${width} / ${height}' }}` — this gives the container an intrinsic aspect ratio so it doesn't collapse before JSXGraph measures it.
-
-Also added `resize(width, height): void` method to `JXGBoard` interface in `src/types/jsxgraph.d.ts`.
-
-### LatexDocumentViewer: responsive max-w-full on mobile
-Outer div had `max-w-4xl` which doesn't cap at viewport width on mobile. Changed to `max-w-full sm:max-w-4xl` so it never overflows on small screens.
-
-### Items already addressed before this round
-- Images: `img { max-width: 100%; width: 100% }` already in globals.css (line ~407)
-- Tables: `width: 100%; word-break: break-word; overflow-wrap: break-word` already in globals.css (line ~414)
-- AxisRenderer: Already uses ResizeObserver + ResizeObserver pattern, passing scaled dimensions to JSXGraphBoard
+## Items addressed before round 3
+- Images: `max-width: 100%; width: 100%` already in globals.css
+- Tables: `width: 100%; word-break: break-word` already in globals.css
+- SplitPaneLayout: primary content container has `overflow-hidden`
 
 ## Quality gates
 - `pnpm typecheck` — passed

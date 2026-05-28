@@ -1,1 +1,9 @@
-[]
+[
+  {
+    "type": "lesson",
+    "name": "jsgraphboard-container-style-uses-boarddimensions",
+    "hook": "JSXGraphBoard container style must match ResizeObserver-measured boardDimensions",
+    "body": "When JSXGraphBoard uses ResizeObserver to measure container width and scale board dimensions, the container's CSS width must match the boardDimensions used for resizeContainer(). Using `width: '100%'` with `aspectRatio` caused JSXGraphBoard to read a different clientWidth than the CSS-constrained container size, leading to SVG/board dimension mismatch. Fix: set container style to `{ width: boardDimensions.width, height: boardDimensions.height }` when boardDimensions is non-zero.\n\n**Why:** JSXGraph reads container.clientWidth at init time. If CSS width doesn't match the measured dimensions, the board coordinate system doesn't align with the SVG display size.\n\n**How to apply:** When using ResizeObserver to control JSXGraphBoard sizing, set the container's explicit width/height style to match the measured boardDimensions, not fixed aspect ratios.",
+    "confidence": 0.85
+  }
+]

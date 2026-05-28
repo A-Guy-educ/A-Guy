@@ -198,7 +198,11 @@ export function JSXGraphBoard({
       ref={containerRef}
       id={`jsxgraph-${id}`}
       className={cn('w-full border rounded-lg overflow-hidden bg-white', className)}
-      style={{ width: '100%', aspectRatio: `${width} / ${height}` }}
+      style={
+        boardDimensions.width === 0
+          ? undefined
+          : { width: boardDimensions.width, height: boardDimensions.height }
+      }
     />
   )
 }
