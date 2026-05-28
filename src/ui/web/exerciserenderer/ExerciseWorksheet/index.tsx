@@ -115,12 +115,14 @@ function getBlockKey(block: ContentBlock, index: number): string {
   return 'id' in block && block.id ? block.id : `block_${index}`
 }
 
-/** Question types that receive Hebrew letter labels (geometry/axis handled separately — diagram rendered as sibling, not nested) */
+/** Question types that receive Hebrew letter labels */
 const LABELLED_QUESTION_TYPES = new Set([
   'question_select',
   'question_free_response',
   'question_table',
   'question_matching',
+  'question_geometry',
+  'question_axis',
 ])
 
 interface RenderBlockParams {
@@ -146,25 +148,6 @@ function renderBlockWithLabel({
   hideLatexBlocks,
 }: RenderBlockParams): { block: React.ReactNode; incremented: boolean } {
   const isLabelledQuestion = LABELLED_QUESTION_TYPES.has(block.type)
-
-  // Geometry/axis: badge beside prompt text, diagram as sibling below (not nested in label)
-  if (block.type === 'question_geometry' || block.type === 'question_axis') {
-    const label = isRtl
-      ? `${HEBREW_LETTERS[questionIndex] || String(questionIndex + 1)}.`
-      : `${questionIndex + 1}.`
-    const blockContent = renderBlockContent({ block, mediaMap, sideBySideLayout, hideLatexBlocks })
-    return {
-      block: (
-        <>
-          <WorksheetQuestionLabel label={label} dir={isRtl ? 'rtl' : 'ltr'}>
-            <PromptText prompt={(block as QuestionGeometryBlock | QuestionAxisBlock).prompt} />
-          </WorksheetQuestionLabel>
-          {blockContent}
-        </>
-      ),
-      incremented: true,
-    }
-  }
 
   if (isLabelledQuestion) {
     const label = isRtl
@@ -244,7 +227,7 @@ function renderBlockContent({
       <GraphWithPrompt
         blockId={b.id}
         layout={layout}
-        prompt={undefined}
+        prompt={b.prompt}
         worksheetLayout={{ sideContentAspectRatio: aspectRatio }}
       >
         <div className="my-4 rounded-xl border bg-card p-card-padding-sm">
@@ -265,7 +248,7 @@ function renderBlockContent({
       <GraphWithPrompt
         blockId={b.id}
         layout={layout}
-        prompt={undefined}
+        prompt={b.prompt}
         worksheetLayout={{ sideContentAspectRatio: axisAspectRatio }}
       >
         <div className="my-4 rounded-xl border bg-card p-card-padding-sm">
