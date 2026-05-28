@@ -82,10 +82,11 @@ export function ExerciseWorksheet({
   const isRtl = locale?.toLowerCase().startsWith('he') ?? false
 
   // Side-by-side layout: text on the reading-start side, diagram opposite.
-  // LTR -> text left, diagram right ('textRight'); RTL -> text right, diagram
-  // left ('textLeft'). GraphWithPrompt forces dir='ltr' on its flex
-  // container so 'textLeft' / 'textRight' always describe physical position.
-  const sideBySideLayout: GraphLayout = isRtl ? 'textLeft' : 'textRight'
+  // GraphWithPrompt forces dir='ltr' on its flex container so 'textLeft' /
+  // 'textRight' always describe physical position regardless of page direction.
+  //   - LTR -> text on the left, diagram on the right -> 'textLeft'
+  //   - RTL -> text on the right, diagram on the left -> 'textRight'
+  const sideBySideLayout: GraphLayout = isRtl ? 'textRight' : 'textLeft'
 
   // Track question index for Hebrew letter labels (RTL only)
   let questionIndex = 0
@@ -246,7 +247,7 @@ function renderBlockContent({
         prompt={undefined}
         worksheetLayout={{ sideContentAspectRatio: aspectRatio }}
       >
-        <div className="my-4 rounded-xl border bg-card p-4">
+        <div className="my-4 rounded-xl border bg-card p-card-padding-sm">
           <GeometryRenderer blockId={b.id} spec={b.geometry} />
         </div>
       </GraphWithPrompt>
@@ -267,7 +268,7 @@ function renderBlockContent({
         prompt={undefined}
         worksheetLayout={{ sideContentAspectRatio: axisAspectRatio }}
       >
-        <div className="my-4 rounded-xl border bg-card p-4">
+        <div className="my-4 rounded-xl border bg-card p-card-padding-sm">
           <AxisRenderer blockId={b.id} spec={b.axis} displaySize={b.displaySize} />
         </div>
       </GraphWithPrompt>
