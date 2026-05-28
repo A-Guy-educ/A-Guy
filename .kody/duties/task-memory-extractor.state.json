@@ -1,26 +1,30 @@
 {
   "version": 1,
-  "rev": 122,
+  "rev": 123,
   "cursor": "idle",
   "data": {
     "last_tick": "2026-05-28T03:30:32.294Z",
-    "tasks_seen": 43,
-    "tasks_processed": 43,
-    "lastFiredAt": "2026-05-28T07:58:51.828Z",
+    "tasks_seen": 46,
+    "tasks_processed": 46,
+    "lastFiredAt": "2026-05-28T09:27:08.801Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 29743,
+    "lastDurationMs": 22993,
     "current_tick": "2026-05-28T06:00:47.000Z",
     "currentFiredAt": "2026-05-28T06:00:47.000Z",
     "currentDurationMs": 2847,
-    "tick_note": "all 43 tasks already extracted; nothing new to write",
+    "tick_note": "3 new tasks with memory-recs found; wrote 5 memory files; git push rejected (remote fetch-first — recoverable next tick)",
     "session": {
       "started": "2026-05-27T17:44:47.000Z",
-      "tasks_seen_this_session": 43,
-      "tasks_processed_this_session": 43,
+      "tasks_seen_this_session": 46,
+      "tasks_processed_this_session": 46,
       "memory_files_written": [
-        "fetch-requests-in-hooks-need-timeouts.md"
+        "jsx-in-ts-causes-ts1005-error.md",
+        "payload-email-send-type-workaround.md",
+        "verify-db-state-not-mock-calls-in-int-tests.md",
+        "mobile-chat-toggle-inside-chatinterface.md",
+        "fab-open-state-via-ischatvisible-prop.md"
       ],
-      "push_state": "succeeded"
+      "push_state": "rejected_fetch_first"
     }
   },
   "done": false
