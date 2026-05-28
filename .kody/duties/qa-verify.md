@@ -82,8 +82,11 @@ frontmatter to pause it.
    ```
    The head branch is `<issue>-...`. Skip pure chore/docs PRs and any with no
    linked issue number. If none qualify, idle. For the chosen PR:
-   1. Dispatch the UI review (preview URL auto-resolves from the PR's deployment):
-      `gh pr comment <pr> --body "@kody ui-review"`
+   1. Dispatch the UI review via **typed workflow_dispatch** — never a bot
+      `@kody` PR comment (the webhook's bot-author guard silently drops
+      those). `ui-review` reads everything it needs from the PR diff +
+      linked issue, so no extra flags are required:
+      `gh workflow run kody.yml -f executable=ui-review -f issue_number=<pr>`
    2. Set `data.inflightPr = <pr>`, `data.inflightSinceISO = now`.
 
 ## Inbox recommendation formats

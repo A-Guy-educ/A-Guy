@@ -39,12 +39,14 @@ A full sweep is the most expensive QA run, so the default is daily (`every: 1d`)
    close the tracking issue, clear `data.openIssue`.
 4. **Open, ≥ 2h old, no report** → comment the stall, close it, clear state
    (the next eligible tick re-runs). A stuck sweep must never wedge the job.
-5. **Otherwise** (none open) → open a tracking issue and
-   dispatch with no scope (URL resolves from `qa.fallbackUrl`):
+5. **Otherwise** (none open) → open a tracking issue and dispatch with no
+   scope via **typed workflow_dispatch** — never a bot `@kody` comment
+   (the webhook's bot-author guard silently drops those, which is exactly
+   how this duty used to stall for hours):
    ```
    gh issue create --title "QA sweep $(date -u +%Y-%m-%d)" --label kody:qa-sweep \
      --body "Automated broad QA sweep; qa-engineer reports here."
-   gh issue comment <n> --body "@kody qa-engineer --issue <n>"
+   gh workflow run kody.yml -f executable=qa-engineer -f issue_number=<n>
    ```
    Set `data.openIssue = <n>` and `data.lastRunISO = now`.
 
@@ -76,6 +78,9 @@ itself; it's gated behind your approval.
 
 - `gh issue list`, `gh issue create`, `gh issue view`, `gh issue comment`,
   `gh issue close`.
+- `gh workflow run kody.yml` — typed cross-run dispatch for `qa-engineer`
+  (never substitute `gh issue comment "@kody qa-engineer …"`; that path is
+  bot-filtered and silently stalls).
 
 ## Restrictions
 

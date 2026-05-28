@@ -158,10 +158,10 @@ export default buildConfig({
         process.env.MONGODB_MAX_POOL_SIZE ?? (process.env.VITEST ? '5' : '3'),
         10,
       ),
-      // Allow pool to fully drain when idle
-      minPoolSize: 0,
-      // Close idle connections after 10 seconds
-      maxIdleTimeMS: 10000,
+      // Keep at least 1 connection warm to avoid cold-handshake on every request
+      minPoolSize: 1,
+      // Close idle connections after 4.5 minutes (keeps warm between sparse traffic)
+      maxIdleTimeMS: 270000,
       // Fail fast if MongoDB is unreachable — don't hang serverless functions
       connectTimeoutMS: 5000,
       // Socket timeout for long-running operations

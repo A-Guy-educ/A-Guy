@@ -33,10 +33,6 @@ export function CourseLessonCard({
 
   const isExam = lessonType === 'exam'
   const label = `${isExam ? tc('exam') : tc('lesson')} ${index}`
-  // Use index-based title to ensure it matches the sequential lesson number on the badge.
-  // This prevents stale/wrong lesson titles (e.g. from reordered lessons) from causing
-  // the heading to appear off-by-one compared to the badge.
-  const title = `${isExam ? tc('exam') : tc('lesson')} ${index}`
   const labelBadgeClassName = isExam ? 'text-[11.5px]' : undefined
 
   const href = `/courses/${courseSlug}/chapters/${chapterSlug}/lessons/${lesson.slug}`
@@ -64,7 +60,7 @@ export function CourseLessonCard({
   return (
     <UnifiedCard
       variant="lesson"
-      title={title}
+      title={lesson.title}
       label={label}
       labelBadgeClassName={labelBadgeClassName}
       accentColor={accentColor}

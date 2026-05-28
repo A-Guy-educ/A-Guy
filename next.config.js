@@ -40,6 +40,9 @@ const nextConfig = {
     // Heavy server-only packages
     // graphql — large (~200KB) transitive dep from Payload, load from node_modules at runtime
     'graphql',
+    // googleapis — 109MB transitive via @genkit-ai/firebase → @google-cloud/opentelemetry,
+    // we never import it directly. Externalizing it saves significant build time.
+    'googleapis',
     'prism-react-renderer',
     'openai',
     'undici',
@@ -53,6 +56,11 @@ const nextConfig = {
     'ajv',
     'sharp',
     'tesseract.js',
+    'tesseract.js-core',
+    // @kody-ade/engine bundles @anthropic-ai/claude-agent-sdk (~43MB).
+    // Only used via the `kody` npx script, never imported in src.
+    '@kody-ade/engine',
+    '@anthropic-ai/claude-agent-sdk',
   ],
   images: {
     remotePatterns: [

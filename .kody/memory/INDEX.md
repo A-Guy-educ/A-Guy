@@ -58,3 +58,13 @@ git activity belongs in `git log`, not here.
 - [Nextrequest Vs Request In Handler Tests](nextrequest-vs-request-in-handler-tests.md) — Route handlers accept NextRequest, not Request — use NextRequest in handler tests (type: lesson)
 
 - [Fetch Requests In Hooks Need Timeouts](fetch-requests-in-hooks-need-timeouts.md) — Always add AbortController+timeout to fetch in useEffect hooks to prevent infinite loading states (type: lesson)
+
+- [Jsx In Ts Causes Ts1005 Error](jsx-in-ts-causes-ts1005-error.md) — JSX in .ts files causes TS1005 error — rename to .tsx (type: lesson)
+
+- [Payload Email Send Type Workaround](payload-email-send-type-workaround.md) — payload.email.send() needs `as any` cast — type doesn't expose send method (type: lesson)
+
+- [Verify Db State Not Mock Calls In Int Tests](verify-db-state-not-mock-calls-in-int-tests.md) — Integration tests should verify DB state, not mock call counts (type: lesson)
+
+- [Mobile Chat Toggle Inside Chatinterface](mobile-chat-toggle-inside-chatinterface.md) — MobileChatToggle renders inside ChatInterface not SplitPaneLayout (type: lesson)
+
+- [Fab Open State Via Ischatvisible Prop](fab-open-state-via-ischatvisible-prop.md) — FAB open state combines internal isOpen + external isChatVisible prop (type: decision)

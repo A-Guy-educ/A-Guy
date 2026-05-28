@@ -5,13 +5,13 @@
  * PUT /api/study-plan - Body: { action: 'generate' | 'markComplete', ... }
  */
 import configPromise from '@payload-config'
-import { format, startOfDay } from 'date-fns'
 import { nanoid } from 'nanoid'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import { z } from 'zod'
 
 import type { StudyPlanSnapshot, StudyPlanDay, TopicInput } from '@/server/services/study-plan'
+import { formatYmd, startOfDay } from '@/lib/dates'
 import { getDefaultTenantId } from '@/server/repos/tenant/get-default-tenant'
 import { generateStudyPlan } from '@/server/services/study-plan'
 import { queryUserProgressByGrade } from '@/server/repos/queries/userProgress'
@@ -174,7 +174,7 @@ async function handleGenerate(
   const { courseId, examDate, topics, gradeLevel } = data
 
   // Get today in YYYY-MM-DD format
-  const today = format(startOfDay(new Date()), 'yyyy-MM-dd')
+  const today = formatYmd(startOfDay(new Date()))
 
   // Find or create UserProgress doc
   const userProgress = await queryUserProgressByGrade({
@@ -200,7 +200,7 @@ async function handleGenerate(
   }))
 
   // Build the plan snapshot
-  const generatedAt = format(startOfDay(new Date()), 'yyyy-MM-dd')
+  const generatedAt = formatYmd(startOfDay(new Date()))
   const newPlan: StudyPlanSnapshot = {
     courseId,
     examDate,

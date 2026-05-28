@@ -1,4 +1,4 @@
-import { addDays, format, parseISO } from 'date-fns'
+import { addDays, formatYmd, parseISO } from '@/lib/dates'
 
 import {
   ACTIVITY_DURATIONS,
@@ -238,7 +238,7 @@ export function generateStudyPlan(input: GeneratePlanInput): StudyPlanDay[] {
     const mode = getTimeframeMode(daysLeft)
     const template = ACTIVITY_TEMPLATES[mode]
 
-    const date = format(addDays(examDateObj, dayIndex - 6), 'yyyy-MM-dd')
+    const date = formatYmd(addDays(examDateObj, dayIndex - 6))
     const activityType = template[dayIndex]
     const topicIds = pickTopicsForDay(cycle, dayIndex, activityType, allTopicIds, topics)
 

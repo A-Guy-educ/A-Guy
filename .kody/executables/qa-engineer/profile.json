@@ -85,6 +85,7 @@
   "outputArtifacts": [],
   "scripts": {
     "preflight": [
+      { "script": "deriveQaScopeFromIssue" },
       { "script": "resolveQaUrl" },
       { "script": "discoverQaContext" },
       { "script": "loadQaContext" },
