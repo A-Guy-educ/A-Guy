@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Convert inline CSS styles to Tailwind design system tokens",
+    "body": "The exercises page uses React.CSSProperties inline styles. Convert to Tailwind classes using design system tokens (p-card-padding, bg-elevated-50, text-body-sm, etc.) for consistency with the rest of the admin UI.",
+    "rationale": "Admin components should use the design system tokens for visual consistency. The page works but diverges from the project's styling conventions.",
+    "priority": "low"
+  }
+]
