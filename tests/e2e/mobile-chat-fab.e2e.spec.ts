@@ -6,7 +6,7 @@
  * Tests:
  * - On mobile (<1024px), chat is hidden behind a FAB by default
  * - Tapping the FAB expands it into a full-width pill input
- * - FAB is positioned at bottom-left (LTR) or bottom-right (RTL)
+ * - FAB is positioned at bottom-left regardless of locale direction
  * - Collapse button and Escape close the input back to FAB
  * - Backdrop dim shows when input is open
  * - onChatInteraction callbacks auto-open the FAB input

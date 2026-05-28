@@ -141,12 +141,12 @@ export function MobileChatToggle({
     onInputFocusChange(false)
   }
 
-  // Collapsed FAB state
+  // Collapsed FAB state — always bottom-left regardless of locale direction.
   if (!isInternalOpen) {
     return (
       <button
         onClick={handleFabClick}
-        className="fixed bottom-6 start-6 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-elevation-3 hover:scale-110 hover:bg-primary/90 transition-all duration-normal flex items-center justify-center"
+        className="fixed bottom-6 left-6 z-50 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-elevation-3 hover:scale-110 hover:bg-primary/90 transition-all duration-normal flex items-center justify-center"
         aria-label={t('openChat')}
       >
         <MessageCircle className="w-6 h-6" />
@@ -154,105 +154,101 @@ export function MobileChatToggle({
     )
   }
 
-  // Expanded input bar state
+  // Expanded input bar state — bottom-anchored partial panel.
+  // No full-viewport backdrop so the exercise above stays visible and interactive.
+  // Close via the collapse chevron or Escape.
   return (
     <div
-      className="fixed inset-0 z-40 bg-black/5 animate-in fade-in duration-normal"
-      onClick={handleCollapse}
+      className="fixed bottom-0 left-0 right-0 z-40 bg-card rounded-t-2xl shadow-elevation-4 p-card-padding pb-8 max-h-[60dvh] overflow-y-auto animate-in slide-in-from-bottom duration-normal"
+      onKeyDown={handleKeyDown}
     >
-      <div
-        className="absolute bottom-0 start-0 end-0 bg-card rounded-t-2xl shadow-elevation-4 p-card-padding pb-8 animate-in slide-in-from-bottom-0 duration-normal"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={handleKeyDown}
-      >
-        {/* Header with collapse button */}
-        <div className="flex items-center justify-between mb-3">
-          <button
-            type="button"
-            onClick={handleCollapse}
-            className="p-2 rounded-lg hover:bg-muted transition-colors"
-            aria-label={t('closeChat')}
-          >
-            <ChevronDown className="w-5 h-5 text-muted-foreground" />
-          </button>
-          <span className="text-body-sm font-medium text-foreground">{t('chatTitle')}</span>
-          <div className="w-9" /> {/* Spacer to balance layout */}
-        </div>
+      {/* Header with collapse button */}
+      <div className="flex items-center justify-between mb-3">
+        <button
+          type="button"
+          onClick={handleCollapse}
+          className="p-2 rounded-lg hover:bg-muted transition-colors"
+          aria-label={t('closeChat')}
+        >
+          <ChevronDown className="w-5 h-5 text-muted-foreground" />
+        </button>
+        <span className="text-body-sm font-medium text-foreground">{t('chatTitle')}</span>
+        <div className="w-9" /> {/* Spacer to balance layout */}
+      </div>
 
-        {/* Input form */}
-        <form ref={formRef} onSubmit={handleFormSubmit}>
-          <div
-            className={cn(
-              'bg-muted rounded-full flex items-center px-4 py-1.5 border border-input gap-3',
-              isInputFocused && 'ring-2 ring-primary/30',
-            )}
-          >
-            {/* Formula button */}
-            {showMathTools && (
-              <button
-                type="button"
-                onClick={onFormulaToggle}
-                className={cn(
-                  'p-1.5 rounded-lg border transition-colors',
-                  isFormulaOpen
-                    ? 'bg-primary/20 text-primary border-primary/40'
-                    : 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/20',
-                )}
-                title={t('insertFormula')}
-              >
-                <FunctionSquare className="w-5 h-5" />
-              </button>
-            )}
-
-            {/* Text input */}
-            <input
-              ref={inputRef}
-              type="text"
-              className="flex-1 bg-transparent border-none outline-none py-2.5 text-chat-input text-foreground placeholder:text-muted-foreground"
-              placeholder={t('chatInputPlaceholder')}
-              value={localInputValue}
-              onChange={handleInputChange}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  handleFormSubmit(e as unknown as React.FormEvent)
-                }
-              }}
-              disabled={isSubmitting}
-            />
-
-            {/* Media upload button */}
+      {/* Input form */}
+      <form ref={formRef} onSubmit={handleFormSubmit}>
+        <div
+          className={cn(
+            'bg-muted rounded-full flex items-center px-4 py-1.5 border border-input gap-3',
+            isInputFocused && 'ring-2 ring-primary/30',
+          )}
+        >
+          {/* Formula button */}
+          {showMathTools && (
             <button
               type="button"
-              onClick={onOpenFilePicker}
+              onClick={onFormulaToggle}
               className={cn(
-                'p-1.5 text-muted-foreground hover:text-primary transition-colors',
-                isUploading && 'opacity-disabled cursor-not-allowed',
+                'p-1.5 rounded-lg border transition-colors',
+                isFormulaOpen
+                  ? 'bg-primary/20 text-primary border-primary/40'
+                  : 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/20',
               )}
-              disabled={isUploading}
-              aria-label={t('attachFile')}
+              title={t('insertFormula')}
             >
-              {isUploading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <Plus className="w-5 h-5" />
-              )}
+              <FunctionSquare className="w-5 h-5" />
             </button>
+          )}
 
-            {/* Send button */}
-            <button
-              type="submit"
-              className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-input hover:bg-primary/90 transition-all hover:scale-105 disabled:opacity-disabled disabled:cursor-not-allowed disabled:hover:scale-100"
-              disabled={isSubmitting || !localInputValue.trim()}
-              aria-label={t('sendMessage')}
-            >
-              <Send className="w-5 h-5" />
-            </button>
-          </div>
-        </form>
-      </div>
+          {/* Text input */}
+          <input
+            ref={inputRef}
+            type="text"
+            className="flex-1 bg-transparent border-none outline-none py-2.5 text-chat-input text-foreground placeholder:text-muted-foreground"
+            placeholder={t('chatInputPlaceholder')}
+            value={localInputValue}
+            onChange={handleInputChange}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                handleFormSubmit(e as unknown as React.FormEvent)
+              }
+            }}
+            disabled={isSubmitting}
+          />
+
+          {/* Media upload button */}
+          <button
+            type="button"
+            onClick={onOpenFilePicker}
+            className={cn(
+              'p-1.5 text-muted-foreground hover:text-primary transition-colors',
+              isUploading && 'opacity-disabled cursor-not-allowed',
+            )}
+            disabled={isUploading}
+            aria-label={t('attachFile')}
+          >
+            {isUploading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Plus className="w-5 h-5" />
+            )}
+          </button>
+
+          {/* Send button */}
+          <button
+            type="submit"
+            className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-input hover:bg-primary/90 transition-all hover:scale-105 disabled:opacity-disabled disabled:cursor-not-allowed disabled:hover:scale-100"
+            disabled={isSubmitting || !localInputValue.trim()}
+            aria-label={t('sendMessage')}
+          >
+            <Send className="w-5 h-5" />
+          </button>
+        </div>
+      </form>
     </div>
   )
 }
