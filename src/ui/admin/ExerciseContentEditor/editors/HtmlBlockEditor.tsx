@@ -1,96 +1,19 @@
 'use client'
 
+/**
+ * @fileType component
+ * @ai-summary Raw HTML editor for the exercise HtmlBlock — admin-only.
+ *
+ * SECURITY NOTE: Admin-only. HTML is stored verbatim (no sanitization) so admins
+ * can author any tags/attributes/inline styles. Student-facing rendering is
+ * sanitized separately.
+ */
+
 import type { HtmlBlock } from '@/server/payload/collections/Exercises/types'
 import { parseHtmlToGuidedExplanation } from '@/infra/contracts/guided-explanation/parseHtmlToGuidedExplanation'
-import DOMPurify from 'dompurify'
-import dynamic from 'next/dynamic'
-import React, { useMemo, useRef, useState } from 'react'
-import 'react-quill-new/dist/quill.snow.css'
+import React, { useRef, useState } from 'react'
 
-const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false })
-
-const QUILL_MODULES = {
-  toolbar: [
-    [{ header: [1, 2, 3, false] }],
-    ['bold', 'italic', 'underline', 'strike'],
-    [{ list: 'ordered' }, { list: 'bullet' }],
-    ['blockquote', 'code-block'],
-    ['link', 'image'],
-    [{ direction: 'rtl' }],
-    ['clean'],
-  ],
-}
-
-const QUILL_FORMATS = [
-  'header',
-  'bold',
-  'italic',
-  'underline',
-  'strike',
-  'list',
-  'bullet',
-  'blockquote',
-  'code-block',
-  'link',
-  'image',
-  'direction',
-]
-
-const SANITIZE_CONFIG = {
-  ALLOWED_TAGS: [
-    'p',
-    'br',
-    'hr',
-    'span',
-    'h1',
-    'h2',
-    'h3',
-    'h4',
-    'h5',
-    'h6',
-    'strong',
-    'b',
-    'em',
-    'i',
-    'u',
-    's',
-    'del',
-    'ins',
-    'mark',
-    'sub',
-    'sup',
-    'ul',
-    'ol',
-    'li',
-    'blockquote',
-    'pre',
-    'code',
-    'a',
-    'img',
-    'div',
-    'section',
-    'table',
-    'thead',
-    'tbody',
-    'tr',
-    'th',
-    'td',
-  ],
-  ALLOWED_ATTR: [
-    'href',
-    'src',
-    'alt',
-    'title',
-    'class',
-    'id',
-    'rel',
-    'width',
-    'height',
-    'colspan',
-    'rowspan',
-    'dir',
-  ],
-}
+type Mode = 'edit' | 'preview'
 
 interface HtmlBlockEditorProps {
   block: HtmlBlock
@@ -98,29 +21,13 @@ interface HtmlBlockEditorProps {
 }
 
 export const HtmlBlockEditor: React.FC<HtmlBlockEditorProps> = ({ block, onChange }) => {
-  const [showSource, setShowSource] = useState(false)
+  const [mode, setMode] = useState<Mode>('edit')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const modules = useMemo(() => QUILL_MODULES, [])
   const hasGuidedExplanation = !!block.guidedExplanation
-
-  const handleChange = (html: string) => {
-    const normalized = html === '<p><br></p>' ? '' : html
-    onChange({ ...block, html: normalized })
-  }
 
   const handleSourceChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onChange({ ...block, html: e.target.value })
-  }
-
-  const handleToggleSource = () => {
-    if (showSource && block.html) {
-      const sanitized = DOMPurify.sanitize(block.html, SANITIZE_CONFIG)
-      if (sanitized !== block.html) {
-        onChange({ ...block, html: sanitized })
-      }
-    }
-    setShowSource(!showSource)
   }
 
   const handleImportHtml = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -133,9 +40,8 @@ export const HtmlBlockEditor: React.FC<HtmlBlockEditorProps> = ({ block, onChang
       if (payload) {
         onChange({ ...block, guidedExplanation: payload })
       } else {
-        // Not a guided explanation — treat as static HTML, sanitize it
-        const sanitized = DOMPurify.sanitize(html, SANITIZE_CONFIG)
-        onChange({ ...block, html: sanitized, guidedExplanation: undefined })
+        // Admin-only: keep imported HTML verbatim.
+        onChange({ ...block, html, guidedExplanation: undefined })
       }
     }
     reader.readAsText(file)
@@ -154,13 +60,22 @@ export const HtmlBlockEditor: React.FC<HtmlBlockEditorProps> = ({ block, onChang
         </span>
         <div className="html-block-editor-actions">
           {!hasGuidedExplanation && (
-            <button
-              type="button"
-              className={`html-editor-source-toggle ${showSource ? 'html-editor-source-toggle--active' : ''}`}
-              onClick={handleToggleSource}
-            >
-              {showSource ? 'Visual Editor' : 'HTML Source'}
-            </button>
+            <>
+              <button
+                type="button"
+                className={`html-editor-source-toggle ${mode === 'edit' ? 'html-editor-source-toggle--active' : ''}`}
+                onClick={() => setMode('edit')}
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                className={`html-editor-source-toggle ${mode === 'preview' ? 'html-editor-source-toggle--active' : ''}`}
+                onClick={() => setMode('preview')}
+              >
+                Preview
+              </button>
+            </>
           )}
           <button
             type="button"
@@ -196,7 +111,7 @@ export const HtmlBlockEditor: React.FC<HtmlBlockEditorProps> = ({ block, onChang
             {block.guidedExplanation?.direction.toUpperCase()}
           </p>
         </div>
-      ) : showSource ? (
+      ) : mode === 'edit' ? (
         <textarea
           className="html-block-source-textarea"
           value={block.html}
@@ -205,13 +120,10 @@ export const HtmlBlockEditor: React.FC<HtmlBlockEditorProps> = ({ block, onChang
           rows={12}
         />
       ) : (
-        <ReactQuill
-          theme="snow"
-          value={block.html}
-          onChange={handleChange}
-          modules={modules}
-          formats={QUILL_FORMATS}
-          placeholder="Start typing your content here..."
+        <div
+          className="html-block-preview-pane"
+          // Admin-only preview: render exactly what was authored.
+          dangerouslySetInnerHTML={{ __html: block.html || '' }}
         />
       )}
     </div>

@@ -2,81 +2,50 @@
 
 /**
  * @fileType component
- * @ai-summary Quill HTML editor for HtmlBlock - admin-only content creation
+ * @ai-summary Raw HTML editor for HtmlBlock — admin-only content creation.
  *
- * SECURITY NOTE: This component is admin-only - only authorized content creators (teachers)
- * have access to it. The content is not sanitized here to allow rich HTML including
- * style attributes, details/summary tags, and other HTML. Content displayed to students
- * goes through separate rendering logic with proper escaping.
+ * SECURITY NOTE: This component is admin-only — only authorized content creators
+ * (teachers) have access to it. The HTML is stored verbatim so admins can use any
+ * tags/attributes/inline styles. Content shown to students goes through separate
+ * rendering logic with proper sanitization.
  */
 
 import { useField } from '@payloadcms/ui'
-import dynamic from 'next/dynamic'
-import React, { useMemo, useState } from 'react'
-import 'react-quill-new/dist/quill.snow.css'
+import React, { useState } from 'react'
 
-const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false })
-
-const QUILL_MODULES = {
-  toolbar: [
-    [{ header: [1, 2, 3, false] }],
-    ['bold', 'italic', 'underline', 'strike'],
-    [{ list: 'ordered' }, { list: 'bullet' }],
-    ['blockquote', 'code-block'],
-    ['link', 'image'],
-    [{ direction: 'rtl' }],
-    ['clean'],
-  ],
-}
-
-const QUILL_FORMATS = [
-  'header',
-  'bold',
-  'italic',
-  'underline',
-  'strike',
-  'list',
-  'bullet',
-  'blockquote',
-  'code-block',
-  'link',
-  'image',
-  'direction',
-]
+type Mode = 'edit' | 'preview'
 
 export const QuillField: React.FC<{ path: string }> = ({ path }) => {
   const { value, setValue } = useField<string>({ path })
-  const [showSource, setShowSource] = useState(false)
-
-  const modules = useMemo(() => QUILL_MODULES, [])
-
-  const handleChange = (html: string) => {
-    const normalized = html === '<p><br></p>' ? '' : html
-    setValue(normalized)
-  }
+  const [mode, setMode] = useState<Mode>('edit')
 
   const handleSourceChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setValue(e.target.value)
   }
 
-  const handleToggleSource = () => {
-    // No sanitization - admin-only content, rich HTML allowed
-    setShowSource(!showSource)
-  }
-
   return (
     <div className="html-block-editor">
       <div className="html-block-editor-header">
-        <button
-          type="button"
-          className={`html-editor-source-toggle ${showSource ? 'html-editor-source-toggle--active' : ''}`}
-          onClick={handleToggleSource}
-        >
-          {showSource ? 'Visual Editor' : 'HTML Source'}
-        </button>
+        <span className="html-block-editor-label">HTML Block</span>
+        <div className="html-block-editor-actions">
+          <button
+            type="button"
+            className={`html-editor-source-toggle ${mode === 'edit' ? 'html-editor-source-toggle--active' : ''}`}
+            onClick={() => setMode('edit')}
+          >
+            Edit
+          </button>
+          <button
+            type="button"
+            className={`html-editor-source-toggle ${mode === 'preview' ? 'html-editor-source-toggle--active' : ''}`}
+            onClick={() => setMode('preview')}
+          >
+            Preview
+          </button>
+        </div>
       </div>
 
-      {showSource ? (
+      {mode === 'edit' ? (
         <textarea
           className="html-block-source-textarea"
           value={value || ''}
@@ -85,13 +54,10 @@ export const QuillField: React.FC<{ path: string }> = ({ path }) => {
           rows={12}
         />
       ) : (
-        <ReactQuill
-          theme="snow"
-          value={value || ''}
-          onChange={handleChange}
-          modules={modules}
-          formats={QUILL_FORMATS}
-          placeholder="Start typing your content here..."
+        <div
+          className="html-block-preview-pane"
+          // Admin-only preview: render exactly what was authored.
+          dangerouslySetInnerHTML={{ __html: value || '' }}
         />
       )}
     </div>
