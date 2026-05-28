@@ -82,10 +82,10 @@ export function ExerciseWorksheet({
   const isRtl = locale?.toLowerCase().startsWith('he') ?? false
 
   // Side-by-side layout: text on the reading-start side, diagram opposite.
-  // LTR -> text left, diagram right ('textLeft'); RTL -> text right, diagram
-  // left ('textRight'). GraphWithPrompt forces dir='ltr' on its flex
+  // LTR -> text left, diagram right ('textRight'); RTL -> text right, diagram
+  // left ('textLeft'). GraphWithPrompt forces dir='ltr' on its flex
   // container so 'textLeft' / 'textRight' always describe physical position.
-  const sideBySideLayout: GraphLayout = isRtl ? 'textRight' : 'textLeft'
+  const sideBySideLayout: GraphLayout = isRtl ? 'textLeft' : 'textRight'
 
   // Track question index for Hebrew letter labels (RTL only)
   let questionIndex = 0
@@ -114,14 +114,12 @@ function getBlockKey(block: ContentBlock, index: number): string {
   return 'id' in block && block.id ? block.id : `block_${index}`
 }
 
-/** Question types that receive Hebrew letter labels */
+/** Question types that receive Hebrew letter labels (geometry/axis handled separately — diagram rendered as sibling, not nested) */
 const LABELLED_QUESTION_TYPES = new Set([
   'question_select',
   'question_free_response',
   'question_table',
   'question_matching',
-  'question_geometry',
-  'question_axis',
 ])
 
 interface RenderBlockParams {
@@ -147,6 +145,25 @@ function renderBlockWithLabel({
   hideLatexBlocks,
 }: RenderBlockParams): { block: React.ReactNode; incremented: boolean } {
   const isLabelledQuestion = LABELLED_QUESTION_TYPES.has(block.type)
+
+  // Geometry/axis: badge beside prompt text, diagram as sibling below (not nested in label)
+  if (block.type === 'question_geometry' || block.type === 'question_axis') {
+    const label = isRtl
+      ? `${HEBREW_LETTERS[questionIndex] || String(questionIndex + 1)}.`
+      : `${questionIndex + 1}.`
+    const blockContent = renderBlockContent({ block, mediaMap, sideBySideLayout, hideLatexBlocks })
+    return {
+      block: (
+        <>
+          <WorksheetQuestionLabel label={label} dir={isRtl ? 'rtl' : 'ltr'}>
+            <PromptText prompt={(block as QuestionGeometryBlock | QuestionAxisBlock).prompt} />
+          </WorksheetQuestionLabel>
+          {blockContent}
+        </>
+      ),
+      incremented: true,
+    }
+  }
 
   if (isLabelledQuestion) {
     const label = isRtl
@@ -226,10 +243,12 @@ function renderBlockContent({
       <GraphWithPrompt
         blockId={b.id}
         layout={layout}
-        prompt={b.prompt}
+        prompt={undefined}
         worksheetLayout={{ sideContentAspectRatio: aspectRatio }}
       >
-        <GeometryRenderer blockId={b.id} spec={b.geometry} />
+        <div className="my-4 rounded-xl border bg-card p-4">
+          <GeometryRenderer blockId={b.id} spec={b.geometry} />
+        </div>
       </GraphWithPrompt>
     )
   }
@@ -245,10 +264,12 @@ function renderBlockContent({
       <GraphWithPrompt
         blockId={b.id}
         layout={layout}
-        prompt={b.prompt}
+        prompt={undefined}
         worksheetLayout={{ sideContentAspectRatio: axisAspectRatio }}
       >
-        <AxisRenderer blockId={b.id} spec={b.axis} displaySize={b.displaySize} />
+        <div className="my-4 rounded-xl border bg-card p-4">
+          <AxisRenderer blockId={b.id} spec={b.axis} displaySize={b.displaySize} />
+        </div>
       </GraphWithPrompt>
     )
   }
