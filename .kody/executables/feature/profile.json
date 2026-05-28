@@ -1,7 +1,7 @@
 {
   "name": "feature",
   "role": "primitive",
-  "describe": "Implement a feature / refactor issue end-to-end in ONE session: research → plan → build → test → verify, then branch, commit, open PR. Single-session — no multi-stage orchestration.",
+  "describe": "Implement a feature / refactor issue end-to-end in ONE session: research \u2192 plan \u2192 build \u2192 test \u2192 verify, then branch, commit, open PR. Single-session \u2014 no multi-stage orchestration.",
   "inputs": [
     {
       "name": "issue",
@@ -34,14 +34,26 @@
       "Bash",
       "Grep",
       "Glob",
-      "mcp__kody-verify"
+      "mcp__kody-verify",
+      "mcp__codegraph"
     ],
-    "hooks": ["block-git"],
+    "hooks": [
+      "block-git"
+    ],
     "skills": [],
     "commands": [],
     "subagents": [],
     "plugins": [],
-    "mcpServers": []
+    "mcpServers": [
+      {
+        "name": "codegraph",
+        "command": "codegraph",
+        "args": [
+          "serve",
+          "--mcp"
+        ]
+      }
+    ]
   },
   "cliTools": [],
   "lifecycle": "pr-branch",
@@ -60,7 +72,12 @@
   },
   "scripts": {
     "preflight": [
-      { "script": "runFlow" }
+      {
+        "shell": "install-codegraph.sh"
+      },
+      {
+        "script": "runFlow"
+      }
     ],
     "postflight": []
   },

@@ -24,18 +24,38 @@
       "Grep",
       "Glob",
       "Bash",
-      "Agent"
+      "Agent",
+      "mcp__codegraph"
     ],
-    "hooks": ["block-write"],
+    "hooks": [
+      "block-write"
+    ],
     "skills": [],
     "commands": [],
-    "subagents": ["review-security", "review-correctness", "review-style", "review-architecture"],
+    "subagents": [
+      "review-security",
+      "review-correctness",
+      "review-style",
+      "review-architecture"
+    ],
     "plugins": [],
-    "mcpServers": []
+    "mcpServers": [
+      {
+        "name": "codegraph",
+        "command": "codegraph",
+        "args": [
+          "serve",
+          "--mcp"
+        ]
+      }
+    ]
   },
   "cliTools": [],
   "scripts": {
     "preflight": [
+      {
+        "shell": "install-codegraph.sh"
+      },
       {
         "script": "setLifecycleLabel",
         "with": {

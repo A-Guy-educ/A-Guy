@@ -126,3 +126,11 @@ the full first-pass structure below.
 - Do NOT propose an implementation plan — that's the planner's job.
 - Do NOT tell the user what command to run next.
 - If the issue is empty or incomprehensible, output `FAILED: <why>` instead.
+
+## Map the code first (codegraph)
+Before exploring with grep/Read, use the codegraph tools to locate symbols and trace call paths — they're faster and more precise:
+- `codegraph_search <name>` — find a symbol
+- `codegraph_callees` / `codegraph_callers` — see what a function calls or who calls it
+- `codegraph_trace <from> <to>` — the call path between two symbols
+Use grep only for things codegraph can't answer (strings, comments, config).
+

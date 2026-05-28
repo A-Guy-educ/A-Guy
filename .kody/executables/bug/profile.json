@@ -1,7 +1,7 @@
 {
   "name": "bug",
   "role": "primitive",
-  "describe": "Fix a bug / enhancement issue end-to-end in ONE session: reproduce with a failing test → research → plan → fix → verify, then branch, commit, open PR. Single-session — no multi-stage orchestration.",
+  "describe": "Fix a bug / enhancement issue end-to-end in ONE session: reproduce with a failing test \u2192 research \u2192 plan \u2192 fix \u2192 verify, then branch, commit, open PR. Single-session \u2014 no multi-stage orchestration.",
   "inputs": [
     {
       "name": "issue",
@@ -34,14 +34,28 @@
       "Bash",
       "Grep",
       "Glob",
-      "mcp__kody-verify"
+      "mcp__kody-verify",
+      "mcp__codegraph"
     ],
-    "hooks": ["block-git"],
-    "skills": ["systematic-debugging"],
+    "hooks": [
+      "block-git"
+    ],
+    "skills": [
+      "systematic-debugging"
+    ],
     "commands": [],
     "subagents": [],
     "plugins": [],
-    "mcpServers": []
+    "mcpServers": [
+      {
+        "name": "codegraph",
+        "command": "codegraph",
+        "args": [
+          "serve",
+          "--mcp"
+        ]
+      }
+    ]
   },
   "cliTools": [],
   "lifecycle": "pr-branch",
@@ -60,7 +74,12 @@
   },
   "scripts": {
     "preflight": [
-      { "script": "runFlow" }
+      {
+        "shell": "install-codegraph.sh"
+      },
+      {
+        "script": "runFlow"
+      }
     ],
     "postflight": []
   },

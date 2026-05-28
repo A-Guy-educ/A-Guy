@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Mobile FAB behavior on collapse needs verification",
+    "body": "When FAB closes (chevron/Escape), MobileChatToggle's onCollapse only calls setIsChatInputFocused(false). It doesn't reset SplitPaneLayout's chatExpandedInPdf state. This means the chat panel might remain in expanded state even after FAB closes. The FAB's internal isOpen becomes false (so FAB button reappears), but the underlying chat panel in SplitPaneLayout might still be expanded. Verify behavior by testing: open FAB -> close FAB -> FAB button should reappear and chat should be hidden.",
+    "rationale": "The focus-chat-input event listener in MobileChatToggle auto-opens the FAB by calling open() when the event fires. But there's no event dispatched when FAB closes to reset the parent state. This could leave the system in an inconsistent state.",
+    "priority": "medium"
+  }
+]

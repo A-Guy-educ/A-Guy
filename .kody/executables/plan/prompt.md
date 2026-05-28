@@ -190,3 +190,22 @@ No filler. No marketing language. Depth over brevity.>
 - **Plan length ≤ ~1500 lines / ~15k tokens.** Larger plans get truncated by output token caps before the closing `DONE` marker — and a truncated plan is worse than a smaller one. If a feature legitimately needs more, output `FAILED: scope too large for single plan — split into <list of sub-issues>` instead of overrunning.
 - If the issue is ambiguous and you cannot make progress without input, output `FAILED: <what's unclear>` instead of a plan.
 - If the Research floor cannot be met because required files are missing or unreadable, output `FAILED: <what could not be read>` instead of a half-blind plan.
+
+## Map the code first (codegraph)
+Before exploring with grep/Read, use the codegraph tools to locate symbols and trace call paths — they're faster and more precise:
+- `codegraph_search <name>` — find a symbol
+- `codegraph_callees` / `codegraph_callers` — see what a function calls or who calls it
+- `codegraph_trace <from> <to>` — the call path between two symbols
+Use grep only for things codegraph can't answer (strings, comments, config).
+
+
+<!-- kody:output-format (managed — edit above this line only) -->
+
+# Final message format (required)
+Your FINAL message MUST be exactly this block, with nothing before it:
+
+DONE
+PR_SUMMARY:
+<your complete answer to the issue — this text is posted verbatim as a comment>
+
+If you cannot answer, output a single line instead: FAILED: <reason>

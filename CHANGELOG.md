@@ -1490,19 +1490,21 @@
 - start interactive session interactive-1778075175838-vd0im6 (1b6229b27)
 ## [Unreleased]
 
+- #2133: Send purchase confirmation email after webhook payment success ([#2143](https://github.com/A-Guy-educ/A-Guy/pull/2143)) — @kodyade[bot]
+- #2140: Replace mobile draggable chat with a toggle FAB + expanding input ([#2155](https://github.com/A-Guy-educ/A-Guy/pull/2155)) — @kodyade[bot]
 - #1823: [P2] Stats page chart area renders empty ([#1860](https://github.com/A-Guy-educ/A-Guy/pull/1860)) — @aguyaharonyair
 - #2135: Fix PaymentStats race condition with atomic $inc upsert and uniq… ([#2142](https://github.com/A-Guy-educ/A-Guy/pull/2142)) — @kodyade[bot]
 - #2134: User can see their purchases and active entitlements at /account… ([#2146](https://github.com/A-Guy-educ/A-Guy/pull/2146)) — @kodyade[bot]
 - #1764: [Admin] Block management — add, reorder, delete in lesson worksh… ([#1765](https://github.com/A-Guy-educ/A-Guy/pull/1765)) — @aguyaharonyair
 - #2111: Improve admin Coupons list and detail views — show usage stats a… ([#2115](https://github.com/A-Guy-educ/A-Guy/pull/2115)) — @aguyaharonyair
 - #1534: יצירת כפתור צ'אט באדמין לגישה לסוכן AI ([#1591](https://github.com/A-Guy-educ/A-Guy/pull/1591)) — @aguyaharonyair
-- #2110: Add WebhookEvents collection and dedup all webhook handlers on (… ([#2118](https://github.com/A-Guy-educ/A-Guy/pull/2118)) — @aguyaharonyair
+- #2110: Add WebhookEvents collection and dedup all webhook handlers on (… ([#2118](https://github.com/A-Guy-educ/A-Guy/pull/2118)) — @aguyaharonyair · 🔄 QA (#2167)
 ## [v0.25.9] - 2026-05-26
 
 - chore: release v0.25.9 ([#2121](https://github.com/A-Guy-educ/A-Guy/pull/2121)) — @kodyade[bot]
-- #2113: Add public product catalog page and checkout success/cancel pages ([#2117_(https://github.com/A-Guy-educ/A-Guy/pull/2117)) — @aguyaharonyair
-- #2112: Add PayPal sandbox key smoke test script + developer setup doc ([#2114](https://github.com/A-Guy-educ/A-Guy/pull/2114)) — @aguyaharonyair
-- #2104: [Admin] Lesson page — show all exercises inline with full conten… ([#2108](https://github.com/A-Guy-educ/A-Guy/pull/2108)) — @aguyaharonyair
+- #2113: Add public product catalog page and checkout success/cancel pages ([#2117_(https://github.com/A-Guy-educ/A-Guy/pull/2117)) — @aguyaharonyair · 🔄 QA (#2166)
+- #2112: Add PayPal sandbox key smoke test script + developer setup doc ([#2114](https://github.com/A-Guy-educ/A-Guy/pull/2114)) — @aguyaharonyair · 🔄 QA (#2166)
+- #2104: [Admin] Lesson page — show all exercises inline with full conten… ([#2108](https://github.com/A-Guy-educ/A-Guy/pull/2108)) — @aguyaharonyair · 🔄 QA (#2166)
 - fix(lesson-blocks): Persist exercise deletions in lesson blocks UI ([#2109](https://github.com/A-Guy-educ/A-Guy/pull/2109)) — @aguyshayb
 - #2011: Fail closed in checkout tenant guard when user has no tenant ([#2012](https://github.com/A-Guy-educ/A-Guy/pull/2012)) — @kodyade · ⚠️ QA 2026-05-25 (#2079)
 

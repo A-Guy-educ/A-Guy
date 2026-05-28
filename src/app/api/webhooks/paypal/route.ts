@@ -22,6 +22,7 @@ import config from '@payload-config'
 
 import { grantProductEntitlements } from '@/lib/payment/grant-entitlements'
 import { verifyPayPalWebhook } from '@/lib/payment/paypal'
+import { sendPurchaseReceipt } from '@/server/email/services/purchase-receipt-service'
 
 interface PayPalWebhookResource {
   id: string
@@ -404,6 +405,20 @@ async function handleEvent(
           overrideAccess: true,
         })
       }
+
+      // Send purchase receipt email — fire-and-forget.
+      // sendPurchaseReceipt handles idempotency (skips if emailSentAt already set),
+      // handles missing email adapter (no-op fallback), and logs errors without throwing.
+      void sendPurchaseReceipt(payload, {
+        transactionId: transaction.id,
+        userId: typeof transaction.user === 'object' ? transaction.user.id : transaction.user,
+        productId:
+          typeof transaction.product === 'object' ? transaction.product.id : transaction.product,
+        providerTransactionId: transaction.providerTransactionId,
+        amount: transaction.amount as number,
+        currency: transaction.currency as string,
+        appliedCoupon: paypalTxMetadata?.appliedCoupon ?? null,
+      })
       break
     }
 
