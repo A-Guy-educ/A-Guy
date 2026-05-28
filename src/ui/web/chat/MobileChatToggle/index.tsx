@@ -46,7 +46,7 @@ interface MobileChatToggleProps {
  * On mobile (<1024px), replaces the draggable chat panel with a FAB that
  * expands into a full-width pill-shaped input bar.
  *
- * - FAB is always visible at bottom-left (LTR) or bottom-right (RTL)
+ * - FAB is always visible at bottom-left regardless of locale direction
  * - Tapping FAB expands it into the chat input bar
  * - Collapse button or Escape closes back to FAB
  * - Listens for focus-chat-input event to auto-open (from onChatInteraction callbacks)
