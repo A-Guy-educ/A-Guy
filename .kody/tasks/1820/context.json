@@ -1,0 +1,17 @@
+{
+  "taskId": "1820",
+  "taskType": "issue",
+  "target": "1820-p1-test-page-empty-for-course-that-has-lessons-in",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed test page to use lessonType='practice' instead of 'exam', mirroring the study page fix in commit 3d002f33e",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/test/page.tsx",
+    "tests/int/test-page-lesson-type-bug.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1820-1.jsonl",
+  "startedAt": "2026-05-22T21:30:00.000Z",
+  "finishedAt": "2026-05-22T21:48:00.000Z"
+}

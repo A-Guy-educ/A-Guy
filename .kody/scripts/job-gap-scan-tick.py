@@ -27,6 +27,11 @@ from typing import Any
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 JOBS_DIR = REPO_ROOT / ".kody" / "jobs"
+# Duty definitions live in .kody/duties/ after the Jobs→Duties rename. The
+# script's own state file still lives in .kody/jobs/ (self-managed via
+# STATE_PATH below), so that constant stays put — only the existing-slug
+# dedupe needs to read the real definitions.
+DUTIES_DIR = REPO_ROOT / ".kody" / "duties"
 MEMORY_DIR = REPO_ROOT / ".kody" / "memory"
 STATE_PATH = JOBS_DIR / "job-gap-scan.state.json"
 KODY_CONFIG_PATH = REPO_ROOT / "kody.config.json"
@@ -264,9 +269,9 @@ def read_verdicts() -> dict[str, dict[str, Any]]:
 
 
 def existing_job_slugs() -> set[str]:
-    if not JOBS_DIR.exists():
+    if not DUTIES_DIR.exists():
         return set()
-    return {p.stem for p in JOBS_DIR.glob("*.md")}
+    return {p.stem for p in DUTIES_DIR.glob("*.md")}
 
 
 def gh(args: list[str], check: bool = True) -> subprocess.CompletedProcess:
@@ -350,7 +355,7 @@ def build_issue_body(cand: Candidate) -> str:
         f"{score_row}\n\n"
         "## Draft job markdown\n\n"
         "If approved, the operator (or an executor) would commit the following at "
-        f"`.kody/jobs/{cand.slug}.md`. This is a starting point, not a final spec.\n\n"
+        f"`.kody/duties/{cand.slug}.md`. This is a starting point, not a final spec.\n\n"
         "````markdown\n"
         f"{cand.job_markdown.rstrip()}\n"
         "````\n\n"
@@ -445,7 +450,7 @@ def main() -> int:
     eligible: list[Candidate] = []
     for cand in CATALOGUE:
         if cand.slug in existing_jobs:
-            log(f"skip {cand.slug}: already in .kody/jobs/")
+            log(f"skip {cand.slug}: already in .kody/duties/")
             continue
         verdict = verdicts.get(cand.slug)
         if verdict:

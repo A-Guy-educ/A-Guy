@@ -160,6 +160,40 @@
       "failedToLoadCourse": "Failed to load course",
       "tryAgain": "Try Again"
     },
+    "purchases": {
+      "title": "My Purchases",
+      "refresh": "Refresh",
+      "status": {
+        "pending": "Pending",
+        "succeeded": "Succeeded",
+        "failed": "Failed",
+        "refunded": "Refunded"
+      },
+      "couponApplied": "Coupon: {code}",
+      "unknownProduct": "Unknown Product",
+      "empty": {
+        "title": "No purchases yet",
+        "description": "You haven't made any purchases. Browse our products to get started.",
+        "cta": "Browse Products"
+      },
+      "backToPurchases": "Back to Purchases",
+      "purchasedOn": "Purchased on",
+      "amount": "Amount",
+      "provider": "Provider",
+      "transactionId": "Transaction ID",
+      "status": "Status",
+      "coupon": "Coupon",
+      "pendingHelpText": "Your payment is being processed. This may take a few moments.",
+      "refreshStatus": "Refresh Status",
+      "unlockedItems": "Unlocked Items",
+      "courses": "Courses",
+      "features": "Features",
+      "refunded": "Refunded",
+      "refundedAmount": "Refunded amount",
+      "errorLoading": "Failed to load transaction",
+      "notFound": "Transaction not found",
+      "viewProduct": "View Product"
+    },
     "signup": {
       "title": "Create Account",
       "subtitle": "Sign up to start learning",
@@ -421,7 +455,10 @@
     "chat": {
       "chatWelcome": "Hi! I'm your admin AI assistant. Ask me about courses, chapters, lessons, exercises, or media in your system.",
       "chatInputPlaceholder": "Ask a question...",
-      "chatAuthRequired": "Please log in to access admin chat"
+      "chatAuthRequired": "Please log in to access admin chat",
+      "openChat": "Open AI Chat",
+      "closeChat": "Close Chat",
+      "modalTitle": "Admin AI Assistant"
     },
     "chatLink": "Chat with AI"
   },

@@ -132,9 +132,13 @@ def read_ledger_modes() -> dict[str, str]:
     except json.JSONDecodeError:
         log("ledger JSON malformed — treating all verbs as ask")
         return modes
-    actions = ledger.get("actions", {})
+    # Trust is tracked per staff slug: staff.<slug>.<verb>.mode. This job runs
+    # as the CTO, so read the CTO's slice. (The old flat "actions.<verb>" path
+    # silently read nothing once the ledger moved to per-staff, pinning every
+    # verb to "ask" forever even after graduation.)
+    cto = ledger.get("staff", {}).get("cto", {})
     for v in VERBS:
-        if actions.get(v, {}).get("mode") == "auto":
+        if cto.get(v, {}).get("mode") == "auto":
             modes[v] = "auto"
     return modes
 
@@ -273,8 +277,15 @@ def main() -> int:
         # successful sync), which is exactly when a repair should re-evaluate.
         fp = f"{verb}|{pr.get('headRefOid', '')}"
         prior = new_prs.get(key)
+        graduated = modes.get(verb) == "auto"
+        intended_stage = f"{verb}-auto" if graduated else f"{verb}-recommended"
 
-        if prior and prior.get("fp") == fp:
+        # Dedup on the branch head SHA *and* the action we'd take. Keying on fp
+        # alone pinned a PR that was recommended before its verb graduated at
+        # "-recommended" forever (unchanged branch → unchanged fp), so it never
+        # upgraded to an auto-run. Re-fire when the intended action changes;
+        # still honour an operator "dismissed".
+        if prior and prior.get("fp") == fp and prior.get("stage") in (intended_stage, "dismissed"):
             print(f"| #{num} | {verb} | {fp[:24]} | skip | dedup (unchanged) |")
             continue
 
@@ -282,7 +293,6 @@ def main() -> int:
             print(f"| #{num} | {verb} | {fp[:24]} | defer | per-tick cap ({MAX_ACTIONS_PER_TICK}) |")
             continue
 
-        graduated = modes.get(verb) == "auto"
         if graduated:
             ok = auto_run(num, verb, reason)
             stage = f"{verb}-auto"
