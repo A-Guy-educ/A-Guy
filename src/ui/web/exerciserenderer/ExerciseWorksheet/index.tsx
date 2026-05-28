@@ -317,16 +317,21 @@ interface WorksheetQuestionLabelProps {
 }
 
 function WorksheetQuestionLabel({ label, dir, children }: WorksheetQuestionLabelProps) {
+  // The flex container inherits dir from the page (rtl in Hebrew), which already
+  // reverses visual order of children. Don't add flex-row-reverse — that would
+  // cancel the RTL reversal and put the badge on the wrong side.
+  // DOM order is [badge, children]:
+  //   - LTR: badge on the left, children on the right
+  //   - RTL: badge on the right, children on the left (inherited dir flips it)
   return (
     <div
+      dir={dir}
       className={cn(
-        'w-full flex items-center',
-        dir === 'rtl'
-          ? 'justify-end text-right flex-row-reverse gap-content-gap-xs'
-          : 'justify-start text-left gap-content-gap-xs',
+        'w-full flex items-center justify-start gap-content-gap-xs',
+        dir === 'rtl' ? 'text-right' : 'text-left',
       )}
     >
-      <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-primary/10 border border-primary/20">
+      <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-primary/10 border border-primary/20 shrink-0">
         <span className="font-extrabold text-body-sm text-primary">{label}</span>
       </div>
       {children}
