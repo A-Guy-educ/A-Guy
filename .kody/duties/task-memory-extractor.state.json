@@ -1,18 +1,18 @@
 {
   "version": 1,
-  "rev": 123,
+  "rev": 124,
   "cursor": "idle",
   "data": {
-    "last_tick": "2026-05-28T03:30:32.294Z",
+    "last_tick": "2026-05-28T06:00:47.000Z",
     "tasks_seen": 46,
     "tasks_processed": 46,
-    "lastFiredAt": "2026-05-28T09:27:08.801Z",
+    "lastFiredAt": "2026-05-28T10:56:28.332Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 22993,
+    "lastDurationMs": 133257,
     "current_tick": "2026-05-28T06:00:47.000Z",
-    "currentFiredAt": "2026-05-28T06:00:47.000Z",
+    "currentFiredAt": "2026-05-28T09:30:33.000Z",
     "currentDurationMs": 2847,
-    "tick_note": "3 new tasks with memory-recs found; wrote 5 memory files; git push rejected (remote fetch-first — recoverable next tick)",
+    "tick_note": "Script ran idempotently — all 5 memory files already committed prior tick; git push still blocked by remote-ahead (recoverable when local syncs)",
     "session": {
       "started": "2026-05-27T17:44:47.000Z",
       "tasks_seen_this_session": 46,
@@ -24,7 +24,7 @@
         "mobile-chat-toggle-inside-chatinterface.md",
         "fab-open-state-via-ischatvisible-prop.md"
       ],
-      "push_state": "rejected_fetch_first"
+      "push_state": "blocked_remote_ahead"
     }
   },
   "done": false
