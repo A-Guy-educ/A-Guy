@@ -9,7 +9,6 @@ import React from 'react'
 import { loadConfigValues } from '@/infra/config/runtime'
 import { isPasswordLoginEnabled } from '@/infra/config/system-params'
 import { mergeOpenGraph } from '@/infra/utils/mergeOpenGraph'
-import { AdminBarWrapper } from '@/ui/web/AdminBar/AdminBarWrapper'
 import { Toaster } from '@/ui/web/components/toaster'
 import { Footer } from '@/ui/web/footer/Component'
 import { Header } from '@/ui/web/header/Component'
@@ -57,7 +56,6 @@ async function getMessages(locale: string) {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // Draft mode is handled in individual pages/components, not in the layout
   // This avoids static-to-dynamic conversion errors
-  const isEnabled = false
 
   const locale = await getSystemLocale()
   const messages = await getMessages(locale)
@@ -103,11 +101,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 </a>
                 <RouteLoadingIndicator />
                 <LayoutClient />
-                <AdminBarWrapper
-                  adminBarProps={{
-                    preview: isEnabled,
-                  }}
-                />
                 <Header />
                 <NavigationBar />
                 <div id="main-content" className="flex-1">
