@@ -60,11 +60,12 @@ afterEach(() => {
 
 describe('CourseLessonCard component', () => {
   describe('baseline rendering', () => {
-    it('renders lesson title and basic info', () => {
+    it('renders title and badge both showing Lesson 1 (title matches badge after fix)', () => {
       renderWithI18n(mockLesson)
 
-      expect(screen.getByText('Test Lesson')).toBeTruthy()
-      expect(screen.getByText('Lesson 1')).toBeTruthy()
+      // After the fix, title is derived from index so badge and title both show "Lesson 1"
+      const lesson1Elements = screen.getAllByText('Lesson 1')
+      expect(lesson1Elements.length).toBeGreaterThanOrEqual(2) // badge + title
     })
   })
 
@@ -131,7 +132,7 @@ describe('CourseLessonCard component', () => {
           />
         </I18nProvider>,
       )
-      expect(screen.getByText('Exam 1')).toBeTruthy()
+      expect(screen.getAllByText('Exam 1').length).toBeGreaterThanOrEqual(2) // badge + title
     })
 
     it('shows "Lesson 1" when lessonType is "learning"', () => {
@@ -146,7 +147,7 @@ describe('CourseLessonCard component', () => {
           />
         </I18nProvider>,
       )
-      expect(screen.getByText('Lesson 1')).toBeTruthy()
+      expect(screen.getAllByText('Lesson 1').length).toBeGreaterThanOrEqual(2) // badge + title
     })
 
     it('shows "Lesson 1" when lessonType is omitted (backward compat)', () => {
@@ -160,7 +161,7 @@ describe('CourseLessonCard component', () => {
           />
         </I18nProvider>,
       )
-      expect(screen.getByText('Lesson 1')).toBeTruthy()
+      expect(screen.getAllByText('Lesson 1').length).toBeGreaterThanOrEqual(2) // badge + title
     })
   })
 })

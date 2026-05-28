@@ -13,11 +13,12 @@ export default async function StudyPage() {
   const contentLocale = isValidContentLocale(locale) ? locale : undefined
 
   // Server-side prefetch when grade is known (direct DB, no HTTP round-trip)
-  const prefetchedData = grade ? await prefetchStudyData(grade, contentLocale, 'learning') : null
+  // Note: no lessonType argument → defaults to 'practice' to match Practice page behavior
+  const prefetchedData = grade ? await prefetchStudyData(grade, contentLocale) : null
 
   return (
     <div>
-      <StudyContent lessonType="learning" prefetchedData={prefetchedData} />
+      <StudyContent lessonType="practice" prefetchedData={prefetchedData} />
     </div>
   )
 }

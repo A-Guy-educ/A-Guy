@@ -52,3 +52,9 @@ git activity belongs in `git log`, not here.
 - [Translation Template Replace Pattern](translation-template-replace-pattern.md) — Translation interpolations use .replace('{key}', value) not object args (type: lesson)
 
 - [Thin App Payload Restriction Exception](thin-app-payload-restriction-exception.md) — Server actions (*-action.ts) are exempt from Payload getPayload restriction (type: decision)
+
+- [User Transaction Api At Account Namespace](user-transaction-api-at-account-namespace.md) — User-facing transaction fetch API placed at /api/account/transactions/[id] not /api/transactions/[id] (type: decision)
+
+- [Nextrequest Vs Request In Handler Tests](nextrequest-vs-request-in-handler-tests.md) — Route handlers accept NextRequest, not Request — use NextRequest in handler tests (type: lesson)
+
+- [Fetch Requests In Hooks Need Timeouts](fetch-requests-in-hooks-need-timeouts.md) — Always add AbortController+timeout to fetch in useEffect hooks to prevent infinite loading states (type: lesson)

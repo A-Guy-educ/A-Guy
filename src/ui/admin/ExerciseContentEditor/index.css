@@ -2901,7 +2901,10 @@
 
 .block-item {
   position: relative;
-  transition: opacity 0.15s, border-color 0.15s, background-color 0.15s;
+  transition:
+    opacity 0.15s,
+    border-color 0.15s,
+    background-color 0.15s;
 }
 
 .block-item--dragging {
@@ -2967,7 +2970,11 @@
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: opacity 0.15s, border-color 0.15s, color 0.15s, background-color 0.15s;
+  transition:
+    opacity 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    background-color 0.15s;
   z-index: 10;
 }
 

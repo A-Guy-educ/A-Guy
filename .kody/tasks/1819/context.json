@@ -1,0 +1,17 @@
+{
+  "taskId": "1819",
+  "taskType": "issue",
+  "target": "1819-p1-study-page-empty-while-practice-page-has-course",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed study page to use lessonType='practice' matching practice page, both now return same lessons",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/study/page.tsx",
+    "tests/int/study-page-lesson-type-bug.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1819.jsonl",
+  "startedAt": "2026-05-22T20:25:00.000Z",
+  "finishedAt": "2026-05-22T20:41:00.000Z"
+}

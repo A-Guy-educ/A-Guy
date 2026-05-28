@@ -34,6 +34,7 @@ import { MathMarkdown } from '@/ui/web/shared/MathMarkdown'
 import { FunctionSquare } from 'lucide-react'
 import { FormulaSheetButton } from '@/ui/web/shared/FormulaSheetViewer/FormulaSheetButton'
 import { FormulaSheetContent } from '@/ui/web/shared/FormulaSheetViewer/FormulaSheetContent'
+import { MobileChatToggle } from '@/ui/web/chat/MobileChatToggle'
 
 export type ViewMode = 'PDF' | 'Chat'
 
@@ -101,6 +102,10 @@ interface ChatInterfaceProps {
   viewMode?: ViewMode
   onModeToggle?: () => void
   onChatInteraction?: () => void
+  /** Auto-focus the input when this value increments (used by SplitPaneLayout for mobile FAB) */
+  autoFocus?: number
+  /** Whether the mobile FAB is open (used to hide ChatInterface input when FAB expanded) */
+  fabOpen?: boolean
 }
 
 export function ChatInterface({
@@ -126,6 +131,8 @@ export function ChatInterface({
   viewMode,
   onModeToggle,
   onChatInteraction,
+  autoFocus,
+  fabOpen,
 }: ChatInterfaceProps) {
   const t = useTranslations(translationNamespace)
   const tCourses = useTranslations('courses')
@@ -236,12 +243,18 @@ export function ChatInterface({
   // FloatingAskButton: focus the chat input when the floating button is clicked
   useEffect(() => {
     const handleFocusChatInput = () => {
-      onChatInteraction?.()
       inputRef.current?.focus()
     }
     window.addEventListener('focus-chat-input', handleFocusChatInput)
     return () => window.removeEventListener('focus-chat-input', handleFocusChatInput)
-  }, [onChatInteraction, inputRef])
+  }, [inputRef])
+
+  // Auto-focus the input when autoFocus prop increments (mobile FAB support)
+  useEffect(() => {
+    if (autoFocus && autoFocus > 0) {
+      inputRef.current?.focus()
+    }
+  }, [autoFocus, inputRef])
 
   // Ask page actions (hint, solution, check solution from canvas)
   const askActionRef = useRef<(e: Event) => void>(() => {})
@@ -615,9 +628,12 @@ export function ChatInterface({
         </div>
       )}
 
-      {/* Input Container */}
+      {/* Input Container - hidden when FAB is open (MobileChatToggle provides the input) */}
       <div
-        className="flex-grow-0 flex-shrink-0 bg-card border-t border-border p-5 pb-8 relative"
+        className={cn(
+          'flex-grow-0 flex-shrink-0 bg-card border-t border-border p-5 pb-8 relative',
+          fabOpen && 'hidden',
+        )}
         data-math-controls
       >
         {/* Formula Composer Popup */}
@@ -818,6 +834,30 @@ export function ChatInterface({
           </div>
         </form>
       </div>
+
+      {/* Mobile Chat FAB Toggle - only shown on mobile in PDF mode */}
+      {isMobile && viewMode === 'PDF' && (
+        <MobileChatToggle
+          onExpand={() => {
+            setIsChatInputFocused(true)
+            if (onChatInteraction) onChatInteraction()
+          }}
+          onCollapse={() => setIsChatInputFocused(false)}
+          inputValue={inputValue}
+          onInputChange={setInputValue}
+          onSubmit={handleFormSubmit}
+          onOpenFilePicker={openFilePicker}
+          isUploading={isDirectUploading}
+          showMathTools={showMathTools ?? false}
+          onFormulaToggle={() => setFormulaComposerOpen(!formulaComposerOpen)}
+          isFormulaOpen={formulaComposerOpen}
+          isInputFocused={isChatInputFocused}
+          onInputFocusChange={setIsChatInputFocused}
+          inputRef={inputRef}
+          isChatVisible={viewMode === 'PDF'}
+          isSubmitting={isLoading}
+        />
+      )}
     </div>
   )
 }
