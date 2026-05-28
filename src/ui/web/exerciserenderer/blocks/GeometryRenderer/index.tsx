@@ -13,12 +13,23 @@ const JSXGraphBoard = dynamic(
   },
 )
 
+// Display size to percentage mapping (same as AxisRenderer)
+const SIZE_MAP = {
+  small: 0.33,
+  medium: 0.5,
+  large: 0.75,
+  full: 1,
+} as const
+
+export type DisplaySize = 'small' | 'medium' | 'large' | 'full'
+
 interface GeometryRendererProps {
   blockId: string
   spec: GeometrySpecV1
+  displaySize?: DisplaySize
 }
 
-export function GeometryRenderer({ blockId, spec }: GeometryRendererProps) {
+export function GeometryRenderer({ blockId, spec, displaySize = 'full' }: GeometryRendererProps) {
   const handleBoardReady = useCallback(
     (board: JXG.Board) => {
       renderGeometrySpec(board, spec)
@@ -41,14 +52,16 @@ export function GeometryRenderer({ blockId, spec }: GeometryRendererProps) {
     if (!container) return
 
     const aspectRatio = canvas.width / canvas.height
-    const minWidth = Math.min(canvas.width, 200)
-    const minHeight = Math.min(canvas.height, Math.round(minWidth / aspectRatio))
+    const percentage = SIZE_MAP[displaySize]
+    const minWidth = Math.min(canvas.width * percentage, 200)
+    const minHeight = Math.min(canvas.height * percentage, Math.round(minWidth / aspectRatio))
 
     function updateDimensions() {
       if (!container) return
       const containerWidth = container.clientWidth
-      const calculatedHeight = containerWidth / aspectRatio
-      const finalWidth = Math.min(containerWidth, canvas.width)
+      const availableWidth = containerWidth * percentage
+      const calculatedHeight = availableWidth / aspectRatio
+      const finalWidth = Math.min(availableWidth, canvas.width)
       const finalHeight = Math.min(calculatedHeight, canvas.height)
       setDimensions({
         width: Math.max(finalWidth, minWidth),
@@ -63,7 +76,7 @@ export function GeometryRenderer({ blockId, spec }: GeometryRendererProps) {
     })
     resizeObserver.observe(container)
     return () => resizeObserver.disconnect()
-  }, [canvas.width, canvas.height])
+  }, [canvas.width, canvas.height, displaySize])
 
   return (
     <div className="my-4 flex justify-center" ref={containerRef}>

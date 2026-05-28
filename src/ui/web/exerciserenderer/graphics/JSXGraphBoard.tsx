@@ -5,7 +5,9 @@ import { cn } from '@/infra/utils/ui'
 
 interface JSXGraphBoardProps {
   id: string
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   width: number
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   height: number
   boundingBox?: [number, number, number, number]
   showGrid?: boolean
@@ -24,8 +26,8 @@ interface JSXGraphBoardProps {
 
 export function JSXGraphBoard({
   id,
-  width,
-  height,
+  width: _width,
+  height: _height,
   boundingBox = [-10, 10, 10, -10],
   showGrid = false,
   showAxis = false,
@@ -166,7 +168,7 @@ export function JSXGraphBoard({
       ref={containerRef}
       id={`jsxgraph-${id}`}
       className={cn('w-full border rounded-lg overflow-hidden bg-white', className)}
-      style={{ width, height, maxWidth: '100%' }}
+      style={{ maxWidth: '100%' }}
     />
   )
 }
