@@ -6,7 +6,7 @@ import { useTranslations } from '@/ui/web/providers/I18n'
 import { ThemeSelector } from '@/ui/web/providers/Theme/ThemeSelector'
 import { LanguageSwitcher } from '@/ui/web/LanguageSwitcher'
 import { motion } from 'framer-motion'
-import { BookOpen, GraduationCap, MessageCircle, Target, Trophy } from 'lucide-react'
+import { BookOpen, GraduationCap, MessageSquare, Target, Trophy } from 'lucide-react'
 
 interface LandingPageProps {
   onGetStarted: () => void
@@ -44,7 +44,7 @@ const FEATURES = [
   },
   {
     key: 'ask',
-    icon: MessageCircle,
+    icon: MessageSquare,
     color: 'hsl(142 71% 45%)',
     bgClass: 'from-green-500/20 to-green-600/5',
   },
