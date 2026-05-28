@@ -196,7 +196,7 @@ export function BlocksDocumentLessonView({
                   <th
                     scope="colgroup"
                     colSpan={1}
-                    className="border-b border-border/60 bg-card px-12 py-3 text-left print:hidden"
+                    className="border-b border-border/60 bg-card px-4 sm:px-12 py-3 text-left print:hidden"
                   >
                     <span className="truncate text-body-sm font-medium text-muted-foreground">
                       {lessonTitle}
@@ -208,7 +208,7 @@ export function BlocksDocumentLessonView({
               {/* Document body — lesson title, exercises, solutions */}
               <tbody>
                 <tr>
-                  <td className="bg-background px-12 py-10 font-serif sm:px-16 sm:py-section-lg max-w-full overflow-hidden">
+                  <td className="bg-background px-4 sm:px-12 py-10 font-serif sm:px-16 sm:py-section-lg max-w-full overflow-hidden">
                     {lessonTitle && (
                       <h1 className="mb-8 text-center text-heading-xl font-bold text-foreground">
                         {lessonTitle}
@@ -241,14 +241,14 @@ export function BlocksDocumentLessonView({
               <tfoot>
                 {/* Screen-only footer row */}
                 <tr className="print:hidden">
-                  <td className="flex items-center justify-between border-t border-border/60 bg-card px-12 py-2 text-body-xs text-muted-foreground/70">
+                  <td className="flex items-center justify-between border-t border-border/60 bg-card px-4 sm:px-12 py-2 text-body-xs text-muted-foreground/70">
                     <span className="truncate">{lessonTitle}</span>
                     <span className="font-mono tracking-[0.3em]">· · ·</span>
                   </td>
                 </tr>
                 {/* Print-only copyright row: repeats on every printed page via @page rules */}
                 <tr className="hidden print:table-row">
-                  <td className="border-t border-border/60 px-12 py-2 text-center text-body-xs text-muted-foreground/70">
+                  <td className="border-t border-border/60 px-4 sm:px-12 py-2 text-center text-body-xs text-muted-foreground/70">
                     כל הזכויות שמורות לגיא קורן, אין להעתיק, לצלם, לפרסם את המסמכים או חלקם ללא
                     אישור בכתב מגיא קורן
                   </td>

@@ -135,7 +135,7 @@ export function GraphWithPrompt({
     // Worksheet side-by-side: 60/40 proportions
     promptFlexClass = is60x40 ? 'flex-[3]' : 'flex-1'
     graphFlexClass = is60x40
-      ? `flex-[2] min-w-0 max-w-full max-w-[${maxWidthCap}]`
+      ? cn('flex-[2] min-w-0 max-w-full', `max-w-[${maxWidthCap}]`)
       : 'flex-1 min-w-0 max-w-full'
   } else if (isSideBySide) {
     // Interactive side-by-side: equal split with min-w floor
