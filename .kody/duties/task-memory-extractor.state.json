@@ -1,18 +1,18 @@
 {
   "version": 1,
-  "rev": 125,
+  "rev": 126,
   "cursor": "idle",
   "data": {
     "last_tick": "2026-05-28T09:30:33.000Z",
     "tasks_seen": 46,
     "tasks_processed": 46,
-    "lastFiredAt": "2026-05-28T12:06:47.876Z",
+    "lastFiredAt": "2026-05-28T13:26:19.880Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 30573,
+    "lastDurationMs": 17683,
     "current_tick": "2026-05-28T09:30:33.000Z",
-    "currentFiredAt": "2026-05-28T09:30:33.000Z",
+    "currentFiredAt": "2026-05-28T12:07:31.876Z",
     "currentDurationMs": 2847,
-    "tick_note": "5 memory files written and pushed successfully — recovered from prior remote-ahead block",
+    "tick_note": "No new work — all 46 tasks already have .extracted markers",
     "session": {
       "started": "2026-05-27T17:44:47.000Z",
       "tasks_seen_this_session": 46,
