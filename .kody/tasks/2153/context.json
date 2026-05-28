@@ -4,13 +4,15 @@
   "target": "2138-eliminate-horizontal-scroll-across-the-site-mobile",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Fixed two remaining gaps: (1) LatexDocumentViewer overflow-visible bypasses article scroll container, changed to overflow-x-auto overflow-y-hidden; (2) header and footer px-12 fixed padding causes overflow on mobile, changed to px-4 sm:px-12.",
+  "reason": "Applied feedback fixes: (1) JSXGraphBoard now uses ResizeObserver to measure container width and calls resizeContainer to scale board proportionally on mobile; (2) LatexDocumentViewer max-w-4xl changed to max-w-full sm:max-w-4xl for responsive mobile containment; (3) Added resize method to JXGBoard type declarations.",
   "prUrl": null,
   "runUrl": null,
   "filesTouched": [
-    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ConsolidatedLatexLessonView/index.tsx"
+    "src/ui/web/exerciserenderer/graphics/JSXGraphBoard.tsx",
+    "src/ui/web/shared/LatexDocumentViewer/index.tsx",
+    "src/types/jsxgraph.d.ts"
   ],
   "sessionLog": ".kody/sessions/current.jsonl",
-  "startedAt": "2026-05-27T12:00:00Z",
-  "finishedAt": "2026-05-27T12:05:00Z"
+  "startedAt": "2026-05-28T17:00:00Z",
+  "finishedAt": "2026-05-28T17:07:00Z"
 }

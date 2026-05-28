@@ -78,7 +78,7 @@ export function LatexDocumentViewer({
     <div
       dir={dir}
       className={cn(
-        'bg-background border-border mx-auto max-w-4xl rounded-lg border shadow-lg font-serif',
+        'bg-background border-border mx-auto max-w-full sm:max-w-4xl rounded-lg border shadow-lg font-serif',
         className,
       )}
     >

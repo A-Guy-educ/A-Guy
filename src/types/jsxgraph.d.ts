@@ -103,6 +103,7 @@ declare module 'jsxgraph' {
     fullUpdate(): void
     suspendUpdate(): void
     unsuspendUpdate(): void
+    resize(width: number, height: number): void
     containerObj: HTMLElement
     select(id: string): JXGElement | null
   }

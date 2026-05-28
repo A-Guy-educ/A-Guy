@@ -1,13 +1,11 @@
 'use client'
 
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { cn } from '@/infra/utils/ui'
 
 interface JSXGraphBoardProps {
   id: string
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   width: number
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   height: number
   boundingBox?: [number, number, number, number]
   showGrid?: boolean
@@ -26,8 +24,8 @@ interface JSXGraphBoardProps {
 
 export function JSXGraphBoard({
   id,
-  width: _width,
-  height: _height,
+  width,
+  height,
   boundingBox = [-10, 10, 10, -10],
   showGrid = false,
   showAxis = false,
@@ -38,6 +36,38 @@ export function JSXGraphBoard({
   const containerRef = useRef<HTMLDivElement>(null)
   const boardRef = useRef<JXG.Board | null>(null)
   const jxgRef = useRef<typeof JXG | null>(null)
+  const [boardDimensions, setBoardDimensions] = useState({ width, height })
+
+  // ResizeObserver: measure container width and scale JSXGraph board proportionally
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    function updateDimensions() {
+      if (!container) return
+      const measuredWidth = container.clientWidth
+      // Scale board dimensions proportionally: capped at original width
+      const scaledWidth = Math.min(width, measuredWidth)
+      const aspectRatio = width / height
+      const scaledHeight = scaledWidth / aspectRatio
+      setBoardDimensions({ width: scaledWidth, height: scaledHeight })
+    }
+
+    // Initial measurement
+    updateDimensions()
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateDimensions()
+    })
+    resizeObserver.observe(container)
+    return () => resizeObserver.disconnect()
+  }, [width, height])
+
+  // Resize the JSXGraph board when dimensions change
+  useEffect(() => {
+    if (!boardRef.current) return
+    boardRef.current.resizeContainer(boardDimensions.width, boardDimensions.height)
+  }, [boardDimensions])
 
   useEffect(() => {
     let destroyed = false
@@ -168,7 +198,7 @@ export function JSXGraphBoard({
       ref={containerRef}
       id={`jsxgraph-${id}`}
       className={cn('w-full border rounded-lg overflow-hidden bg-white', className)}
-      style={{ maxWidth: '100%' }}
+      style={{ width: '100%', aspectRatio: `${width} / ${height}` }}
     />
   )
 }
