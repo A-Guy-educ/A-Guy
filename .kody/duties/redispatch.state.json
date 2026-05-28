@@ -1,55 +1,37 @@
 {
   "version": 1,
-  "rev": 168,
-  "cursor": "redispatch-2026-05-28T18:28:07Z",
+  "rev": 169,
+  "cursor": "redispatch-2026-05-28T19:31:50Z",
   "data": {
     "dryRunLog": [
       {
         "issueNumber": 2139,
         "action": "resume",
         "reason": "core.status=running, history age >40min (2026-05-27T11:31:12.811Z), no blockers",
-        "plannedAt": "2026-05-28T17:24:44Z"
-      },
-      {
-        "issueNumber": 2130,
-        "action": "resume",
-        "reason": "core.status=running, history age >40min (2026-05-27T07:50:53.680Z), no blockers",
-        "plannedAt": "2026-05-28T17:24:44Z"
-      },
-      {
-        "issueNumber": 1536,
-        "action": "resume",
-        "reason": "core.status=running, history age >40min (2026-05-12T08:13:21.749Z), no blockers",
-        "plannedAt": "2026-05-28T17:24:44Z"
-      },
-      {
-        "issueNumber": 2139,
-        "action": "resume",
-        "reason": "core.status=running, history age >40min (2026-05-27T11:31:12.811Z), no blockers",
-        "plannedAt": "2026-05-28T18:28:07Z"
+        "plannedAt": "2026-05-28T19:31:50Z"
       },
       {
         "issueNumber": 2138,
         "action": "resume",
         "reason": "core.status=running, history age >40min (2026-05-27T11:31:24.959Z), no blockers",
-        "plannedAt": "2026-05-28T18:28:07Z"
+        "plannedAt": "2026-05-28T19:31:50Z"
       },
       {
         "issueNumber": 2130,
         "action": "resume",
         "reason": "core.status=running, history age >40min (2026-05-27T07:50:53.680Z), no blockers",
-        "plannedAt": "2026-05-28T18:28:07Z"
+        "plannedAt": "2026-05-28T19:31:50Z"
       },
       {
         "issueNumber": 1536,
         "action": "resume",
         "reason": "core.status=running, history age >40min (2026-05-12T08:13:21.749Z), no blockers",
-        "plannedAt": "2026-05-28T18:28:07Z"
+        "plannedAt": "2026-05-28T19:31:50Z"
       }
     ],
-    "lastFiredAt": "2026-05-28T18:29:08.236Z",
+    "lastFiredAt": "2026-05-28T19:32:31.299Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 66057,
+    "lastDurationMs": 46095,
     "perIssue": {}
   },
   "done": false
