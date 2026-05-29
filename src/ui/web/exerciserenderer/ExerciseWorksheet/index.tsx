@@ -319,7 +319,10 @@ function WorksheetQuestionLabel({ label, dir, children }: WorksheetQuestionLabel
       <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-primary/10 border border-primary/20 shrink-0">
         <span className="font-extrabold text-body-sm text-primary">{label}</span>
       </div>
-      {children}
+      {/* flex-1 + min-w-0 makes children fill the remaining row width so the
+          inner GraphWithPrompt 50/50 split lands on real pixels instead of
+          collapsing to natural content width. */}
+      <div className="flex-1 min-w-0">{children}</div>
     </div>
   )
 }
