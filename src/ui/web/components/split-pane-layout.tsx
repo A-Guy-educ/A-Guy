@@ -220,12 +220,19 @@ export function SplitPaneLayout({
         </div>
       )}
 
-      {!(!isDesktop && viewMode === 'PDF' && !chatExpandedInPdf) && (
+      {/*
+        Always render the chat container so MobileChatToggle (which lives
+        inside ChatInterface and is fixed-positioned) stays mounted. On mobile
+        in PDF mode with the chat collapsed, the container is given h-0 so it
+        takes no layout space — the FAB still appears at the viewport edge.
+      */}
+      {
         <div
           className={cn(
             'bg-background flex flex-col overflow-hidden relative',
             viewMode === 'CHAT' && 'flex-1',
-            viewMode === 'PDF' && !chatExpandedInPdf && 'flex-shrink-0 h-auto',
+            viewMode === 'PDF' && !chatExpandedInPdf && isDesktop && 'flex-shrink-0 h-auto',
+            viewMode === 'PDF' && !chatExpandedInPdf && !isDesktop && 'h-0',
             viewMode === 'PDF' && chatExpandedInPdf && 'flex-1',
           )}
         >
@@ -251,7 +258,7 @@ export function SplitPaneLayout({
           )}
           {isDragging && <div className="absolute inset-0 z-10" />}
         </div>
-      )}
+      }
     </div>
   )
 }
