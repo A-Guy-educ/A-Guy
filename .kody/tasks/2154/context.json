@@ -1,0 +1,16 @@
+{
+  "taskId": "2154",
+  "taskType": "pr",
+  "target": "2139",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed 3 RTL bugs in ExerciseWorksheet: (1) flipped sideBySideLayout ternary for correct RTL layout, (2) restructured geometry/axis to render badge beside prompt text with diagram as sibling, (3) added card wrapper around geometry/axis diagrams.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/exerciserenderer/ExerciseWorksheet/index.tsx"
+  ],
+  "sessionLog": ".kody/sessions/2154-2139-rtl-fix.jsonl",
+  "startedAt": "2026-05-28T00:00:00.000Z",
+  "finishedAt": "2026-05-28T00:00:00.000Z"
+}
