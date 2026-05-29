@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "rev": 132,
+  "rev": 133,
   "cursor": "idle",
   "data": {
-    "lastRunISO": "2026-05-29T20:22:00Z",
+    "lastRunISO": "2026-05-29T22:06:37Z",
     "proposed": {
       "sentry-digest": {
         "firstSuggestedISO": "2026-05-20T12:37:00Z",
-        "lastWrittenISO": "2026-05-29T20:22:00Z"
+        "lastWrittenISO": "2026-05-29T22:06:37Z"
       },
       "secret-leak-scan": {
         "firstSuggestedISO": "2026-05-20T13:01:00Z",
@@ -26,9 +26,9 @@
         "lastWrittenISO": "2026-05-26T08:39:00Z"
       }
     },
-    "lastFiredAt": "2026-05-29T21:15:04.706Z",
+    "lastFiredAt": "2026-05-29T22:07:46.914Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 18002
+    "lastDurationMs": 75495
   },
   "done": false
 }
