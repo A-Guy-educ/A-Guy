@@ -1,13 +1,14 @@
 {
   "version": 1,
-  "rev": 19,
+  "rev": 20,
   "cursor": "reported",
   "data": {
     "cycle": 2,
-    "lastRunISO": "2026-05-29T02:24:50Z",
-    "nextEligibleISO": "2026-05-29T08:24:50Z",
+    "lastRunISO": "2026-05-29T09:34:07Z",
+    "nextEligibleISO": "2026-05-29T15:34:07Z",
     "reviewed": [
-      "approval-gate"
+      "approval-gate",
+      "architecture-audit"
     ],
     "verdicts": {
       "approval-gate": {
@@ -15,8 +16,8 @@
         "verdict": "broken"
       },
       "architecture-audit": {
-        "note": "pending",
-        "verdict": "pending"
+        "note": "disabled=true but referenced script .kody/scripts/architecture-audit-tick.py does not exist; state path in body still points to deprecated .kody/jobs/ after migration",
+        "verdict": "broken"
       },
       "ceo-performance-review": {
         "note": "state.json never created; report exists so duty ran, but promised state file was never persisted",
@@ -107,9 +108,9 @@
         "verdict": "pending"
       }
     },
-    "lastFiredAt": "2026-05-29T02:27:37.152Z",
+    "lastFiredAt": "2026-05-29T09:35:59.617Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 175426
+    "lastDurationMs": 142831
   },
   "done": false
 }
