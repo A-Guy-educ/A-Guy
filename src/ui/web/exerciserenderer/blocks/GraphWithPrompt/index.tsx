@@ -127,16 +127,19 @@ export function GraphWithPrompt({
   const is60x40 = worksheetLayout?.proportions !== '50-50'
   const maxWidthCap = worksheetLayout?.maxWidthCap ?? '25rem'
 
-  // Child classes
+  // Child classes. Note: the runtime maxWidthCap value is applied via inline
+  // style — Tailwind JIT cannot generate arbitrary class names from a runtime
+  // template literal at build time, so `max-w-[${maxWidthCap}]` would silently
+  // emit nothing.
   let promptFlexClass: string
   let graphFlexClass: string
+  let graphStyle: React.CSSProperties | undefined
 
   if (isWorksheet && isSideBySide && !shouldWrap) {
-    // Worksheet side-by-side: 60/40 proportions
+    // Worksheet side-by-side: 60/40 or 50/50 proportions
     promptFlexClass = is60x40 ? 'flex-[3]' : 'flex-1'
-    graphFlexClass = is60x40
-      ? `flex-[2] min-w-0 max-w-full max-w-[${maxWidthCap}]`
-      : 'flex-1 min-w-0 max-w-full'
+    graphFlexClass = is60x40 ? 'flex-[2] min-w-0 max-w-full' : 'flex-1 min-w-0 max-w-full'
+    graphStyle = is60x40 ? { maxWidth: maxWidthCap } : undefined
   } else if (isSideBySide) {
     // Interactive side-by-side: equal split with min-w floor
     promptFlexClass = 'flex-1'
@@ -178,7 +181,11 @@ export function GraphWithPrompt({
       {showGraphFirst ? (
         <>
           {/* Graph first (left in horizontal, top in vertical below) */}
-          <div className={cn(graphFlexClass, graphOrderClass)} data-testid="graph-child">
+          <div
+            className={cn(graphFlexClass, graphOrderClass)}
+            style={graphStyle}
+            data-testid="graph-child"
+          >
             {children}
           </div>
           {/* Prompt second */}
@@ -209,7 +216,11 @@ export function GraphWithPrompt({
             </div>
           )}
           {/* Graph second (right in horizontal, bottom in vertical above) */}
-          <div className={cn(graphFlexClass, graphOrderClass)} data-testid="graph-child">
+          <div
+            className={cn(graphFlexClass, graphOrderClass)}
+            style={graphStyle}
+            data-testid="graph-child"
+          >
             {children}
           </div>
         </>

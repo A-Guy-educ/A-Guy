@@ -228,7 +228,7 @@ function renderBlockContent({
         blockId={b.id}
         layout={layout}
         prompt={b.prompt}
-        worksheetLayout={{ sideContentAspectRatio: aspectRatio }}
+        worksheetLayout={{ sideContentAspectRatio: aspectRatio, proportions: '50-50' }}
       >
         <div className="my-4 rounded-xl border bg-card p-card-padding-sm">
           <GeometryRenderer blockId={b.id} spec={b.geometry} />
@@ -249,7 +249,7 @@ function renderBlockContent({
         blockId={b.id}
         layout={layout}
         prompt={b.prompt}
-        worksheetLayout={{ sideContentAspectRatio: axisAspectRatio }}
+        worksheetLayout={{ sideContentAspectRatio: axisAspectRatio, proportions: '50-50' }}
       >
         <div className="my-4 rounded-xl border bg-card p-card-padding-sm">
           <AxisRenderer blockId={b.id} spec={b.axis} displaySize={b.displaySize} />
@@ -312,7 +312,7 @@ function WorksheetQuestionLabel({ label, dir, children }: WorksheetQuestionLabel
   return (
     <div
       className={cn(
-        'w-full flex items-center justify-start gap-content-gap-xs',
+        'w-full flex items-start justify-start gap-content-gap-xs',
         dir === 'rtl' ? 'text-right' : 'text-left',
       )}
     >
