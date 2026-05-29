@@ -386,7 +386,7 @@ describe('GraphWithPrompt Component', () => {
       expect(promptWrapper?.className).not.toMatch(/order/)
     })
 
-    it('textRight: graph has sm:order-last so prompt appears first on mobile', () => {
+    it('textRight: graph reorders below prompt on mobile, returns to DOM order on desktop', () => {
       const { container } = render(
         <GraphWithPrompt
           blockId="test-block"
@@ -399,8 +399,12 @@ describe('GraphWithPrompt Component', () => {
       )
       const graphChild = container.querySelector('[data-testid="graph-child"]')
 
-      // Graph is first in DOM (textRight) → needs sm:order-last so prompt is visual-first on mobile
-      expect(graphChild?.className).toContain('sm:order-last')
+      // Mobile: order-last pushes graph below the prompt so the prompt reads first.
+      // Desktop: sm:order-none restores DOM order so the layout matches the
+      // textRight semantic (graph on the left, prompt on the right inside the
+      // dir='ltr' container).
+      expect(graphChild?.className).toContain('order-last')
+      expect(graphChild?.className).toContain('sm:order-none')
     })
 
     it('interactive mode (no worksheetLayout) does not apply sm:order classes', () => {

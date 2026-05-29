@@ -148,9 +148,13 @@ export function GraphWithPrompt({
   }
 
   // Mobile order reversal: for textRight in worksheet mode, graph is first in DOM
-  // but needs sm:order-last so prompt appears first on mobile (< 640px)
+  // so on mobile (flex-col) it would render above the prompt — but we want the
+  // prompt to read first. Apply order-last on mobile to push the graph below
+  // the prompt, then sm:order-none restores DOM order on desktop so the
+  // physical layout matches the `textRight` semantic (graph left, prompt right
+  // inside the dir='ltr' container).
   const graphOrderClass =
-    isWorksheet && layout === 'textRight' && isSideBySide ? 'sm:order-last' : ''
+    isWorksheet && layout === 'textRight' && isSideBySide ? 'order-last sm:order-none' : ''
 
   // Convert InlineRichText to RichTextBlock for RichTextRenderer
   const promptBlock = prompt
