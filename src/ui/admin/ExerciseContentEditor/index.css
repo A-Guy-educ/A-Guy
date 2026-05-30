@@ -1813,21 +1813,19 @@
   color: var(--theme-text);
 }
 
-.html-block-editor .ql-toolbar {
-  border: none;
-  border-bottom: 1px solid var(--theme-elevation-150);
-  background: var(--theme-elevation-50);
-}
-
-.html-block-editor .ql-container {
-  border: none;
+.html-block-preview-pane {
   min-height: 200px;
+  padding: 1rem;
+  background: var(--theme-elevation-0);
+  color: var(--theme-text);
   font-size: 1rem;
+  overflow: auto;
 }
 
-.html-block-editor .ql-editor {
-  min-height: 180px;
-  padding: 1rem;
+.html-block-preview-pane:empty::before {
+  content: 'Nothing to preview yet.';
+  color: var(--theme-elevation-400);
+  font-style: italic;
 }
 
 /* Table Editor */
@@ -2893,4 +2891,188 @@
 .full-json-editor-apply-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ========================
+   Drag-and-Drop Styles
+   ======================== */
+
+.block-item {
+  position: relative;
+  transition:
+    opacity 0.15s,
+    border-color 0.15s,
+    background-color 0.15s;
+}
+
+.block-item--dragging {
+  opacity: 0.5;
+  background: var(--theme-elevation-50);
+}
+
+.block-item--drop-target {
+  border-top: 2px solid var(--theme-info-500);
+}
+
+.block-drag-handle {
+  position: absolute;
+  left: -28px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 4px;
+  cursor: grab;
+  color: var(--theme-elevation-400);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.block-item:hover .block-drag-handle {
+  opacity: 1;
+}
+
+.block-drag-handle:hover {
+  color: var(--theme-elevation-700);
+}
+
+.block-drag-handle:active {
+  cursor: grabbing;
+}
+
+/* ========================
+   Between-Block Add Button
+   ======================== */
+
+.between-block-add {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 0;
+  overflow: visible;
+  position: relative;
+  margin: 0;
+}
+
+.between-block-add-button {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--theme-elevation-200);
+  background: var(--theme-elevation-0);
+  color: var(--theme-elevation-500);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition:
+    opacity 0.15s,
+    border-color 0.15s,
+    color 0.15s,
+    background-color 0.15s;
+  z-index: 10;
+}
+
+.block-list:hover .between-block-add-button,
+.between-block-add-button:focus {
+  opacity: 1;
+}
+
+.between-block-add-button:hover {
+  border-color: var(--theme-info-500);
+  color: var(--theme-info-500);
+  background: var(--theme-info-50);
+}
+
+/* ========================
+   Delete Confirmation Dialog
+   ======================== */
+
+.delete-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.delete-confirm-modal {
+  background: var(--theme-elevation-0);
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-width: 400px;
+  width: 90%;
+  padding: 1.5rem;
+}
+
+.delete-confirm-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  color: var(--theme-error-500);
+}
+
+.delete-confirm-header--warning {
+  color: var(--theme-warning-500);
+}
+
+.delete-confirm-header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--theme-elevation-1000);
+}
+
+.delete-confirm-body {
+  margin: 0 0 1.5rem 0;
+  font-size: 0.875rem;
+  color: var(--theme-elevation-700);
+  line-height: 1.5;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.delete-confirm-cancel {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--theme-elevation-200);
+  border-radius: 4px;
+  background: var(--theme-elevation-0);
+  color: var(--theme-elevation-700);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.delete-confirm-cancel:hover {
+  background: var(--theme-elevation-50);
+}
+
+.delete-confirm-delete {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  background: var(--theme-error-500);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.delete-confirm-delete:hover {
+  background: var(--theme-error-600);
 }

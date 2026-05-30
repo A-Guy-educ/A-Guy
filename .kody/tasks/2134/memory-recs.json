@@ -1,0 +1,18 @@
+[
+  {
+    "type": "decision",
+    "name": "user-transaction-api-at-account-namespace",
+    "hook": "User-facing transaction fetch API placed at /api/account/transactions/[id] not /api/transactions/[id]",
+    "body": "The GET /api/account/transactions/{id} endpoint uses the /account/ namespace to separate user-owned data from admin APIs. This follows the pattern established by the checkout flow at /api/payments/checkout. Authorization is enforced server-side by comparing transaction.user to the authenticated user.id, returning 404 (not 403) to avoid leaking existence information.",
+    "why": "Admin REST API at /api/transactions requires admin role. Users need their own API that returns 404 on mismatch to prevent enumeration attacks.",
+    "confidence": 0.9
+  },
+  {
+    "type": "lesson",
+    "name": "nextrequest-vs-request-in-handler-tests",
+    "hook": "Route handlers accept NextRequest, not Request — use NextRequest in handler tests",
+    "body": "Next.js route handlers typed as `(req: NextRequest, { params }) =>` require `new NextRequest()` in test calls, not `new Request()`. The Payload REST API handler in transaction-refund.int.spec.ts uses `NextRequest` from 'next/server'.",
+    "why": "TypeScript error: Argument of type 'Request' is not assignable to parameter of type 'NextRequest'. Fix: import NextRequest and use it instead of Request in tests.",
+    "confidence": 1.0
+  }
+]

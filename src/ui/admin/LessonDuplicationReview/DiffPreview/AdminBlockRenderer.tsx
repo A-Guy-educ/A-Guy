@@ -82,7 +82,7 @@ function BlockItem({ block }: { block: ContentBlock }) {
 
   if (block.type === 'media') {
     return (
-      <div className="bg-muted text-muted-foreground p-4 rounded-lg text-label">
+      <div className="bg-muted text-muted-foreground p-card-padding rounded-lg text-label">
         [mediaId: {(block as { mediaId: string }).mediaId}]
       </div>
     )
@@ -155,7 +155,7 @@ function BlockItem({ block }: { block: ContentBlock }) {
       hint?: InlineRichText
     }
     return (
-      <div className="bg-card border border-border rounded-lg p-4">
+      <div className="bg-card border border-border rounded-lg p-card-padding">
         <p className="text-label text-muted-foreground mb-2">
           [{block.type.replace('question_', '')}]
         </p>
@@ -176,7 +176,7 @@ function BlockItem({ block }: { block: ContentBlock }) {
   // Fallback for unknown block types
   const unknownBlock = block as unknown as { type?: string }
   return (
-    <div className="bg-muted text-muted-foreground p-4 rounded-lg text-label">
+    <div className="bg-muted text-muted-foreground p-card-padding rounded-lg text-label">
       Unknown block type: {unknownBlock.type ?? '?'}
     </div>
   )

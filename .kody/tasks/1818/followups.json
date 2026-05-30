@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Lesson title no longer reflects actual lesson name from database",
+    "body": "The fix makes the displayed title (e.g., 'Lesson 4') derived from index, not from lesson.title. This means the actual lesson name/title stored in the database is not shown on the card. If lessons have meaningful titles beyond just 'Lesson N', this could be a regression.",
+    "rationale": "The original behavior used lesson.title which could be stale/incorrect after lesson reordering. The fix ensures consistency between badge and title at the cost of hiding the database title.",
+    "priority": "low"
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "taskId": "1818",
+  "taskType": "issue",
+  "target": "1818-p1-fix-lesson-heading-off-by-one-in-practice-page",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed off-by-one lesson heading display bug on Practice page Chapter 2 by making CourseLessonCard use index-based title instead of stale lesson.title",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/components/UnifiedCard/CourseLessonCard.tsx",
+    "tests/unit/components/CourseLessonCard.test.tsx",
+    "tests/unit/components/practice-lesson-index.test.tsx"
+  ],
+  "sessionLog": ".kody/sessions/1818.jsonl",
+  "startedAt": "2026-05-22T19:35:00Z",
+  "finishedAt": "2026-05-22T19:56:00Z"
+}

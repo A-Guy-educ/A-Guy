@@ -1,9 +1,25 @@
 {
+  "lastRunISO": "2026-05-30T17:13:02Z",
   "proposed": {
+    "sentry-digest": {
+      "firstSuggestedISO": "2026-05-20T12:37:00Z",
+      "lastWrittenISO": "2026-05-30T17:13:02Z"
+    },
+    "secret-leak-scan": {
+      "firstSuggestedISO": "2026-05-20T13:01:00Z",
+      "lastWrittenISO": "2026-05-20T13:01:00Z"
+    },
+    "stale-pr-janitor": {
+      "firstSuggestedISO": "2026-05-20T14:17:00Z",
+      "lastWrittenISO": "2026-05-20T14:17:00Z"
+    },
+    "issue-auto-triage": {
+      "firstSuggestedISO": "2026-05-20T19:54:00Z",
+      "lastWrittenISO": "2026-05-20T19:54:00Z"
+    },
     "bundle-size-diff": {
-      "firstSuggestedISO": "2026-05-26T08:39:30Z",
-      "openIssue": 2106
+      "firstSuggestedISO": "2026-05-26T08:39:00Z",
+      "lastWrittenISO": "2026-05-26T08:39:00Z"
     }
-  },
-  "lastRunISO": "2026-05-26T08:39:30Z"
+  }
 }

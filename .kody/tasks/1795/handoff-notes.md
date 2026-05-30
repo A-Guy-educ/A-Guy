@@ -1,7 +1,9 @@
-Resolved merge conflicts with origin/dev in two files:
+# Merge Conflict Resolution for PR #1795
 
-1. **src/ui/web/PageRange/index.tsx**: HEAD added `isSearchResult` prop; dev added `isSearch` prop. Merged both — the component now accepts both props and uses `(isSearchResult || isSearch)` for the "Search produced no results." case and `(!isSearchResult && !isSearch)` for the "No X yet." case. Both props are kept for backwards compatibility.
+Resolved single merge conflict from `git merge origin/dev`:
 
-2. **tests/unit/components/PageRange.test.tsx**: Merged both test suites — HEAD's structured `isSearchResult` tests (3 cases) + dev's "No X yet" tests (3 cases) + second page range test. All 11 tests pass. TypeScript clean.
+- **`.kody/last-run.jsonl`**: JSONL session log that git treats as binary. Both sides had different session log content (different session IDs, different embedded tool results). The apparent conflict markers (<<<<<<<, =======, >>>>>>>) were inside JSON string values (embedded from a previous agent's grep operations in the session log), not actual file-level conflict markers.
 
-No conflict markers remain. Unit tests: 11/11 passing. TypeScript: clean.
+**Resolution**: Took the dev version (`:3:`) since it represents the more recent session. The file is valid JSONL with no structural conflicts.
+
+**Why not HEAD**: Both versions are equivalent session logs with no semantic content — the conflict was at the "binary file" level. Taking dev was a pragmatic choice (more recent session).
