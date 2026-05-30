@@ -1,0 +1,5 @@
+{"type":"meta","mode":"interactive","createdAt":"2026-05-12T21:21:42.336Z","idleExitMs":300000,"hardCapMs":1800000}
+{"role":"user","content":"hi","timestamp":"2026-05-12T21:23:45.174Z","toolCalls":[]}
+{"role":"assistant","content":"Hi there! How can I help you today?","timestamp":"2026-05-12T21:24:13.826Z","toolCalls":[]}
+{"role":"user","content":"Which environment are you running on?","timestamp":"2026-05-12T21:24:47.603Z","toolCalls":[]}
+{"role":"assistant","content":"I am running on a Linux platform with OS Version `Linux 6.12.84-fly`. My shell is `unknown` and my current working directory is `/workspace/repo`, which is a git repository. I am powered by the model `gemini-2.5-flash`.","timestamp":"2026-05-12T21:24:57.937Z","toolCalls":[]}
