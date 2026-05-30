@@ -1,7 +1,10 @@
-Resolved git merge conflicts from `git merge origin/dev` into PR #1525.
+Resolved git merge conflict in `.kody/last-run.jsonl` from `git merge origin/dev` into PR #1525.
 
-**layout.tsx conflict:** HEAD had hardcoded static `metadata` export; origin/dev had dynamic `generateMetadata()` using brand config. Took origin/dev's async approach (multi-brand compatible) and preserved the PR's static `viewport` export.
+The file is a JSONL session log. The conflict was:
+- HEAD (PR #1525) had 75 lines of session content (session_id 80697484)
+- origin/dev had 133 lines of session content (session_id 86afddb9)
+- Git conflict markers separated the two at line 77 (=======)
 
-**LoginForm.tsx conflict:** HEAD added `safeValidate`/`emailSchema` imports and validation logic; origin/dev changed telescope SVG path from `@/ui/web/TelescopeLogo/telescope.svg` to `@/brands/aguy/assets/telescope.svg`. Kept both — merged validation utilities from HEAD with dev's brand asset path.
+Resolution: Concatenated both session logs — kept HEAD's 75 lines followed by origin/dev's 133 lines (208 total). No actual git conflict markers remain at file level. The markers that appear in the content are inside nested JSON strings from sessions that were investigating conflicts — these are harmless text in session tool results.
 
-Typecheck and lint pass with no errors.
+Note: Previous session artifacts in this task directory (context.json, handoff-notes.md) referenced layout.tsx and LoginForm.tsx conflicts — those were from a different merge attempt. This session only addressed the .kody/last-run.jsonl conflict.
