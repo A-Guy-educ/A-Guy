@@ -45,7 +45,7 @@ export function ViewToggle({
         )}
       >
         <FileText className="h-4 w-4" />
-        {t('pdfView')}
+        {t('scrollView')}
       </Button>
       <Button
         variant={activeMode === 'interactive' ? 'default' : 'ghost'}

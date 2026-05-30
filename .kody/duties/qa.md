@@ -27,9 +27,10 @@ browser cost.
 
 `disabled: true` only to avoid auto-activating QA — this repo is already set up:
 `CHANGELOG.md` has a populated `## [Unreleased]` section, `qa.fallbackUrl` in
-`kody.config.json` (`https://dev.aguy.co.il`) resolves the target URL, and
-`.kody/qa-guide.md` carries login credentials + the route list. Flip to
-`disabled: false` to go live; no other setup needed.
+`kody.config.json` (`https://dev.aguy.co.il`) resolves the target URL, the
+`LOGIN_USER` variable + `LOGIN_PASSWORD` secret carry the QA credentials, and
+the `.kody/context/*.md` entries tagged for `qa-engineer` carry the route list
++ flows. Flip to `disabled: false` to go live; no other setup needed.
 
 **Per tick (one action max):**
 
@@ -46,10 +47,11 @@ browser cost.
      - **PASS** → swap the marker to ` · ✅ QA <today>`, close the tracking
        issue, post one **informational** inbox rec (already shipped — clear to
        ship, so it carries **no** `kody-cmd:` line; the operator just dismisses).
-     - **CONCERNS / FAIL** → swap the marker to ` · ⚠️ QA <today> (#<finding>)`,
-       close the tracking issue, post one inbox rec whose `kody-cmd:` is
-       `@kody fix --pr <pr> <one-line concern>` (`<pr>` is the bullet's linked
-       PR; the concern text is the inline feedback) — never `@kody approve`.
+     - **CONCERNS / FAIL** → swap the marker to ` · ⚠️ QA <today> (#<tracking>)`,
+       **leave the tracking issue open** (the `qa-goal` verb reads the report
+       from it on approve), and post one inbox rec whose `kody-cmd:` is
+       `@kody qa-goal --issue <tracking> --scope "<title>"` — approving promotes
+       qa-engineer's report into a fix goal. Never `@kody approve`.
    - **Stuck** (no report, issue ≥ 2h old) → strip the marker (back to
      untested), comment the stall on the tracking issue, exit. A `🔄` must never
      block QA forever.
@@ -60,8 +62,12 @@ browser cost.
    bottom-most one with a `[#<pr>]` link and no marker. If none, idle. For it:
    1. Open a tracking issue:
       `gh issue create --title "QA: <title> (#<pr>)" --label kody:qa --body "Automated QA pass for changelog entry #<pr>; qa-engineer reports here."`
-   2. Dispatch the pass onto it (URL resolves from `qa.fallbackUrl`):
-      `gh issue comment <tracking> --body "@kody qa-engineer --scope \"<title>\" --issue <tracking>"`
+   2. Dispatch the pass onto it via **typed workflow_dispatch** — never a
+      bot `@kody` comment (the webhook's bot-author guard silently drops
+      those, which is exactly how this duty used to stall for hours).
+      `qa-engineer` reads the scope from the tracking issue title via its
+      `deriveQaScopeFromIssue` preflight, so no `--scope` flag is needed:
+      `gh workflow run kody.yml -f executable=qa-engineer -f issue_number=<tracking>`
    3. Mark the bullet ` · 🔄 QA (#<tracking>)` via a read-modify-write PUT to the
       Contents API (re-read the sha, swap the one line, retry ≤ 3 on 409):
       `gh api -X PUT repos/{owner}/{repo}/contents/CHANGELOG.md -f message="chore(qa): start QA for #<pr>" -f content="<base64>" -f sha="<sha>"`.
@@ -77,23 +83,23 @@ that mention is the only thing that routes it into the dashboard inbox:
 
 <one or two sentences: what was tested, the verdict, what confirming does>
 
-<!-- kody-cmd: @kody fix --pr <pr> <one-line concern> -->
+<!-- kody-cmd: @kody qa-goal --issue <tracking> --scope "<title>" -->
 
 _Confirm or dismiss in the dashboard inbox. QA will not act on its own._
 ```
 
 `<action>` is `verified` (PASS — clear to ship) or `fix` (CONCERNS/FAIL).
 
-- **PASS → omit the `kody-cmd:` line entirely.** The change already shipped, so
-  there is nothing for the engine to run; the rec is informational and the
-  operator just dismisses it.
-- **CONCERNS / FAIL → the `kody-cmd:` line is required and MUST carry `fix`'s
-  mandatory flag:** `@kody fix --pr <pr> <one-line concern>`. `fix` applies
-  feedback to an **existing PR branch**, so **`--pr <pr>` is required** — the
-  engine preflight rejects `@kody fix` without it. The text after `--pr <pr>`
-  is the inline feedback. The Approve button posts it verbatim, so it MUST
-  start with `@kody fix --pr`, be one line, ≤ 300 chars. **Never emit
-  `@kody approve`** — the engine has no `approve` verb and rejects it.
+- **PASS → omit the `kody-cmd:` line entirely.** The change already shipped; the
+  rec is informational and the operator just dismisses it.
+- **CONCERNS / FAIL → the `kody-cmd:` line is required:**
+  `@kody qa-goal --issue <tracking> --scope "<title>"`. qa-engineer already
+  posted its report on the tracking issue; on approve, `qa-goal` reads that
+  report and promotes it into a fix goal (manifest entry + one fix-ticket per
+  finding). The Approve button posts the line verbatim, so it MUST start with
+  `@kody qa-goal --issue`, be one line, ≤ 300 chars. **Never emit
+  `@kody approve`** — the engine has no `approve` verb. QA never creates the
+  goal itself — that's gated behind your approval.
 
 ## Allowed Commands
 
@@ -101,6 +107,9 @@ _Confirm or dismiss in the dashboard inbox. QA will not act on its own._
   **only** a bullet's trailing marker).
 - `gh issue list`, `gh issue create`, `gh issue view`, `gh issue comment`,
   `gh issue close`.
+- `gh workflow run kody.yml` — typed cross-run dispatch for `qa-engineer`
+  (never substitute `gh issue comment "@kody qa-engineer …"`; that path is
+  bot-filtered and silently stalls).
 
 ## Restrictions
 

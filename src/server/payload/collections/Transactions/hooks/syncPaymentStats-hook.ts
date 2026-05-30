@@ -142,66 +142,41 @@ export const syncPaymentStats: CollectionAfterChangeHook = async ({
   }
 
   try {
-    // Look up existing PaymentStats row for this date + currency using find with limit 1
-    const existing = await req.payload.find({
-      collection: 'payment_stats',
-      where: {
-        date: { equals: dateStr },
-        currency: { equals: currency },
-      },
-      limit: 1,
-      depth: 0,
-      overrideAccess: true,
-      req,
-    })
-
-    if (existing.docs.length > 0) {
-      const existingDoc = existing.docs[0]
-      // Read-modify-write for atomic counter updates
-      await req.payload.update({
-        collection: 'payment_stats',
-        id: existingDoc.id,
-        data: {
-          totalRevenueAgorot: Math.max(
-            0,
-            (existingDoc.totalRevenueAgorot as number) + revenueDelta,
-          ),
-          refundedAgorot: Math.max(0, (existingDoc.refundedAgorot as number) + refundedDelta),
-          failedAgorot: Math.max(0, (existingDoc.failedAgorot as number) + failedDelta),
-          transactionCount: Math.max(0, (existingDoc.transactionCount as number) + txCountDelta),
-          succeededCount: Math.max(0, (existingDoc.succeededCount as number) + succeededCountDelta),
-          refundedCount: Math.max(0, (existingDoc.refundedCount as number) + refundedCountDelta),
-          failedCount: Math.max(0, (existingDoc.failedCount as number) + failedCountDelta),
-          newCustomersCount: Math.max(
-            0,
-            (existingDoc.newCustomersCount as number) + newCustomerDelta,
-          ),
-        },
-        req,
-        context: { _skipPaymentStatsUpsert: true },
-        overrideAccess: true,
-      })
-    } else {
-      // First transaction for this date + currency — create row with absolute values
-      await req.payload.create({
-        collection: 'payment_stats',
-        data: {
-          date: dateStr,
-          currency,
-          totalRevenueAgorot: Math.max(0, revenueDelta),
-          refundedAgorot: Math.max(0, refundedDelta),
-          failedAgorot: Math.max(0, failedDelta),
-          transactionCount: Math.max(0, txCountDelta),
-          succeededCount: Math.max(0, succeededCountDelta),
-          refundedCount: Math.max(0, refundedCountDelta),
-          failedCount: Math.max(0, failedCountDelta),
-          newCustomersCount: Math.max(0, newCustomerDelta),
-        },
-        req,
-        context: { _skipPaymentStatsUpsert: true },
-        overrideAccess: true,
-      })
+    // Use atomic upsert via raw MongoDB to prevent race conditions when
+    // concurrent webhooks hit the same (date, currency) simultaneously.
+    // updateOne with $inc is atomic at the database level — no read-modify-write
+    // race possible.
+    type MongoCollection = {
+      updateOne: (
+        filter: Record<string, unknown>,
+        update: Record<string, unknown>,
+        options?: Record<string, unknown>,
+      ) => Promise<unknown>
     }
+    const paymentStatsCollection = (
+      req.payload.db as unknown as { collections?: Record<string, MongoCollection> }
+    ).collections?.['payment_stats']
+    if (!paymentStatsCollection) {
+      req.payload.logger.error('payment_stats collection not found in db.collections')
+      return doc
+    }
+
+    await paymentStatsCollection.updateOne(
+      { date: dateStr, currency },
+      {
+        $inc: {
+          ...(revenueDelta !== 0 && { totalRevenueAgorot: revenueDelta }),
+          ...(refundedDelta !== 0 && { refundedAgorot: refundedDelta }),
+          ...(failedDelta !== 0 && { failedAgorot: failedDelta }),
+          ...(txCountDelta !== 0 && { transactionCount: txCountDelta }),
+          ...(succeededCountDelta !== 0 && { succeededCount: succeededCountDelta }),
+          ...(refundedCountDelta !== 0 && { refundedCount: refundedCountDelta }),
+          ...(failedCountDelta !== 0 && { failedCount: failedCountDelta }),
+          ...(newCustomerDelta !== 0 && { newCustomersCount: newCustomerDelta }),
+        },
+      },
+      { upsert: true },
+    )
   } catch (error) {
     // Log but don't fail the transaction update
     req.payload.logger.error(

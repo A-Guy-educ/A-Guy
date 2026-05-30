@@ -20,6 +20,8 @@ import { ContextExtractions } from '@/server/payload/collections/ContextExtracti
 import { Conversations } from '@/server/payload/collections/Conversations'
 import { Courses } from '@/server/payload/collections/Courses'
 import { ExerciseAssets } from '@/server/payload/collections/ExerciseAssets'
+import { EnrollmentProgress } from '@/server/payload/collections/EnrollmentProgress'
+import { Enrollments } from '@/server/payload/collections/Enrollments'
 import { Exercises } from '@/server/payload/collections/Exercises'
 import { ExtractionLogs } from '@/server/payload/collections/ExtractionLogs'
 import { FormulaSheets } from '@/server/payload/collections/FormulaSheets'
@@ -40,6 +42,7 @@ import { TeacherProfiles } from '@/server/payload/collections/TeacherProfiles'
 import { Tenants } from '@/server/payload/collections/Tenants'
 import { Transactions } from '@/server/payload/collections/Transactions'
 import { PaymentStats } from '@/server/payload/collections/PaymentStats'
+import { WebhookEvents } from '@/server/payload/collections/WebhookEvents'
 import { UploadSessions } from '@/server/payload/collections/UploadSessions'
 import { UserProgress } from '@/server/payload/collections/UserProgress'
 import { Users } from '@/server/payload/collections/Users'
@@ -157,10 +160,10 @@ export default buildConfig({
         process.env.MONGODB_MAX_POOL_SIZE ?? (process.env.VITEST ? '5' : '3'),
         10,
       ),
-      // Allow pool to fully drain when idle
-      minPoolSize: 0,
-      // Close idle connections after 10 seconds
-      maxIdleTimeMS: 10000,
+      // Keep at least 1 connection warm to avoid cold-handshake on every request
+      minPoolSize: 1,
+      // Close idle connections after 4.5 minutes (keeps warm between sparse traffic)
+      maxIdleTimeMS: 270000,
       // Fail fast if MongoDB is unreachable — don't hang serverless functions
       connectTimeoutMS: 5000,
       // Socket timeout for long-running operations
@@ -206,6 +209,8 @@ export default buildConfig({
     TeacherProfiles,
     UserSettings,
     ExerciseAssets,
+    EnrollmentProgress,
+    Enrollments,
     Users,
     UserProgress,
     UserStats,
@@ -219,6 +224,7 @@ export default buildConfig({
     AccessCodes,
     Transactions,
     PaymentStats,
+    WebhookEvents,
     MCPAuditLogs,
   ],
   cors: [getServerSideURL()].filter(Boolean),

@@ -7,7 +7,7 @@ describe('PageRange', () => {
   it('should NOT show "Search produced no results" message when totalDocs is 0 on a non-search page', () => {
     // Bug reproduction: The posts page shows "Search produced no results" when totalDocs is 0
     // even though there's no search functionality on that page.
-    // This test asserts the CORRECT behavior: no search message when isSearchResult is not set.
+    // This test asserts the CORRECT behavior: no search message when isSearch is not set.
     render(<PageRange totalDocs={0} collection="posts" />)
     expect(screen.queryByText('Search produced no results.')).toBeNull()
   })
@@ -17,8 +17,8 @@ describe('PageRange', () => {
     expect(screen.queryByText('Search produced no results.')).toBeNull()
   })
 
-  it('should show "Search produced no results" message when isSearchResult is true and totalDocs is 0', () => {
-    render(<PageRange totalDocs={0} collection="posts" isSearchResult={true} />)
+  it('should show "Search produced no results" message when isSearch is true and totalDocs is 0', () => {
+    render(<PageRange totalDocs={0} collection="posts" isSearch={true} />)
     expect(screen.getByText('Search produced no results.')).toBeTruthy()
   })
 

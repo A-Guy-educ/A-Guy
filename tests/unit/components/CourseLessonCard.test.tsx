@@ -60,9 +60,10 @@ afterEach(() => {
 
 describe('CourseLessonCard component', () => {
   describe('baseline rendering', () => {
-    it('renders lesson title and basic info', () => {
+    it('renders the lesson title as the heading and a separate "Lesson N" badge', () => {
       renderWithI18n(mockLesson)
 
+      // Title comes from lesson.title; badge is "Lesson <index>". They must not collide.
       expect(screen.getByText('Test Lesson')).toBeTruthy()
       expect(screen.getByText('Lesson 1')).toBeTruthy()
     })
@@ -119,7 +120,7 @@ describe('CourseLessonCard component', () => {
   })
 
   describe('exam label', () => {
-    it('shows "Exam 1" when lessonType is "exam"', () => {
+    it('shows "Exam 1" badge when lessonType is "exam"', () => {
       render(
         <I18nProvider locale="en" messages={enMessages}>
           <CourseLessonCard
@@ -132,9 +133,10 @@ describe('CourseLessonCard component', () => {
         </I18nProvider>,
       )
       expect(screen.getByText('Exam 1')).toBeTruthy()
+      expect(screen.getByText('Test Lesson')).toBeTruthy()
     })
 
-    it('shows "Lesson 1" when lessonType is "learning"', () => {
+    it('shows "Lesson 1" badge when lessonType is "learning"', () => {
       render(
         <I18nProvider locale="en" messages={enMessages}>
           <CourseLessonCard
@@ -147,9 +149,10 @@ describe('CourseLessonCard component', () => {
         </I18nProvider>,
       )
       expect(screen.getByText('Lesson 1')).toBeTruthy()
+      expect(screen.getByText('Test Lesson')).toBeTruthy()
     })
 
-    it('shows "Lesson 1" when lessonType is omitted (backward compat)', () => {
+    it('shows "Lesson 1" badge when lessonType is omitted (backward compat)', () => {
       render(
         <I18nProvider locale="en" messages={enMessages}>
           <CourseLessonCard
@@ -161,6 +164,7 @@ describe('CourseLessonCard component', () => {
         </I18nProvider>,
       )
       expect(screen.getByText('Lesson 1')).toBeTruthy()
+      expect(screen.getByText('Test Lesson')).toBeTruthy()
     })
   })
 })
