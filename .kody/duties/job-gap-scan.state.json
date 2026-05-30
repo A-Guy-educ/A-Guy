@@ -1,34 +1,34 @@
 {
   "version": 1,
-  "rev": 157,
+  "rev": 158,
   "cursor": "idle",
   "data": {
-    "lastFiredAt": "2026-05-30T17:41:30.587Z",
-    "lastOutcome": "completed",
-    "lastDurationMs": 50750,
-    "lastRunISO": "2026-05-30T17:40:45Z",
+    "lastRunISO": "2026-05-30T18:11:54Z",
     "proposed": {
-      "bundle-size-diff": {
-        "firstSuggestedISO": "2026-05-26T08:39:00Z",
-        "lastWrittenISO": "2026-05-26T08:39:00Z"
-      },
-      "issue-auto-triage": {
-        "firstSuggestedISO": "2026-05-20T19:54:00Z",
-        "lastWrittenISO": "2026-05-20T19:54:00Z"
+      "sentry-digest": {
+        "firstSuggestedISO": "2026-05-20T12:37:00Z",
+        "lastWrittenISO": "2026-05-30T18:11:54Z"
       },
       "secret-leak-scan": {
         "firstSuggestedISO": "2026-05-20T13:01:00Z",
         "lastWrittenISO": "2026-05-20T13:01:00Z"
       },
-      "sentry-digest": {
-        "firstSuggestedISO": "2026-05-20T12:37:00Z",
-        "lastWrittenISO": "2026-05-30T17:40:45Z"
-      },
       "stale-pr-janitor": {
         "firstSuggestedISO": "2026-05-20T14:17:00Z",
         "lastWrittenISO": "2026-05-20T14:17:00Z"
+      },
+      "issue-auto-triage": {
+        "firstSuggestedISO": "2026-05-20T19:54:00Z",
+        "lastWrittenISO": "2026-05-20T19:54:00Z"
+      },
+      "bundle-size-diff": {
+        "firstSuggestedISO": "2026-05-26T08:39:00Z",
+        "lastWrittenISO": "2026-05-26T08:39:00Z"
       }
-    }
+    },
+    "lastFiredAt": "2026-05-30T18:12:24.759Z",
+    "lastOutcome": "completed",
+    "lastDurationMs": 37814
   },
   "done": false
 }
