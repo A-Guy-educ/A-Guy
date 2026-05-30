@@ -1,18 +1,7 @@
-# Merge Conflict Resolution for #1377 (docs/testing-patterns-for-route-handlers)
+Resolved merge conflict for PR #1377 (docs(tests): Document route-handler patterns and admin two-step).
 
-## What was done
+**What changed:** Single conflicted file — `.kody/last-run.jsonl` (a Kody session log).
 
-Resolved `git merge origin/dev` conflicts in two test files:
+**Resolution:** Took HEAD (PR branch) version. This session log file records the current Kody session's activity. The origin/dev version was from a different session context and is not meaningfully mergeable with the current session's log.
 
-1. `tests/int/course-entitlement-cascade-delete.int.spec.ts` — conflict in `createUserWithEntitlements` helper at the `transactionId` field
-2. `tests/int/dashboard-metrics.int.spec.ts` — conflict in `courseEntitlements` data at the `transactionId` field
-
-## Resolution rationale
-
-Both conflicts had identical content: the PR used `test-tx-${id}` (simple) while `origin/dev` used `test-txn-${id}-${Date.now()}-${i}` (timestamp + index). The dev version is more unique — critical because some tests create users with entitlements to multiple courses, and duplicate `transactionId` values could cause test flakiness or masking of real bugs. Took the dev side for both.
-
-## Verification
-
-- `grep` confirms no `<<<<<<<`, `=======`, or `>>>>>>>` markers remain
-- `pnpm typecheck --noEmit` passes
-- `npx eslint` on both files passes with no errors
+**No code or documentation changes** — only the Kody operational session log file was touched.
