@@ -221,6 +221,19 @@ export const Transactions: CollectionConfig = {
       index: true,
     },
 
+    // Timestamp when purchase receipt email was sent.
+    // Used for idempotency — replayed webhooks skip re-sending if set.
+    // Set by the purchase receipt email handler after successful send.
+    {
+      name: 'emailSentAt',
+      type: 'date',
+      admin: {
+        readOnly: true,
+        description: 'Timestamp when the purchase receipt email was sent to the user',
+      },
+      index: true,
+    },
+
     // Refund audit fields (set when transaction is refunded)
     {
       name: 'refundedAmount',

@@ -1,0 +1,26 @@
+[
+  {
+    "type": "lesson",
+    "name": "paypal-webhook-event-id-field",
+    "hook": "PayPal webhook event bodies need explicit id field",
+    "body": "PayPal webhook event bodies must include an explicit `id: string` field — the `PayPalWebhookEvent` interface requires it, and the dedup gate uses `event.id` as the unique key in WebhookEvents. This differs from Stripe where `event.id` is on the parsed Stripe.Event object.\n\n**Why:** Without `id` in the JSON body, the webhook handler throws a type error or passes `undefined` as the eventId, causing dedup to fail silently or the unique-index insert to be rejected.\n\n**How to apply:** When writing new PayPal webhook tests, always include `id: \`PP_evt_${Date.now()}\`` (or a unique value) in the JSON body sent to the handler.",
+    "why": "PayPal events require explicit id field unlike Stripe events where id is parsed from SDK",
+    "confidence": 0.95
+  },
+  {
+    "type": "lesson",
+    "name": "payload-duplicate-key-error-patterns",
+    "hook": "Payload CMS wraps MongoDB duplicate-key errors with ValidationError",
+    "body": "Payload CMS's `handleError` wraps raw MongoDB duplicate-key errors (code 11000) into a `ValidationError` with human-readable message containing 'unique'. The `isDuplicateKeyError` helper must check: (1) raw `code === 11000`, (2) message containing 'E11000' or 'duplicate key', (3) message containing 'unique', and (4) `e.data.errors[].message` containing 'unique'.\n\n**Why:** A dedup gate that only checks MongoDB's raw code 11000 will miss Payload's wrapped errors, causing false negatives in the dedup check.\n\n**How to apply:** When implementing dedup gates that use Payload collections with unique indexes, always include all four error patterns in `isDuplicateKeyError`.",
+    "why": "Payload CMS wraps MongoDB duplicate-key in ValidationError with localized 'unique' message",
+    "confidence": 0.95
+  },
+  {
+    "type": "preference",
+    "name": "id-field-uniqueness-in-webhook-tests",
+    "hook": "Use unique event IDs per webhook request body in tests",
+    "body": "When testing webhook replay/dedup behavior, each distinct webhook delivery must have a unique event ID in the request body. Replays should reuse the same ID as the first delivery to properly test the dedup gate.\n\n**Why:** If two different test requests use the same event ID value (e.g., both using `Date.now()` at the same millisecond), the dedup gate will fire incorrectly in the first delivery, masking real bugs.\n\n**How to apply:** In test bodies, use `id: \`PP_evt_${Date.now()}\`` for first deliveries. For replay tests, use the same ID as the first delivery of that event.",
+    "why": "Concurrent test requests can share same Date.now() value, causing false dedup hits",
+    "confidence": 0.9
+  }
+]

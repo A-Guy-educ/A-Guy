@@ -15,6 +15,10 @@ import { MetaTitleComponent as MetaTitleComponent_a8a977ebc872c5d5ea7ee689724c08
 import { MetaDescriptionComponent as MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { PreviewComponent as PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860 } from '@payloadcms/plugin-seo/client'
 import { SlugField as SlugField_3817bf644402e67bfe6577f60ef982de } from '@payloadcms/ui'
+import { CouponUsageProgress as CouponUsageProgress_a2b260aa8f6b4290112e6f60e4421268 } from '@/ui/admin/Coupons/UsageProgressField'
+import { CouponStatusCell as CouponStatusCell_7c7747ca63cfce7f1a733bba066e4691 } from '@/ui/admin/Coupons/Cells/StatusCell'
+import { CouponUsageCell as CouponUsageCell_5f0f323a3410f2629a0fb9e3baa22f67 } from '@/ui/admin/Coupons/Cells/UsageCell'
+import { CouponExpiresCell as CouponExpiresCell_77867c52198465ed20e956268b374e85 } from '@/ui/admin/Coupons/Cells/ExpiresCell'
 import { CouponsListView as CouponsListView_4c2bd615af163e22ea57e98b586263d9 } from '@/ui/admin/Coupons/ListView'
 import { CourseLessonsSorter as CourseLessonsSorter_219effcec2d3303f5f77bc687e0138e9 } from '@/ui/admin/CourseLessonsSorter'
 import { TranslateCourseAction as TranslateCourseAction_5e03fe73ee4379dfd96d492849856d43 } from '@/ui/admin/TranslationButton'
@@ -80,6 +84,10 @@ export const importMap = {
   "@payloadcms/plugin-seo/client#MetaDescriptionComponent": MetaDescriptionComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/plugin-seo/client#PreviewComponent": PreviewComponent_a8a977ebc872c5d5ea7ee689724c0860,
   "@payloadcms/ui#SlugField": SlugField_3817bf644402e67bfe6577f60ef982de,
+  "@/ui/admin/Coupons/UsageProgressField#CouponUsageProgress": CouponUsageProgress_a2b260aa8f6b4290112e6f60e4421268,
+  "@/ui/admin/Coupons/Cells/StatusCell#CouponStatusCell": CouponStatusCell_7c7747ca63cfce7f1a733bba066e4691,
+  "@/ui/admin/Coupons/Cells/UsageCell#CouponUsageCell": CouponUsageCell_5f0f323a3410f2629a0fb9e3baa22f67,
+  "@/ui/admin/Coupons/Cells/ExpiresCell#CouponExpiresCell": CouponExpiresCell_77867c52198465ed20e956268b374e85,
   "@/ui/admin/Coupons/ListView#CouponsListView": CouponsListView_4c2bd615af163e22ea57e98b586263d9,
   "@/ui/admin/CourseLessonsSorter#CourseLessonsSorter": CourseLessonsSorter_219effcec2d3303f5f77bc687e0138e9,
   "@/ui/admin/TranslationButton#TranslateCourseAction": TranslateCourseAction_5e03fe73ee4379dfd96d492849856d43,
