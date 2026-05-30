@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "rev": 156,
+  "rev": 157,
   "cursor": "idle",
   "data": {
-    "lastFiredAt": "2026-05-30T17:13:15.431Z",
+    "lastFiredAt": "2026-05-30T17:41:30.587Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 18715,
-    "lastRunISO": "2026-05-30T17:13:02Z",
+    "lastDurationMs": 50750,
+    "lastRunISO": "2026-05-30T17:40:45Z",
     "proposed": {
       "bundle-size-diff": {
         "firstSuggestedISO": "2026-05-26T08:39:00Z",
@@ -22,7 +22,7 @@
       },
       "sentry-digest": {
         "firstSuggestedISO": "2026-05-20T12:37:00Z",
-        "lastWrittenISO": "2026-05-30T17:13:02Z"
+        "lastWrittenISO": "2026-05-30T17:40:45Z"
       },
       "stale-pr-janitor": {
         "firstSuggestedISO": "2026-05-20T14:17:00Z",
