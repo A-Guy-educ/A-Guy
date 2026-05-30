@@ -1,14 +1,17 @@
 {
   "taskId": "1377",
   "taskType": "pr",
-  "target": "docs/testing-patterns-for-route-handlers",
+  "target": "PR #1377 docs/testing-patterns-for-route-handlers",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Fixed Prettier formatting violation in kody.config.json by running pnpm format. Verified with pnpm format:check which now passes.",
+  "reason": "Resolved merge conflicts with origin/dev in two test files — took dev's transactionId format for uniqueness",
   "prUrl": null,
   "runUrl": null,
-  "filesTouched": ["kody.config.json"],
+  "filesTouched": [
+    "tests/int/course-entitlement-cascade-delete.int.spec.ts",
+    "tests/int/dashboard-metrics.int.spec.ts"
+  ],
   "sessionLog": ".kody/sessions/1377.jsonl",
-  "startedAt": "2026-05-24T00:00:00.000Z",
-  "finishedAt": "2026-05-24T00:01:00.000Z"
+  "startedAt": "2026-05-30T16:13:00Z",
+  "finishedAt": "2026-05-30T16:15:30Z"
 }

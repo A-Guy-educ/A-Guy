@@ -1,52 +1,78 @@
 ---
 disabled: true
 staff: kody
+every: 7d
 ---
 
 # Dependency Bump
 
 ## Job
 
-Weekly tracking of stale production dependencies. One bump PR in flight at a time — never let bumps pile up.
+Weekly tracking of stale production dependencies. Writes a single report
+to `.kody/reports/dependency-bump.md` proposing the **single most-stale
+package** to bump next. The dashboard Reports page renders it; the
+operator decides whether to take the bump.
 
-**Cadence guard.** Run only on **Monday UTC**, and only if `data.lastRunISO` is older than 6 days. Otherwise emit unchanged state and exit. On a successful run, update `data.lastRunISO` to now.
+**Cadence.** Set by the `every:` frontmatter (default `every: 7d`) and
+enforced by the engine — runs on Monday UTC.
 
-**Per tick (one action max):**
+## Tick procedure — REQUIRED
 
-1. Check current in-flight tracking issue: `gh issue list --label "kody:deps-bump" --state open --json number,title,createdAt,body`.
-2. If an open issue exists AND was created less than 7 days ago, emit `cursor: awaiting-pr` and exit (last week's bump is still being processed).
-3. If the open issue is older than 7 days with no merged PR linking it, post one nudge comment:
-   ```
-   gh issue comment <n> --body "Last week's bump appears stalled. /kody chore: drop or unblock this bump and pick the next stalest package."
-   ```
-   Then exit.
-4. Otherwise, open the new tracking issue:
-   ```
-   gh issue create \
-     --title "deps: weekly bump $(date -u +%Y-%m-%d)" \
-     --label "kody:deps-bump" \
-     --body "/kody chore: run \`pnpm outdated --prod --json\`, pick the SINGLE most-stale package (largest semver gap; ties broken by oldest published date), and open one PR that bumps it (and the matching @types/* if any). Skip packages already attempted in the last 30 days — see history below.\n\nHistory: <data.history serialized as a list of {pkg, attemptedISO, outcome}>\n\nIf the chosen package has been attempted before, document why this attempt is different (new compatible version? upstream regression resolved?). If nothing eligible to bump, comment 'no eligible packages' and close."
-   ```
-5. Stash `data.openIssue` and append `{ pkg: "<chosen-by-executor>", attemptedISO: <now>, outcome: "in-flight" }` to `data.history` (you don't know the package yet — leave `pkg: null` and let a future tick correlate it from the eventual PR title).
+This tick is **fully scripted**. The script
+[dependency-bump-tick.py](.kody/scripts/dependency-bump-tick.py) is the
+**single source of truth** for picking the candidate and writing the
+report.
 
-## Allowed Commands
+Run the script:
 
-- `gh issue list`, `gh issue create`, `gh issue comment`
-- `gh pr list --search "label:kody:deps-bump"` (to correlate package names back into history)
+```
+python3 .kody/scripts/dependency-bump-tick.py
+```
+
+The script:
+
+1. Runs `pnpm outdated --prod --json` to get current stale packages.
+2. Filters out packages attempted within the last 30 days (see
+   `state.history`).
+3. Picks the candidate with the largest semver gap (ties broken by
+   oldest published date).
+4. Overwrites `.kody/reports/dependency-bump.md` with:
+   - Headline: which package and the proposed jump.
+   - Reason (semver gap, age, any matching `@types/*`).
+   - Recent history of attempts and their outcomes.
+   - "Nothing eligible" message if the filtered set is empty.
+5. Appends `{ pkg, attemptedISO, outcome: "proposed" }` to
+   `state.history` (capped at 50 entries — drops oldest).
+6. Bumps `state.lastRunISO` and commits + pushes state and report.
 
 ## Restrictions
 
-- Never edit files. Never run `pnpm`. Delegation via `/kody chore` only.
-- One bump in flight at a time — that's the whole point.
-- Maximum one issue created or commented per tick.
-- If `gh issue create --label kody:deps-bump` fails because the label doesn't exist, run `gh label create kody:deps-bump --description "Kody job: dependency bump"` and retry the create. **Do not skip the label** — the next-tick "is bump in flight?" check depends on it.
-- `data.history` must not exceed 50 entries — drop the oldest when over.
+- **Report only.** Never push bump PRs, never edit `package.json`,
+  never run `pnpm add`/`pnpm up`.
+- **One proposal per tick.** Don't list every stale package — pick the
+  single highest-priority one.
+- **Honor the 30-day cool-off.** Don't re-surface a recently-attempted
+  package even if it's still the stalest.
 
 ## State
 
-- `cursor`: `idle` | `awaiting-pr` | `stalled`
-- `data.lastRunISO`: ISO timestamp of last tick that opened or nudged an issue
-- `data.openIssue`: number of currently-open tracking issue (or null)
-- `data.history`: rolling list `[{ pkg, attemptedISO, outcome }]`
-- `data.nextEligibleISO`: UTC ISO timestamp this job will next be eligible to act, computed from the cadence guard above. **Always emit this, every tick.** For this job: the **next Monday 00:00 UTC** at or after `data.lastRunISO + 6d`. Surfaced as "next run" on the dashboard.
-- `done`: always `false`
+State lives in
+[dependency-bump.state.json](.kody/jobs/dependency-bump.state.json):
+
+```json
+{
+  "lastRunISO": "2026-05-25T00:00:00Z",
+  "history": [
+    { "pkg": "next", "attemptedISO": "2026-05-18T00:00:00Z", "outcome": "proposed" }
+  ],
+  "nextEligibleISO": "2026-06-01T00:00:00Z"
+}
+```
+
+- `data.lastRunISO`: ISO timestamp of last tick that wrote the report.
+- `data.history`: rolling list `[{ pkg, attemptedISO, outcome }]`,
+  capped at 50.
+- `data.nextEligibleISO`: next Monday 00:00 UTC at or after
+  `data.lastRunISO + 6d`. **Always emit this, every tick.** Surfaced as
+  "next run" on the dashboard.
+- `done`: always `false`.

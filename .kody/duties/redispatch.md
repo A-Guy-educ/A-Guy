@@ -1,6 +1,7 @@
 ---
-disabled: true
+disabled: false
 staff: kody
+every: 30m
 ---
 
 # redispatch

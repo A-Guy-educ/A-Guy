@@ -44,3 +44,27 @@ git activity belongs in `git log`, not here.
 - [Payment Status Gate Entitlements](payment-status-gate-entitlements.md) — Gate entitlement grant on payment_status=paid not checkout.session.completed (type: decision)
 
 - [Enum Preservation In Derive Json Schema](enum-preservation-in-derive-json-schema.md) — deriveJsonSchemaFromValue now preserves identifier strings as enum (type: decision)
+
+- [Inline Exercise Editor Per Exercise Save Via Rest](inline-exercise-editor-per-exercise-save-via-rest.md) — Per-exercise inline save uses Payload REST API PATCH, not lesson form (type: decision)
+
+- [Lazy Load Geometry Axis Editors Inline](lazy-load-geometry-axis-editors-inline.md) — Geometry/Axis editors lazy-loaded in InlineExerciseEditor (type: decision)
+
+- [Translation Template Replace Pattern](translation-template-replace-pattern.md) — Translation interpolations use .replace('{key}', value) not object args (type: lesson)
+
+- [Thin App Payload Restriction Exception](thin-app-payload-restriction-exception.md) — Server actions (*-action.ts) are exempt from Payload getPayload restriction (type: decision)
+
+- [User Transaction Api At Account Namespace](user-transaction-api-at-account-namespace.md) — User-facing transaction fetch API placed at /api/account/transactions/[id] not /api/transactions/[id] (type: decision)
+
+- [Nextrequest Vs Request In Handler Tests](nextrequest-vs-request-in-handler-tests.md) — Route handlers accept NextRequest, not Request — use NextRequest in handler tests (type: lesson)
+
+- [Fetch Requests In Hooks Need Timeouts](fetch-requests-in-hooks-need-timeouts.md) — Always add AbortController+timeout to fetch in useEffect hooks to prevent infinite loading states (type: lesson)
+
+- [Jsx In Ts Causes Ts1005 Error](jsx-in-ts-causes-ts1005-error.md) — JSX in .ts files causes TS1005 error — rename to .tsx (type: lesson)
+
+- [Payload Email Send Type Workaround](payload-email-send-type-workaround.md) — payload.email.send() needs `as any` cast — type doesn't expose send method (type: lesson)
+
+- [Verify Db State Not Mock Calls In Int Tests](verify-db-state-not-mock-calls-in-int-tests.md) — Integration tests should verify DB state, not mock call counts (type: lesson)
+
+- [Mobile Chat Toggle Inside Chatinterface](mobile-chat-toggle-inside-chatinterface.md) — MobileChatToggle renders inside ChatInterface not SplitPaneLayout (type: lesson)
+
+- [Fab Open State Via Ischatvisible Prop](fab-open-state-via-ischatvisible-prop.md) — FAB open state combines internal isOpen + external isChatVisible prop (type: decision)
