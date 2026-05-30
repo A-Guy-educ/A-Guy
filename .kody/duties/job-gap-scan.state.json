@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "rev": 150,
+  "rev": 151,
   "cursor": "idle",
   "data": {
-    "lastFiredAt": "2026-05-30T12:45:03.662Z",
+    "lastFiredAt": "2026-05-30T14:38:05.528Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 21534,
+    "lastDurationMs": 17102,
     "lastRunISO": "2026-05-30T12:44:49Z",
     "proposed": {
       "bundle-size-diff": {
