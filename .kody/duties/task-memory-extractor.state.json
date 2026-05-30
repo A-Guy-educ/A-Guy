@@ -1,14 +1,14 @@
 {
   "version": 1,
-  "rev": 153,
+  "rev": 154,
   "cursor": "idle",
   "data": {
     "last_tick": "2026-05-29T21:33:47.000Z",
     "tasks_seen": 51,
     "tasks_processed": 51,
-    "lastFiredAt": "2026-05-29T23:26:55.690Z",
+    "lastFiredAt": "2026-05-30T00:29:11.019Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 28785,
+    "lastDurationMs": 22515,
     "current_tick": "2026-05-29T21:33:47.000Z",
     "currentFiredAt": "2026-05-29T21:33:47.000Z",
     "currentDurationMs": 16585,
