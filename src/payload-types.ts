@@ -93,6 +93,8 @@ export interface Config {
     teacher_profiles: TeacherProfile;
     user_settings: UserSetting;
     'exercise-assets': ExerciseAsset;
+    'enrollment-progress': EnrollmentProgress;
+    enrollments: Enrollment;
     users: User;
     'user-progress': UserProgress;
     'user-stats': UserStat;
@@ -146,6 +148,8 @@ export interface Config {
     teacher_profiles: TeacherProfilesSelect<false> | TeacherProfilesSelect<true>;
     user_settings: UserSettingsSelect<false> | UserSettingsSelect<true>;
     'exercise-assets': ExerciseAssetsSelect<false> | ExerciseAssetsSelect<true>;
+    'enrollment-progress': EnrollmentProgressSelect<false> | EnrollmentProgressSelect<true>;
+    enrollments: EnrollmentsSelect<false> | EnrollmentsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'user-progress': UserProgressSelect<false> | UserProgressSelect<true>;
     'user-stats': UserStatsSelect<false> | UserStatsSelect<true>;
@@ -1811,6 +1815,9 @@ export interface Coupon {
    * אם ריק — חל על כל המוצרים
    */
   applicableProducts?: (string | Product)[] | null;
+  status?: string | null;
+  usageDisplay?: string | null;
+  expiresDisplay?: string | null;
   /**
    * User who created this document
    */
@@ -1974,6 +1981,10 @@ export interface Transaction {
    * Timestamp when coupon was consumed on this transaction
    */
   couponConsumedAt?: string | null;
+  /**
+   * Timestamp when the purchase receipt email was sent to the user
+   */
+  emailSentAt?: string | null;
   /**
    * Amount refunded in agorot (smallest currency unit)
    */
@@ -2512,6 +2523,94 @@ export interface ExerciseAsset {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollment-progress".
+ */
+export interface EnrollmentProgress {
+  id: string;
+  /**
+   * The user who owns this progress (populated from enrollment)
+   */
+  user: string | User;
+  /**
+   * The enrollment this progress belongs to
+   */
+  enrollment: string | Enrollment;
+  /**
+   * The lesson this progress is for
+   */
+  lesson: string | Lesson;
+  /**
+   * Progress percentage (0-100)
+   */
+  progress?: number | null;
+  /**
+   * When the lesson was marked as completed
+   */
+  completedAt?: string | null;
+  /**
+   * When the lesson was last accessed
+   */
+  lastAccessedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollments".
+ */
+export interface Enrollment {
+  id: string;
+  /**
+   * The user who is enrolled
+   */
+  user: string | User;
+  /**
+   * The course the user is enrolled in
+   */
+  course: string | Course;
+  /**
+   * Current enrollment status
+   */
+  status: 'active' | 'inactive' | 'suspended' | 'cancelled' | 'expired';
+  /**
+   * How the enrollment was granted
+   */
+  grantMethod: 'admin' | 'payment' | 'code';
+  /**
+   * Origin of the enrollment
+   */
+  source: 'dashboard' | 'api' | 'self' | 'invite';
+  /**
+   * When the enrollment was created
+   */
+  enrolledAt: string;
+  /**
+   * When the enrollment was cancelled
+   */
+  cancelledAt?: string | null;
+  /**
+   * When the enrollment expires (for time-limited access)
+   */
+  expiresAt?: string | null;
+  metadata?: {
+    /**
+     * Access code used for enrollment (if applicable)
+     */
+    accessCodeId?: string | null;
+    /**
+     * Payment reference (for future payment integration)
+     */
+    paymentId?: string | null;
+    /**
+     * Admin user ID who granted the enrollment
+     */
+    grantedBy?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3357,6 +3456,14 @@ export interface PayloadLockedDocument {
         value: string | ExerciseAsset;
       } | null)
     | ({
+        relationTo: 'enrollment-progress';
+        value: string | EnrollmentProgress;
+      } | null)
+    | ({
+        relationTo: 'enrollments';
+        value: string | Enrollment;
+      } | null)
+    | ({
         relationTo: 'users';
         value: string | User;
       } | null)
@@ -3761,6 +3868,9 @@ export interface CouponsSelect<T extends boolean = true> {
   usesCount?: T;
   maxUsesPerUser?: T;
   applicableProducts?: T;
+  status?: T;
+  usageDisplay?: T;
+  expiresDisplay?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -4203,6 +4313,43 @@ export interface ExerciseAssetsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollment-progress_select".
+ */
+export interface EnrollmentProgressSelect<T extends boolean = true> {
+  user?: T;
+  enrollment?: T;
+  lesson?: T;
+  progress?: T;
+  completedAt?: T;
+  lastAccessedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollments_select".
+ */
+export interface EnrollmentsSelect<T extends boolean = true> {
+  user?: T;
+  course?: T;
+  status?: T;
+  grantMethod?: T;
+  source?: T;
+  enrolledAt?: T;
+  cancelledAt?: T;
+  expiresAt?: T;
+  metadata?:
+    | T
+    | {
+        accessCodeId?: T;
+        paymentId?: T;
+        grantedBy?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
@@ -4519,6 +4666,7 @@ export interface TransactionsSelect<T extends boolean = true> {
   errorMessage?: T;
   entitlementsGrantedAt?: T;
   couponConsumedAt?: T;
+  emailSentAt?: T;
   refundedAmount?: T;
   refundedBy?: T;
   refundedAt?: T;

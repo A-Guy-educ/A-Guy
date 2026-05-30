@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "fetch-requests-in-hooks-need-timeouts",
+    "hook": "Always add AbortController+timeout to fetch in useEffect hooks to prevent infinite loading states",
+    "body": "When a fetch request is made in a useEffect hook (like useStudyPlan's fetchPlan), it can hang indefinitely if the server doesn't respond. This causes isLoading to stay true forever, showing a loading spinner forever.\n\nFix: Use AbortController with a setTimeout to abort the request after a reasonable timeout (e.g., 15s).",
+    "why": "This bug (#1822) manifested as the /study-plan page showing 'Loading...' forever because the fetch to /api/study-plan had no timeout and no way to abort.",
+    "confidence": 0.9
+  }
+]

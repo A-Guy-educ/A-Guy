@@ -1,0 +1,3 @@
+{"type":"meta","mode":"interactive","createdAt":"2026-05-12T21:10:56.147Z","idleExitMs":300000,"hardCapMs":1800000}
+{"role":"user","content":"Hello, are you running?","timestamp":"2026-05-12T21:13:33.018Z","toolCalls":[]}
+{"role":"assistant","content":"Hello! Yes, I am running and ready to assist you. How can I help you today?","timestamp":"2026-05-12T21:14:04.151Z","toolCalls":[]}

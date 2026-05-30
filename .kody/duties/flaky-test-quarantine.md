@@ -8,48 +8,76 @@ every: 1d
 
 ## Job
 
-Detect and quarantine flaky tests by watching CI failure patterns on `dev` and `main`.
+Daily detection of flaky tests by watching CI failure patterns on `dev`
+and `main`. Writes a single report to
+`.kody/reports/flaky-test-quarantine.md` listing flip candidates and
+flagging any that have crossed the quarantine threshold. The dashboard
+Reports page renders it; the operator decides whether to quarantine.
 
-**Cadence.** Set by the `every:` frontmatter (the dashboard schedule dropdown) and enforced by the engine — the duty won't tick more often than its interval (default `every: 1d`).
+**Cadence.** Set by the `every:` frontmatter (default `every: 1d`) and
+enforced by the engine.
 
-**Per tick (one action max):**
+## Tick procedure — REQUIRED
 
-1. Fetch the last 50 completed CI runs on `dev` and `main`:
-   `gh run list --branch dev --limit 25 --json databaseId,headSha,conclusion,workflowName,createdAt,attempt`
-   `gh run list --branch main --limit 25 --json databaseId,headSha,conclusion,workflowName,createdAt,attempt`
-2. Identify **flip candidates** — runs where the same `headSha` had at least one failed attempt followed by a successful re-run (`attempt > 1` with prior `conclusion=failure`). For each, fetch failed jobs:
-   `gh run view <runId> --json jobs` and pull failed test names from job logs via `gh api repos/{owner}/{repo}/actions/jobs/<jobId>/logs` (parse the vitest/playwright failure lines).
-3. Update `data.candidates[testId] = { flips, lastSeenSha, lastSeenISO }`. Only count one flip per (testId, headSha) pair.
-4. **Quarantine threshold:** when a candidate reaches `flips >= 3` AND has not yet been escalated, post **one** issue (one per tick — pick the highest-flip candidate not yet escalated):
-   ```
-   gh issue create \
-     --title "flaky: <testId>" \
-     --label "kody:flaky-test" \
-     --body "Detected $flips flips across recent CI runs. Latest SHAs: <list>. /kody fix: quarantine this test by marking it .skip with a TODO citing this issue, then open a PR."
-   ```
-   Mark `data.candidates[testId].escalated = true` and stash `data.candidates[testId].issue = <number>`.
-5. **Garbage-collect** candidates whose `lastSeenISO` is older than 14 days — delete them from `data.candidates`.
+This tick is **fully scripted**. The script
+[flaky-test-quarantine-tick.py](.kody/scripts/flaky-test-quarantine-tick.py)
+is the **single source of truth** for fetching CI runs and writing the
+report.
 
-If no candidates cross the threshold this tick, just narrate briefly (no comment needed) and emit state.
+Run the script:
 
-## Allowed Commands
+```
+python3 .kody/scripts/flaky-test-quarantine-tick.py
+```
 
-- `gh run list`, `gh run view`
-- `gh api repos/{owner}/{repo}/actions/jobs/<id>/logs`
-- `gh issue list`, `gh issue create`, `gh issue comment`
+The script:
+
+1. Fetches the last 25 completed CI runs on `dev` and the last 25 on
+   `main`.
+2. Identifies **flip candidates** — runs where the same `headSha` had a
+   failed attempt followed by a successful re-run. For each, parses
+   failed test names from job logs (vitest/playwright failure lines).
+3. Updates `state.candidates[testId] = { flips, lastSeenSha,
+   lastSeenISO }`. Only counts one flip per (testId, headSha) pair.
+4. Garbage-collects candidates whose `lastSeenISO` is older than 14
+   days.
+5. Overwrites `.kody/reports/flaky-test-quarantine.md` with:
+   - **Quarantine candidates** — testIds with `flips >= 3`, sorted by
+     flip count.
+   - **Watch list** — testIds with `flips` between 1 and 2.
+   - For each: latest SHAs and last-seen timestamp.
+6. Bumps `state.lastRunISO` and commits + pushes state and report.
 
 ## Restrictions
 
-- Never edit, create, or delete files in the working tree.
-- Never push, never commit.
-- Maximum **one** new issue per tick. Other candidates wait for the next tick.
-- Skip a candidate if an open issue with `label:kody:flaky-test` and the testId in the title already exists.
-- Do NOT escalate the same testId twice — `data.candidates[testId].escalated` gates re-fire.
+- **Report only.** Never edit test files, never push quarantine PRs,
+  never open issues.
+- **Threshold is 3 flips.** Don't lower it from inside the script —
+  edit this file if the threshold needs tuning.
+- **Drop candidates older than 14 days.** Stale data shouldn't drive
+  quarantine decisions.
 
 ## State
 
-- `cursor`: `idle` | `tracking` | `awaiting-quarantine`
-- `data.lastRunISO`: ISO timestamp of last full pass
-- `data.candidates`: `{ [testId]: { flips, lastSeenSha, lastSeenISO, escalated, issue } }`
-- `data.nextEligibleISO`: UTC ISO timestamp this job will next be eligible to act, computed from the cadence guard above. **Always emit this, every tick.** For this job: `data.lastRunISO + 20h`. Surfaced as "next run" on the dashboard.
-- `done`: always `false` (evergreen)
+State lives in
+[flaky-test-quarantine.state.json](.kody/jobs/flaky-test-quarantine.state.json):
+
+```json
+{
+  "lastRunISO": "2026-05-29T00:00:00Z",
+  "candidates": {
+    "tests/e2e/login.spec.ts > login flow": {
+      "flips": 4,
+      "lastSeenSha": "abc123",
+      "lastSeenISO": "2026-05-28T00:00:00Z"
+    }
+  },
+  "nextEligibleISO": "2026-05-29T20:00:00Z"
+}
+```
+
+- `data.lastRunISO`: ISO timestamp of last tick that wrote the report.
+- `data.candidates`: `{ [testId]: { flips, lastSeenSha, lastSeenISO } }`.
+- `data.nextEligibleISO`: `data.lastRunISO + 20h`. **Always emit this,
+  every tick.** Surfaced as "next run" on the dashboard.
+- `done`: always `false`.
