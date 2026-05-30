@@ -1,18 +1,13 @@
 {
   "version": 1,
-  "rev": 160,
+  "rev": 161,
   "cursor": "idle",
   "data": {
-    "prs": {
-      "1525": {
-        "stage": "merge-recommended",
-        "lastActAt": "2026-05-30T12:20:00Z"
-      }
-    },
-    "nextEligibleISO": "2026-05-30T12:35:00Z",
-    "lastFiredAt": "2026-05-30T12:44:31.910Z",
+    "prs": {},
+    "nextEligibleISO": "2026-05-30T12:59:31Z",
+    "lastFiredAt": "2026-05-30T14:36:49.417Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 272366
+    "lastDurationMs": 249150
   },
   "done": false
 }
