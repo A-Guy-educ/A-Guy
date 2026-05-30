@@ -943,6 +943,304 @@ describe.skipIf(!hasDatabaseUrl)('Coupons Collection', () => {
       expect(createdById).toBe(adminUserId)
     })
   })
+
+  // -------------------------------------------------------------------------
+  // Computed fields (afterRead hooks)
+  // -------------------------------------------------------------------------
+
+  describe('Computed fields — status, usageDisplay, expiresDisplay', () => {
+    it('should compute status as Active for active coupon with no expiration', async () => {
+      const admin = await getAdminUser()
+
+      const coupon = await payload.create({
+        collection: 'coupons',
+        data: {
+          code: `STATUS-ACTIVE-${Date.now()}`,
+          discountType: 'percentage',
+          discountValue: 10,
+          currency: 'ILS',
+          maxUses: 0,
+          usesCount: 0,
+          isActive: true,
+        },
+        user: admin as any,
+        overrideAccess: false,
+      })
+      trackCoupon(coupon.id)
+
+      const read = await payload.findByID({
+        collection: 'coupons',
+        id: coupon.id,
+        overrideAccess: true,
+      })
+
+      expect((read as any).status).toBe('Active')
+    })
+
+    it('should compute status as Inactive when isActive is false', async () => {
+      const admin = await getAdminUser()
+
+      const coupon = await payload.create({
+        collection: 'coupons',
+        data: {
+          code: `STATUS-INACTIVE-${Date.now()}`,
+          discountType: 'percentage',
+          discountValue: 10,
+          currency: 'ILS',
+          maxUses: 0,
+          usesCount: 0,
+          isActive: false,
+        },
+        user: admin as any,
+        overrideAccess: false,
+      })
+      trackCoupon(coupon.id)
+
+      const read = await payload.findByID({
+        collection: 'coupons',
+        id: coupon.id,
+        overrideAccess: true,
+      })
+
+      expect((read as any).status).toBe('Inactive')
+    })
+
+    it('should compute status as Exhausted when usesCount >= maxUses', async () => {
+      const admin = await getAdminUser()
+
+      const coupon = await payload.create({
+        collection: 'coupons',
+        data: {
+          code: `STATUS-EXHAUSTED-${Date.now()}`,
+          discountType: 'percentage',
+          discountValue: 10,
+          currency: 'ILS',
+          maxUses: 5,
+          usesCount: 5,
+          isActive: true,
+        },
+        user: admin as any,
+        overrideAccess: false,
+      })
+      trackCoupon(coupon.id)
+
+      const read = await payload.findByID({
+        collection: 'coupons',
+        id: coupon.id,
+        overrideAccess: true,
+      })
+
+      expect((read as any).status).toBe('Exhausted')
+    })
+
+    it('should compute status as Expired when validUntil is in the past', async () => {
+      const admin = await getAdminUser()
+      const pastDate = new Date()
+      pastDate.setDate(pastDate.getDate() - 1)
+
+      const coupon = await payload.create({
+        collection: 'coupons',
+        data: {
+          code: `STATUS-EXPIRED-${Date.now()}`,
+          discountType: 'percentage',
+          discountValue: 10,
+          currency: 'ILS',
+          maxUses: 0,
+          usesCount: 0,
+          isActive: true,
+          validUntil: pastDate.toISOString(),
+        },
+        user: admin as any,
+        overrideAccess: false,
+      })
+      trackCoupon(coupon.id)
+
+      const read = await payload.findByID({
+        collection: 'coupons',
+        id: coupon.id,
+        overrideAccess: true,
+      })
+
+      expect((read as any).status).toBe('Expired')
+    })
+
+    it('should compute status as Scheduled when validFrom is in the future', async () => {
+      const admin = await getAdminUser()
+      const futureDate = new Date()
+      futureDate.setDate(futureDate.getDate() + 7)
+
+      const coupon = await payload.create({
+        collection: 'coupons',
+        data: {
+          code: `STATUS-SCHEDULED-${Date.now()}`,
+          discountType: 'percentage',
+          discountValue: 10,
+          currency: 'ILS',
+          maxUses: 0,
+          usesCount: 0,
+          isActive: true,
+          validFrom: futureDate.toISOString(),
+        },
+        user: admin as any,
+        overrideAccess: false,
+      })
+      trackCoupon(coupon.id)
+
+      const read = await payload.findByID({
+        collection: 'coupons',
+        id: coupon.id,
+        overrideAccess: true,
+      })
+
+      expect((read as any).status).toBe('Scheduled')
+    })
+
+    it('should compute usageDisplay as "used / ∞" when maxUses is 0', async () => {
+      const admin = await getAdminUser()
+
+      const coupon = await payload.create({
+        collection: 'coupons',
+        data: {
+          code: `USAGE-INF-${Date.now()}`,
+          discountType: 'percentage',
+          discountValue: 10,
+          currency: 'ILS',
+          maxUses: 0,
+          usesCount: 3,
+          isActive: true,
+        },
+        user: admin as any,
+        overrideAccess: false,
+      })
+      trackCoupon(coupon.id)
+
+      const read = await payload.findByID({
+        collection: 'coupons',
+        id: coupon.id,
+        overrideAccess: true,
+      })
+
+      expect((read as any).usageDisplay).toBe('3 / ∞')
+    })
+
+    it('should compute usageDisplay as "used / max" when maxUses > 0', async () => {
+      const admin = await getAdminUser()
+
+      const coupon = await payload.create({
+        collection: 'coupons',
+        data: {
+          code: `USAGE-MAX-${Date.now()}`,
+          discountType: 'percentage',
+          discountValue: 10,
+          currency: 'ILS',
+          maxUses: 100,
+          usesCount: 25,
+          isActive: true,
+        },
+        user: admin as any,
+        overrideAccess: false,
+      })
+      trackCoupon(coupon.id)
+
+      const read = await payload.findByID({
+        collection: 'coupons',
+        id: coupon.id,
+        overrideAccess: true,
+      })
+
+      expect((read as any).usageDisplay).toBe('25 / 100')
+    })
+
+    it('should compute expiresDisplay as "Never expires" when validUntil is not set', async () => {
+      const admin = await getAdminUser()
+
+      const coupon = await payload.create({
+        collection: 'coupons',
+        data: {
+          code: `EXPIRES-NONE-${Date.now()}`,
+          discountType: 'percentage',
+          discountValue: 10,
+          currency: 'ILS',
+          maxUses: 0,
+          usesCount: 0,
+          isActive: true,
+        },
+        user: admin as any,
+        overrideAccess: false,
+      })
+      trackCoupon(coupon.id)
+
+      const read = await payload.findByID({
+        collection: 'coupons',
+        id: coupon.id,
+        overrideAccess: true,
+      })
+
+      expect((read as any).expiresDisplay).toBe('Never expires')
+    })
+
+    it('should compute expiresDisplay as relative time when validUntil is set', async () => {
+      const admin = await getAdminUser()
+      const futureDate = new Date()
+      futureDate.setDate(futureDate.getDate() + 5)
+
+      const coupon = await payload.create({
+        collection: 'coupons',
+        data: {
+          code: `EXPIRES-FUTURE-${Date.now()}`,
+          discountType: 'percentage',
+          discountValue: 10,
+          currency: 'ILS',
+          maxUses: 0,
+          usesCount: 0,
+          isActive: true,
+          validUntil: futureDate.toISOString(),
+        },
+        user: admin as any,
+        overrideAccess: false,
+      })
+      trackCoupon(coupon.id)
+
+      const read = await payload.findByID({
+        collection: 'coupons',
+        id: coupon.id,
+        overrideAccess: true,
+      })
+
+      expect((read as any).expiresDisplay).toMatch(/^Expires in \d+ days$/)
+    })
+
+    it('should compute expiresDisplay as "Expired X days ago" when validUntil is in the past', async () => {
+      const admin = await getAdminUser()
+      const pastDate = new Date()
+      pastDate.setDate(pastDate.getDate() - 10)
+
+      const coupon = await payload.create({
+        collection: 'coupons',
+        data: {
+          code: `EXPIRES-PAST-${Date.now()}`,
+          discountType: 'percentage',
+          discountValue: 10,
+          currency: 'ILS',
+          maxUses: 0,
+          usesCount: 0,
+          isActive: true,
+          validUntil: pastDate.toISOString(),
+        },
+        user: admin as any,
+        overrideAccess: false,
+      })
+      trackCoupon(coupon.id)
+
+      const read = await payload.findByID({
+        collection: 'coupons',
+        id: coupon.id,
+        overrideAccess: true,
+      })
+
+      expect((read as any).expiresDisplay).toMatch(/^Expired \d+ days ago$/)
+    })
+  })
 })
 
 // ---------------------------------------------------------------------------

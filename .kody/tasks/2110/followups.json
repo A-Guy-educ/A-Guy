@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Add WebhookEvents retention/cleanup policy",
+    "body": "The WebhookEvents collection will grow indefinitely as webhook events are recorded. Consider adding a TTL index on `receivedAt` or a background job to purge old records older than N days (e.g., 90 days). This should be documented in the collection's admin description.\n\nLocation: `src/server/payload/collections/WebhookEvents.ts`",
+    "rationale": "Unbounded storage growth can lead to performance degradation and increased storage costs",
+    "priority": "low"
+  },
+  {
+    "title": "Add Stripe payment_intent lookup to PayPal refund path",
+    "body": "PayPal refunds for capture-based payments store `paymentIntentId` on the transaction (populated from `session.payment_intent` in Stripe webhook). The PayPal refund path in `handleEvent` does not populate this field. If a Stripe transaction ever needs to be refunded via the PayPal webhook path (e.g., migrated data), the `paymentIntentId` would be missing. Consider whether `PAYMENT.CAPTURE.COMPLETED` should also accept `paymentIntentId` in metadata.",
+    "rationale": "Data consistency for cross-provider transaction lookups",
+    "priority": "low"
+  }
+]

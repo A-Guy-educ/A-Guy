@@ -65,7 +65,10 @@ export const ContentPages: CollectionConfig = {
           })
         }
 
-        if (newLessonId) {
+        // Only auto-add when the lesson association changes (create or reassignment).
+        // Without this guard, every content-page edit re-appends the block, undoing
+        // any deletion an admin made from the lesson blocks UI.
+        if (newLessonId && oldLessonId !== newLessonId) {
           await addBlockToLesson({
             payload: req.payload,
             req,

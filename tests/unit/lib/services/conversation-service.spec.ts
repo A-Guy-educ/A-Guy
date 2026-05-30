@@ -349,6 +349,8 @@ describe('ConversationService (instance methods)', () => {
         id: 'course-123',
         accessType: 'paid',
       })
+      // Mock Enrollments collection find (no active enrollment found)
+      mockPayload.find = vi.fn().mockResolvedValue({ docs: [] })
 
       const service = new ConversationService(mockPayload)
       const result = await service.validateContextAccess('user-123', AccountRole.Student, {

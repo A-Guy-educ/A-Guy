@@ -1181,6 +1181,7 @@ describe('PayPal webhook handler', () => {
         'paypal-auth-algo': 'SHA256withRSA',
       },
       body: JSON.stringify({
+        id: `PP_evt_${Date.now()}`,
         event_type: 'CHECKOUT.ORDER.APPROVED',
         resource: { id: orderId },
       }),
@@ -1254,6 +1255,7 @@ describe('PayPal webhook handler', () => {
         'paypal-auth-algo': 'SHA256withRSA',
       },
       body: JSON.stringify({
+        id: `PP_evt_${Date.now()}`,
         event_type: 'CHECKOUT.ORDER.APPROVED',
         resource: { id: orderId },
       }),
@@ -1309,6 +1311,7 @@ describe('PayPal webhook handler', () => {
         'paypal-auth-algo': 'SHA256withRSA',
       },
       body: JSON.stringify({
+        id: `PP_evt_${Date.now()}`,
         event_type: 'PAYMENT.CAPTURE.COMPLETED',
         resource: {
           id: `${orderId}_capture`,
@@ -1379,6 +1382,7 @@ describe('PayPal webhook handler', () => {
         'paypal-auth-algo': 'SHA256withRSA',
       },
       body: JSON.stringify({
+        id: `PP_evt_${Date.now()}`,
         event_type: 'PAYMENT.CAPTURE.COMPLETED',
         resource: {
           id: `${orderId}_capture`,
@@ -1435,6 +1439,7 @@ describe('PayPal webhook handler', () => {
         'paypal-auth-algo': 'SHA256withRSA',
       },
       body: JSON.stringify({
+        id: `PP_evt_${Date.now()}`,
         event_type: 'PAYMENT.CAPTURE.REFUNDED',
         resource: { id: captureId },
       }),
@@ -1488,6 +1493,7 @@ describe('PayPal webhook handler', () => {
         'paypal-auth-algo': 'SHA256withRSA',
       },
       body: JSON.stringify({
+        id: `PP_evt_${Date.now()}`,
         event_type: 'PAYMENT.CAPTURE.COMPLETED',
         resource: {
           id: `${orderId}_capture`,
@@ -1552,6 +1558,7 @@ describe('PayPal webhook handler', () => {
         'paypal-auth-algo': 'SHA256withRSA',
       },
       body: JSON.stringify({
+        id: `PP_evt_${Date.now()}`,
         event_type: 'PAYMENT.CAPTURE.COMPLETED',
         resource: {
           id: `${orderId}_capture`,
@@ -1604,6 +1611,7 @@ describe('PayPal webhook handler', () => {
         'paypal-auth-algo': 'SHA256withRSA',
       },
       body: JSON.stringify({
+        id: `PP_evt_${Date.now()}_approved`,
         event_type: 'CHECKOUT.ORDER.APPROVED',
         resource: { id: orderId },
       }),
@@ -1646,6 +1654,7 @@ describe('PayPal webhook handler', () => {
         'paypal-auth-algo': 'SHA256withRSA',
       },
       body: JSON.stringify({
+        id: `PP_evt_${Date.now()}_capture`,
         event_type: 'PAYMENT.CAPTURE.COMPLETED',
         resource: {
           id: `${orderId}_capture`,
@@ -1718,6 +1727,7 @@ describe('PayPal webhook handler', () => {
         'paypal-auth-algo': 'SHA256withRSA',
       },
       body: JSON.stringify({
+        id: `PP_evt_${Date.now()}`,
         event_type: 'PAYMENT.CAPTURE.COMPLETED',
         resource: {
           id: `${orderId}_capture`,
@@ -2353,6 +2363,7 @@ describe('PayPal webhook signature failure responses', () => {
         'paypal-auth-algo': 'SHA256withRSA',
       },
       body: JSON.stringify({
+        id: `PP_evt_${Date.now()}`,
         event_type: 'CHECKOUT.ORDER.APPROVED',
         resource: { id: 'order_123' },
       }),
@@ -2376,6 +2387,7 @@ describe('PayPal webhook signature failure responses', () => {
         'paypal-auth-algo': 'SHA256withRSA',
       },
       body: JSON.stringify({
+        id: `PP_evt_${Date.now()}`,
         event_type: 'CHECKOUT.ORDER.APPROVED',
         resource: { id: 'order_123' },
       }),
@@ -2396,6 +2408,7 @@ describe('PayPal webhook signature failure responses', () => {
       method: 'POST',
       headers: {}, // Missing all PayPal headers
       body: JSON.stringify({
+        id: `PP_evt_${Date.now()}`,
         event_type: 'CHECKOUT.ORDER.APPROVED',
         resource: { id: 'order_123' },
       }),
@@ -2442,6 +2455,7 @@ describe('PayPal captureId persistence for refunds', () => {
         'paypal-auth-algo': 'SHA256withRSA',
       },
       body: JSON.stringify({
+        id: `PP_evt_${Date.now()}`,
         event_type: 'PAYMENT.CAPTURE.COMPLETED',
         resource: {
           id: captureId,
@@ -2506,6 +2520,7 @@ describe('PayPal captureId persistence for refunds', () => {
         'paypal-auth-algo': 'SHA256withRSA',
       },
       body: JSON.stringify({
+        id: `PP_evt_${Date.now()}`,
         event_type: 'PAYMENT.CAPTURE.REFUNDED',
         resource: { id: captureId },
       }),
@@ -2547,5 +2562,322 @@ describe('PayPal webhook JSON parse failure', () => {
     expect(res.status).toBe(400)
     const body = await res.json()
     expect(body.error).toBe('invalid_body')
+  })
+})
+
+// ─── WebhookEvents dedup tests ─────────────────────────────────────────────────
+
+describe('WebhookEvents collection dedup gate', () => {
+  // Clean up webhook-events after each test
+  afterEach(async () => {
+    if (!payload) return
+    const events = await payload.find({
+      collection: 'webhook-events',
+      where: {
+        or: [{ provider: { equals: 'stripe' } }, { provider: { equals: 'paypal' } }],
+      },
+      limit: 100,
+      depth: 0,
+      overrideAccess: true,
+    })
+    for (const doc of events.docs) {
+      await payload
+        .delete({ collection: 'webhook-events', id: doc.id, overrideAccess: true })
+        .catch(() => {})
+    }
+  })
+
+  it('Stripe: first delivery of new event processes normally (200, side-effects applied)', async () => {
+    const eventId = `evt_stripe_dedup_first_${Date.now()}`
+    const sessionId = `cs_stripe_dedup_first_${Date.now()}`
+    const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+    vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+      id: eventId,
+      type: 'checkout.session.completed',
+      data: { object: { id: sessionId, payment_status: 'paid' } },
+    } as any)
+
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'stripe',
+        providerTransactionId: sessionId,
+        status: 'pending',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    const req = new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig_test' },
+    })
+
+    const res = await stripeWebhookHandler(req)
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body).toEqual({ received: true })
+    // processed should be true after success
+    const events = await payload.find({
+      collection: 'webhook-events',
+      where: { eventId: { equals: eventId } },
+      limit: 1,
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect(events.totalDocs).toBe(1)
+    expect((events.docs[0] as any).processed).toBe(true)
+    expect((events.docs[0] as any).provider).toBe('stripe')
+    expect((events.docs[0] as any).eventType).toBe('checkout.session.completed')
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+
+  it('Stripe: replay of same event ID returns { received: true, deduped: true }', async () => {
+    const eventId = `evt_stripe_dedup_replay_${Date.now()}`
+    const sessionId = `cs_stripe_dedup_replay_${Date.now()}`
+    const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+    vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+      id: eventId,
+      type: 'checkout.session.completed',
+      data: { object: { id: sessionId, payment_status: 'paid' } },
+    } as any)
+
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'stripe',
+        providerTransactionId: sessionId,
+        status: 'pending',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    // First delivery
+    const req1 = new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig_test' },
+    })
+    const res1 = await stripeWebhookHandler(req1)
+    expect(res1.status).toBe(200)
+    const body1 = await res1.json()
+    expect(body1).toEqual({ received: true })
+
+    // Replay same event ID — should be deduped
+    vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+      id: eventId, // same event ID
+      type: 'checkout.session.completed',
+      data: { object: { id: sessionId, payment_status: 'paid' } },
+    } as any)
+
+    const req2 = new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig_test' },
+    })
+    const res2 = await stripeWebhookHandler(req2)
+    expect(res2.status).toBe(200)
+    const body2 = await res2.json()
+    expect(body2).toEqual({ received: true, deduped: true })
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+
+  it('Stripe: if processing throws after dedup row created, processed stays false', async () => {
+    const eventId = `evt_stripe_dedup_fail_${Date.now()}`
+    const sessionId = `cs_stripe_dedup_fail_${Date.now()}`
+    const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+    const { grantProductEntitlements } = await import('@/lib/payment/grant-entitlements')
+    vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+      id: eventId,
+      type: 'checkout.session.completed',
+      data: { object: { id: sessionId, payment_status: 'paid' } },
+    } as any)
+    vi.mocked(grantProductEntitlements).mockRejectedValueOnce(new Error('Grant failed'))
+
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'stripe',
+        providerTransactionId: sessionId,
+        status: 'pending',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    const req = new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig_test' },
+    })
+    const res = await stripeWebhookHandler(req)
+    expect(res.status).toBe(500)
+
+    // processed should be false since processing threw
+    const events = await payload.find({
+      collection: 'webhook-events',
+      where: { eventId: { equals: eventId } },
+      limit: 1,
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect(events.totalDocs).toBe(1)
+    expect((events.docs[0] as any).processed).toBe(false)
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+
+  it('PayPal: first delivery of new event processes normally (200)', async () => {
+    const eventId = `PP_evt_dedup_first_${Date.now()}`
+    const orderId = `PP_order_dedup_first_${Date.now()}`
+    const { verifyPayPalWebhook } = await import('@/lib/payment/paypal')
+    vi.mocked(verifyPayPalWebhook).mockResolvedValueOnce(true)
+
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'paypal',
+        providerTransactionId: orderId,
+        status: 'pending',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    const req = new NextRequest('http://localhost/api/webhooks/paypal', {
+      method: 'POST',
+      headers: {
+        'paypal-transmission-id': 'test-tx-id',
+        'paypal-transmission-time': new Date().toISOString(),
+        'paypal-transmission-sig': 'test-sig',
+        'paypal-cert-url': 'https://cert.url',
+        'paypal-auth-algo': 'SHA256withRSA',
+      },
+      body: JSON.stringify({
+        id: eventId,
+        event_type: 'PAYMENT.CAPTURE.COMPLETED',
+        resource: {
+          id: `${orderId}_capture`,
+          supplementary_data: { related_ids: { order_id: orderId } },
+        },
+      }),
+    })
+
+    const res = await paypalWebhookHandler(req)
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body).toEqual({ received: true })
+    // processed should be true after success
+    const events = await payload.find({
+      collection: 'webhook-events',
+      where: { eventId: { equals: eventId } },
+      limit: 1,
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect(events.totalDocs).toBe(1)
+    expect((events.docs[0] as any).processed).toBe(true)
+    expect((events.docs[0] as any).provider).toBe('paypal')
+    expect((events.docs[0] as any).eventType).toBe('PAYMENT.CAPTURE.COMPLETED')
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+
+  it('PayPal: replay of same event ID returns { received: true, deduped: true }', async () => {
+    const eventId = `PP_evt_dedup_replay_${Date.now()}`
+    const orderId = `PP_order_dedup_replay_${Date.now()}`
+    const { verifyPayPalWebhook } = await import('@/lib/payment/paypal')
+    vi.mocked(verifyPayPalWebhook).mockResolvedValue(true)
+
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'paypal',
+        providerTransactionId: orderId,
+        status: 'pending',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    // First delivery
+    vi.mocked(verifyPayPalWebhook).mockResolvedValueOnce(true)
+    const req1 = new NextRequest('http://localhost/api/webhooks/paypal', {
+      method: 'POST',
+      headers: {
+        'paypal-transmission-id': 'test-tx-id',
+        'paypal-transmission-time': new Date().toISOString(),
+        'paypal-transmission-sig': 'test-sig',
+        'paypal-cert-url': 'https://cert.url',
+        'paypal-auth-algo': 'SHA256withRSA',
+      },
+      body: JSON.stringify({
+        id: eventId,
+        event_type: 'PAYMENT.CAPTURE.COMPLETED',
+        resource: {
+          id: `${orderId}_capture`,
+          supplementary_data: { related_ids: { order_id: orderId } },
+        },
+      }),
+    })
+    const res1 = await paypalWebhookHandler(req1)
+    expect(res1.status).toBe(200)
+    expect(await res1.json()).toEqual({ received: true })
+
+    // Replay same event ID — should be deduped
+    vi.mocked(verifyPayPalWebhook).mockResolvedValueOnce(true)
+    const req2 = new NextRequest('http://localhost/api/webhooks/paypal', {
+      method: 'POST',
+      headers: {
+        'paypal-transmission-id': 'test-tx-id-2',
+        'paypal-transmission-time': new Date().toISOString(),
+        'paypal-transmission-sig': 'test-sig-2',
+        'paypal-cert-url': 'https://cert.url',
+        'paypal-auth-algo': 'SHA256withRSA',
+      },
+      body: JSON.stringify({
+        id: eventId, // same event ID
+        event_type: 'PAYMENT.CAPTURE.COMPLETED',
+        resource: {
+          id: `${orderId}_capture`,
+          supplementary_data: { related_ids: { order_id: orderId } },
+        },
+      }),
+    })
+    const res2 = await paypalWebhookHandler(req2)
+    expect(res2.status).toBe(200)
+    expect(await res2.json()).toEqual({ received: true, deduped: true })
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
   })
 })

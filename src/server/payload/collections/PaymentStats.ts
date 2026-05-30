@@ -33,6 +33,15 @@ export const PaymentStats: CollectionConfig = {
       'refundedCount',
     ],
   },
+  // Unique compound index prevents duplicate rows for the same (date, currency).
+  // Combined with the atomic upsert in syncPaymentStats-hook.ts, this guarantees
+  // no race conditions and no duplicate rows even if other code paths bypass the hook.
+  indexes: [
+    {
+      fields: ['date', 'currency'],
+      unique: true,
+    },
+  ],
   fields: [
     // Calendar date for this row (YYYY-MM-DD in UTC). Stored as text to
     // avoid timezone issues; formatted as YYYY-MM-DD from the transaction's
