@@ -97,7 +97,7 @@ gh issue list --state open --label kody:cto-decisions --limit 5 \
 
 Take the lowest-numbered match, find the fenced ```json block between
 `<!-- kody-cto-decisions:start -->` and `<!-- kody-cto-decisions:end -->`,
-and read `actions.<verb>.mode` for each of `fix-ci`, `sync`, `resolve`.
+and read `staff.cto.<verb>.mode` for each of `fix-ci`, `sync`, `resolve`.
 Interpret `mode` exactly as the **Authority — the trust ledger** section
 above dictates (auto → may self-dispatch; anything else → recommend).
 

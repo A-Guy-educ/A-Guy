@@ -82,9 +82,10 @@ export function ExerciseWorksheet({
   const isRtl = locale?.toLowerCase().startsWith('he') ?? false
 
   // Side-by-side layout: text on the reading-start side, diagram opposite.
-  // LTR -> text left, diagram right ('textLeft'); RTL -> text right, diagram
-  // left ('textRight'). GraphWithPrompt forces dir='ltr' on its flex
-  // container so 'textLeft' / 'textRight' always describe physical position.
+  // GraphWithPrompt forces dir='ltr' on its flex container so 'textLeft' /
+  // 'textRight' always describe physical position regardless of page direction.
+  //   - LTR -> text on the left, diagram on the right -> 'textLeft'
+  //   - RTL -> text on the right, diagram on the left -> 'textRight'
   const sideBySideLayout: GraphLayout = isRtl ? 'textRight' : 'textLeft'
 
   // Track question index for Hebrew letter labels (RTL only)
@@ -227,9 +228,11 @@ function renderBlockContent({
         blockId={b.id}
         layout={layout}
         prompt={b.prompt}
-        worksheetLayout={{ sideContentAspectRatio: aspectRatio }}
+        worksheetLayout={{ sideContentAspectRatio: aspectRatio, proportions: '50-50' }}
       >
-        <GeometryRenderer blockId={b.id} spec={b.geometry} />
+        <div className="my-4 rounded-xl border bg-card p-card-padding-sm">
+          <GeometryRenderer blockId={b.id} spec={b.geometry} />
+        </div>
       </GraphWithPrompt>
     )
   }
@@ -246,9 +249,11 @@ function renderBlockContent({
         blockId={b.id}
         layout={layout}
         prompt={b.prompt}
-        worksheetLayout={{ sideContentAspectRatio: axisAspectRatio }}
+        worksheetLayout={{ sideContentAspectRatio: axisAspectRatio, proportions: '50-50' }}
       >
-        <AxisRenderer blockId={b.id} spec={b.axis} displaySize={b.displaySize} />
+        <div className="my-4 rounded-xl border bg-card p-card-padding-sm">
+          <AxisRenderer blockId={b.id} spec={b.axis} displaySize={b.displaySize} />
+        </div>
       </GraphWithPrompt>
     )
   }
@@ -295,19 +300,29 @@ interface WorksheetQuestionLabelProps {
 }
 
 function WorksheetQuestionLabel({ label, dir, children }: WorksheetQuestionLabelProps) {
+  // The flex container inherits dir from the page (rtl in Hebrew), which already
+  // reverses visual order of children. Don't add flex-row-reverse — that would
+  // cancel the RTL reversal and put the badge on the wrong side.
+  // DOM order is [badge, children]:
+  //   - LTR: badge on the left, children on the right
+  //   - RTL: badge on the right, children on the left (inherited dir flips it)
+  // dir is intentionally NOT set on the wrapper — that lets the document's
+  // inherited dir drive visual reversal, and avoids shadowing inner
+  // GraphWithPrompt containers that downstream tests query by [dir="ltr"].
   return (
     <div
       className={cn(
-        'w-full flex items-center',
-        dir === 'rtl'
-          ? 'justify-end text-right flex-row-reverse gap-content-gap-xs'
-          : 'justify-start text-left gap-content-gap-xs',
+        'w-full flex items-start justify-start gap-content-gap-xs',
+        dir === 'rtl' ? 'text-right' : 'text-left',
       )}
     >
-      <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-primary/10 border border-primary/20">
+      <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-primary/10 border border-primary/20 shrink-0">
         <span className="font-extrabold text-body-sm text-primary">{label}</span>
       </div>
-      {children}
+      {/* flex-1 + min-w-0 makes children fill the remaining row width so the
+          inner GraphWithPrompt 50/50 split lands on real pixels instead of
+          collapsing to natural content width. */}
+      <div className="flex-1 min-w-0">{children}</div>
     </div>
   )
 }
