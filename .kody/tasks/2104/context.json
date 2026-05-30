@@ -1,0 +1,19 @@
+{
+  "taskId": "2104",
+  "taskType": "issue",
+  "target": "2104-admin-lesson-page-show-all-exercises-inline-with-f",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Implemented inline exercise display in LessonBlocksField with per-exercise save buttons",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/LessonBlocksField/index.tsx",
+    "src/ui/admin/LessonBlocksField/InlineExerciseEditor.tsx",
+    "src/ui/admin/LessonBlocksField/inline-exercise-editor.css",
+    "tests/e2e/lesson-blocks-field.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/last-run.jsonl",
+  "startedAt": "2026-05-26T09:00:00Z",
+  "finishedAt": "2026-05-26T09:08:00Z"
+}

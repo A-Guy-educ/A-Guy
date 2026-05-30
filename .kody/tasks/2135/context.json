@@ -1,0 +1,19 @@
+{
+  "taskId": "2135",
+  "taskType": "issue",
+  "target": "2135",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed PaymentStats race condition by replacing read-modify-write with atomic $inc upsert via raw MongoDB; added unique compound index on (date, currency); created dedup script; added concurrent test.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/collections/Transactions/hooks/syncPaymentStats-hook.ts",
+    "src/server/payload/collections/PaymentStats.ts",
+    "scripts/dedup-payment-stats.ts",
+    "tests/int/payment-stats.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/latest.jsonl",
+  "startedAt": "2026-05-27T10:11:00Z",
+  "finishedAt": "2026-05-27T10:18:17Z"
+}

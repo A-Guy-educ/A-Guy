@@ -121,12 +121,27 @@ beforeAll(async () => {
         courseEntitlements: spec.courses.map((c) => ({
           course: c,
           grantMethod: 'admin',
-          transactionId: 'test-transaction',
+          transactionId: `test-txn-${c}-${Date.now()}`,
         })),
       } as any,
       overrideAccess: true,
     })
     createdUserIds.push(u.id)
+
+    // Create enrollment records in the Enrollments collection (new system)
+    for (const courseId of spec.courses) {
+      await payload.create({
+        collection: 'enrollments',
+        data: {
+          user: u.id,
+          course: courseId,
+          status: 'active',
+          grantMethod: 'admin',
+          source: 'dashboard',
+        } as any,
+        overrideAccess: true,
+      })
+    }
   }
 }, 60_000)
 
