@@ -43,7 +43,7 @@ export function ProductDetailContent({ product }: ProductDetailContentProps) {
     <div className="max-w-3xl mx-auto px-6 py-section-md">
       {/* Breadcrumb */}
       <nav className="mb-8" aria-label="breadcrumb">
-        <ol className="flex items-center gap-2 text-body-sm text-muted-foreground">
+        <ol className="flex items-center gap-content-gap-xs text-body-sm text-muted-foreground">
           <li>
             <Link
               href="/products"
@@ -63,7 +63,7 @@ export function ProductDetailContent({ product }: ProductDetailContentProps) {
       <div className="bg-card rounded-2xl border border-border/60 shadow-card overflow-hidden">
         {/* Header */}
         <div className="p-card-padding-lg border-b border-border/40">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex items-start justify-between gap-content-gap">
             <div className="flex-1">
               <h1 className="text-heading-xl font-black text-card-foreground">{product.name}</h1>
               <p className="text-body-lg text-muted-foreground mt-2">{billingLabel}</p>
@@ -100,7 +100,7 @@ export function ProductDetailContent({ product }: ProductDetailContentProps) {
                 return (
                   <li
                     key={index}
-                    className="flex items-center gap-2 text-body-sm text-muted-foreground"
+                    className="flex items-center gap-content-gap-xs text-body-sm text-muted-foreground"
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
                     {itemObj.lesson?.title ?? itemObj.featureKey ?? String(item)}

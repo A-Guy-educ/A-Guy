@@ -26,9 +26,9 @@ function cloneBlock(block: ContentBlock): ContentBlock {
 }
 
 function getBlockTypeLabel(block: ContentBlock): string {
-  if (block.type === 'question_select' && (block as any).variant === 'true_false')
-    return 'True / False'
-  if (block.type === 'question_select' && (block as any).variant === 'mcq') return 'Multiple Choice'
+  const variant = (block as { variant?: string }).variant
+  if (block.type === 'question_select' && variant === 'true_false') return 'True / False'
+  if (block.type === 'question_select' && variant === 'mcq') return 'Multiple Choice'
   if (block.type === 'question_free_response') return 'Free Response'
   if (block.type === 'question_table') return 'Table Question'
   if (block.type === 'html') return 'HTML Block'
@@ -49,6 +49,7 @@ function InlineBlockRenderer({
   block: ContentBlock
   onChange: (updated: ContentBlock) => void
 }) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- loose dispatch to per-type editor components
   const b = block as any
 
   if (block.type === 'rich_text') {
@@ -163,7 +164,13 @@ const DynamicGraphBlock = React.lazy(() =>
     }: {
       block: ContentBlock
       onChange: (b: ContentBlock) => void
-    }) => <m.GeometryEditor block={block as any} onChange={(updated: any) => onChange(updated)} />,
+    }) => (
+      <m.GeometryEditor
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- GeometryEditor expects narrowed block type
+        block={block as any}
+        onChange={(updated: ContentBlock) => onChange(updated)}
+      />
+    ),
   })),
 )
 

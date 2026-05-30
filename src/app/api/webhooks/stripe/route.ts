@@ -103,7 +103,8 @@ export async function POST(request: NextRequest) {
         eventId: event.id,
         eventType: event.type as string,
         processed: false,
-      } as any,
+        receivedAt: new Date().toISOString(),
+      },
       draft: false,
       overrideAccess: true,
     })

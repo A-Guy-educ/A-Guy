@@ -12,12 +12,14 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getPayload } from 'payload'
+import { getPayload, type Payload } from 'payload'
 import { z } from 'zod'
 
 import config from '@payload-config'
 import { cancelPayPalOrder, createPayPalOrder } from '@/lib/payment/paypal'
 import { cancelStripeCheckout, createStripeCheckout } from '@/lib/payment/stripe'
+import { checkAuthenticatedRateLimit } from '@/server/services/rate-limit'
+import { AccountRole } from '@/server/payload/collections/Users/roles'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -37,16 +39,34 @@ function extractTenantId(tenantValue: unknown): string | null {
 }
 
 /**
- * Checks if the user has super-admin privileges (for cross-tenant access).
- * Returns true if the user's role includes 'super-admin'.
+ * Checks if the user has super-admin privileges (for cross-tenant access and rate-limit exemption).
+ *
+ * Re-fetches the user via Payload's Local API because `user.role` is not always
+ * present on the object returned by `payload.auth({ headers })` — depending on
+ * collection access rules and JWT payload shape it may be undefined even for
+ * admins. Reading the canonical doc by ID with `overrideAccess: true` is the
+ * only reliable way to determine the role inside this route handler.
  */
-function isSuperAdmin(user: { roles?: unknown } | null): boolean {
-  if (!user?.roles) return false
-  if (Array.isArray(user.roles)) {
-    return user.roles.includes('super-admin')
+async function isSuperAdmin(
+  user: { id?: string | number } | null,
+  payload: Payload,
+): Promise<boolean> {
+  if (!user?.id) return false
+  try {
+    const full = await payload.findByID({
+      collection: 'users',
+      id: String(user.id),
+      depth: 0,
+      overrideAccess: true,
+    })
+    return (full as { role?: unknown })?.role === AccountRole.Admin
+  } catch {
+    return false
   }
-  return false
 }
+
+// Rate limit: 10 requests per 5 minutes per authenticated user
+const CHECKOUT_RATE_LIMIT_CONFIG = { maxRequests: 10, windowMs: 300_000 } as const
 
 // MongoDB ObjectId: 24 hex characters
 const objectIdRegex = /^[0-9a-fA-F]{24}$/
@@ -67,7 +87,32 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false, error: 'authentication_required' }, { status: 401 })
   }
 
-  // 2. Parse and validate request body
+  // 2. Per-user rate limit (skip for super-admins who may spike during testing)
+  if (!(await isSuperAdmin(user, payload))) {
+    const rateLimitResult = checkAuthenticatedRateLimit(
+      user.id,
+      '/api/payments/checkout',
+      CHECKOUT_RATE_LIMIT_CONFIG,
+    )
+
+    if (!rateLimitResult.allowed) {
+      payload.logger.warn(
+        { userId: user.id, requestCount: CHECKOUT_RATE_LIMIT_CONFIG.maxRequests },
+        'Checkout rate limit exceeded',
+      )
+
+      const retryAfterSeconds = Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000)
+      return new NextResponse(JSON.stringify({ success: false, error: 'rate_limit_exceeded' }), {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': String(Math.max(1, retryAfterSeconds)),
+        },
+      })
+    }
+  }
+
+  // 3. Parse and validate request body
   let body: unknown
   try {
     body = await request.json()
@@ -110,7 +155,7 @@ export async function POST(request: NextRequest) {
   // A product with a tenant can only be purchased by users in the same tenant.
   // Super-admin users bypass this check.
   // Fail-closed: null-tenant non-super-admin users cannot buy tenant-scoped products.
-  if (!isSuperAdmin(user as { roles?: unknown } | null)) {
+  if (!(await isSuperAdmin(user, payload))) {
     const productTenantId = extractTenantId((product as { tenant?: unknown }).tenant)
     const userTenantId = extractTenantId((user as { tenant?: unknown })?.tenant)
 
@@ -261,7 +306,7 @@ export async function POST(request: NextRequest) {
     // A coupon with a tenant can only be used by users in the same tenant.
     // Super-admin users bypass this check.
     // Fail-closed: null-tenant non-super-admin users cannot use tenant-scoped coupons.
-    if (!isSuperAdmin(user as { roles?: unknown } | null)) {
+    if (!(await isSuperAdmin(user, payload))) {
       const couponTenantId = extractTenantId((coupon as { tenant?: unknown }).tenant)
       const userTenantId = extractTenantId((user as { tenant?: unknown })?.tenant)
 

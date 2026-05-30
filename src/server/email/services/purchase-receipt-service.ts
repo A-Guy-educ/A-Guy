@@ -94,7 +94,7 @@ export async function sendPurchaseReceipt(
     overrideAccess: true,
   })
 
-  if ((existing as any).emailSentAt) {
+  if ((existing as { emailSentAt?: string | null }).emailSentAt) {
     payload.logger.info({ transactionId }, 'Purchase receipt email already sent — skipping')
     return true
   }
@@ -109,8 +109,8 @@ export async function sendPurchaseReceipt(
       payload.findByID({ collection: 'products', id: productId, depth: 0, overrideAccess: true }),
     ])
 
-    userEmail = (userResult as any).email as string
-    productName = (productResult as any).name as string
+    userEmail = (userResult as { email: string }).email
+    productName = (productResult as { name: string }).name
   } catch (err) {
     // If we can't fetch user/product data, log and return false without throwing
     payload.logger.error(

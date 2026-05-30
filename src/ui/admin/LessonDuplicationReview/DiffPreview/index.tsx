@@ -166,7 +166,7 @@ export function DiffPreview({
 
   if (exercisePairs.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground text-body-sm">
+      <div className="text-center py-section-md text-muted-foreground text-body-sm">
         No exercises to preview.
       </div>
     )
@@ -175,7 +175,7 @@ export function DiffPreview({
   return (
     <div className="relative">
       {/* Sticky summary bar */}
-      <div className="sticky top-0 z-10 bg-[var(--theme-elevation-100)] border-b border-[var(--theme-elevation-200)] px-4 py-3 flex items-center gap-4 mb-4 rounded-t-lg">
+      <div className="sticky top-0 z-10 bg-[var(--theme-elevation-100)] border-b border-[var(--theme-elevation-200)] px-4 py-3 flex items-center gap-content-gap mb-4 rounded-t-lg">
         <span className="text-body-sm font-semibold text-foreground">
           {reviewedCount} of {totalExercises} exercises reviewed
           {unresolvedFailures > 0 && (
@@ -200,7 +200,7 @@ export function DiffPreview({
         </div>
 
         {/* Exercise navigation */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-content-gap-xs">
           <button
             onClick={() => setFocusedIndex((i) => Math.max(i - 1, 0))}
             disabled={focusedIndex === 0}
@@ -226,7 +226,7 @@ export function DiffPreview({
 
       {/* Failure rows with jump links */}
       {failures.filter((f) => !f.resolved).length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-2">
+        <div className="mb-4 flex flex-wrap gap-content-gap-xs">
           {failures
             .filter((f) => !f.resolved)
             .map((failure) => (
@@ -242,7 +242,7 @@ export function DiffPreview({
       )}
 
       {/* Exercise pairs */}
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-content-gap">
         {exercisePairs.map((pair, idx) => {
           const pairFailures = failures.filter(
             (f) => f.exerciseRef === pair.sourceExerciseId && !f.resolved,

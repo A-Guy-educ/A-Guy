@@ -146,7 +146,16 @@ export const syncPaymentStats: CollectionAfterChangeHook = async ({
     // concurrent webhooks hit the same (date, currency) simultaneously.
     // updateOne with $inc is atomic at the database level — no read-modify-write
     // race possible.
-    const paymentStatsCollection = (req.payload.db as any).collections?.['payment_stats']
+    type MongoCollection = {
+      updateOne: (
+        filter: Record<string, unknown>,
+        update: Record<string, unknown>,
+        options?: Record<string, unknown>,
+      ) => Promise<unknown>
+    }
+    const paymentStatsCollection = (
+      req.payload.db as unknown as { collections?: Record<string, MongoCollection> }
+    ).collections?.['payment_stats']
     if (!paymentStatsCollection) {
       req.payload.logger.error('payment_stats collection not found in db.collections')
       return doc
