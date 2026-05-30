@@ -1,16 +1,17 @@
 {
   "version": 1,
-  "rev": 22,
+  "rev": 23,
   "cursor": "reported",
   "data": {
     "cycle": 2,
-    "lastRunISO": "2026-05-29T22:05:55Z",
-    "nextEligibleISO": "2026-05-30T04:05:55Z",
+    "lastRunISO": "2026-05-30T05:08:47Z",
+    "nextEligibleISO": "2026-05-30T11:08:47Z",
     "reviewed": [
       "approval-gate",
       "architecture-audit",
       "ceo-performance-review",
-      "cleanup-branches"
+      "cleanup-branches",
+      "clear-empty-goals"
     ],
     "verdicts": {
       "approval-gate": {
@@ -30,8 +31,8 @@
         "verdict": "broken"
       },
       "clear-empty-goals": {
-        "note": "pending",
-        "verdict": "pending"
+        "note": "no procedure whatsoever; Job states intent (remove gods with no tasks) but provides zero steps, no system target, no state schema, no kody-job-next-state block; state never created",
+        "verdict": "broken"
       },
       "coverage-floor": {
         "note": "pending",
@@ -110,9 +111,9 @@
         "verdict": "pending"
       }
     },
-    "lastFiredAt": "2026-05-29T22:06:20.934Z",
+    "lastFiredAt": "2026-05-30T05:09:03.777Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 118961
+    "lastDurationMs": 93605
   },
   "done": false
 }
