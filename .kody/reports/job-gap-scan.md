@@ -2,7 +2,7 @@
 
 _Cadence: daily — one proposed duty per cycle, advisory only._
 
-_Last updated: 2026-05-30T18:40:32Z_
+_Last updated: 2026-05-30T23:41:29Z_
 
 ## Current proposal
 
