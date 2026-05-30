@@ -1,13 +1,20 @@
-## Merge Conflict Resolution — PR #1564 (1505-doc-drift-srclibaicron)
+# Merge Conflict Resolution for PR #1564
 
-### What I did
-Resolved two symmetric conflicts in test fixture files — both involved the `transactionId` field in `courseEntitlements` test data:
+## Conflict Summary
+- **File**: `.kody/last-run.jsonl`
+- **Type**: Runtime session log (JSONL)
+- **Resolution**: Took `origin/dev` version (base)
 
-- `tests/int/course-entitlement-cascade-delete.int.spec.ts` — `createUserWithEntitlements` helper
-- `tests/int/dashboard-metrics.int.spec.ts` — enrollment specs loop
+## Resolution Rationale
+`.kody/last-run.jsonl` is a runtime session log that accumulates JSONL entries from Kody sessions. It is NOT source code. Both HEAD and origin/dev had different session runs recorded. Since:
+1. The file is a runtime artifact, not source code
+2. origin/dev had a longer log (133 lines vs 97)
+3. The actual PR changes are in `src/lib/ai/cron` (doc-drift job), not this log file
 
-### How I resolved each conflict
-**Both conflicts were identical in nature:** HEAD used `admin-${id}` while `origin/dev` used `test-txn-${id}-${Date.now()}-${i}`. These are purely test fixture values with no semantic difference. Took the HEAD side (cleaner, matches PR intent).
+I resolved by taking the origin/dev (base) version, which represents the more complete runtime history.
 
-### Note
-`pnpm typecheck` fails with a stale `src/payload-types.ts` error — this is pre-existing from the merge and unrelated to the conflict resolution.
+## Files Touched
+- `.kody/last-run.jsonl` - resolved to origin/dev version, staged
+
+## Status
+All conflicts resolved. Wrapper will create the merge commit.

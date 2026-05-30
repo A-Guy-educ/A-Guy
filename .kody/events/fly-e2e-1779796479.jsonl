@@ -1,0 +1,5 @@
+{"event":"chat.ready","payload":{"sessionId":"fly-e2e-1779796479","startedAt":"2026-05-26T11:55:52.225Z","idleExitMs":300000,"hardCapMs":1800000},"runId":"chat-fly-e2e-1779796479-ready","emittedAt":"2026-05-26T11:55:52.245Z"}
+{"event":"chat.thinking","payload":{"text":"The user is asking a simple math question: 17 times 3."},"runId":"chat-fly-e2e-1779796479-think-1","emittedAt":"2026-05-26T11:56:51.971Z"}
+{"event":"chat.message","payload":{"sessionId":"fly-e2e-1779796479","role":"assistant","content":"51","timestamp":"2026-05-26T11:56:52.621Z"},"runId":"chat-fly-e2e-1779796479-message","emittedAt":"2026-05-26T11:56:52.622Z"}
+{"event":"chat.done","payload":{"sessionId":"fly-e2e-1779796479"},"runId":"chat-fly-e2e-1779796479-done","emittedAt":"2026-05-26T11:56:52.622Z"}
+{"event":"chat.exit","payload":{"sessionId":"fly-e2e-1779796479","reason":"idle-timeout","turnsCompleted":1,"endedAt":"2026-05-26T12:01:55.748Z"},"runId":"chat-fly-e2e-1779796479-exit","emittedAt":"2026-05-26T12:01:55.748Z"}

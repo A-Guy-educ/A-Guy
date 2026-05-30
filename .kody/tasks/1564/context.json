@@ -4,14 +4,11 @@
   "target": "1505-doc-drift-srclibaicron",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Both conflicts were symmetric (transactionId fixture value only); resolved to HEAD side in both files. Typecheck failure is pre-existing (stale payload-types.ts from merge, not introduced by resolution).",
-  "prUrl": null,
+  "reason": "Single conflicted file (.kody/last-run.jsonl) resolved by taking origin/dev version",
+  "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/1564",
   "runUrl": null,
-  "filesTouched": [
-    "tests/int/course-entitlement-cascade-delete.int.spec.ts",
-    "tests/int/dashboard-metrics.int.spec.ts"
-  ],
-  "sessionLog": null,
-  "startedAt": "2026-05-30T16:00:00Z",
-  "finishedAt": "2026-05-30T16:14:00Z"
+  "filesTouched": [".kody/last-run.jsonl"],
+  "sessionLog": ".kody/sessions/de7f3cc4-7aa4-4fa6-b41b-022b89cfd011.jsonl",
+  "startedAt": "2026-05-30T00:00:00Z",
+  "finishedAt": "2026-05-30T00:01:00Z"
 }
