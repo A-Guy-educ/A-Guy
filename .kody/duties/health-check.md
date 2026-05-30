@@ -1,5 +1,5 @@
 ---
-disabled: true
+disabled: false
 staff: kody
 every: 1d
 ---

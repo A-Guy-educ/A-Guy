@@ -690,7 +690,7 @@ export const TransactionPaymentDetail: React.FC = () => {
     setLoading(true)
     setFetchError(null)
     try {
-      const res = await fetch(`/api/collections/transactions/${id}?depth=2`, {
+      const res = await fetch(`/api/transactions/${id}?depth=2`, {
         credentials: 'include',
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)

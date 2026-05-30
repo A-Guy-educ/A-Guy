@@ -1,4 +1,10 @@
 {
+  "git": {
+    "deploymentEnabled": {
+      "kody-state": false
+    }
+  },
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- ':(exclude).kody/**' ':(exclude)CHANGELOG.md'",
   "crons": [
     {
       "path": "/api/cron/warmup",
