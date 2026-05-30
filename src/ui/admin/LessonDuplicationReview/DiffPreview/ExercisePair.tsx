@@ -87,7 +87,7 @@ export function ExercisePair({
       </div>
 
       {/* Side-by-side columns */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-2 gap-content-gap mb-4">
         {/* Source column */}
         <div>
           <p className="text-body-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
@@ -177,9 +177,9 @@ export function ExercisePair({
           onToggle={(e) => setDetailsOpen((e.target as HTMLDetailsElement).open)}
           className="mt-3 pt-3 border-t border-border"
         >
-          <summary className="flex items-center gap-2 cursor-pointer text-label text-muted-foreground hover:text-foreground transition-colors duration-normal select-none">
+          <summary className="flex items-center gap-content-gap-xs cursor-pointer text-label text-muted-foreground hover:text-foreground transition-colors duration-normal select-none">
             <span
-              className="font-mono text-xs bg-[var(--theme-elevation-100)] px-1.5 py-0.5 rounded"
+              className="font-mono text-body-xs bg-[var(--theme-elevation-100)] px-1.5 py-0.5 rounded"
               style={{ fontFamily: 'monospace', fontSize: 11 }}
             >
               {failureInfo.code}

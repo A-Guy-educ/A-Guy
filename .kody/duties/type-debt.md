@@ -1,54 +1,82 @@
 ---
 disabled: true
 staff: kody
+every: 7d
 ---
 
 # Type Debt Tracker
 
 ## Job
 
-Weekly tracking of TypeScript escape hatches: occurrences of `any`, `@ts-ignore`, `@ts-expect-error`, and `@ts-nocheck` across `src/**` and `tests/**`. Trends matter more than absolute counts — flag when growth exceeds 5% week-over-week.
+Weekly tracking of TypeScript escape hatches: occurrences of `any`,
+`@ts-ignore`, `@ts-expect-error`, and `@ts-nocheck` across `src/**` and
+`tests/**`. Writes a single report to `.kody/reports/type-debt.md` with
+current counts and week-over-week trend. The dashboard Reports page
+renders it; the operator decides whether the growth warrants a cleanup.
 
-**Cadence guard.** Run only on **Wednesday UTC**, and only if `data.lastRunISO` is older than 6 days. Otherwise emit unchanged state and exit.
+**Cadence.** Set by the `every:` frontmatter (default `every: 7d`) and
+enforced by the engine — runs on Wednesday UTC.
 
-**Per tick (one action max):**
+## Tick procedure — REQUIRED
 
-1. Job cannot grep locally. Trigger a Kody executable to count and report by opening (or reusing) the weekly tracking issue:
-   ```
-   gh issue list --label "kody:type-debt" --state open --json number,title,createdAt,body
-   ```
-2. **If an open issue exists less than 7 days old:** emit `cursor: awaiting-result` and exit (last week's count is still being processed).
-3. **If an open issue exists older than 7 days with no closing PR:** post one nudge:
-   ```
-   gh issue comment <n> --body "Type-debt count appears stalled. /kody chore: report current counts and close this issue."
-   ```
-   Then exit.
-4. **Otherwise, open the weekly issue:**
-   ```
-   gh issue create \
-     --title "type-debt: weekly count $(date -u +%Y-%m-%d)" \
-     --label "kody:type-debt" \
-     --body "/kody chore: count occurrences of \`any\`, \`@ts-ignore\`, \`@ts-expect-error\`, and \`@ts-nocheck\` across \`src/**\` and \`tests/**\` (exclude \`payload-types.ts\` and \`*.d.ts\` from generated bundles). Post counts as a single comment on this issue in the format: \`stmts: any=<N> ts-ignore=<N> ts-expect-error=<N> ts-nocheck=<N> | total=<N>\`. Then compare against the prior week (see body below) — if total grew by >5%, open a separate cleanup PR removing the lowest-effort 5 occurrences (prefer dead-code paths and test files). Close this issue when the count comment lands.\n\nPrior week: ${data.lastCount ? JSON.stringify(data.lastCount) : 'none on record'}\nGrowth threshold: 5%"
-   ```
-5. Stash `data.openIssue = <number>`.
-6. **Closing the loop:** when a future tick finds the prior issue closed, parse the latest count comment from `gh issue view <n> --comments --json comments` and update `data.lastCount = { ...parsed, capturedISO: <issue.closedAt> }`. (Do this opportunistically, not as a separate action — it's metadata, not a `gh` action that counts toward the tick limit.)
+This tick is **fully scripted**. The script
+[type-debt-tick.py](.kody/scripts/type-debt-tick.py) is the **single
+source of truth** for counting and writing the report.
 
-## Allowed Commands
+Run the script:
 
-- `gh issue list`, `gh issue create`, `gh issue comment`, `gh issue view`
+```
+python3 .kody/scripts/type-debt-tick.py
+```
+
+The script:
+
+1. Counts occurrences of `any`, `@ts-ignore`, `@ts-expect-error`, and
+   `@ts-nocheck` across `src/**` and `tests/**`, excluding
+   `payload-types.ts` and `*.d.ts` from generated bundles.
+2. Compares against `state.lastCount` to compute week-over-week growth.
+3. Overwrites `.kody/reports/type-debt.md` with:
+   - Headline counts in the format `any=<N> ts-ignore=<N>
+     ts-expect-error=<N> ts-nocheck=<N> | total=<N>`.
+   - Delta versus prior week and growth percentage.
+   - **Growth alert** if total grew by >5%, plus the 5 lowest-effort
+     occurrences to address first (prefer dead-code paths and test
+     files).
+4. Updates `state.lastCount` and bumps `state.lastRunISO`. Commits and
+   pushes state and report.
 
 ## Restrictions
 
-- Never edit files. Never run `tsc` or `grep`. Counting is delegated to the `chore` executor.
-- Maximum one issue created or commented per tick.
-- If `gh issue create --label kody:type-debt` fails because the label doesn't exist, run `gh label create kody:type-debt --description "Kody job: type debt"` and retry the create. **Do not skip the label** — the next-tick stall-detection depends on it.
-- Do NOT open the cleanup PR yourself — that's part of the `/kody chore` body. The job only orchestrates.
+- **Report only.** Never edit source files, never push cleanup PRs,
+  never open issues.
+- **Growth threshold is 5%.** Don't lower it from inside the script —
+  edit this file if the threshold needs tuning.
+- **Exclude generated files.** `payload-types.ts` and `*.d.ts` bundles
+  are not type debt.
 
 ## State
 
-- `cursor`: `idle` | `awaiting-result` | `stalled`
-- `data.lastRunISO`: ISO timestamp of last tick that took action
-- `data.openIssue`: number of currently-open weekly issue (or null)
-- `data.lastCount`: `{ any, "ts-ignore", "ts-expect-error", "ts-nocheck", total, capturedISO }` from the last closed issue's count comment
-- `data.nextEligibleISO`: UTC ISO timestamp this job will next be eligible to act, computed from the cadence guard above. **Always emit this, every tick.** For this job: the **next Wednesday 00:00 UTC** at or after `data.lastRunISO + 6d`. Surfaced as "next run" on the dashboard.
-- `done`: always `false`
+State lives in
+[type-debt.state.json](.kody/jobs/type-debt.state.json):
+
+```json
+{
+  "lastRunISO": "2026-05-27T00:00:00Z",
+  "lastCount": {
+    "any": 42,
+    "ts-ignore": 3,
+    "ts-expect-error": 8,
+    "ts-nocheck": 0,
+    "total": 53,
+    "capturedISO": "2026-05-27T00:00:00Z"
+  },
+  "nextEligibleISO": "2026-06-03T00:00:00Z"
+}
+```
+
+- `data.lastRunISO`: ISO timestamp of last tick that wrote the report.
+- `data.lastCount`: prior count snapshot (used for trend).
+- `data.nextEligibleISO`: next Wednesday 00:00 UTC at or after
+  `data.lastRunISO + 6d`. **Always emit this, every tick.** Surfaced as
+  "next run" on the dashboard.
+- `done`: always `false`.

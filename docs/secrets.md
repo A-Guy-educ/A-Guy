@@ -24,6 +24,8 @@ All payment secrets are documented in `.env.example` and managed via the [Config
 | `PAYPAL_WEBHOOK_ID` | No | Webhook ID של PayPal (מהדשבורד של PayPal) |
 | `PAYPAL_SANDBOX` | No | האם להשתמש בסביבת Sandbox (בדיקה) |
 
+> **PayPal Sandbox Setup:** See [PayPal Sandbox Setup](../payment/paypal-sandbox-setup.md) for step-by-step instructions on creating a sandbox app, configuring webhooks with ngrok, and using sandbox buyer accounts.
+
 ## ConfigSecrets
 
 The `config_secrets` collection is a tenant-scoped encrypted secrets store. All values are encrypted at rest and are write-only in the admin UI (values are never displayed after saving).

@@ -93,6 +93,8 @@ export interface Config {
     teacher_profiles: TeacherProfile;
     user_settings: UserSetting;
     'exercise-assets': ExerciseAsset;
+    'enrollment-progress': EnrollmentProgress;
+    enrollments: Enrollment;
     users: User;
     'user-progress': UserProgress;
     'user-stats': UserStat;
@@ -106,6 +108,7 @@ export interface Config {
     'access-codes': AccessCode;
     transactions: Transaction;
     payment_stats: PaymentStat;
+    'webhook-events': WebhookEvent;
     'mcp-audit-logs': McpAuditLog;
     redirects: Redirect;
     forms: Form;
@@ -145,6 +148,8 @@ export interface Config {
     teacher_profiles: TeacherProfilesSelect<false> | TeacherProfilesSelect<true>;
     user_settings: UserSettingsSelect<false> | UserSettingsSelect<true>;
     'exercise-assets': ExerciseAssetsSelect<false> | ExerciseAssetsSelect<true>;
+    'enrollment-progress': EnrollmentProgressSelect<false> | EnrollmentProgressSelect<true>;
+    enrollments: EnrollmentsSelect<false> | EnrollmentsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'user-progress': UserProgressSelect<false> | UserProgressSelect<true>;
     'user-stats': UserStatsSelect<false> | UserStatsSelect<true>;
@@ -158,6 +163,7 @@ export interface Config {
     'access-codes': AccessCodesSelect<false> | AccessCodesSelect<true>;
     transactions: TransactionsSelect<false> | TransactionsSelect<true>;
     payment_stats: PaymentStatsSelect<false> | PaymentStatsSelect<true>;
+    'webhook-events': WebhookEventsSelect<false> | WebhookEventsSelect<true>;
     'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -1809,6 +1815,9 @@ export interface Coupon {
    * אם ריק — חל על כל המוצרים
    */
   applicableProducts?: (string | Product)[] | null;
+  status?: string | null;
+  usageDisplay?: string | null;
+  expiresDisplay?: string | null;
   /**
    * User who created this document
    */
@@ -1972,6 +1981,10 @@ export interface Transaction {
    * Timestamp when coupon was consumed on this transaction
    */
   couponConsumedAt?: string | null;
+  /**
+   * Timestamp when the purchase receipt email was sent to the user
+   */
+  emailSentAt?: string | null;
   /**
    * Amount refunded in agorot (smallest currency unit)
    */
@@ -2513,6 +2526,94 @@ export interface ExerciseAsset {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollment-progress".
+ */
+export interface EnrollmentProgress {
+  id: string;
+  /**
+   * The user who owns this progress (populated from enrollment)
+   */
+  user: string | User;
+  /**
+   * The enrollment this progress belongs to
+   */
+  enrollment: string | Enrollment;
+  /**
+   * The lesson this progress is for
+   */
+  lesson: string | Lesson;
+  /**
+   * Progress percentage (0-100)
+   */
+  progress?: number | null;
+  /**
+   * When the lesson was marked as completed
+   */
+  completedAt?: string | null;
+  /**
+   * When the lesson was last accessed
+   */
+  lastAccessedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollments".
+ */
+export interface Enrollment {
+  id: string;
+  /**
+   * The user who is enrolled
+   */
+  user: string | User;
+  /**
+   * The course the user is enrolled in
+   */
+  course: string | Course;
+  /**
+   * Current enrollment status
+   */
+  status: 'active' | 'inactive' | 'suspended' | 'cancelled' | 'expired';
+  /**
+   * How the enrollment was granted
+   */
+  grantMethod: 'admin' | 'payment' | 'code';
+  /**
+   * Origin of the enrollment
+   */
+  source: 'dashboard' | 'api' | 'self' | 'invite';
+  /**
+   * When the enrollment was created
+   */
+  enrolledAt: string;
+  /**
+   * When the enrollment was cancelled
+   */
+  cancelledAt?: string | null;
+  /**
+   * When the enrollment expires (for time-limited access)
+   */
+  expiresAt?: string | null;
+  metadata?: {
+    /**
+     * Access code used for enrollment (if applicable)
+     */
+    accessCodeId?: string | null;
+    /**
+     * Payment reference (for future payment integration)
+     */
+    paymentId?: string | null;
+    /**
+     * Admin user ID who granted the enrollment
+     */
+    grantedBy?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "user-progress".
  */
 export interface UserProgress {
@@ -2914,6 +3015,35 @@ export interface PaymentStat {
    * Approximate count of newly-counted succeeded transactions per day — may overcount repeat users on the same date due to simplified deduplication logic
    */
   newCustomersCount: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "webhook-events".
+ */
+export interface WebhookEvent {
+  id: string;
+  /**
+   * Payment provider that sent this webhook event
+   */
+  provider: 'stripe' | 'paypal';
+  /**
+   * Provider-assigned event ID used for deduplication
+   */
+  eventId: string;
+  /**
+   * Type of webhook event
+   */
+  eventType: string;
+  /**
+   * Timestamp when this event was first received
+   */
+  receivedAt: string;
+  /**
+   * Whether this event was successfully processed
+   */
+  processed?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -3326,6 +3456,14 @@ export interface PayloadLockedDocument {
         value: string | ExerciseAsset;
       } | null)
     | ({
+        relationTo: 'enrollment-progress';
+        value: string | EnrollmentProgress;
+      } | null)
+    | ({
+        relationTo: 'enrollments';
+        value: string | Enrollment;
+      } | null)
+    | ({
         relationTo: 'users';
         value: string | User;
       } | null)
@@ -3376,6 +3514,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'payment_stats';
         value: string | PaymentStat;
+      } | null)
+    | ({
+        relationTo: 'webhook-events';
+        value: string | WebhookEvent;
       } | null)
     | ({
         relationTo: 'mcp-audit-logs';
@@ -3726,6 +3868,9 @@ export interface CouponsSelect<T extends boolean = true> {
   usesCount?: T;
   maxUsesPerUser?: T;
   applicableProducts?: T;
+  status?: T;
+  usageDisplay?: T;
+  expiresDisplay?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -4168,6 +4313,43 @@ export interface ExerciseAssetsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollment-progress_select".
+ */
+export interface EnrollmentProgressSelect<T extends boolean = true> {
+  user?: T;
+  enrollment?: T;
+  lesson?: T;
+  progress?: T;
+  completedAt?: T;
+  lastAccessedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollments_select".
+ */
+export interface EnrollmentsSelect<T extends boolean = true> {
+  user?: T;
+  course?: T;
+  status?: T;
+  grantMethod?: T;
+  source?: T;
+  enrolledAt?: T;
+  cancelledAt?: T;
+  expiresAt?: T;
+  metadata?:
+    | T
+    | {
+        accessCodeId?: T;
+        paymentId?: T;
+        grantedBy?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
@@ -4484,6 +4666,7 @@ export interface TransactionsSelect<T extends boolean = true> {
   errorMessage?: T;
   entitlementsGrantedAt?: T;
   couponConsumedAt?: T;
+  emailSentAt?: T;
   refundedAmount?: T;
   refundedBy?: T;
   refundedAt?: T;
@@ -4506,6 +4689,19 @@ export interface PaymentStatsSelect<T extends boolean = true> {
   refundedCount?: T;
   failedCount?: T;
   newCustomersCount?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "webhook-events_select".
+ */
+export interface WebhookEventsSelect<T extends boolean = true> {
+  provider?: T;
+  eventId?: T;
+  eventType?: T;
+  receivedAt?: T;
+  processed?: T;
   updatedAt?: T;
   createdAt?: T;
 }

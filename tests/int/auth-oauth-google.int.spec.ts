@@ -253,7 +253,7 @@ describe('Google OAuth Integration', () => {
         data: { email: sharedEmail, password: emailPassword },
       })
       expect(emailLogin.token).toBeDefined()
-      expect(emailLogin.user.id).toBe(emailUser.id)
+      expect(emailLogin.user?.id).toBe(emailUser.id)
 
       // Verify we can generate a session token for Google login (simulating OAuth callback)
       // For linked accounts, we generate tokens directly without password check
@@ -311,7 +311,7 @@ describe('Google OAuth Integration', () => {
       })
 
       expect(loginResult.token).toBeDefined()
-      expect(loginResult.user.id).toBe(user.id)
+      expect(loginResult.user?.id).toBe(user.id)
 
       // Cleanup
       await payload.delete({ collection: 'users', id: user.id })
