@@ -84,7 +84,14 @@ export function LatexDocumentViewer({
     >
       <div className="px-12 py-10 font-serif sm:px-16 sm:py-12">
         {title && (
-          <h1 className="text-foreground mb-8 text-center text-heading-xl font-bold">{title}</h1>
+          <h1
+            className={cn(
+              'text-foreground mb-8 text-heading-xl font-bold',
+              dir === 'rtl' ? 'text-right' : 'text-left',
+            )}
+          >
+            {title}
+          </h1>
         )}
 
         {diagrams.length === 0 ? (
@@ -102,7 +109,11 @@ export function LatexDocumentViewer({
                     className="rich-text-content latex-document text-foreground text-body-md leading-relaxed"
                   />
                 )}
-                {i < diagrams.length && <DiagramRenderer diagram={diagrams[i]} />}
+                {i < diagrams.length && (
+                  <div className="my-6 rounded-xl border bg-card p-4">
+                    <DiagramRenderer diagram={diagrams[i]} />
+                  </div>
+                )}
               </React.Fragment>
             ))}
           </>

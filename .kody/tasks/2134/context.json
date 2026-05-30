@@ -1,0 +1,23 @@
+{
+  "taskId": "2134",
+  "taskType": "issue",
+  "target": "2134",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "All quality gates pass, 4 integration tests pass",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/account/purchases/page.tsx",
+    "src/app/(frontend)/account/purchases/PurchasesPageContent.tsx",
+    "src/app/(frontend)/account/purchases/[transactionId]/page.tsx",
+    "src/app/(frontend)/account/purchases/[transactionId]/TransactionDetailContent.tsx",
+    "src/app/api/account/transactions/[id]/route.ts",
+    "src/i18n/en.json",
+    "src/i18n/he.json",
+    "tests/int/user-transaction-api.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2134.jsonl",
+  "startedAt": "2026-05-27T10:07:00Z",
+  "finishedAt": "2026-05-27T10:40:00Z"
+}

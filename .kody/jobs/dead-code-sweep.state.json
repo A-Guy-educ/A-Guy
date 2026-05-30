@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "rev": 2,
+  "cursor": "awaiting-prs",
+  "data": {
+    "lastRunISO": "2026-05-08T00:00:00Z",
+    "openIssue": 1493,
+    "openedISO": "2026-05-08T00:00:00Z",
+    "nextEligibleISO": "2026-07-01T00:00:00Z"
+  },
+  "done": false
+}

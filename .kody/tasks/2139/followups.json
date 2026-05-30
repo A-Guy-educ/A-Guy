@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Remove dead ConsolidatedLatexLessonView component",
+    "body": "The file src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ConsolidatedLatexLessonView/index.tsx is never imported anywhere and appears to be legacy dead code. It should be deleted in a follow-up to avoid confusion.",
+    "rationale": "Dead code that still has the old PDF chrome styling (gradient gutter, header/footer with —/· · ·) which could confuse future developers working on scroll view.",
+    "priority": "low"
+  }
+]

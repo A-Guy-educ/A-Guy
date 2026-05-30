@@ -1,0 +1,17 @@
+{
+  "taskId": "1821",
+  "taskType": "issue",
+  "target": "1821",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Admin bar was exposed on mobile (375px) because sm:hidden hides at 640px+ and shows below. Fixed by changing sm:hidden to hidden sm:block — admin bar is now hidden on mobile and visible on desktop.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/AdminBar/index.tsx",
+    "tests/e2e/admin-bar-mobile-visibility.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/placeholder.jsonl",
+  "startedAt": "2026-05-22T22:00:00.000Z",
+  "finishedAt": "2026-05-22T22:05:00.000Z"
+}

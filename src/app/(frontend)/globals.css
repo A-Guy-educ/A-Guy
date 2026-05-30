@@ -216,6 +216,7 @@
       BlinkMacSystemFont,
       'Segoe UI',
       sans-serif;
+    margin: 0;
     overscroll-behavior-y: contain;
     position: relative;
   }
@@ -259,6 +260,7 @@
   /* Smooth scrolling for anchor links */
   html {
     scroll-behavior: smooth;
+    background-color: hsl(var(--background));
   }
 
   /* Hide scrollbar but keep functionality */
