@@ -1813,21 +1813,19 @@
   color: var(--theme-text);
 }
 
-.html-block-editor .ql-toolbar {
-  border: none;
-  border-bottom: 1px solid var(--theme-elevation-150);
-  background: var(--theme-elevation-50);
-}
-
-.html-block-editor .ql-container {
-  border: none;
+.html-block-preview-pane {
   min-height: 200px;
+  padding: 1rem;
+  background: var(--theme-elevation-0);
+  color: var(--theme-text);
   font-size: 1rem;
+  overflow: auto;
 }
 
-.html-block-editor .ql-editor {
-  min-height: 180px;
-  padding: 1rem;
+.html-block-preview-pane:empty::before {
+  content: 'Nothing to preview yet.';
+  color: var(--theme-elevation-400);
+  font-style: italic;
 }
 
 /* Table Editor */

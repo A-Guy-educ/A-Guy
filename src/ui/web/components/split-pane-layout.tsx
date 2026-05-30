@@ -37,7 +37,6 @@ export function SplitPaneLayout({
 
   const [viewMode, setViewMode] = useState<ViewMode>(getInitialViewMode)
   const [chatExpandedInPdf, setChatExpandedInPdf] = useState(false)
-  const [focusCount, setFocusCount] = useState(0)
   const [pdfHeightPercent, setPdfHeightPercent] = useState(defaultSize)
   const [isDragging, setIsDragging] = useState(false)
 
@@ -71,23 +70,10 @@ export function SplitPaneLayout({
     const handleIncorrectAnswer = () => {
       if (!isDesktop && viewMode === 'PDF') {
         setChatExpandedInPdf(true)
-        setFocusCount((c) => c + 1)
       }
     }
     window.addEventListener('exercise-incorrect-answer', handleIncorrectAnswer)
     return () => window.removeEventListener('exercise-incorrect-answer', handleIncorrectAnswer)
-  }, [isDesktop, viewMode])
-
-  // Listen for mobile-chat-open event from MobileChatToggle
-  useEffect(() => {
-    const handleMobileChatOpen = () => {
-      if (!isDesktop && viewMode === 'PDF') {
-        setChatExpandedInPdf(true)
-        setFocusCount((c) => c + 1)
-      }
-    }
-    window.addEventListener('mobile-chat-open', handleMobileChatOpen)
-    return () => window.removeEventListener('mobile-chat-open', handleMobileChatOpen)
   }, [isDesktop, viewMode])
 
   const handleModeToggle = useCallback(() => {
@@ -103,7 +89,6 @@ export function SplitPaneLayout({
   const handleChatExpand = useCallback(() => {
     if (!isDesktop && viewMode === 'PDF') {
       setChatExpandedInPdf(true)
-      setFocusCount((c) => c + 1)
     }
   }, [isDesktop, viewMode])
 
@@ -220,38 +205,35 @@ export function SplitPaneLayout({
         </div>
       )}
 
-      {!(!isDesktop && viewMode === 'PDF' && !chatExpandedInPdf) && (
-        <div
-          className={cn(
-            'bg-background flex flex-col overflow-hidden relative',
-            viewMode === 'CHAT' && 'flex-1',
-            viewMode === 'PDF' && !chatExpandedInPdf && 'flex-shrink-0 h-auto',
-            viewMode === 'PDF' && chatExpandedInPdf && 'flex-1',
-          )}
-        >
-          {React.cloneElement(
-            chatContent as React.ReactElement<{
-              onChatInteraction?: () => void
-              displayMode?: 'full'
-              isMobile?: boolean
-              viewMode?: ViewMode
-              onModeToggle?: () => void
-              autoFocus?: number
-              fabOpen?: boolean
-            }>,
-            {
-              onChatInteraction: handleChatExpand,
-              displayMode: 'full',
-              isMobile: true,
-              viewMode,
-              onModeToggle: handleModeToggle,
-              autoFocus: focusCount,
-              fabOpen: viewMode === 'PDF' && !chatExpandedInPdf,
-            },
-          )}
-          {isDragging && <div className="absolute inset-0 z-10" />}
-        </div>
-      )}
+      <div
+        className={cn(
+          'bg-background flex flex-col overflow-hidden relative',
+          viewMode === 'CHAT' && 'flex-1',
+          viewMode === 'PDF' && !chatExpandedInPdf && 'flex-shrink-0 h-auto',
+          viewMode === 'PDF' && chatExpandedInPdf && 'flex-1',
+        )}
+      >
+        {React.cloneElement(
+          chatContent as React.ReactElement<{
+            onChatInteraction?: () => void
+            displayMode?: 'full' | 'input-only'
+            isMobile?: boolean
+            viewMode?: ViewMode
+            onModeToggle?: () => void
+          }>,
+          {
+            onChatInteraction: handleChatExpand,
+            displayMode:
+              viewMode === 'CHAT' || (viewMode === 'PDF' && chatExpandedInPdf)
+                ? 'full'
+                : ('input-only' as const),
+            isMobile: true,
+            viewMode,
+            onModeToggle: handleModeToggle,
+          },
+        )}
+        {isDragging && <div className="absolute inset-0 z-10" />}
+      </div>
     </div>
   )
 }

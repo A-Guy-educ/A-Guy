@@ -216,6 +216,7 @@ export const Coupons: CollectionConfig = {
         },
       },
       hooks: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- FieldHookArgs vs FieldHook generic mismatch
         afterRead: [afterReadCouponUsageDisplay as any],
       },
     },
@@ -228,6 +229,7 @@ export const Coupons: CollectionConfig = {
         },
       },
       hooks: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- FieldHookArgs vs FieldHook generic mismatch
         afterRead: [afterReadCouponExpiresDisplay as any],
       },
     },

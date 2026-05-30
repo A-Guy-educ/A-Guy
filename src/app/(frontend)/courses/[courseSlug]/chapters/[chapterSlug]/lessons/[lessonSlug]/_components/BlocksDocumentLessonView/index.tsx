@@ -1,22 +1,22 @@
 /**
  * BlocksDocumentLessonView
  *
- * Renders a lesson's exercises as a single paper-style document (the "PDF
+ * Renders a lesson's exercises as a single scroll-style document (the "Scroll
  * tab"). Each exercise's structured blocks (`exercise.content.blocks`) are
  * laid out worksheet-style via ExerciseWorksheet — same source of truth as
- * the Interactive tab, just non-interactive and styled as a printed page.
+ * the Interactive tab, just non-interactive and styled as a clean card.
  *
  * Solutions (fullSolution/solution) from question blocks are collected into
- * a single "Solutions" section rendered AFTER all exercises, before the
- * copyright footer.
+ * a single "Solutions" section rendered AFTER all exercises.
  *
- * The document uses a <table> structure so the <tfoot> copyright footer
- * repeats on every printed page via CSS @page rules.
+ * Text alignment is locale-aware: right-aligned for Hebrew (RTL), left-aligned
+ * for English (LTR).
  */
 
 'use client'
 
 import React from 'react'
+import { cn } from '@/infra/utils/ui'
 import { ExerciseWorksheet } from '@/ui/web/exerciserenderer/ExerciseWorksheet'
 import { RichTextRenderer } from '@/ui/web/exerciserenderer/blocks/RichTextRenderer'
 import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
@@ -184,77 +184,43 @@ export function BlocksDocumentLessonView({
       primaryContent={
         <div className="flex h-full flex-col">
           {headerSlot}
-          <div className="flex-1 overflow-auto max-w-full bg-gradient-to-b from-muted via-muted to-border/40 py-section-md px-4 print:bg-background print:overflow-visible print:p-0">
-            {/* Use a table so <tfoot> repeats on every printed page */}
-            <table
-              className="mx-auto max-w-[794px] w-full border-collapse overflow-hidden rounded-md border border-border bg-card shadow-modal print:shadow-none print:border-0 print:rounded-none print:max-w-full"
-              style={{ page: 'lesson-page' }}
-            >
-              {/* Screen-only header */}
-              <thead>
-                <tr>
-                  <th
-                    scope="colgroup"
-                    colSpan={1}
-                    className="border-b border-border/60 bg-card px-12 py-3 text-left print:hidden"
-                  >
-                    <span className="truncate text-body-sm font-medium text-muted-foreground">
-                      {lessonTitle}
-                    </span>
-                  </th>
-                </tr>
-              </thead>
-
-              {/* Document body — lesson title, exercises, solutions */}
-              <tbody>
-                <tr>
-                  <td className="bg-background px-12 py-10 font-serif sm:px-16 sm:py-section-lg max-w-full overflow-hidden">
-                    {lessonTitle && (
-                      <h1 className="mb-8 text-center text-heading-xl font-bold text-foreground">
-                        {lessonTitle}
-                      </h1>
+          <div className="flex-1 overflow-auto max-w-full bg-muted py-section-md px-4 print:bg-background print:overflow-visible print:p-0">
+            <div className="mx-auto max-w-[794px] rounded-xl border border-border bg-card shadow-elevation-1 overflow-hidden print:shadow-none print:border-0 print:rounded-none print:max-w-full">
+              <div
+                className="px-12 py-10 font-serif sm:px-16 sm:py-section-lg max-w-full overflow-hidden"
+                dir={dir}
+              >
+                {lessonTitle && (
+                  <h1
+                    className={cn(
+                      'mb-8 text-heading-xl font-bold text-foreground',
+                      dir === 'rtl' ? 'text-right' : 'text-left',
                     )}
-                    <div className="flex flex-col gap-12">
-                      {renderable.map(({ exercise, blocks }) => (
-                        <section key={exercise.id} className="flex flex-col gap-content-gap">
-                          {exercise.title && (
-                            <h2 className="text-heading-md font-bold text-foreground">
-                              {exercise.title}
-                            </h2>
-                          )}
-                          <ExerciseWorksheet
-                            blocks={blocks}
-                            mediaMap={mediaMap}
-                            hideLatexBlocks={false}
-                          />
-                        </section>
-                      ))}
-                    </div>
+                  >
+                    {lessonTitle}
+                  </h1>
+                )}
+                <div className="flex flex-col gap-12">
+                  {renderable.map(({ exercise, blocks }) => (
+                    <section key={exercise.id} className="flex flex-col gap-content-gap">
+                      {exercise.title && (
+                        <h2 className="text-heading-md font-bold text-foreground">
+                          {exercise.title}
+                        </h2>
+                      )}
+                      <ExerciseWorksheet
+                        blocks={blocks}
+                        mediaMap={mediaMap}
+                        hideLatexBlocks={false}
+                      />
+                    </section>
+                  ))}
+                </div>
 
-                    {/* Solutions section — rendered AFTER all exercises, BEFORE footer */}
-                    <SolutionsSection entries={solutionEntries} dir={dir} />
-                  </td>
-                </tr>
-              </tbody>
-
-              {/* Single <tfoot> — screen footer row hidden in print, print copyright row hidden on screen */}
-              <tfoot>
-                {/* Screen-only footer row */}
-                <tr className="print:hidden">
-                  <td className="flex items-center justify-between border-t border-border/60 bg-card px-12 py-2 text-body-xs text-muted-foreground/70">
-                    <span className="truncate">{lessonTitle}</span>
-                    <span className="font-mono tracking-[0.3em]">· · ·</span>
-                  </td>
-                </tr>
-                {/* Print-only copyright row: repeats on every printed page via @page rules */}
-                <tr className="hidden print:table-row">
-                  <td className="border-t border-border/60 px-12 py-2 text-center text-body-xs text-muted-foreground/70">
-                    כל הזכויות שמורות לגיא קורן, אין להעתיק, לצלם, לפרסם את המסמכים או חלקם ללא
-                    אישור בכתב מגיא קורן
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
+                {/* Solutions section — rendered AFTER all exercises */}
+                <SolutionsSection entries={solutionEntries} dir={dir} />
+              </div>
+            </div>
           </div>
         </div>
       }

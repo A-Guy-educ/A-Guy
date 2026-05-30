@@ -108,6 +108,7 @@ async function resolveTier1DefaultProfile(
     }
 
     const result = await payload.find({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- collection slug not yet in generated payload-types
       collection: 'agent-behavior-prompts' as any,
       where: locale ? { and: [baseWhere, { locale: { equals: locale } }] } : baseWhere,
       limit: 1,
@@ -153,6 +154,7 @@ async function resolveTier2HighestPriority(
     }
 
     const result = await payload.find({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- collection slug not yet in generated payload-types
       collection: 'agent-behavior-prompts' as any,
       where: locale ? { and: [baseWhere, { locale: { equals: locale } }] } : baseWhere,
       limit: 1,
