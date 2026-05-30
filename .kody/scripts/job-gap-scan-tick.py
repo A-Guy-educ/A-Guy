@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """
-job-gap-scan tick: once a week, propose ONE new high-ROI job the system
+job-gap-scan tick: once a day, propose ONE new high-ROI duty the system
 does not yet have. Reads .kody/memory/ to honour prior verdicts, picks
-the highest-ROI candidate from a built-in catalogue, and opens a GitHub
-issue labeled `kody:ceo-proposal`. Never writes new job markdown
+the highest-ROI candidate from a built-in catalogue, and overwrites
+`.kody/reports/job-gap-scan.md`. Never writes new duty markdown
 directly — that is for the operator to approve.
 
-Cadence: skip unless ≥6 days since last run. Override with
-JOB_GAP_SCAN_FORCE=1 for live tests.
+Cadence is engine-enforced via `every:` in the duty markdown. The
+JOB_GAP_SCAN_FORCE=1 env var is accepted for parity with prior
+behaviour but does nothing now (no in-script cadence guard).
 
 Exit 0 always (cadence skips and "nothing eligible" are normal). Non-zero
-only on hard failures (gh missing, state file unwritable, etc.).
+only on hard failures (state file unwritable, etc.).
 """
 
 from __future__ import annotations
@@ -27,23 +28,12 @@ from typing import Any
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 JOBS_DIR = REPO_ROOT / ".kody" / "jobs"
+DUTIES_DIR = REPO_ROOT / ".kody" / "duties"
 MEMORY_DIR = REPO_ROOT / ".kody" / "memory"
+REPORTS_DIR = REPO_ROOT / ".kody" / "reports"
 STATE_PATH = JOBS_DIR / "job-gap-scan.state.json"
-KODY_CONFIG_PATH = REPO_ROOT / "kody.config.json"
+REPORT_PATH = REPORTS_DIR / "job-gap-scan.md"
 
-
-def operator_handle() -> str | None:
-    """Read github.operator from kody.config.json. Returns None if missing
-    or unparseable so the job still posts (just without inbox routing)."""
-    try:
-        raw = json.loads(KODY_CONFIG_PATH.read_text(encoding="utf-8"))
-    except (FileNotFoundError, json.JSONDecodeError):
-        return None
-    operator = raw.get("github", {}).get("operator")
-    return operator if isinstance(operator, str) and operator else None
-
-PROPOSAL_LABEL = "kody:ceo-proposal"
-CADENCE_DAYS = 0  # Engine schedules via every: 24h in the job markdown.
 DISMISS_COOLOFF_DAYS = 30
 
 VERDICT_FILE_RE = re.compile(r"^verdict-ceo-proposal-(?P<slug>[a-z0-9-]+)\.md$")
@@ -60,7 +50,7 @@ class Candidate:
     effort: str
     value: str
     roi: int
-    job_markdown: str
+    duty_markdown: str
 
 
 CATALOGUE: list[Candidate] = [
@@ -73,9 +63,9 @@ CATALOGUE: list[Candidate] = [
         effort="low",
         value="high",
         roi=95,
-        job_markdown="""---
+        duty_markdown="""---
 every: 24h
-worker: kody
+staff: kody
 ---
 
 # sentry-digest
@@ -100,9 +90,9 @@ Fully scripted. See [sentry-digest-tick.py](.kody/scripts/sentry-digest-tick.py)
         effort="low",
         value="medium",
         roi=80,
-        job_markdown="""---
+        duty_markdown="""---
 every: 24h
-worker: kody
+staff: kody
 ---
 
 # stale-pr-janitor
@@ -117,16 +107,16 @@ days. Skip drafts and any PR carrying a `kody:*` lifecycle label.
         slug="issue-auto-triage",
         title="Issue auto-triage",
         headline="Label new issues by content (`type:bug/feat/docs`, `area:*`) so the inbox is sorted without operator effort.",
-        why_now="Triage today is manual or absent — most projects pay this tax forever; one job zeroes it out.",
+        why_now="Triage today is manual or absent — most projects pay this tax forever; one duty zeroes it out.",
         risk="low",
         effort="low",
         value="medium",
         roi=78,
-        job_markdown="""---
+        duty_markdown="""---
 on:
   issues:
     types: [opened]
-worker: kody
+staff: kody
 ---
 
 # issue-auto-triage
@@ -146,9 +136,9 @@ them. Never close or assign — labels only.
         effort="low",
         value="high",
         roi=85,
-        job_markdown="""---
+        duty_markdown="""---
 every: 24h
-worker: kody
+staff: kody
 ---
 
 # secret-leak-scan
@@ -168,11 +158,11 @@ per finding type, with the offending file+line redacted.
         effort="medium",
         value="medium",
         roi=70,
-        job_markdown="""---
+        duty_markdown="""---
 on:
   pull_request:
     types: [opened, synchronize]
-worker: kody
+staff: kody
 ---
 
 # bundle-size-diff
@@ -213,7 +203,7 @@ def load_state() -> dict[str, Any]:
         try:
             return json.loads(STATE_PATH.read_text())
         except json.JSONDecodeError:
-            log(f"state file unreadable, starting fresh")
+            log("state file unreadable, starting fresh")
             return {}
     return {}
 
@@ -223,19 +213,7 @@ def save_state(state: dict[str, Any]) -> None:
     STATE_PATH.write_text(json.dumps(state, indent=2) + "\n")
 
 
-def cadence_skip(state: dict[str, Any]) -> bool:
-    if os.environ.get("JOB_GAP_SCAN_FORCE") == "1":
-        return False
-    if CADENCE_DAYS <= 0:
-        return False  # Engine handles cadence via every: <interval> in job markdown.
-    last = parse_iso(state.get("lastRunISO"))
-    if last is None:
-        return False
-    return now_utc() - last < timedelta(days=CADENCE_DAYS)
-
-
 def read_verdicts() -> dict[str, dict[str, Any]]:
-    """Map slug → latest verdict frontmatter (type/source/recorded_at + decision parsed from name)."""
     out: dict[str, dict[str, Any]] = {}
     if not MEMORY_DIR.exists():
         return out
@@ -253,144 +231,96 @@ def read_verdicts() -> dict[str, dict[str, Any]]:
                     k, _, v = line.partition(":")
                     meta[k.strip()] = v.strip()
         source = meta.get("source", "")
-        if ":" in source:
-            decision = source.rsplit(":", 1)[-1]
-        else:
-            decision = ""
+        decision = source.rsplit(":", 1)[-1] if ":" in source else ""
         prev = out.get(slug)
         if prev is None or (meta.get("recorded_at", "") > prev.get("recorded_at", "")):
             out[slug] = {"decision": decision, "recorded_at": meta.get("recorded_at", "")}
     return out
 
 
-def existing_job_slugs() -> set[str]:
-    if not JOBS_DIR.exists():
+def existing_duty_slugs() -> set[str]:
+    if not DUTIES_DIR.exists():
         return set()
-    return {p.stem for p in JOBS_DIR.glob("*.md")}
+    return {p.stem for p in DUTIES_DIR.glob("*.md")}
 
 
-def gh(args: list[str], check: bool = True) -> subprocess.CompletedProcess:
-    return subprocess.run(
-        ["gh", *args],
-        check=check,
-        capture_output=True,
-        text=True,
-        cwd=str(REPO_ROOT),
-    )
-
-
-def existing_proposal_issue(slug: str) -> int | None:
-    title = f"ceo: propose new job — {slug}"
-    result = gh(
-        [
-            "issue",
-            "list",
-            "--label",
-            PROPOSAL_LABEL,
-            "--state",
-            "open",
-            "--search",
-            f'in:title "{title}"',
-            "--json",
-            "number,title",
-            "--limit",
-            "20",
-        ],
-        check=False,
-    )
-    if result.returncode != 0:
-        log(f"gh issue list failed (label may not exist yet): {result.stderr.strip()}")
-        return None
-    try:
-        items = json.loads(result.stdout or "[]")
-    except json.JSONDecodeError:
-        return None
-    for item in items:
-        if item.get("title") == title:
-            return int(item["number"])
-    return None
-
-
-def ensure_label() -> None:
-    check = gh(
-        ["label", "list", "--search", PROPOSAL_LABEL, "--json", "name", "--limit", "5"],
-        check=False,
-    )
-    if check.returncode == 0 and PROPOSAL_LABEL in check.stdout:
-        return
-    create = gh(
-        [
-            "label",
-            "create",
-            PROPOSAL_LABEL,
-            "--description",
-            "Kody CEO: proposed new job (advisory, awaiting operator decision)",
-            "--color",
-            "0e8a16",
-        ],
-        check=False,
-    )
-    if create.returncode != 0:
-        log(f"label create returned: {create.stderr.strip()}")
-
-
-def build_issue_body(cand: Candidate) -> str:
+def render_current(cand: Candidate, now: datetime) -> str:
     score_row = (
         f"| 1 | {cand.title} | {cand.risk} | {cand.effort} | {cand.value} | {cand.roi} |"
     )
-    operator = operator_handle()
-    mention_prefix = f"@{operator} " if operator else ""
     return (
-        f"{mention_prefix}{cand.headline}\n\n"
-        "## Why now\n\n"
+        "## Current proposal\n\n"
+        f"**{cand.slug}** — {cand.headline}\n\n"
+        "### Why now\n\n"
         f"{cand.why_now}\n\n"
-        "## Scoring\n\n"
+        "### Scoring\n\n"
         "| # | Item | Risk | Effort | Value | ROI |\n"
-        "|---|---|---|---|---|---|\n"
+        "|---|------|------|--------|-------|-----|\n"
         f"{score_row}\n\n"
-        "## Draft job markdown\n\n"
+        "### Draft duty markdown\n\n"
         "If approved, the operator (or an executor) would commit the following at "
-        f"`.kody/jobs/{cand.slug}.md`. This is a starting point, not a final spec.\n\n"
+        f"`.kody/duties/{cand.slug}.md`. This is a starting point, not a final spec.\n\n"
         "````markdown\n"
-        f"{cand.job_markdown.rstrip()}\n"
+        f"{cand.duty_markdown.rstrip()}\n"
         "````\n\n"
-        "## Verdict path\n\n"
-        "Approve → create the job markdown above (manually or via a follow-up "
-        "task). Reject → permanent — the CEO will not surface this slug again. "
-        "Dismiss → cooling-off for 30 days, then eligible to re-surface if signal "
-        "grows.\n"
+        "### Verdict path\n\n"
+        "Approve → create the duty markdown above. Reject → permanent — the CEO will "
+        "not surface this slug again. Dismiss → cooling-off for 30 days, then "
+        "eligible to re-surface if signal grows.\n"
     )
 
 
-def create_proposal_issue(cand: Candidate) -> int | None:
-    title = f"ceo: propose new job — {cand.slug}"
-    body = build_issue_body(cand)
-    ensure_label()
-    result = gh(
-        [
-            "issue",
-            "create",
-            "--title",
-            title,
-            "--label",
-            PROPOSAL_LABEL,
-            "--body",
-            body,
-        ],
-        check=False,
+def render_caught_up() -> str:
+    return (
+        "## Current proposal\n\n"
+        "_All catalogue candidates have either been adopted (found in "
+        "`.kody/duties/`), rejected, or dismissed within the cool-off window. "
+        "Nothing new to suggest this cycle._\n"
     )
-    if result.returncode != 0:
-        log(f"issue create failed: {result.stderr.strip()}")
-        return None
-    # `gh issue create` prints the URL on stdout; extract the number.
-    url = result.stdout.strip().splitlines()[-1] if result.stdout.strip() else ""
-    m = re.search(r"/issues/(\d+)$", url)
-    return int(m.group(1)) if m else None
 
 
-def commit_state(slug: str) -> bool:
+def render_history(state: dict[str, Any], verdicts: dict[str, dict[str, Any]]) -> str:
+    proposed = state.get("proposed", {})
+    if not proposed:
+        return "## History\n\n_No prior proposals yet._\n"
+    by_slug = {c.slug: c for c in CATALOGUE}
+    rows = []
+    for slug, meta in sorted(
+        proposed.items(),
+        key=lambda kv: kv[1].get("firstSuggestedISO", ""),
+        reverse=True,
+    ):
+        title = by_slug[slug].title if slug in by_slug else slug
+        first = (meta.get("firstSuggestedISO") or "")[:10]
+        v = verdicts.get(slug)
+        if v and v.get("decision"):
+            status = v["decision"]
+        elif slug in existing_duty_slugs():
+            status = "adopted"
+        else:
+            status = "pending"
+        rows.append(f"| {slug} | {title} | {first} | {status} |")
+    return (
+        "## History\n\n"
+        "| Slug | Title | First suggested | Status |\n"
+        "|------|-------|-----------------|--------|\n"
+        + "\n".join(rows)
+        + "\n"
+    )
+
+
+def write_report(body: str) -> None:
+    REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    REPORT_PATH.write_text(body)
+
+
+def commit_and_push(slug: str | None) -> bool:
+    paths = [
+        str(STATE_PATH.relative_to(REPO_ROOT)),
+        str(REPORT_PATH.relative_to(REPO_ROOT)),
+    ]
     add_result = subprocess.run(
-        ["git", "-C", str(REPO_ROOT), "add", "--", str(STATE_PATH.relative_to(REPO_ROOT))],
+        ["git", "-C", str(REPO_ROOT), "add", "--", *paths],
         capture_output=True,
         text=True,
     )
@@ -398,18 +328,18 @@ def commit_state(slug: str) -> bool:
         log(f"git add failed: {add_result.stderr.strip()}")
         return False
     status = subprocess.run(
-        ["git", "-C", str(REPO_ROOT), "status", "--porcelain", "--", str(STATE_PATH.relative_to(REPO_ROOT))],
+        ["git", "-C", str(REPO_ROOT), "status", "--porcelain", "--", *paths],
         capture_output=True,
         text=True,
     ).stdout.strip()
     if not status:
         return False
-    # Sentence-case subject + a non-empty body so the repo's commitlint
-    # (subject-case + body-empty rules) accepts the auto-commit.
-    subject = f"chore(jobs): Record job-gap-scan proposal for {slug}"
+    subject_tail = f"propose {slug}" if slug else "no eligible proposals"
+    subject = f"chore(duties): Refresh job-gap-scan report ({subject_tail})"
     body = (
-        f"Bumps .kody/jobs/job-gap-scan.state.json after proposing "
-        f"`{slug}` (see `kody:ceo-proposal` issue)."
+        f"Overwrites `.kody/reports/job-gap-scan.md` and bumps "
+        f"`.kody/jobs/job-gap-scan.state.json`. Advisory only — the operator "
+        f"decides Approve/Reject/Dismiss."
     )
     commit_result = subprocess.run(
         ["git", "-C", str(REPO_ROOT), "commit", "-m", subject, "-m", body],
@@ -434,18 +364,14 @@ def main() -> int:
     state = load_state()
     state.setdefault("proposed", {})
 
-    if cadence_skip(state):
-        log("cadence guard: <6 days since last run, skipping (override with JOB_GAP_SCAN_FORCE=1)")
-        return 0
-
     verdicts = read_verdicts()
-    existing_jobs = existing_job_slugs()
+    existing = existing_duty_slugs()
     now = now_utc()
 
     eligible: list[Candidate] = []
     for cand in CATALOGUE:
-        if cand.slug in existing_jobs:
-            log(f"skip {cand.slug}: already in .kody/jobs/")
+        if cand.slug in existing:
+            log(f"skip {cand.slug}: already in .kody/duties/")
             continue
         verdict = verdicts.get(cand.slug)
         if verdict:
@@ -458,41 +384,45 @@ def main() -> int:
                 if recorded and (now - recorded) < timedelta(days=DISMISS_COOLOFF_DAYS):
                     log(f"skip {cand.slug}: dismissed within cooling-off window")
                     continue
-        existing_issue = existing_proposal_issue(cand.slug)
-        if existing_issue is not None:
-            log(f"skip {cand.slug}: open proposal issue #{existing_issue} still pending")
-            continue
         eligible.append(cand)
 
-    if not eligible:
-        log("no eligible proposals — exiting clean")
-        return 0
-
-    eligible.sort(key=lambda c: c.roi, reverse=True)
-    chosen = eligible[0]
-    log(f"chose {chosen.slug} (roi={chosen.roi})")
-
-    issue_number = create_proposal_issue(chosen)
-    if issue_number is None:
-        log("issue create returned no number; not updating state")
-        return 1
+    chosen: Candidate | None = None
+    if eligible:
+        eligible.sort(key=lambda c: c.roi, reverse=True)
+        chosen = eligible[0]
+        log(f"chose {chosen.slug} (roi={chosen.roi})")
+        existing_meta = state["proposed"].get(chosen.slug, {})
+        first = existing_meta.get("firstSuggestedISO") or iso(now)
+        state["proposed"][chosen.slug] = {
+            "firstSuggestedISO": first,
+            "lastWrittenISO": iso(now),
+        }
+    else:
+        log("no eligible proposals")
 
     state["lastRunISO"] = iso(now)
-    state["proposed"][chosen.slug] = {
-        "firstSuggestedISO": iso(now),
-        "openIssue": issue_number,
-    }
     save_state(state)
 
+    current_section = render_current(chosen, now) if chosen else render_caught_up()
+    history_section = render_history(state, verdicts)
+    report = (
+        "# Job Gap Scan\n\n"
+        "_Cadence: daily — one proposed duty per cycle, advisory only._\n\n"
+        f"_Last updated: {iso(now)}_\n\n"
+        f"{current_section}\n"
+        f"{history_section}"
+    )
+    write_report(report)
+
     if os.environ.get("JOB_GAP_SCAN_NO_COMMIT") == "1":
-        log(f"tick complete: proposed {chosen.slug} as issue #{issue_number} (commit suppressed)")
+        log("tick complete (commit suppressed)")
         return 0
 
-    committed = commit_state(chosen.slug)
+    committed = commit_and_push(chosen.slug if chosen else None)
     if committed:
-        log(f"tick complete: proposed {chosen.slug} as issue #{issue_number}, state committed")
+        log("tick complete: report + state committed")
     else:
-        log(f"tick complete: proposed {chosen.slug} as issue #{issue_number}, state NOT committed")
+        log("tick complete: nothing to commit")
     return 0
 
 

@@ -9,7 +9,7 @@ import React from 'react'
 import { loadConfigValues } from '@/infra/config/runtime'
 import { isPasswordLoginEnabled } from '@/infra/config/system-params'
 import { mergeOpenGraph } from '@/infra/utils/mergeOpenGraph'
-import { AdminBar } from '@/ui/web/AdminBar'
+import { AdminBarWrapper } from '@/ui/web/AdminBar/AdminBarWrapper'
 import { Toaster } from '@/ui/web/components/toaster'
 import { Footer } from '@/ui/web/footer/Component'
 import { Header } from '@/ui/web/header/Component'
@@ -103,7 +103,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 </a>
                 <RouteLoadingIndicator />
                 <LayoutClient />
-                <AdminBar
+                <AdminBarWrapper
                   adminBarProps={{
                     preview: isEnabled,
                   }}

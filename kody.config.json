@@ -34,5 +34,7 @@
   },
   "executables": {
     "default": "run"
-  }
+  },
+  "defaultExecutable": "classify",
+  "defaultPrExecutable": "fix"
 }

@@ -20,21 +20,25 @@ duty works live. It reads the duty's instructions plus its real run history
 whether the logic is sound and the evidence shows it working. Static review
 + evidence, not a live test.
 
-Purely diagnostic: it never edits, re-kicks, or relabels anything. Output is
-findings on the **Kody duty review** tracking issue, and an end-of-cycle
-summary comment.
+Purely diagnostic: it never edits, re-kicks, or relabels anything.
+**Output is a report file, not an inbox comment** — each tick refreshes
+`.kody/reports/duty-review.md`, a living roster of every duty with its
+latest verdict, which the dashboard Reports page surfaces. The duty
+reviewed this tick gets a fresh verdict; the others carry their last
+verdict from state. Past states live in the file's git history.
 
 **Cadence guard.** If `data.lastRunISO` is set and within the last 6 hours,
 emit unchanged state and exit. Otherwise proceed and set `data.lastRunISO`
 to now (UTC ISO) before emitting state.
 
-## Tick procedure (one duty reviewed, one comment max)
+## Tick procedure (one duty reviewed, one report write)
 
 1. **Pin the repo.** `gh`'s default repo is not guaranteed here — resolve it
-   once and pass `--repo` to every `gh issue` call:
+   once and pass `--repo` / `$REPO` everywhere:
    ```
    REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
    ```
+   For A-Guy this resolves to `A-Guy-educ/A-Guy`, default branch `dev`.
 
 2. **Enumerate duties.** List every `<slug>.md` in `.kody/duties/`:
    ```
@@ -45,9 +49,8 @@ to now (UTC ISO) before emitting state.
 
 3. **Pick the next duty.** From the enumerated slugs sorted alphabetically,
    pick the first one **not** in `data.reviewed`. If every duty is already
-   in `data.reviewed`, a full cycle just finished:
-   - Post the **end-of-cycle summary** (step 7).
-   - Reset `data.reviewed = []`, bump `data.cycle`, and pick the first slug.
+   in `data.reviewed`, a full cycle just finished — reset
+   `data.reviewed = []`, bump `data.cycle`, and pick the first slug.
 
 4. **Gather evidence** for the picked duty `<slug>`:
    - Body: `gh api "/repos/$REPO/contents/.kody/duties/<slug>.md"` (base64 →
@@ -75,8 +78,8 @@ to now (UTC ISO) before emitting state.
       (no guard but a cadence implied) → `BROKEN`.
    4. **State contract** — body emits a closing `kody-job-next-state` block,
       and the schema it documents matches what the procedure actually
-      writes. Missing block on a cadence-gated duty → `BROKEN` (it re-fires
-      every wake). Documented field never written → `WARN`.
+      writes. Missing block on a cadence-gated duty → `BROKEN`. Documented
+      field never written → `WARN`.
    5. **One-action-max** — the procedure cannot fan out into multiple
       mutations in a single tick. A loop that comments/commits per item →
       `BROKEN`.
@@ -93,32 +96,43 @@ to now (UTC ISO) before emitting state.
       reviewed for design but **not** flagged for being idle (disabled is
       intentional) — note the disabled status and move on.
 
-6. **Post findings — only when the duty has at least one `BROKEN` or `WARN`.**
-   Healthy duties produce **no comment** (the inbox is precious); they're
-   recorded in state only. Find or open the tracking issue:
-   ```
-   ISSUE=$(gh issue list --repo "$REPO" --search "Kody duty review in:title" --state open --limit 1 --json number -q '.[0].number')
-   ```
-   If empty, open it once (label `kody:duty-review`, create the label first
-   if missing):
-   ```
-   gh issue create --repo "$REPO" --title "Kody duty review" --label "kody:duty-review" \
-     --body "Tracking issue for the duty-review duty. Each tick deep-reviews one duty's design and observed behavior; flagged duties get a comment here. Read-only — never close."
-   ```
-   Then post one comment, lead line `## Duty review — \`<slug>\` — <verdict>`
-   where `<verdict>` is `BROKEN` / `WARN`, followed by the finding lines.
-   Each line: `` - **BROKEN** — <what's wrong>. **Why it matters:** <effect>. ``
-   Reference the duty section by name (e.g. "Cadence guard", "step 3").
+   Distill to a one-word verdict for this duty: `healthy` / `warn` /
+   `broken`, plus a short note (the single most important finding, or
+   "passes every check" when healthy).
 
-7. **End-of-cycle summary** (only in step 3 when a cycle completes): one
-   comment on the tracking issue —
-   `## Duty review — cycle <N> complete — reviewed <count>, flagged <m>`
-   then a one-line-per-flagged-duty roster (`- \`<slug>\` — <verdict>`).
-   This is the low-noise "everything got looked at" heartbeat (~once per
-   full sweep, i.e. every `count × 6h`). Skip the roster if zero flagged.
+6. **Update the verdict map and rebuild the report.** Set
+   `data.verdicts[<slug>] = { verdict, note }` for the duty reviewed this
+   tick. Then rebuild the full roster body from `data.verdicts`:
+   - H1 `# Kody Duty Review`, then a
+     `_Rolling 6h cycle — one duty deep-reviewed per tick._` line (**no
+     timestamp**; `lastRunISO` lives in state so a no-change tick is
+     byte-identical).
+   - A headline: `Cycle <N> — <healthy> healthy, <warn> warn, <broken> broken
+     of <total> duties.`
+   - A roster table, **one row per duty** (alphabetical), pulling verdict
+     from `data.verdicts` (`—` / `pending` for any not yet reviewed in any
+     cycle):
+     ```
+     | Duty | Staff | Cadence | Verdict | Note |
+     |------|-------|---------|---------|------|
+     | qa-sweep | qa | 7d | broken | state frozen 9 days; no sweep ran |
+     ```
+     Mark `disabled: true` duties in the Cadence column (e.g. `7d (disabled)`).
 
-8. **Emit closing state** (step "State" below) as the very last thing in the
-   reply, recording the slug reviewed this tick and its verdict.
+7. **Write the report** at **`.kody/reports/duty-review.md`** via `gh api`
+   (fetch the prior sha so the PUT overwrites in place):
+   ```
+   sha=$(gh api "/repos/$REPO/contents/.kody/reports/duty-review.md" -q .sha 2>/dev/null || true)
+   gh api -X PUT "/repos/$REPO/contents/.kody/reports/duty-review.md" \
+     -f message="chore(duty-review): refresh report" \
+     -f content="$(printf '%s' "$REPORT_BODY" | base64)" \
+     -f branch="<defaultBranch>" \
+     ${sha:+-f sha="$sha"}
+   ```
+   `<defaultBranch>` is `dev` for A-Guy. **One PUT per tick.**
+
+8. **Emit closing state** (schema below) as the very last thing in the reply,
+   recording the slug reviewed this tick and its verdict.
 
 ## Allowed Commands
 
@@ -126,29 +140,25 @@ to now (UTC ISO) before emitting state.
 - `gh api` reads against `/repos/$REPO/contents/.kody/duties`, individual
   duty bodies, their `.state.json` files, `.kody/reports/*`, and
   `/repos/$REPO/commits?path=...` for run history.
-- `gh issue list --search "Kody duty review in:title"` — find the tracking
-  issue.
-- `gh issue create --title "Kody duty review" ...` — one-time only if it
-  doesn't exist; `gh label create kody:duty-review ...` if the label is
-  missing.
-- `gh issue comment <n>` against the **Kody duty review** issue only.
+- `gh api -X PUT` against `.kody/reports/duty-review.md` **only** — to write
+  the report. Permitted by the global job-tick contract.
 
 ## Restrictions
 
-- **Read-only on every duty, state file, report, PR, and issue** except the
-  one tracking issue. Never edit, re-kick, relabel, or "fix" the duty you're
-  reviewing — surface it; the operator decides.
-- **At most one duty reviewed per tick**, and **at most one comment per
-  tick** (a findings comment, or the end-of-cycle summary — not both; if a
-  cycle completes on the same tick a duty is flagged, post the summary this
-  tick and the findings next tick).
-- **No file writes.** This duty never modifies the working tree.
-- **Quiet on healthy** — no comment when the reviewed duty passes every
-  check. The cycle summary is the only routine output.
+- **Read-only on every duty, state file, report, PR, and issue.** The
+  **only** write is the single PUT to `.kody/reports/duty-review.md`. Never
+  edit, re-kick, relabel, or "fix" the duty you're reviewing — surface it on
+  the report; the operator decides.
+- **One report write per tick**, covering at most one freshly-reviewed duty.
+  Never open issues or post comments — this duty has no inbox surface by
+  design.
+- **No timestamp in the report body.** `lastRunISO` lives in state, so a tick
+  that produces an identical roster is byte-identical (skip-PUT is free).
 - **Don't review yourself** (`duty-review`) — self-exempt, like
   `system-audit`.
 - **`disabled: true` is not a finding** for the "observed behavior" check —
-  disabled duties are idle by intent. Still review their design.
+  disabled duties are idle by intent. Still review their design; mark them
+  disabled in the roster.
 - **Static review + evidence only.** Never claim a duty "works" — claim its
   design is sound and its history shows it running. The two are different.
 
@@ -156,7 +166,7 @@ to now (UTC ISO) before emitting state.
 
 The engine writes `duty-review.state.json` from the closing block below.
 
-- `cursor`: `reviewed` after any tick past the cadence guard.
+- `cursor`: `reported` after any tick past the cadence guard.
 - `data.lastRunISO`: UTC ISO timestamp of the last tick that ran past the
   cadence guard.
 - `data.nextEligibleISO`: always `lastRunISO + 6h`. **Always emit this,
@@ -164,8 +174,9 @@ The engine writes `duty-review.state.json` from the closing block below.
 - `data.cycle`: integer, incremented each time a full sweep completes.
 - `data.reviewed`: array of slugs reviewed in the **current** cycle (reset
   to `[]` when the cycle completes).
-- `data.lastReviewed`: `{ slug, verdict }` reviewed this tick (`verdict` is
-  `healthy` / `warn` / `broken`).
+- `data.verdicts`: `{ "<slug>": { "verdict": "healthy|warn|broken", "note": "..." } }`
+  — the latest verdict for every duty ever reviewed; the report roster is
+  rebuilt from this each tick.
 - `done`: always `false` — this duty is evergreen.
 
 Closing block shape:
@@ -173,13 +184,16 @@ Closing block shape:
 ````
 ```kody-job-next-state
 {
-  "cursor": "reviewed",
+  "cursor": "reported",
   "data": {
     "lastRunISO": "<now ISO>",
     "nextEligibleISO": "<now ISO + 6h>",
     "cycle": <n>,
     "reviewed": ["architecture-audit", "cleanup-branches"],
-    "lastReviewed": { "slug": "cleanup-branches", "verdict": "healthy" }
+    "verdicts": {
+      "architecture-audit": { "verdict": "healthy", "note": "passes every check" },
+      "cleanup-branches": { "verdict": "warn", "note": "no idempotence guard; churns on no-op" }
+    }
   },
   "done": false
 }

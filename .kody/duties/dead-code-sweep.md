@@ -1,51 +1,80 @@
 ---
 disabled: true
 staff: kody
+every: 30d
 ---
 
 # Dead Code Sweep
 
 ## Job
 
-Monthly cleanup of unused exports, files, and dependencies. Runs `knip` / `ts-prune` / `depcheck` (via `/kody chore`) and opens **separate PRs per category** so review stays bounded.
+Monthly cleanup audit of unused exports, files, and dependencies. Writes
+a single report to `.kody/reports/dead-code-sweep.md` grouping findings
+from `knip`, `ts-prune`, and `depcheck` by category. The dashboard
+Reports page renders it; the operator decides which categories merit a
+cleanup PR.
 
-**Cadence guard.** Run only on the **1st day of the month UTC**, and only if `data.lastRunISO` is older than 25 days. Otherwise emit unchanged state and exit.
+**Cadence.** Set by the `every:` frontmatter (default `every: 30d`) and
+enforced by the engine.
 
-**Per tick (one action max):**
+## Tick procedure — REQUIRED
 
-1. Check for an in-flight sweep: `gh issue list --label "kody:dead-code-sweep" --state open --json number,title,createdAt,body`.
-2. **If an open issue exists less than 14 days old:** emit `cursor: awaiting-prs` and exit (last month's sweep is still being processed — give reviewers time).
-3. **If an open issue exists older than 14 days with fewer than 3 linked PRs merged or closed:** post a nudge once, then exit:
-   ```
-   gh issue comment <n> --body "Last month's sweep appears partially stalled. /kody chore: report status — which categories produced PRs, which still need work, which were dropped."
-   ```
-4. **Otherwise, open the monthly issue:**
-   ```
-   gh issue create \
-     --title "dead-code: monthly sweep $(date -u +%Y-%m)" \
-     --label "kody:dead-code-sweep" \
-     --body "/kody chore: run a dead-code sweep using \`knip\`, \`ts-prune\`, and \`depcheck\`. Open up to FIVE separate PRs, one per category and bounded by size:\n\n1. **unused exports** — \`ts-prune\` findings, max 30 deletions per PR\n2. **unused files** — \`knip\` findings, max 15 file deletions per PR\n3. **unused devDependencies** — \`depcheck\` findings\n4. **unused dependencies (prod)** — \`depcheck\` findings, only if confidence is high\n5. **unused exports from \`src/lib/**\`** — these are the highest-signal cleanups\n\nDo NOT delete:\n- Anything under \`src/payload/collections/**\` (Payload collections are dynamically registered)\n- Anything imported via \`payload-config.ts\`\n- Anything in \`scripts/**\` flagged solely by \`knip\` (often invoked via package.json scripts knip can't see)\n- Files under \`messages/**\` (i18n)\n- Anything matching \`**/*.spec.ts\` or \`**/*.test.ts\`\n\nSkip categories where the tool reports zero findings — comment 'category: no findings' on this issue.\n\nClose this issue when all opened PRs are merged or rejected with rationale."
-   ```
-5. Stash `data.openIssue = <number>` and `data.openedISO = <now>`.
+This tick is **fully scripted**. The script
+[dead-code-sweep-tick.py](.kody/scripts/dead-code-sweep-tick.py) is the
+**single source of truth** for running the tools and writing the report.
 
-## Allowed Commands
+Run the script:
 
-- `gh issue list`, `gh issue create`, `gh issue comment`
-- `gh pr list --search "label:kody:dead-code-sweep"` (to count linked PRs in step 3)
+```
+python3 .kody/scripts/dead-code-sweep-tick.py
+```
+
+The script:
+
+1. Runs `knip`, `ts-prune`, and `depcheck` against the working tree.
+2. Filters findings by the do-not-delete list (below).
+3. Overwrites `.kody/reports/dead-code-sweep.md` grouped into five
+   categories:
+   1. **unused exports** — `ts-prune` findings.
+   2. **unused files** — `knip` findings.
+   3. **unused devDependencies** — `depcheck` findings.
+   4. **unused dependencies (prod)** — `depcheck` findings (high
+      confidence only).
+   5. **unused exports from `src/lib/**`** — highest-signal cleanups.
+4. Categories with zero findings render as "no findings".
+5. Bumps `state.lastRunISO` and commits + pushes the state and report.
+
+### Do-not-delete list
+
+- Anything under `src/payload/collections/**` (dynamically registered).
+- Anything imported via `payload-config.ts`.
+- Anything in `scripts/**` flagged solely by `knip` (often invoked via
+  package.json scripts knip can't see).
+- Files under `messages/**` (i18n).
+- Anything matching `**/*.spec.ts` or `**/*.test.ts`.
 
 ## Restrictions
 
-- Never edit files. Never run `knip`/`ts-prune`/`depcheck`. Delegation only.
-- Maximum one issue created or commented per tick.
-- If `gh issue create --label kody:dead-code-sweep` fails because the label doesn't exist, run `gh label create kody:dead-code-sweep --description "Kody job: dead code sweep"` and retry the create. **Do not skip the label** — the next-tick "is sweep in flight?" check depends on it.
-- Honor the do-not-delete list — never override it from this job's body. If the body needs updating (new safe-zone discovered after a bad PR), the human edits this file and the next tick re-reads it.
-- This is the noisiest job — biases toward NOT firing if anything looks in-flight.
+- **Report only.** Never delete files, never open issues, never push
+  cleanup PRs. Operator decides.
+- **Honor the do-not-delete list.** No exceptions from within the
+  script.
+- **Cite real `file:line` for every finding.** No category-level
+  generalities.
 
 ## State
 
-- `cursor`: `idle` | `awaiting-prs` | `stalled`
-- `data.lastRunISO`: ISO timestamp of last tick that opened or nudged an issue
-- `data.openIssue`: number of currently-open monthly issue (or null)
-- `data.openedISO`: ISO timestamp the current issue was opened (for stall detection)
-- `data.nextEligibleISO`: UTC ISO timestamp this job will next be eligible to act, computed from the cadence guard above. **Always emit this, every tick.** For this job: the **next 1st-of-month 00:00 UTC** at or after `data.lastRunISO + 25d`. Surfaced as "next run" on the dashboard.
-- `done`: always `false`
+State lives in
+[dead-code-sweep.state.json](.kody/jobs/dead-code-sweep.state.json):
+
+```json
+{
+  "lastRunISO": "2026-05-29T00:00:00Z",
+  "nextEligibleISO": "2026-06-28T00:00:00Z"
+}
+```
+
+- `data.lastRunISO`: ISO timestamp of last tick that wrote the report.
+- `data.nextEligibleISO`: `data.lastRunISO + 30d`. **Always emit this,
+  every tick.** Surfaced as "next run" on the dashboard.
+- `done`: always `false`.

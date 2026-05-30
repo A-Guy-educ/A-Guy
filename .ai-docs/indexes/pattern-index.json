@@ -13,6 +13,8 @@
         "src/app/(frontend)/account/_components/PreferencesSection.tsx",
         "src/app/(frontend)/account/_components/SelectedCourseCard.tsx",
         "src/app/(frontend)/account/_components/TeachersProfileSection.tsx",
+        "src/app/(frontend)/account/purchases/PurchasesPageContent.tsx",
+        "src/app/(frontend)/account/purchases/[transactionId]/TransactionDetailContent.tsx",
         "src/app/(frontend)/ask/_components/AskContent/index.tsx",
         "src/app/(frontend)/ask/_components/AskConversationGrid/index.tsx",
         "src/app/(frontend)/ask/_components/AskDrawingCanvas/index.tsx",
@@ -20,6 +22,8 @@
         "src/app/(frontend)/ask/_components/AskPageClient/index.tsx",
         "src/app/(frontend)/ask/_components/AskPrimaryContent/index.tsx",
         "src/app/(frontend)/ask/_components/InteractivePlayer/useGenerateLesson.ts",
+        "src/app/(frontend)/checkout/cancel/CheckoutCancelContent.tsx",
+        "src/app/(frontend)/checkout/success/CheckoutSuccessContent.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/AddExamDialog/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/AskTab/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/ConversationCard/index.tsx",
@@ -29,12 +33,19 @@
         "src/app/(frontend)/courses/[courseSlug]/_components/ExamReminderBubble/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/ExamsTab/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/LessonListTab/index.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/BlocksDocumentLessonView/index.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ConsolidatedLatexLessonView/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ConvertButton.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/TabButton.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/index.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/useLessonViewMode.ts",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/FloatingAskButton/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonAnalytics.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonContent.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/useLessonPager.ts",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/MediaTabContent/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/PdfLessonPager/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/PdfLessonPager/usePdfLessonPager.ts",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ViewToggle.tsx",
@@ -72,6 +83,13 @@
         "src/app/(frontend)/posts/[slug]/page.client.tsx",
         "src/app/(frontend)/posts/page.client.tsx",
         "src/app/(frontend)/posts/page/[pageNumber]/page.client.tsx",
+        "src/app/(frontend)/products/[slug]/BuyButton.tsx",
+        "src/app/(frontend)/products/[slug]/CouponInput.tsx",
+        "src/app/(frontend)/products/[slug]/ProductDetailContent.tsx",
+        "src/app/(frontend)/products/_components/EmptyProducts/index.tsx",
+        "src/app/(frontend)/products/_components/ProductCard/index.tsx",
+        "src/app/(frontend)/products/_components/ProductCardGrid/index.tsx",
+        "src/app/(frontend)/products/_components/ProductsHeader/index.tsx",
         "src/app/(frontend)/search/page.client.tsx",
         "src/app/(frontend)/signup/SignupForm.tsx",
         "src/app/(frontend)/signup/SignupPageContent.tsx",
@@ -87,6 +105,8 @@
         "src/app/(frontend)/study-plan/_components/useStudyPlan.ts",
         "src/app/(frontend)/study/_components/StudyContent/index.tsx",
         "src/app/(payload)/admin/chat/page.tsx",
+        "src/app/(payload)/admin/lesson-duplications/[id]/page.tsx",
+        "src/app/(payload)/admin/lesson-duplications/page.tsx",
         "src/app/(payload)/admin/pdf-conversion/page.tsx",
         "src/app/global-error.tsx",
         "src/client/hooks/useAccessGate.ts",
@@ -119,11 +139,27 @@
         "src/server/payload/blocks/Form/Error/index.tsx",
         "src/server/payload/blocks/GeometryBlock/Component.tsx",
         "src/server/payload/blocks/GraphBlock/Component.tsx",
-        "src/ui/admin/AdminChat/DashboardWidget/index.tsx",
-        "src/ui/admin/AdminChat/SidebarLink/index.tsx",
+        "src/ui/admin/AdminChatLauncher/index.tsx",
         "src/ui/admin/AnswerSpecJsonField/index.tsx",
         "src/ui/admin/CascadeDeleteButton/index.tsx",
         "src/ui/admin/ContentNavigation/index.tsx",
+        "src/ui/admin/ConversionTracking/ContentCountsWidget.tsx",
+        "src/ui/admin/ConversionTracking/DashboardHeader.tsx",
+        "src/ui/admin/ConversionTracking/DashboardWidgets.tsx",
+        "src/ui/admin/ConversionTracking/EngagementWidget.tsx",
+        "src/ui/admin/ConversionTracking/MetricCard.tsx",
+        "src/ui/admin/ConversionTracking/MetricsProvider.tsx",
+        "src/ui/admin/ConversionTracking/UserMetricsWidget.tsx",
+        "src/ui/admin/Coupons/Cells/ExpiresCell/index.tsx",
+        "src/ui/admin/Coupons/Cells/StatusCell/index.tsx",
+        "src/ui/admin/Coupons/Cells/UsageCell/index.tsx",
+        "src/ui/admin/Coupons/CouponUsageModal/index.tsx",
+        "src/ui/admin/Coupons/CreateCouponModal/index.tsx",
+        "src/ui/admin/Coupons/EditView/index.tsx",
+        "src/ui/admin/Coupons/ListView/index.tsx",
+        "src/ui/admin/Coupons/UsageProgressField/index.tsx",
+        "src/ui/admin/CourseEnrollmentsWidget/index.tsx",
+        "src/ui/admin/CourseLessonsSorter/index.tsx",
         "src/ui/admin/ExerciseContentEditor/BlockTypeSelector.tsx",
         "src/ui/admin/ExerciseContentEditor/FullJsonEditor.tsx",
         "src/ui/admin/ExerciseContentEditor/JSONInspector.tsx",
@@ -174,7 +210,16 @@
         "src/ui/admin/IntroGraphField/index.tsx",
         "src/ui/admin/IntroTableField/index.tsx",
         "src/ui/admin/LatexQuickImport/index.tsx",
+        "src/ui/admin/LessonBlocksField/InlineExerciseEditor.tsx",
         "src/ui/admin/LessonBlocksField/index.tsx",
+        "src/ui/admin/LessonDuplicateButton/LessonDuplicateButton.tsx",
+        "src/ui/admin/LessonDuplicationReview/DiffPreview/AdminBlockRenderer.tsx",
+        "src/ui/admin/LessonDuplicationReview/DiffPreview/ExercisePair.tsx",
+        "src/ui/admin/LessonDuplicationReview/DiffPreview/index.tsx",
+        "src/ui/admin/LessonDuplicationReview/ReviewLinkButton.tsx",
+        "src/ui/admin/LessonDuplicationReview/SidebarLink/index.tsx",
+        "src/ui/admin/LessonDuplicationReview/index.tsx",
+        "src/ui/admin/LessonExportButton/LessonExportButton.tsx",
         "src/ui/admin/MediaPreview/AudioPreview.tsx",
         "src/ui/admin/MediaPreview/DocumentPreview.tsx",
         "src/ui/admin/MediaPreview/ExternalPreview.tsx",
@@ -191,7 +236,15 @@
         "src/ui/admin/PdfConversion/PdfConversionPage/index.tsx",
         "src/ui/admin/PdfConversion/PdfSelector/index.tsx",
         "src/ui/admin/PdfConversion/SidebarLink/index.tsx",
+        "src/ui/admin/ProductItems/TypeBadgeCell/index.tsx",
+        "src/ui/admin/Products/EditView/index.tsx",
+        "src/ui/admin/Products/SaveButton/index.tsx",
         "src/ui/admin/QuillField/index.tsx",
+        "src/ui/admin/RecentTransactionsWidget/index.tsx",
+        "src/ui/admin/RevenueWidget/index.tsx",
+        "src/ui/admin/TopProductsWidget/index.tsx",
+        "src/ui/admin/TransactionEditView/index.tsx",
+        "src/ui/admin/TransactionStatusCell/index.tsx",
         "src/ui/admin/TranslationButton/TranslateAction.tsx",
         "src/ui/admin/TranslationButton/TranslationModal.tsx",
         "src/ui/admin/TranslationButton/index.tsx",
@@ -207,6 +260,8 @@
         "src/ui/admin/exercise-conversion/ConvertV2Button/index.tsx",
         "src/ui/admin/exercise-conversion/ConvertV3Button/index.tsx",
         "src/ui/admin/exercise-conversion/DraftExercisesList/index.tsx",
+        "src/ui/admin/exercise-conversion/FullConvertLatexButton/index.tsx",
+        "src/ui/admin/exercise-conversion/FullConvertMediaButton/index.tsx",
         "src/ui/admin/exercise-conversion/LatexImportSection/index.tsx",
         "src/ui/admin/exercise-conversion/LessonConversionPanel/index.tsx",
         "src/ui/admin/exercise-conversion/LessonMediaActions/index.tsx",
@@ -218,7 +273,9 @@
         "src/ui/admin/shared/AdvancedJsonPanel.tsx",
         "src/ui/admin/shared/CollapsibleSection.tsx",
         "src/ui/admin/shared/ErrorDisplay.tsx",
+        "src/ui/web/AdminBar/AdminBarWrapper.tsx",
         "src/ui/web/AdminBar/index.tsx",
+        "src/ui/web/BrandLogo.tsx",
         "src/ui/web/Card/index.tsx",
         "src/ui/web/CommandPalette.tsx",
         "src/ui/web/ExampleForm.tsx",
@@ -236,6 +293,7 @@
         "src/ui/web/chat/ChatInterface/index.tsx",
         "src/ui/web/chat/ChatMessageContent/index.tsx",
         "src/ui/web/chat/ChatQuotaBar/index.tsx",
+        "src/ui/web/chat/MobileChatToggle/index.tsx",
         "src/ui/web/chat/TTSButton/index.tsx",
         "src/ui/web/chat/hooks/useChatQuota.ts",
         "src/ui/web/chat/hooks/useNotebookChat.ts",
@@ -271,6 +329,7 @@
         "src/ui/web/components/tooltip.tsx",
         "src/ui/web/courses/PDFViewer/PDFEmbed.tsx",
         "src/ui/web/exerciserenderer/ExerciseRenderer/index.tsx",
+        "src/ui/web/exerciserenderer/ExerciseWorksheet/index.tsx",
         "src/ui/web/exerciserenderer/blocks/AxisRenderer/index.tsx",
         "src/ui/web/exerciserenderer/blocks/GeometryRenderer/index.tsx",
         "src/ui/web/exerciserenderer/blocks/HtmlBlockRenderer/index.tsx",
@@ -310,6 +369,9 @@
         "src/ui/web/homepage/LandingPage/index.tsx",
         "src/ui/web/homepage/NavigationBar/index.tsx",
         "src/ui/web/homepage/TopicCard/index.tsx",
+        "src/ui/web/learning-agent/AgentChatWindow/index.tsx",
+        "src/ui/web/learning-agent/FloatingAgentButton/index.tsx",
+        "src/ui/web/learning-agent/hooks/useLearningAgentChat.ts",
         "src/ui/web/media/AudioMedia/index.tsx",
         "src/ui/web/media/DocumentMedia/index.tsx",
         "src/ui/web/media/ExternalMedia/index.tsx",
@@ -348,11 +410,15 @@
         "src/app/(frontend)/account/_components/PreferencesSection.tsx",
         "src/app/(frontend)/account/_components/SelectedCourseCard.tsx",
         "src/app/(frontend)/account/_components/TeachersProfileSection.tsx",
+        "src/app/(frontend)/account/purchases/PurchasesPageContent.tsx",
+        "src/app/(frontend)/account/purchases/[transactionId]/TransactionDetailContent.tsx",
         "src/app/(frontend)/ask/_components/AskContent/index.tsx",
         "src/app/(frontend)/ask/_components/AskConversationGrid/index.tsx",
         "src/app/(frontend)/ask/_components/AskDrawingCanvas/index.tsx",
         "src/app/(frontend)/ask/_components/AskExerciseCard/index.tsx",
         "src/app/(frontend)/ask/_components/AskPrimaryContent/index.tsx",
+        "src/app/(frontend)/checkout/cancel/CheckoutCancelContent.tsx",
+        "src/app/(frontend)/checkout/success/CheckoutSuccessContent.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/AddExamDialog/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/AskTab/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/ConversationCard/index.tsx",
@@ -361,7 +427,10 @@
         "src/app/(frontend)/courses/[courseSlug]/_components/ExamReminderBubble/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/ExamsTab/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/LessonListTab/index.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/BlocksDocumentLessonView/index.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/FloatingAskButton/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonContent.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/PdfLessonPager/index.tsx",
@@ -389,6 +458,12 @@
         "src/app/(frontend)/login/LoginPageContent.tsx",
         "src/app/(frontend)/not-found.tsx",
         "src/app/(frontend)/onboarding/persona/PersonaSelectionStep.tsx",
+        "src/app/(frontend)/products/[slug]/BuyButton.tsx",
+        "src/app/(frontend)/products/[slug]/CouponInput.tsx",
+        "src/app/(frontend)/products/[slug]/ProductDetailContent.tsx",
+        "src/app/(frontend)/products/_components/EmptyProducts/index.tsx",
+        "src/app/(frontend)/products/_components/ProductCard/index.tsx",
+        "src/app/(frontend)/products/_components/ProductsHeader/index.tsx",
         "src/app/(frontend)/signup/SignupForm.tsx",
         "src/app/(frontend)/signup/SignupPageContent.tsx",
         "src/app/(frontend)/stats/_components/ActivityTimeline.tsx",
@@ -402,6 +477,8 @@
         "src/app/(frontend)/study-plan/_components/LessonSelector/index.tsx",
         "src/app/(frontend)/study-plan/_components/StudyPlanPage.tsx",
         "src/app/(frontend)/study/_components/StudyContent/index.tsx",
+        "src/ui/admin/AdminChatLauncher/index.tsx",
+        "src/ui/web/GuidedExplanationRunner/index.tsx",
         "src/ui/web/LanguageSwitcher/index.tsx",
         "src/ui/web/UserDropdown/index.tsx",
         "src/ui/web/auth/AccessGateProvider.tsx",
@@ -410,6 +487,7 @@
         "src/ui/web/chat/ChatErrorSurface/index.tsx",
         "src/ui/web/chat/ChatInterface/index.tsx",
         "src/ui/web/chat/ChatQuotaBar/index.tsx",
+        "src/ui/web/chat/MobileChatToggle/index.tsx",
         "src/ui/web/components/UnifiedCard/CourseCard.tsx",
         "src/ui/web/components/UnifiedCard/CourseLessonCard.tsx",
         "src/ui/web/components/UnifiedCard/ExerciseCard.tsx",
@@ -443,7 +521,9 @@
         "src/app/(frontend)/courses/[courseSlug]/_components/AskTab/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/ConversationCard/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/_components/CourseTabs/index.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/TabButton.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx",
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/FloatingAskButton/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/index.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ViewToggle.tsx",
         "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/exercises/[exerciseSlug]/_components/ExerciseHeader/index.tsx",
@@ -461,6 +541,7 @@
         "src/app/(frontend)/study-plan/_components/DayCard.tsx",
         "src/app/(frontend)/study-plan/_components/LessonSelector/index.tsx",
         "src/app/(frontend)/study-plan/_components/StudyPlanPage.tsx",
+        "src/brands/aguy/components/Logo.tsx",
         "src/infra/loading/components/RouteLoadingIndicator.tsx",
         "src/infra/loading/components/Spinner.tsx",
         "src/infra/loading/components/SystemLink.tsx",
@@ -468,20 +549,22 @@
         "src/server/payload/blocks/Content/Component.tsx",
         "src/server/payload/blocks/MediaBlock/Component.tsx",
         "src/server/payload/blocks/TableBlock/Component.tsx",
+        "src/ui/admin/LessonDuplicationReview/DiffPreview/ExercisePair.tsx",
         "src/ui/web/AdminBar/index.tsx",
         "src/ui/web/Card/index.tsx",
         "src/ui/web/CollectionArchive/index.tsx",
+        "src/ui/web/GuidedExplanationRunner/index.tsx",
         "src/ui/web/Link/index.tsx",
         "src/ui/web/PageRange/index.tsx",
         "src/ui/web/Pagination/index.tsx",
         "src/ui/web/RichText/index.tsx",
         "src/ui/web/SafeHtml/index.tsx",
-        "src/ui/web/TelescopeLogo/index.tsx",
         "src/ui/web/auth/GoogleLoginButton.tsx",
         "src/ui/web/chat/ChatErrorSurface/index.tsx",
         "src/ui/web/chat/ChatInterface/index.tsx",
         "src/ui/web/chat/ChatMessageContent/index.tsx",
         "src/ui/web/chat/ChatQuotaBar/index.tsx",
+        "src/ui/web/chat/MobileChatToggle/index.tsx",
         "src/ui/web/chat/TTSButton/index.tsx",
         "src/ui/web/components/UnifiedCard/index.tsx",
         "src/ui/web/components/accent-card.tsx",
@@ -515,6 +598,7 @@
         "src/ui/web/components/textarea.tsx",
         "src/ui/web/components/tooltip.tsx",
         "src/ui/web/exerciserenderer/ExerciseRenderer/index.tsx",
+        "src/ui/web/exerciserenderer/ExerciseWorksheet/index.tsx",
         "src/ui/web/exerciserenderer/answers/McqAnswerUI/index.tsx",
         "src/ui/web/exerciserenderer/answers/TrueFalseAnswerUI/index.tsx",
         "src/ui/web/exerciserenderer/blocks/GraphWithPrompt/index.tsx",
@@ -566,6 +650,67 @@
         "src/ui/web/shared/Typography/Text.tsx"
       ]
     },
+    "view": {
+      "pattern": "view",
+      "description": "No description available",
+      "files": [
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ConsolidatedLatexLessonView/index.tsx"
+      ]
+    },
+    "dual-view": {
+      "pattern": "dual-view",
+      "description": "No description available",
+      "files": [
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/index.tsx"
+      ]
+    },
+    "payload-hooks": {
+      "pattern": "payload-hooks",
+      "description": "Payload lifecycle hooks (beforeChange, afterChange, etc.)",
+      "files": [
+        "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/useLessonViewMode.ts",
+        "src/app/api/webhooks/paypal/route.ts",
+        "src/app/api/webhooks/stripe/route.ts",
+        "src/infra/llm/services/interactive-lesson/published-prompt-cache.ts",
+        "src/infra/media/embed/vimeo.ts",
+        "src/server/payload/collections/Categories.ts",
+        "src/server/payload/collections/Chapters.ts",
+        "src/server/payload/collections/ConfigSecrets.ts",
+        "src/server/payload/collections/ConfigValues.ts",
+        "src/server/payload/collections/ContentPages.ts",
+        "src/server/payload/collections/Conversations.ts",
+        "src/server/payload/collections/CouponUsages.ts",
+        "src/server/payload/collections/Coupons.ts",
+        "src/server/payload/collections/Courses.ts",
+        "src/server/payload/collections/Exercises/index.ts",
+        "src/server/payload/collections/Lessons.ts",
+        "src/server/payload/collections/Media/hooks/enforceRetentionPolicy.ts",
+        "src/server/payload/collections/Media/hooks/resolveEmbed.ts",
+        "src/server/payload/collections/Media/index.ts",
+        "src/server/payload/collections/Pages/index.ts",
+        "src/server/payload/collections/Posts/index.ts",
+        "src/server/payload/collections/Products.ts",
+        "src/server/payload/collections/Prompts.ts",
+        "src/server/payload/collections/TeacherProfiles.ts",
+        "src/server/payload/collections/Transactions.ts",
+        "src/server/payload/collections/Transactions/hooks/statusTransitionGuard-hook.ts",
+        "src/server/payload/collections/Transactions/hooks/syncPaymentStats-hook.ts",
+        "src/server/payload/collections/Users/hooks/auditRoleChange-hook.ts",
+        "src/server/payload/collections/Users/hooks/ensureRoleOnSignup-hook.ts",
+        "src/server/payload/collections/Users/hooks/preventLastAdminDemotion-hook.ts",
+        "src/server/payload/collections/Users/index.ts",
+        "src/server/payload/endpoints/agent/generate-interactive-lesson.ts",
+        "src/server/payload/fields/createdBy.ts",
+        "src/server/payload/hooks/configSecrets/afterChange-hook.ts",
+        "src/server/payload/hooks/configSecrets/beforeChange-hook.ts",
+        "src/server/payload/hooks/configValues/beforeChange-hook.ts",
+        "src/server/payload/hooks/validateLocaleUniqueness.ts",
+        "src/server/payload/migrations/backfillAdminTitle.ts",
+        "src/server/payload/plugins/index.ts",
+        "src/ui/web/footer/config.ts",
+        "src/ui/web/header/config.ts"
+      ]
+    },
     "authenticated-endpoint": {
       "pattern": "authenticated-endpoint",
       "description": "API endpoint requiring authentication",
@@ -573,11 +718,17 @@
         "src/app/(frontend)/courses/[courseSlug]/page.tsx",
         "src/app/(frontend)/next/preview/route.ts",
         "src/app/(frontend)/next/seed/route.ts",
+        "src/app/(frontend)/products/validate-coupon-action.ts",
+        "src/app/api/account/transactions/[id]/route.ts",
+        "src/app/api/admin/dashboard-metrics/route.ts",
+        "src/app/api/admin/transactions/[id]/refund/route.ts",
         "src/app/api/agent/chat-quota/route.ts",
+        "src/app/api/agent/chat/debug-prompt/route.ts",
         "src/app/api/agent/chat/route.ts",
         "src/app/api/agent/chat/stream/route.ts",
         "src/app/api/agent/conversation/route.ts",
         "src/app/api/agent/generate-interactive-lesson/route.ts",
+        "src/app/api/agent/learning-chat/route.ts",
         "src/app/api/agent/message/persist/route.ts",
         "src/app/api/agent/reset-chat/route.ts",
         "src/app/api/blob/upload-token/route.ts",
@@ -596,6 +747,9 @@
         "src/app/api/exercises/import/route.ts",
         "src/app/api/exercises/validate-answer/route.ts",
         "src/app/api/jobs/run-immediate/route.ts",
+        "src/app/api/lessons/[id]/duplicate-variation/route.ts",
+        "src/app/api/lessons/[id]/export/route.ts",
+        "src/app/api/payments/checkout/route.ts",
         "src/app/api/progress/route.ts",
         "src/app/api/prompts/for-conversion/route.ts",
         "src/app/api/stats/activity/route.ts",
@@ -606,17 +760,53 @@
         "src/app/api/study-plan/route.ts",
         "src/app/api/teacher-profiles/route.ts",
         "src/app/api/translation/translate/route.ts",
+        "src/app/api/tts/synthesize/route.ts",
         "src/app/api/user-settings/route.ts",
         "src/infra/analytics/system-events-subscriber.ts",
+        "src/infra/auth/oauth_session.ts",
         "src/server/api/with-api-handler.ts",
         "src/server/payload/endpoints/agent/auth-middleware.ts",
+        "src/server/payload/endpoints/agent/chat-debug-prompt.ts",
         "src/server/payload/endpoints/agent/chat-stream.ts",
         "src/server/payload/endpoints/agent/chat.ts",
         "src/server/payload/endpoints/agent/get-conversation.ts",
+        "src/server/payload/endpoints/agent/learning-chat.ts",
         "src/server/payload/endpoints/agent/reset-chat.ts",
         "src/server/payload/endpoints/cron/guest-sessions-cleanup.ts",
         "src/server/payload/endpoints/cron/media-expiry.ts",
         "src/server/utils/access-gate-server.ts"
+      ]
+    },
+    "validated-endpoint": {
+      "pattern": "validated-endpoint",
+      "description": "API endpoint with Zod validation",
+      "files": [
+        "src/app/(frontend)/products/validate-coupon-action.ts",
+        "src/app/api/agent/conversation/route.ts",
+        "src/app/api/agent/message/persist/route.ts",
+        "src/app/api/agent/reset-chat/route.ts",
+        "src/app/api/blob/upload-token/route.ts",
+        "src/app/api/course-search/route.ts",
+        "src/app/api/course-syllabus/route.ts",
+        "src/app/api/entitlements/redeem/route.ts",
+        "src/app/api/exercises/[id]/blocks/[blockId]/route.ts",
+        "src/app/api/exercises/convert/single/create/route.ts",
+        "src/app/api/exercises/import-latex-ai/route.ts",
+        "src/app/api/lessons/convert-full-latex/route.ts",
+        "src/app/api/payments/checkout/route.ts",
+        "src/app/api/progress/route.ts",
+        "src/app/api/stats/activity/route.ts",
+        "src/app/api/study-plan/route.ts",
+        "src/infra/llm/schemas/lesson-duplication-output.ts",
+        "src/server/payload/endpoints/agent/chat.ts",
+        "src/server/payload/endpoints/agent/chat/request-validation.ts",
+        "src/server/payload/endpoints/agent/get-conversation.ts",
+        "src/server/payload/endpoints/agent/learning-chat.ts",
+        "src/server/payload/endpoints/agent/learning-chat/index.ts",
+        "src/server/payload/endpoints/agent/reset-chat.ts",
+        "src/server/payload/endpoints/exercises/import-from-latex.ts",
+        "src/server/payload/endpoints/exercises/validate-answer.ts",
+        "src/server/payload/jobs/pdf-to-exercises-task.ts"
       ]
     },
     "admin-page": {
@@ -624,24 +814,36 @@
       "description": "No description available",
       "files": [
         "src/app/(payload)/admin/chat/page.tsx",
+        "src/app/(payload)/admin/lesson-duplications/[id]/page.tsx",
+        "src/app/(payload)/admin/lesson-duplications/page.tsx",
         "src/app/(payload)/admin/pdf-conversion/page.tsx"
       ]
+    },
+    "admin-layout": {
+      "pattern": "admin-layout",
+      "description": "No description available",
+      "files": ["src/app/(payload)/admin/layout.tsx"]
     },
     "api-endpoint": {
       "pattern": "api-endpoint",
       "description": "Next.js API route handler",
       "files": [
+        "src/app/api/account/transactions/[id]/route.ts",
+        "src/app/api/admin/transactions/[id]/refund/route.ts",
         "src/app/api/agent/chat-quota/route.ts",
+        "src/app/api/agent/chat/debug-prompt/route.ts",
         "src/app/api/agent/chat/route.ts",
         "src/app/api/agent/chat/stream/route.ts",
         "src/app/api/agent/conversation/route.ts",
         "src/app/api/agent/generate-interactive-lesson/route.ts",
+        "src/app/api/agent/learning-chat/route.ts",
         "src/app/api/agent/message/persist/route.ts",
         "src/app/api/agent/reset-chat/route.ts",
         "src/app/api/chapters/by-grade/route.ts",
         "src/app/api/conversations/by-context/route.ts",
         "src/app/api/course-search/route.ts",
         "src/app/api/course-syllabus/route.ts",
+        "src/app/api/cron/process-duplications/route.ts",
         "src/app/api/entitlements/check/route.ts",
         "src/app/api/entitlements/redeem/route.ts",
         "src/app/api/example/route.ts",
@@ -654,45 +856,23 @@
         "src/app/api/exercises/import-latex/route.ts",
         "src/app/api/exercises/import/route.ts",
         "src/app/api/jobs/run-immediate/route.ts",
+        "src/app/api/lessons/[id]/duplicate-variation/route.ts",
         "src/app/api/oauth/google/callback/oauth_callback_helpers.ts",
         "src/app/api/oauth/google/callback/route.ts",
         "src/app/api/oauth/google/route.ts",
+        "src/app/api/payments/checkout/route.ts",
         "src/app/api/pdfjs-viewer/route.ts",
         "src/app/api/progress/route.ts",
         "src/app/api/prompts/for-conversion/route.ts",
         "src/app/api/study-plan/route.ts",
+        "src/app/api/tts/synthesize/route.ts",
+        "src/app/api/webhooks/paypal/route.ts",
+        "src/app/api/webhooks/stripe/route.ts",
         "src/infra/auth/oauth_cookies.ts",
         "src/infra/auth/oauth_state.ts",
         "src/middleware.ts",
         "src/server/api/responses.ts",
         "src/server/api/with-api-handler.ts"
-      ]
-    },
-    "validated-endpoint": {
-      "pattern": "validated-endpoint",
-      "description": "API endpoint with Zod validation",
-      "files": [
-        "src/app/api/agent/conversation/route.ts",
-        "src/app/api/agent/message/persist/route.ts",
-        "src/app/api/agent/reset-chat/route.ts",
-        "src/app/api/blob/upload-token/route.ts",
-        "src/app/api/course-search/route.ts",
-        "src/app/api/course-syllabus/route.ts",
-        "src/app/api/entitlements/redeem/route.ts",
-        "src/app/api/exercises/[id]/blocks/[blockId]/route.ts",
-        "src/app/api/exercises/convert/single/create/route.ts",
-        "src/app/api/exercises/import-latex-ai/route.ts",
-        "src/app/api/lessons/create-context-exercises/route.ts",
-        "src/app/api/progress/route.ts",
-        "src/app/api/stats/activity/route.ts",
-        "src/app/api/study-plan/route.ts",
-        "src/server/payload/endpoints/agent/chat.ts",
-        "src/server/payload/endpoints/agent/chat/request-validation.ts",
-        "src/server/payload/endpoints/agent/get-conversation.ts",
-        "src/server/payload/endpoints/agent/reset-chat.ts",
-        "src/server/payload/endpoints/exercises/import-from-latex.ts",
-        "src/server/payload/endpoints/exercises/validate-answer.ts",
-        "src/server/payload/jobs/pdf-to-exercises-task.ts"
       ]
     },
     "copilotkit-runtime": {
@@ -708,7 +888,7 @@
     "atomic-update": {
       "pattern": "atomic-update",
       "description": "No description available",
-      "files": ["src/app/api/entitlements/redeem/route.ts"]
+      "files": ["src/app/api/entitlements/redeem/route.ts", "src/lib/payment/grant-entitlements.ts"]
     },
     "validation": {
       "pattern": "validation",
@@ -743,6 +923,19 @@
       "description": "No description available",
       "files": ["src/app/api/exercises/convert/queue-v2/route.ts"]
     },
+    "payload-endpoint-wrapper": {
+      "pattern": "payload-endpoint-wrapper",
+      "description": "No description available",
+      "files": [
+        "src/app/api/lessons/[id]/duplicate-variation/route.ts",
+        "src/app/api/lessons/[id]/export/route.ts"
+      ]
+    },
+    "subject-detection": {
+      "pattern": "subject-detection",
+      "description": "No description available",
+      "files": ["src/app/api/lessons/[id]/suggested-subject/route.ts"]
+    },
     "oauth": {
       "pattern": "oauth",
       "description": "No description available",
@@ -759,6 +952,16 @@
         "src/infra/auth/oauth_state.ts",
         "src/infra/auth/oauth_url.ts"
       ]
+    },
+    "checkout-initiation": {
+      "pattern": "checkout-initiation",
+      "description": "No description available",
+      "files": ["src/app/api/payments/checkout/route.ts"]
+    },
+    "webhook": {
+      "pattern": "webhook",
+      "description": "No description available",
+      "files": ["src/app/api/webhooks/paypal/route.ts", "src/app/api/webhooks/stripe/route.ts"]
     },
     "encryption": {
       "pattern": "encryption",
@@ -889,6 +1092,16 @@
       "description": "No description available",
       "files": ["src/infra/llm/genkit/tools/genkit-tools.ts"]
     },
+    "pricing": {
+      "pattern": "pricing",
+      "description": "No description available",
+      "files": ["src/infra/llm/pricing.ts"]
+    },
+    "cost-tracking": {
+      "pattern": "cost-tracking",
+      "description": "No description available",
+      "files": ["src/infra/llm/pricing.ts"]
+    },
     "server-only": {
       "pattern": "server-only",
       "description": "No description available",
@@ -967,42 +1180,6 @@
         "src/server/payload/collections/Media/hooks/resolveEmbed.ts"
       ]
     },
-    "payload-hooks": {
-      "pattern": "payload-hooks",
-      "description": "Payload lifecycle hooks (beforeChange, afterChange, etc.)",
-      "files": [
-        "src/infra/media/embed/vimeo.ts",
-        "src/server/payload/collections/Categories.ts",
-        "src/server/payload/collections/Chapters.ts",
-        "src/server/payload/collections/ConfigSecrets.ts",
-        "src/server/payload/collections/ConfigValues.ts",
-        "src/server/payload/collections/ContentPages.ts",
-        "src/server/payload/collections/Conversations.ts",
-        "src/server/payload/collections/Courses.ts",
-        "src/server/payload/collections/Exercises/index.ts",
-        "src/server/payload/collections/Lessons.ts",
-        "src/server/payload/collections/Media/hooks/enforceRetentionPolicy.ts",
-        "src/server/payload/collections/Media/hooks/resolveEmbed.ts",
-        "src/server/payload/collections/Media/index.ts",
-        "src/server/payload/collections/Pages/index.ts",
-        "src/server/payload/collections/Posts/index.ts",
-        "src/server/payload/collections/Prompts.ts",
-        "src/server/payload/collections/TeacherProfiles.ts",
-        "src/server/payload/collections/Users/hooks/auditRoleChange-hook.ts",
-        "src/server/payload/collections/Users/hooks/ensureRoleOnSignup-hook.ts",
-        "src/server/payload/collections/Users/hooks/preventLastAdminDemotion-hook.ts",
-        "src/server/payload/collections/Users/index.ts",
-        "src/server/payload/fields/createdBy.ts",
-        "src/server/payload/hooks/configSecrets/afterChange-hook.ts",
-        "src/server/payload/hooks/configSecrets/beforeChange-hook.ts",
-        "src/server/payload/hooks/configValues/beforeChange-hook.ts",
-        "src/server/payload/hooks/validateLocaleUniqueness.ts",
-        "src/server/payload/migrations/backfillAdminTitle.ts",
-        "src/server/payload/plugins/index.ts",
-        "src/ui/web/footer/config.ts",
-        "src/ui/web/header/config.ts"
-      ]
-    },
     "youtube-detection": {
       "pattern": "youtube-detection",
       "description": "No description available",
@@ -1073,6 +1250,11 @@
       "description": "No description available",
       "files": ["src/infra/utils/graphics/viewport-utils.ts"]
     },
+    "math-to-speech": {
+      "pattern": "math-to-speech",
+      "description": "No description available",
+      "files": ["src/infra/utils/latexToSpeech.ts"]
+    },
     "browser-api-types": {
       "pattern": "browser-api-types",
       "description": "No description available",
@@ -1083,21 +1265,45 @@
       "description": "No description available",
       "files": ["src/infra/utils/speechHelpers.ts"]
     },
+    "promise-race-timeout": {
+      "pattern": "promise-race-timeout",
+      "description": "No description available",
+      "files": ["src/infra/utils/with-timeout.ts"]
+    },
+    "env-vault": {
+      "pattern": "env-vault",
+      "description": "No description available",
+      "files": ["src/lib/payment/env.ts"]
+    },
     "typed-config-accessor": {
       "pattern": "typed-config-accessor",
       "description": "No description available",
       "files": ["src/server/config/guest-chat-config.ts"]
     },
+    "purchase-receipt": {
+      "pattern": "purchase-receipt",
+      "description": "No description available",
+      "files": [
+        "src/server/email/services/purchase-receipt-service.ts",
+        "src/server/email/templates/purchase-receipt/index.ts",
+        "src/server/email/templates/purchase-receipt/purchase-receipt.en.ts",
+        "src/server/email/templates/purchase-receipt/purchase-receipt.he.ts"
+      ]
+    },
     "admin-only": {
       "pattern": "admin-only",
       "description": "No description available",
-      "files": ["src/server/payload/access/configAdminOnly.ts"]
+      "files": [
+        "src/server/payload/access/configAdminOnly.ts",
+        "src/server/payload/endpoints/agent/chat-debug-prompt.ts"
+      ]
     },
     "access-control": {
       "pattern": "access-control",
       "description": "Explicit access control defined for CRUD operations",
       "files": [
         "src/server/payload/collections/AccessCodes.ts",
+        "src/server/payload/collections/AgentBehaviorPrompts.ts",
         "src/server/payload/collections/Categories.ts",
         "src/server/payload/collections/Chapters.ts",
         "src/server/payload/collections/ChatAssets/index.ts",
@@ -1107,29 +1313,43 @@
         "src/server/payload/collections/ContentPages.ts",
         "src/server/payload/collections/ContextExtractions.ts",
         "src/server/payload/collections/Conversations.ts",
+        "src/server/payload/collections/CouponUsages.ts",
+        "src/server/payload/collections/Coupons.ts",
         "src/server/payload/collections/Courses.ts",
         "src/server/payload/collections/ExerciseAssets.ts",
         "src/server/payload/collections/Exercises/index.ts",
         "src/server/payload/collections/ExtractionLogs.ts",
         "src/server/payload/collections/FormulaSheets.ts",
         "src/server/payload/collections/GuestSessions.ts",
+        "src/server/payload/collections/InteractiveLessons/index.ts",
+        "src/server/payload/collections/LessonDuplications.ts",
         "src/server/payload/collections/Lessons.ts",
         "src/server/payload/collections/MCPAuditLogs.ts",
         "src/server/payload/collections/Media/index.ts",
         "src/server/payload/collections/MemoryItems.ts",
         "src/server/payload/collections/Pages/index.ts",
+        "src/server/payload/collections/PaymentStats.ts",
         "src/server/payload/collections/Posts/index.ts",
         "src/server/payload/collections/PricingPlans.ts",
+        "src/server/payload/collections/ProductItems.ts",
+        "src/server/payload/collections/Products.ts",
         "src/server/payload/collections/Prompts.ts",
         "src/server/payload/collections/TeacherProfiles.ts",
         "src/server/payload/collections/Tenants.ts",
+        "src/server/payload/collections/Transactions.ts",
         "src/server/payload/collections/TranslationGlossary.ts",
         "src/server/payload/collections/UploadSessions/index.ts",
         "src/server/payload/collections/UserProgress.ts",
         "src/server/payload/collections/UserSettings/index.ts",
         "src/server/payload/collections/UserStats.ts",
-        "src/server/payload/collections/Users/index.ts"
+        "src/server/payload/collections/Users/index.ts",
+        "src/server/payload/collections/WebhookEvents.ts"
       ]
+    },
+    "agent-behavior": {
+      "pattern": "agent-behavior",
+      "description": "No description available",
+      "files": ["src/server/payload/collections/AgentBehaviorPrompts.ts"]
     },
     "hierarchical-data": {
       "pattern": "hierarchical-data",
@@ -1138,7 +1358,8 @@
         "src/server/payload/collections/Chapters.ts",
         "src/server/payload/collections/Courses.ts",
         "src/server/payload/collections/Exercises/index.ts",
-        "src/server/payload/collections/Lessons.ts"
+        "src/server/payload/collections/Lessons.ts",
+        "src/server/payload/collections/Transactions.ts"
       ]
     },
     "audit-log": {
@@ -1185,6 +1406,19 @@
         "src/server/payload/collections/Users/index.ts"
       ]
     },
+    "coupon": {
+      "pattern": "coupon",
+      "description": "No description available",
+      "files": [
+        "src/server/payload/collections/CouponUsages.ts",
+        "src/server/payload/hooks/coupons/computeListDisplayFields-hook.ts"
+      ]
+    },
+    "discount-code": {
+      "pattern": "discount-code",
+      "description": "No description available",
+      "files": ["src/server/payload/collections/Coupons.ts"]
+    },
     "published-content": {
       "pattern": "published-content",
       "description": "Collection with publishedAt field and isPublished access control",
@@ -1226,6 +1460,41 @@
       "description": "No description available",
       "files": ["src/server/payload/collections/GuestSessions.ts"]
     },
+    "content-cache": {
+      "pattern": "content-cache",
+      "description": "No description available",
+      "files": ["src/server/payload/collections/InteractiveLessons/index.ts"]
+    },
+    "job-record": {
+      "pattern": "job-record",
+      "description": "No description available",
+      "files": ["src/server/payload/collections/LessonDuplications.ts"]
+    },
+    "transaction-log": {
+      "pattern": "transaction-log",
+      "description": "No description available",
+      "files": [
+        "src/server/payload/collections/PaymentStats.ts",
+        "src/server/payload/collections/Transactions.ts",
+        "src/server/payload/collections/Transactions/hooks/statusTransitionGuard-hook.ts",
+        "src/server/payload/collections/Transactions/hooks/syncPaymentStats-hook.ts"
+      ]
+    },
+    "conditional-fields": {
+      "pattern": "conditional-fields",
+      "description": "No description available",
+      "files": ["src/server/payload/collections/ProductItems.ts"]
+    },
+    "discriminated-union": {
+      "pattern": "discriminated-union",
+      "description": "No description available",
+      "files": ["src/server/payload/collections/ProductItems.ts"]
+    },
+    "composable-bundle": {
+      "pattern": "composable-bundle",
+      "description": "No description available",
+      "files": ["src/server/payload/collections/Products.ts"]
+    },
     "teacher-profile": {
       "pattern": "teacher-profile",
       "description": "No description available",
@@ -1243,6 +1512,11 @@
       "pattern": "user-settings",
       "description": "No description available",
       "files": ["src/server/payload/collections/UserSettings/index.ts"]
+    },
+    "webhook-dedup": {
+      "pattern": "webhook-dedup",
+      "description": "No description available",
+      "files": ["src/server/payload/collections/WebhookEvents.ts"]
     },
     "guest-session": {
       "pattern": "guest-session",
@@ -1269,15 +1543,26 @@
       "description": "No description available",
       "files": ["src/server/payload/endpoints/agent/chat/pipeline.ts"]
     },
+    "debug": {
+      "pattern": "debug",
+      "description": "No description available",
+      "files": ["src/server/payload/endpoints/agent/chat-debug-prompt.ts"]
+    },
     "streaming": {
       "pattern": "streaming",
       "description": "No description available",
-      "files": ["src/server/payload/endpoints/agent/chat-stream.ts"]
+      "files": [
+        "src/server/payload/endpoints/agent/chat-stream.ts",
+        "src/server/payload/endpoints/agent/learning-chat/index.ts"
+      ]
     },
     "sse": {
       "pattern": "sse",
       "description": "No description available",
-      "files": ["src/server/payload/endpoints/agent/chat-stream.ts"]
+      "files": [
+        "src/server/payload/endpoints/agent/chat-stream.ts",
+        "src/server/payload/endpoints/agent/learning-chat/index.ts"
+      ]
     },
     "server-sent-events": {
       "pattern": "server-sent-events",
@@ -1289,12 +1574,42 @@
       "description": "No description available",
       "files": ["src/server/payload/endpoints/agent/chat.ts"]
     },
+    "learning-agent": {
+      "pattern": "learning-agent",
+      "description": "No description available",
+      "files": [
+        "src/server/payload/endpoints/agent/learning-chat.ts",
+        "src/server/payload/endpoints/agent/learning-chat/index.ts"
+      ]
+    },
+    "user-scoped": {
+      "pattern": "user-scoped",
+      "description": "No description available",
+      "files": [
+        "src/server/payload/endpoints/agent/learning-chat.ts",
+        "src/server/payload/endpoints/agent/learning-chat/index.ts"
+      ]
+    },
     "cron-endpoint": {
       "pattern": "cron-endpoint",
       "description": "No description available",
       "files": [
         "src/server/payload/endpoints/cron/guest-sessions-cleanup.ts",
         "src/server/payload/endpoints/cron/media-expiry.ts"
+      ]
+    },
+    "duplication-job": {
+      "pattern": "duplication-job",
+      "description": "No description available",
+      "files": ["src/server/payload/endpoints/lessons/duplicate.ts"]
+    },
+    "lesson-export": {
+      "pattern": "lesson-export",
+      "description": "No description available",
+      "files": [
+        "src/server/payload/endpoints/lessons/export.ts",
+        "src/server/services/lesson-duplication/graphics-to-svg.ts",
+        "src/server/services/lesson-export/to-canonical-format.ts"
       ]
     },
     "data-seeding": {
@@ -1363,6 +1678,11 @@
       "description": "No description available",
       "files": ["src/server/repos/queries/formula-sheets.ts"]
     },
+    "repository": {
+      "pattern": "repository",
+      "description": "No description available",
+      "files": ["src/server/repos/queries/products.ts"]
+    },
     "rolling-window-quota": {
       "pattern": "rolling-window-quota",
       "description": "No description available",
@@ -1372,6 +1692,16 @@
       "pattern": "service-layer",
       "description": "No description available",
       "files": ["src/server/services/conversation-service.ts"]
+    },
+    "diff-classifier": {
+      "pattern": "diff-classifier",
+      "description": "No description available",
+      "files": [
+        "src/server/services/diff.ts",
+        "src/server/services/lesson-duplication/diff.ts",
+        "src/ui/admin/LessonDuplicationReview/lib/diff.ts",
+        "src/utils/diff.ts"
+      ]
     },
     "image-processing": {
       "pattern": "image-processing",
@@ -1448,18 +1778,58 @@
       "description": "No description available",
       "files": ["src/server/services/guest-session-upgrade.ts"]
     },
-    "admin-dashboard-widget": {
-      "pattern": "admin-dashboard-widget",
+    "algebraic-detector": {
+      "pattern": "algebraic-detector",
       "description": "No description available",
-      "files": ["src/ui/admin/AdminChat/DashboardWidget/index.tsx"]
+      "files": ["src/server/services/lesson-duplication/strategies/algebraic-detector.ts"]
+    },
+    "variation-router": {
+      "pattern": "variation-router",
+      "description": "No description available",
+      "files": ["src/server/services/lesson-duplication/strategies/router.ts"]
+    },
+    "script-variation": {
+      "pattern": "script-variation",
+      "description": "No description available",
+      "files": ["src/server/services/lesson-duplication/strategies/script-strategy.ts"]
+    },
+    "variation-strategy": {
+      "pattern": "variation-strategy",
+      "description": "No description available",
+      "files": ["src/server/services/lesson-duplication/strategies/types.ts"]
+    },
+    "subject-detector": {
+      "pattern": "subject-detector",
+      "description": "No description available",
+      "files": ["src/server/services/lesson-duplication/subject-detector.ts"]
+    },
+    "admin-action-modal": {
+      "pattern": "admin-action-modal",
+      "description": "No description available",
+      "files": ["src/ui/admin/LessonDuplicateButton/LessonDuplicateButton.tsx"]
+    },
+    "admin-action-link": {
+      "pattern": "admin-action-link",
+      "description": "No description available",
+      "files": ["src/ui/admin/LessonDuplicationReview/ReviewLinkButton.tsx"]
     },
     "admin-sidebar-link": {
       "pattern": "admin-sidebar-link",
       "description": "No description available",
       "files": [
-        "src/ui/admin/AdminChat/SidebarLink/index.tsx",
+        "src/ui/admin/LessonDuplicationReview/SidebarLink/index.tsx",
         "src/ui/admin/PdfConversion/SidebarLink/index.tsx"
       ]
+    },
+    "review-list": {
+      "pattern": "review-list",
+      "description": "No description available",
+      "files": ["src/ui/admin/LessonDuplicationReview/index.tsx"]
+    },
+    "admin-action-button": {
+      "pattern": "admin-action-button",
+      "description": "No description available",
+      "files": ["src/ui/admin/LessonExportButton/LessonExportButton.tsx"]
     },
     "form": {
       "pattern": "form",
@@ -1524,6 +1894,11 @@
       "description": "No description available",
       "files": ["src/ui/web/components/tabs.tsx"]
     },
+    "math-expression-parser": {
+      "pattern": "math-expression-parser",
+      "description": "No description available",
+      "files": ["src/ui/web/exerciserenderer/utils/safeMathEval.ts"]
+    },
     "action-button": {
       "pattern": "action-button",
       "description": "No description available",
@@ -1533,6 +1908,11 @@
       "pattern": "content-renderer",
       "description": "No description available",
       "files": ["src/ui/web/shared/FormulaSheetViewer/FormulaSheetContent.tsx"]
+    },
+    "aggregator": {
+      "pattern": "aggregator",
+      "description": "No description available",
+      "files": ["src/ui/web/shared/LatexDocumentViewer/consolidate-latex-blocks.ts"]
     },
     "viewer": {
       "pattern": "viewer",
@@ -1633,6 +2013,22 @@
       "aiSummary": "",
       "dependencies": ["react", "sonner", "lucide-react"]
     },
+    "src/app/(frontend)/account/purchases/PurchasesPageContent.tsx": {
+      "path": "src/app/(frontend)/account/purchases/PurchasesPageContent.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["lucide-react"]
+    },
+    "src/app/(frontend)/account/purchases/[transactionId]/TransactionDetailContent.tsx": {
+      "path": "src/app/(frontend)/account/purchases/[transactionId]/TransactionDetailContent.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
     "src/app/(frontend)/ask/_components/AskContent/index.tsx": {
       "path": "src/app/(frontend)/ask/_components/AskContent/index.tsx",
       "type": "unknown",
@@ -1679,7 +2075,7 @@
       "domain": "general",
       "patterns": ["i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["lucide-react", "react", "sonner"]
+      "dependencies": ["react", "sonner"]
     },
     "src/app/(frontend)/ask/_components/InteractivePlayer/useGenerateLesson.ts": {
       "path": "src/app/(frontend)/ask/_components/InteractivePlayer/useGenerateLesson.ts",
@@ -1688,6 +2084,22 @@
       "patterns": ["client-component"],
       "aiSummary": "",
       "dependencies": ["react"]
+    },
+    "src/app/(frontend)/checkout/cancel/CheckoutCancelContent.tsx": {
+      "path": "src/app/(frontend)/checkout/cancel/CheckoutCancelContent.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["lucide-react"]
+    },
+    "src/app/(frontend)/checkout/success/CheckoutSuccessContent.tsx": {
+      "path": "src/app/(frontend)/checkout/success/CheckoutSuccessContent.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["lucide-react"]
     },
     "src/app/(frontend)/courses/[courseSlug]/_components/AddExamDialog/index.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/_components/AddExamDialog/index.tsx",
@@ -1761,6 +2173,22 @@
       "aiSummary": "",
       "dependencies": ["react"]
     },
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/BlocksDocumentLessonView/index.tsx": {
+      "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/BlocksDocumentLessonView/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ConsolidatedLatexLessonView/index.tsx": {
+      "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ConsolidatedLatexLessonView/index.tsx",
+      "type": "component",
+      "domain": "lessons",
+      "patterns": ["view", "client-component"],
+      "aiSummary": "Renders every LaTeX block from a practice/exam lesson's exercises as a single",
+      "dependencies": ["react"]
+    },
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ConvertButton.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ConvertButton.tsx",
       "type": "unknown",
@@ -1769,13 +2197,45 @@
       "aiSummary": "",
       "dependencies": ["react", "next/navigation"]
     },
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/TabButton.tsx": {
+      "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/TabButton.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/index.tsx": {
+      "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/index.tsx",
+      "type": "component",
+      "domain": "lessons",
+      "patterns": ["dual-view", "i18n-component", "client-component"],
+      "aiSummary": "Tab-based lesson view supporting up to three tabs: Media (attached",
+      "dependencies": ["react"]
+    },
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/useLessonViewMode.ts": {
+      "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/DualModeLessonView/useLessonViewMode.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component", "payload-hooks"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/ExercisesPager/index.tsx",
       "type": "unknown",
       "domain": "general",
       "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react", "framer-motion"]
+      "dependencies": ["react", "lucide-react", "framer-motion"]
+    },
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/FloatingAskButton/index.tsx": {
+      "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/FloatingAskButton/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["lucide-react", "react"]
     },
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonAnalytics.tsx": {
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonAnalytics.tsx",
@@ -1803,6 +2263,14 @@
     },
     "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/useLessonPager.ts": {
       "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/LessonPager/useLessonPager.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/MediaTabContent/index.tsx": {
+      "path": "src/app/(frontend)/courses/[courseSlug]/chapters/[chapterSlug]/lessons/[lessonSlug]/_components/MediaTabContent/index.tsx",
       "type": "unknown",
       "domain": "general",
       "patterns": ["client-component"],
@@ -2159,6 +2627,70 @@
       "aiSummary": "",
       "dependencies": ["react"]
     },
+    "src/app/(frontend)/products/[slug]/BuyButton.tsx": {
+      "path": "src/app/(frontend)/products/[slug]/BuyButton.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["next/navigation", "react", "@payloadcms/ui", "lucide-react", "sonner"]
+    },
+    "src/app/(frontend)/products/[slug]/CouponInput.tsx": {
+      "path": "src/app/(frontend)/products/[slug]/CouponInput.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "lucide-react"]
+    },
+    "src/app/(frontend)/products/[slug]/ProductDetailContent.tsx": {
+      "path": "src/app/(frontend)/products/[slug]/ProductDetailContent.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "next/link"]
+    },
+    "src/app/(frontend)/products/_components/EmptyProducts/index.tsx": {
+      "path": "src/app/(frontend)/products/_components/EmptyProducts/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["lucide-react"]
+    },
+    "src/app/(frontend)/products/_components/ProductCard/index.tsx": {
+      "path": "src/app/(frontend)/products/_components/ProductCard/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": []
+    },
+    "src/app/(frontend)/products/_components/ProductCardGrid/index.tsx": {
+      "path": "src/app/(frontend)/products/_components/ProductCardGrid/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": []
+    },
+    "src/app/(frontend)/products/_components/ProductsHeader/index.tsx": {
+      "path": "src/app/(frontend)/products/_components/ProductsHeader/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": []
+    },
+    "src/app/(frontend)/products/validate-coupon-action.ts": {
+      "path": "src/app/(frontend)/products/validate-coupon-action.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["authenticated-endpoint", "validated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["next/headers", "payload", "zod", "@payload-config"]
+    },
     "src/app/(frontend)/search/page.client.tsx": {
       "path": "src/app/(frontend)/search/page.client.tsx",
       "type": "unknown",
@@ -2287,6 +2819,30 @@
       "aiSummary": "Dedicated admin chat interface for querying content via MCP tools",
       "dependencies": []
     },
+    "src/app/(payload)/admin/layout.tsx": {
+      "path": "src/app/(payload)/admin/layout.tsx",
+      "type": "layout",
+      "domain": "admin",
+      "patterns": ["admin-layout"],
+      "aiSummary": "Admin layout wrapper for floating chat button",
+      "dependencies": ["react"]
+    },
+    "src/app/(payload)/admin/lesson-duplications/[id]/page.tsx": {
+      "path": "src/app/(payload)/admin/lesson-duplications/[id]/page.tsx",
+      "type": "page",
+      "domain": "admin",
+      "patterns": ["admin-page", "client-component"],
+      "aiSummary": "Dedicated admin page for reviewing and resolving lesson duplication failures.",
+      "dependencies": ["next/navigation"]
+    },
+    "src/app/(payload)/admin/lesson-duplications/page.tsx": {
+      "path": "src/app/(payload)/admin/lesson-duplications/page.tsx",
+      "type": "page",
+      "domain": "admin",
+      "patterns": ["admin-page", "client-component"],
+      "aiSummary": "Redirects to the Payload collection list for lesson duplications.",
+      "dependencies": ["react", "next/navigation"]
+    },
     "src/app/(payload)/admin/pdf-conversion/page.tsx": {
       "path": "src/app/(payload)/admin/pdf-conversion/page.tsx",
       "type": "page",
@@ -2294,6 +2850,38 @@
       "patterns": ["admin-page", "client-component"],
       "aiSummary": "Dedicated admin page for PDF-to-exercise conversion",
       "dependencies": []
+    },
+    "src/app/api/account/transactions/[id]/route.ts": {
+      "path": "src/app/api/account/transactions/[id]/route.ts",
+      "type": "api-route",
+      "domain": "billing",
+      "patterns": ["api-endpoint", "authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["next/server", "payload", "@payload-config"]
+    },
+    "src/app/api/admin/dashboard-metrics/route.ts": {
+      "path": "src/app/api/admin/dashboard-metrics/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["payload", "@payload-config"]
+    },
+    "src/app/api/admin/transactions/[id]/refund/route.ts": {
+      "path": "src/app/api/admin/transactions/[id]/refund/route.ts",
+      "type": "api-route",
+      "domain": "payments",
+      "patterns": ["api-endpoint", "authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["next/server", "payload", "@payload-config"]
+    },
+    "src/app/api/agent/chat/debug-prompt/route.ts": {
+      "path": "src/app/api/agent/chat/debug-prompt/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["api-endpoint", "authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["@payload-config", "next/server", "payload"]
     },
     "src/app/api/agent/chat/route.ts": {
       "path": "src/app/api/agent/chat/route.ts",
@@ -2329,6 +2917,14 @@
     },
     "src/app/api/agent/generate-interactive-lesson/route.ts": {
       "path": "src/app/api/agent/generate-interactive-lesson/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["api-endpoint", "authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["@payload-config", "next/server", "payload"]
+    },
+    "src/app/api/agent/learning-chat/route.ts": {
+      "path": "src/app/api/agent/learning-chat/route.ts",
       "type": "unknown",
       "domain": "general",
       "patterns": ["api-endpoint", "authenticated-endpoint"],
@@ -2406,6 +3002,14 @@
       "patterns": ["course-syllabus", "api-endpoint", "validated-endpoint"],
       "aiSummary": "Returns full syllabus (chapters + lessons) for a course",
       "dependencies": ["next/server", "zod"]
+    },
+    "src/app/api/cron/process-duplications/route.ts": {
+      "path": "src/app/api/cron/process-duplications/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["api-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["crypto", "next/server", "mongodb", "payload", "@payload-config"]
     },
     "src/app/api/entitlements/check/route.ts": {
       "path": "src/app/api/entitlements/check/route.ts",
@@ -2551,8 +3155,32 @@
       "aiSummary": "",
       "dependencies": ["@payload-config", "mongodb", "next/server", "payload"]
     },
-    "src/app/api/lessons/create-context-exercises/route.ts": {
-      "path": "src/app/api/lessons/create-context-exercises/route.ts",
+    "src/app/api/lessons/[id]/duplicate-variation/route.ts": {
+      "path": "src/app/api/lessons/[id]/duplicate-variation/route.ts",
+      "type": "api-route",
+      "domain": "lesson-duplication",
+      "patterns": ["payload-endpoint-wrapper", "api-endpoint", "authenticated-endpoint"],
+      "aiSummary": "Forwards POST to the Payload duplicate endpoint with auth + payload context attached.",
+      "dependencies": ["next/server", "payload", "@payload-config"]
+    },
+    "src/app/api/lessons/[id]/export/route.ts": {
+      "path": "src/app/api/lessons/[id]/export/route.ts",
+      "type": "api-route",
+      "domain": "lessons",
+      "patterns": ["payload-endpoint-wrapper", "authenticated-endpoint"],
+      "aiSummary": "Forwards GET to the Payload export endpoint with auth + payload context attached.",
+      "dependencies": ["next/server", "payload", "@payload-config"]
+    },
+    "src/app/api/lessons/[id]/suggested-subject/route.ts": {
+      "path": "src/app/api/lessons/[id]/suggested-subject/route.ts",
+      "type": "api-route",
+      "domain": "lesson-duplication",
+      "patterns": ["subject-detection"],
+      "aiSummary": "Reads a lesson's exercises and guesses subject by block types.",
+      "dependencies": ["payload", "@payload-config"]
+    },
+    "src/app/api/lessons/convert-full-latex/route.ts": {
+      "path": "src/app/api/lessons/convert-full-latex/route.ts",
       "type": "unknown",
       "domain": "general",
       "patterns": ["validated-endpoint"],
@@ -2582,6 +3210,19 @@
       "patterns": ["oauth", "api-endpoint"],
       "aiSummary": "Initiates Google OAuth flow by redirecting to Google consent screen",
       "dependencies": ["next/server"]
+    },
+    "src/app/api/payments/checkout/route.ts": {
+      "path": "src/app/api/payments/checkout/route.ts",
+      "type": "api-route",
+      "domain": "payments",
+      "patterns": [
+        "checkout-initiation",
+        "api-endpoint",
+        "authenticated-endpoint",
+        "validated-endpoint"
+      ],
+      "aiSummary": "Initiates a checkout session with the payment provider and creates a pending transaction record",
+      "dependencies": ["next/server", "payload", "zod", "@payload-config"]
     },
     "src/app/api/pdfjs-viewer/route.ts": {
       "path": "src/app/api/pdfjs-viewer/route.ts",
@@ -2653,7 +3294,7 @@
       "domain": "general",
       "patterns": ["api-endpoint", "authenticated-endpoint", "validated-endpoint"],
       "aiSummary": "",
-      "dependencies": ["@payload-config", "date-fns", "nanoid", "next/server", "payload", "zod"]
+      "dependencies": ["@payload-config", "nanoid", "next/server", "payload", "zod"]
     },
     "src/app/api/teacher-profiles/route.ts": {
       "path": "src/app/api/teacher-profiles/route.ts",
@@ -2671,6 +3312,14 @@
       "aiSummary": "",
       "dependencies": ["next/server", "payload", "@payload-config"]
     },
+    "src/app/api/tts/synthesize/route.ts": {
+      "path": "src/app/api/tts/synthesize/route.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["api-endpoint", "authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["@payload-config", "next/server", "payload"]
+    },
     "src/app/api/user-settings/route.ts": {
       "path": "src/app/api/user-settings/route.ts",
       "type": "unknown",
@@ -2679,6 +3328,22 @@
       "aiSummary": "",
       "dependencies": ["payload", "zod", "@payload-config"]
     },
+    "src/app/api/webhooks/paypal/route.ts": {
+      "path": "src/app/api/webhooks/paypal/route.ts",
+      "type": "api-route",
+      "domain": "payments",
+      "patterns": ["webhook", "api-endpoint", "payload-hooks"],
+      "aiSummary": "Handles PayPal webhook events for payment confirmation and refunds",
+      "dependencies": ["next/server", "mongodb", "payload", "@payload-config"]
+    },
+    "src/app/api/webhooks/stripe/route.ts": {
+      "path": "src/app/api/webhooks/stripe/route.ts",
+      "type": "api-route",
+      "domain": "payments",
+      "patterns": ["webhook", "api-endpoint", "payload-hooks"],
+      "aiSummary": "Handles Stripe webhook events for payment confirmation and refunds",
+      "dependencies": ["next/server", "mongodb", "stripe", "payload", "@payload-config"]
+    },
     "src/app/global-error.tsx": {
       "path": "src/app/global-error.tsx",
       "type": "unknown",
@@ -2686,6 +3351,14 @@
       "patterns": ["client-component"],
       "aiSummary": "",
       "dependencies": ["@sentry/nextjs", "next/error", "react"]
+    },
+    "src/brands/aguy/components/Logo.tsx": {
+      "path": "src/brands/aguy/components/Logo.tsx",
+      "type": "component",
+      "domain": "brands",
+      "patterns": ["tailwind-component"],
+      "aiSummary": "A-Guy brand logo component rendering the telescope SVG inline.",
+      "dependencies": ["react"]
     },
     "src/client/hooks/useAccessGate.ts": {
       "path": "src/client/hooks/useAccessGate.ts",
@@ -2883,9 +3556,9 @@
       "path": "src/infra/auth/oauth_session.ts",
       "type": "utility",
       "domain": "auth",
-      "patterns": ["oauth"],
+      "patterns": ["oauth", "authenticated-endpoint"],
       "aiSummary": "Issue Payload auth sessions using payload.login() for OAuth users",
-      "dependencies": ["payload", "@payload-config"]
+      "dependencies": ["crypto", "payload", "@payload-config", "jose"]
     },
     "src/infra/auth/oauth_state.ts": {
       "path": "src/infra/auth/oauth_state.ts",
@@ -2989,7 +3662,7 @@
       "domain": "ai",
       "patterns": ["abstraction", "genkit", "provider-abstraction"],
       "aiSummary": "",
-      "dependencies": ["genkit", "payload"]
+      "dependencies": ["@genkit-ai/googleai", "genkit", "payload"]
     },
     "src/infra/llm/genkit/config-resolver.ts": {
       "path": "src/infra/llm/genkit/config-resolver.ts",
@@ -3022,6 +3695,14 @@
       "patterns": ["genkit-tools", "tool-calling", "mcp-integration"],
       "aiSummary": "",
       "dependencies": ["genkit"]
+    },
+    "src/infra/llm/pricing.ts": {
+      "path": "src/infra/llm/pricing.ts",
+      "type": "utility",
+      "domain": "ai",
+      "patterns": ["pricing", "cost-tracking"],
+      "aiSummary": "Centralized price table for LLM providers. Prices are in USD per 1,000,000 tokens.",
+      "dependencies": []
     },
     "src/infra/llm/prompt-composer.server.ts": {
       "path": "src/infra/llm/prompt-composer.server.ts",
@@ -3070,6 +3751,22 @@
       "patterns": ["timeout"],
       "aiSummary": "",
       "dependencies": []
+    },
+    "src/infra/llm/schemas/lesson-duplication-output.ts": {
+      "path": "src/infra/llm/schemas/lesson-duplication-output.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["validated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["zod"]
+    },
+    "src/infra/llm/services/interactive-lesson/published-prompt-cache.ts": {
+      "path": "src/infra/llm/services/interactive-lesson/published-prompt-cache.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["payload-hooks"],
+      "aiSummary": "",
+      "dependencies": ["payload"]
     },
     "src/infra/llm/smart-doc-loader.ts": {
       "path": "src/infra/llm/smart-doc-loader.ts",
@@ -3295,6 +3992,14 @@
       "aiSummary": "Viewport utility functions for auto-calculating, validating, and resolving graph display ranges",
       "dependencies": []
     },
+    "src/infra/utils/latexToSpeech.ts": {
+      "path": "src/infra/utils/latexToSpeech.ts",
+      "type": "utility",
+      "domain": "shared",
+      "patterns": ["math-to-speech"],
+      "aiSummary": "Bilingual LaTeX-to-speech converter for English and Hebrew",
+      "dependencies": []
+    },
     "src/infra/utils/speech-recognition.d.ts": {
       "path": "src/infra/utils/speech-recognition.d.ts",
       "type": "type-declaration",
@@ -3318,6 +4023,30 @@
       "patterns": ["client-component"],
       "aiSummary": "",
       "dependencies": ["react", "next/navigation"]
+    },
+    "src/infra/utils/with-timeout.ts": {
+      "path": "src/infra/utils/with-timeout.ts",
+      "type": "utility",
+      "domain": "shared",
+      "patterns": ["promise-race-timeout"],
+      "aiSummary": "Races a promise against a timer; throws a TimeoutError when the timer wins.",
+      "dependencies": []
+    },
+    "src/lib/payment/env.ts": {
+      "path": "src/lib/payment/env.ts",
+      "type": "utility",
+      "domain": "payment",
+      "patterns": ["env-vault"],
+      "aiSummary": "Validates and exposes payment provider environment variables.",
+      "dependencies": []
+    },
+    "src/lib/payment/grant-entitlements.ts": {
+      "path": "src/lib/payment/grant-entitlements.ts",
+      "type": "utility",
+      "domain": "payments",
+      "patterns": ["atomic-update"],
+      "aiSummary": "Grants course and feature entitlements after successful payment using atomic MongoDB operations",
+      "dependencies": ["mongodb", "payload", "@payload-config"]
     },
     "src/middleware.ts": {
       "path": "src/middleware.ts",
@@ -3349,6 +4078,38 @@
       "domain": "config",
       "patterns": ["typed-config-accessor"],
       "aiSummary": "Typed getter for guest_chat domain config values with hardcoded fallbacks",
+      "dependencies": []
+    },
+    "src/server/email/services/purchase-receipt-service.ts": {
+      "path": "src/server/email/services/purchase-receipt-service.ts",
+      "type": "service",
+      "domain": "email",
+      "patterns": ["purchase-receipt"],
+      "aiSummary": "Sends purchase receipt emails after successful payment webhooks",
+      "dependencies": ["payload"]
+    },
+    "src/server/email/templates/purchase-receipt/index.ts": {
+      "path": "src/server/email/templates/purchase-receipt/index.ts",
+      "type": "barrel",
+      "domain": "email",
+      "patterns": ["purchase-receipt"],
+      "aiSummary": "",
+      "dependencies": []
+    },
+    "src/server/email/templates/purchase-receipt/purchase-receipt.en.ts": {
+      "path": "src/server/email/templates/purchase-receipt/purchase-receipt.en.ts",
+      "type": "email-template",
+      "domain": "email",
+      "patterns": ["purchase-receipt"],
+      "aiSummary": "English purchase receipt email sent to users after successful payment",
+      "dependencies": []
+    },
+    "src/server/email/templates/purchase-receipt/purchase-receipt.he.ts": {
+      "path": "src/server/email/templates/purchase-receipt/purchase-receipt.he.ts",
+      "type": "email-template",
+      "domain": "email",
+      "patterns": ["purchase-receipt"],
+      "aiSummary": "Hebrew purchase receipt email sent to users after successful payment",
       "dependencies": []
     },
     "src/server/payload/access/configAdminOnly.ts": {
@@ -3453,6 +4214,14 @@
       "aiSummary": "Stores coupon/access codes that grant entitlements to courses",
       "dependencies": ["payload"]
     },
+    "src/server/payload/collections/AgentBehaviorPrompts.ts": {
+      "path": "src/server/payload/collections/AgentBehaviorPrompts.ts",
+      "type": "collection-config",
+      "domain": "ai",
+      "patterns": ["agent-behavior", "access-control"],
+      "aiSummary": "Collection for managing agent behavior prompts that define AI learning agent personality and communication style.",
+      "dependencies": ["payload"]
+    },
     "src/server/payload/collections/Categories.ts": {
       "path": "src/server/payload/collections/Categories.ts",
       "type": "unknown",
@@ -3525,6 +4294,22 @@
       "aiSummary": "Context-scoped conversations with polymorphic context references",
       "dependencies": ["payload"]
     },
+    "src/server/payload/collections/CouponUsages.ts": {
+      "path": "src/server/payload/collections/CouponUsages.ts",
+      "type": "collection-config",
+      "domain": "payments",
+      "patterns": ["coupon", "access-control", "payload-hooks"],
+      "aiSummary": "Records coupon usage for auditing",
+      "dependencies": ["payload"]
+    },
+    "src/server/payload/collections/Coupons.ts": {
+      "path": "src/server/payload/collections/Coupons.ts",
+      "type": "collection-config",
+      "domain": "payments",
+      "patterns": ["discount-code", "access-control", "payload-hooks"],
+      "aiSummary": "Stores discount coupon codes for checkout (percentage or fixed amount)",
+      "dependencies": ["payload"]
+    },
     "src/server/payload/collections/Courses.ts": {
       "path": "src/server/payload/collections/Courses.ts",
       "type": "collection-config",
@@ -3571,6 +4356,22 @@
       "domain": "auth",
       "patterns": ["session-management", "expiring-records", "access-control"],
       "aiSummary": "Expiring guest sessions for anonymous chat persistence",
+      "dependencies": ["payload"]
+    },
+    "src/server/payload/collections/InteractiveLessons/index.ts": {
+      "path": "src/server/payload/collections/InteractiveLessons/index.ts",
+      "type": "collection-config",
+      "domain": "ai",
+      "patterns": ["content-cache", "access-control"],
+      "aiSummary": "Caches the structured primitive payload Gemini returns for a given",
+      "dependencies": ["payload"]
+    },
+    "src/server/payload/collections/LessonDuplications.ts": {
+      "path": "src/server/payload/collections/LessonDuplications.ts",
+      "type": "collection-config",
+      "domain": "lessons",
+      "patterns": ["job-record", "access-control"],
+      "aiSummary": "Tracks lesson duplication requests with variation level and async processing state.",
       "dependencies": ["payload"]
     },
     "src/server/payload/collections/Lessons.ts": {
@@ -3629,6 +4430,14 @@
       "aiSummary": "",
       "dependencies": ["payload"]
     },
+    "src/server/payload/collections/PaymentStats.ts": {
+      "path": "src/server/payload/collections/PaymentStats.ts",
+      "type": "collection-config",
+      "domain": "payments",
+      "patterns": ["transaction-log", "access-control"],
+      "aiSummary": "Daily payment aggregations for admin analytics",
+      "dependencies": ["payload"]
+    },
     "src/server/payload/collections/Posts/index.ts": {
       "path": "src/server/payload/collections/Posts/index.ts",
       "type": "unknown",
@@ -3642,6 +4451,22 @@
       "type": "unknown",
       "domain": "general",
       "patterns": ["access-control"],
+      "aiSummary": "",
+      "dependencies": ["payload"]
+    },
+    "src/server/payload/collections/ProductItems.ts": {
+      "path": "src/server/payload/collections/ProductItems.ts",
+      "type": "collection-config",
+      "domain": "billing",
+      "patterns": ["conditional-fields", "discriminated-union", "access-control"],
+      "aiSummary": "",
+      "dependencies": ["payload"]
+    },
+    "src/server/payload/collections/Products.ts": {
+      "path": "src/server/payload/collections/Products.ts",
+      "type": "collection-config",
+      "domain": "billing",
+      "patterns": ["composable-bundle", "access-control", "payload-hooks"],
       "aiSummary": "",
       "dependencies": ["payload"]
     },
@@ -3667,6 +4492,30 @@
       "domain": "general",
       "patterns": ["access-control"],
       "aiSummary": "",
+      "dependencies": ["payload"]
+    },
+    "src/server/payload/collections/Transactions/hooks/statusTransitionGuard-hook.ts": {
+      "path": "src/server/payload/collections/Transactions/hooks/statusTransitionGuard-hook.ts",
+      "type": "hook",
+      "domain": "payments",
+      "patterns": ["transaction-log", "payload-hooks"],
+      "aiSummary": "",
+      "dependencies": ["payload"]
+    },
+    "src/server/payload/collections/Transactions/hooks/syncPaymentStats-hook.ts": {
+      "path": "src/server/payload/collections/Transactions/hooks/syncPaymentStats-hook.ts",
+      "type": "hook",
+      "domain": "payments",
+      "patterns": ["transaction-log", "payload-hooks"],
+      "aiSummary": "",
+      "dependencies": ["payload"]
+    },
+    "src/server/payload/collections/Transactions.ts": {
+      "path": "src/server/payload/collections/Transactions.ts",
+      "type": "collection-config",
+      "domain": "payments",
+      "patterns": ["transaction-log", "hierarchical-data", "access-control", "payload-hooks"],
+      "aiSummary": "Records payment transactions initiated via checkout API",
       "dependencies": ["payload"]
     },
     "src/server/payload/collections/TranslationGlossary.ts": {
@@ -3741,6 +4590,14 @@
       "aiSummary": "Users collection with authentication, RBAC roles, and audit hooks",
       "dependencies": ["payload"]
     },
+    "src/server/payload/collections/WebhookEvents.ts": {
+      "path": "src/server/payload/collections/WebhookEvents.ts",
+      "type": "collection-config",
+      "domain": "payments",
+      "patterns": ["webhook-dedup", "access-control"],
+      "aiSummary": "Central event log for webhook deduplication across payment providers",
+      "dependencies": ["payload"]
+    },
     "src/server/payload/endpoints/agent/auth-middleware.ts": {
       "path": "src/server/payload/endpoints/agent/auth-middleware.ts",
       "type": "middleware",
@@ -3765,6 +4622,14 @@
       "aiSummary": "",
       "dependencies": ["zod"]
     },
+    "src/server/payload/endpoints/agent/chat-debug-prompt.ts": {
+      "path": "src/server/payload/endpoints/agent/chat-debug-prompt.ts",
+      "type": "endpoint",
+      "domain": "chat",
+      "patterns": ["admin-only", "debug", "authenticated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["payload", "pino"]
+    },
     "src/server/payload/endpoints/agent/chat-stream.ts": {
       "path": "src/server/payload/endpoints/agent/chat-stream.ts",
       "type": "endpoint",
@@ -3787,6 +4652,14 @@
       "aiSummary": "Chat endpoint with context scoping, memory retrieval, MCP tools for admins, guest sessions, and automatic maintenance",
       "dependencies": ["payload", "pino", "zod"]
     },
+    "src/server/payload/endpoints/agent/generate-interactive-lesson.ts": {
+      "path": "src/server/payload/endpoints/agent/generate-interactive-lesson.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["payload-hooks"],
+      "aiSummary": "",
+      "dependencies": ["payload"]
+    },
     "src/server/payload/endpoints/agent/get-conversation.ts": {
       "path": "src/server/payload/endpoints/agent/get-conversation.ts",
       "type": "endpoint",
@@ -3798,6 +4671,22 @@
         "guest-session"
       ],
       "aiSummary": "Get conversation endpoint with explicit user/guest isolation",
+      "dependencies": ["payload", "zod"]
+    },
+    "src/server/payload/endpoints/agent/learning-chat/index.ts": {
+      "path": "src/server/payload/endpoints/agent/learning-chat/index.ts",
+      "type": "endpoint",
+      "domain": "chat",
+      "patterns": ["streaming", "sse", "learning-agent", "user-scoped", "validated-endpoint"],
+      "aiSummary": "",
+      "dependencies": ["payload", "zod"]
+    },
+    "src/server/payload/endpoints/agent/learning-chat.ts": {
+      "path": "src/server/payload/endpoints/agent/learning-chat.ts",
+      "type": "endpoint",
+      "domain": "chat",
+      "patterns": ["authenticated-endpoint", "user-scoped", "learning-agent", "validated-endpoint"],
+      "aiSummary": "",
       "dependencies": ["payload", "zod"]
     },
     "src/server/payload/endpoints/agent/reset-chat.ts": {
@@ -3845,6 +4734,22 @@
       "aiSummary": "",
       "dependencies": ["payload", "zod"]
     },
+    "src/server/payload/endpoints/lessons/duplicate.ts": {
+      "path": "src/server/payload/endpoints/lessons/duplicate.ts",
+      "type": "api-route",
+      "domain": "lessons",
+      "patterns": ["duplication-job"],
+      "aiSummary": "Creates a LessonDuplications record. For level=none, deep-clones the lesson + exercises inline.",
+      "dependencies": ["payload"]
+    },
+    "src/server/payload/endpoints/lessons/export.ts": {
+      "path": "src/server/payload/endpoints/lessons/export.ts",
+      "type": "api-route",
+      "domain": "lessons",
+      "patterns": ["lesson-export"],
+      "aiSummary": "Exports a lesson and its ordered exercises as canonical JSON for admin review or sharing.",
+      "dependencies": ["payload"]
+    },
     "src/server/payload/endpoints/seed/guest-chat-config.ts": {
       "path": "src/server/payload/endpoints/seed/guest-chat-config.ts",
       "type": "seed-function",
@@ -3858,7 +4763,7 @@
       "type": "seed-data",
       "domain": "pages",
       "patterns": ["published-content"],
-      "aiSummary": "Seed data for the A-Guy platform introduction page, converted from docs/a-guy/intro.md",
+      "aiSummary": "Seed data for the active brand's introduction page, converted from docs/a-guy/intro.md",
       "dependencies": ["payload"]
     },
     "src/server/payload/endpoints/seed/system-params.ts": {
@@ -3907,6 +4812,14 @@
       "domain": "config",
       "patterns": ["validation", "secret-detection", "payload-hooks"],
       "aiSummary": "Validates config values and detects secret-like keys before save",
+      "dependencies": ["payload"]
+    },
+    "src/server/payload/hooks/coupons/computeListDisplayFields-hook.ts": {
+      "path": "src/server/payload/hooks/coupons/computeListDisplayFields-hook.ts",
+      "type": "hook",
+      "domain": "payments",
+      "patterns": ["coupon"],
+      "aiSummary": "Computes derived coupon list-display fields for admin UI",
       "dependencies": ["payload"]
     },
     "src/server/payload/hooks/lessons/syncLessonBlocks.ts": {
@@ -3999,13 +4912,21 @@
       "aiSummary": "Server-side queries for formula sheet resolution with locale fallback",
       "dependencies": ["@payload-config", "payload", "react"]
     },
+    "src/server/repos/queries/products.ts": {
+      "path": "src/server/repos/queries/products.ts",
+      "type": "repository",
+      "domain": "billing",
+      "patterns": ["repository"],
+      "aiSummary": "",
+      "dependencies": ["@payload-config", "payload", "react"]
+    },
     "src/server/services/chat-quota.ts": {
       "path": "src/server/services/chat-quota.ts",
       "type": "service",
       "domain": "chat",
       "patterns": ["rolling-window-quota"],
       "aiSummary": "Checks and increments authenticated user chat quota (rolling window)",
-      "dependencies": ["payload"]
+      "dependencies": ["mongodb", "payload"]
     },
     "src/server/services/conversation-service.ts": {
       "path": "src/server/services/conversation-service.ts",
@@ -4014,6 +4935,14 @@
       "patterns": ["service-layer", "context-scoped"],
       "aiSummary": "Service for managing conversations with context scoping and access control",
       "dependencies": ["payload"]
+    },
+    "src/server/services/diff.ts": {
+      "path": "src/server/services/diff.ts",
+      "type": "utility",
+      "domain": "lesson-duplication",
+      "patterns": ["diff-classifier"],
+      "aiSummary": "Classifies the type of difference between two exercise block arrays.",
+      "dependencies": []
     },
     "src/server/services/exercise-conversion/v2/image-crop-service.ts": {
       "path": "src/server/services/exercise-conversion/v2/image-crop-service.ts",
@@ -4109,7 +5038,7 @@
       "domain": "auth",
       "patterns": ["session-management"],
       "aiSummary": "Guest session lifecycle: create, validate, extend, revoke",
-      "dependencies": ["payload", "crypto"]
+      "dependencies": ["mongodb", "payload", "crypto"]
     },
     "src/server/services/lesson-context-conversion/validate-latex.ts": {
       "path": "src/server/services/lesson-context-conversion/validate-latex.ts",
@@ -4117,6 +5046,70 @@
       "domain": "conversion",
       "patterns": ["validation"],
       "aiSummary": "",
+      "dependencies": []
+    },
+    "src/server/services/lesson-duplication/diff.ts": {
+      "path": "src/server/services/lesson-duplication/diff.ts",
+      "type": "utility",
+      "domain": "lesson-duplication",
+      "patterns": ["diff-classifier"],
+      "aiSummary": "Classifies the type of difference between two exercise block arrays.",
+      "dependencies": []
+    },
+    "src/server/services/lesson-duplication/graphics-to-svg.ts": {
+      "path": "src/server/services/lesson-duplication/graphics-to-svg.ts",
+      "type": "utility",
+      "domain": "lessons",
+      "patterns": ["lesson-export"],
+      "aiSummary": "Renders GeometrySpecV1 and AxisSpecV1 to SVG markup strings for lesson export.",
+      "dependencies": ["mathjs"]
+    },
+    "src/server/services/lesson-duplication/strategies/algebraic-detector.ts": {
+      "path": "src/server/services/lesson-duplication/strategies/algebraic-detector.ts",
+      "type": "utility",
+      "domain": "lesson-duplication",
+      "patterns": ["algebraic-detector"],
+      "aiSummary": "Pure-function detector that returns true only for exercises that can safely be varied by numeric substitution without AI.",
+      "dependencies": []
+    },
+    "src/server/services/lesson-duplication/strategies/router.ts": {
+      "path": "src/server/services/lesson-duplication/strategies/router.ts",
+      "type": "utility",
+      "domain": "lesson-duplication",
+      "patterns": ["variation-router"],
+      "aiSummary": "Routes exercises to the appropriate variation strategy (script or AI).",
+      "dependencies": ["payload"]
+    },
+    "src/server/services/lesson-duplication/strategies/script-strategy.ts": {
+      "path": "src/server/services/lesson-duplication/strategies/script-strategy.ts",
+      "type": "utility",
+      "domain": "lesson-duplication",
+      "patterns": ["script-variation"],
+      "aiSummary": "Deterministic numeric substitution strategy for purely-algebraic exercises at light level.",
+      "dependencies": []
+    },
+    "src/server/services/lesson-duplication/strategies/types.ts": {
+      "path": "src/server/services/lesson-duplication/strategies/types.ts",
+      "type": "utility",
+      "domain": "lesson-duplication",
+      "patterns": ["variation-strategy"],
+      "aiSummary": "Defines the VariationStrategy interface and VariationResult type used by the duplication router.",
+      "dependencies": []
+    },
+    "src/server/services/lesson-duplication/subject-detector.ts": {
+      "path": "src/server/services/lesson-duplication/subject-detector.ts",
+      "type": "utility",
+      "domain": "lesson-duplication",
+      "patterns": ["subject-detector"],
+      "aiSummary": "Scans the blocks of every exercise in a lesson to guess the lesson's subject (algebra/geometry/calculus/mixed).",
+      "dependencies": []
+    },
+    "src/server/services/lesson-export/to-canonical-format.ts": {
+      "path": "src/server/services/lesson-export/to-canonical-format.ts",
+      "type": "utility",
+      "domain": "lessons",
+      "patterns": ["lesson-export"],
+      "aiSummary": "Converts exercise content blocks to canonical export format.",
       "dependencies": []
     },
     "src/server/utils/access-gate-server.ts": {
@@ -4135,21 +5128,13 @@
       "aiSummary": "",
       "dependencies": ["pdf-lib"]
     },
-    "src/ui/admin/AdminChat/DashboardWidget/index.tsx": {
-      "path": "src/ui/admin/AdminChat/DashboardWidget/index.tsx",
-      "type": "component",
-      "domain": "admin",
-      "patterns": ["admin-dashboard-widget", "client-component"],
-      "aiSummary": "Quick access widget for admin chat on the dashboard",
-      "dependencies": ["next/link", "react"]
-    },
-    "src/ui/admin/AdminChat/SidebarLink/index.tsx": {
-      "path": "src/ui/admin/AdminChat/SidebarLink/index.tsx",
-      "type": "component",
-      "domain": "admin",
-      "patterns": ["admin-sidebar-link", "client-component"],
-      "aiSummary": "Navigation link for admin chat in the sidebar",
-      "dependencies": ["next/link", "react"]
+    "src/ui/admin/AdminChatLauncher/index.tsx": {
+      "path": "src/ui/admin/AdminChatLauncher/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["@payloadcms/ui", "lucide-react", "react-dom", "react"]
     },
     "src/ui/admin/AnswerSpecJsonField/index.tsx": {
       "path": "src/ui/admin/AnswerSpecJsonField/index.tsx",
@@ -4174,6 +5159,142 @@
       "patterns": ["client-component"],
       "aiSummary": "",
       "dependencies": ["@payloadcms/ui", "react"]
+    },
+    "src/ui/admin/ConversionTracking/ContentCountsWidget.tsx": {
+      "path": "src/ui/admin/ConversionTracking/ContentCountsWidget.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["@payloadcms/ui", "lucide-react", "react"]
+    },
+    "src/ui/admin/ConversionTracking/DashboardHeader.tsx": {
+      "path": "src/ui/admin/ConversionTracking/DashboardHeader.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["@payloadcms/ui", "next/link", "react"]
+    },
+    "src/ui/admin/ConversionTracking/DashboardWidgets.tsx": {
+      "path": "src/ui/admin/ConversionTracking/DashboardWidgets.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/ui/admin/ConversionTracking/EngagementWidget.tsx": {
+      "path": "src/ui/admin/ConversionTracking/EngagementWidget.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["@payloadcms/ui", "react"]
+    },
+    "src/ui/admin/ConversionTracking/MetricCard.tsx": {
+      "path": "src/ui/admin/ConversionTracking/MetricCard.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["lucide-react", "react"]
+    },
+    "src/ui/admin/ConversionTracking/MetricsProvider.tsx": {
+      "path": "src/ui/admin/ConversionTracking/MetricsProvider.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/ui/admin/ConversionTracking/UserMetricsWidget.tsx": {
+      "path": "src/ui/admin/ConversionTracking/UserMetricsWidget.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["@payloadcms/ui", "lucide-react", "react"]
+    },
+    "src/ui/admin/Coupons/Cells/ExpiresCell/index.tsx": {
+      "path": "src/ui/admin/Coupons/Cells/ExpiresCell/index.tsx",
+      "type": "component",
+      "domain": "admin",
+      "patterns": ["client-component"],
+      "aiSummary": "Shows relative expiration string for coupon list view",
+      "dependencies": ["react", "@payloadcms/ui"]
+    },
+    "src/ui/admin/Coupons/Cells/StatusCell/index.tsx": {
+      "path": "src/ui/admin/Coupons/Cells/StatusCell/index.tsx",
+      "type": "component",
+      "domain": "admin",
+      "patterns": ["client-component"],
+      "aiSummary": "Shows color badge for coupon status (Active / Expired / Exhausted / Inactive / Scheduled)",
+      "dependencies": ["react", "@payloadcms/ui"]
+    },
+    "src/ui/admin/Coupons/Cells/UsageCell/index.tsx": {
+      "path": "src/ui/admin/Coupons/Cells/UsageCell/index.tsx",
+      "type": "component",
+      "domain": "admin",
+      "patterns": ["client-component"],
+      "aiSummary": "Shows usage count display for coupon list view",
+      "dependencies": ["react"]
+    },
+    "src/ui/admin/Coupons/CouponUsageModal/index.tsx": {
+      "path": "src/ui/admin/Coupons/CouponUsageModal/index.tsx",
+      "type": "component",
+      "domain": "admin",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "@payloadcms/ui"]
+    },
+    "src/ui/admin/Coupons/CreateCouponModal/index.tsx": {
+      "path": "src/ui/admin/Coupons/CreateCouponModal/index.tsx",
+      "type": "component",
+      "domain": "admin",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "@payloadcms/ui"]
+    },
+    "src/ui/admin/Coupons/EditView/index.tsx": {
+      "path": "src/ui/admin/Coupons/EditView/index.tsx",
+      "type": "component",
+      "domain": "admin",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "@payloadcms/ui", "payload"]
+    },
+    "src/ui/admin/Coupons/ListView/index.tsx": {
+      "path": "src/ui/admin/Coupons/ListView/index.tsx",
+      "type": "component",
+      "domain": "admin",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "next/navigation", "payload", "@payloadcms/ui"]
+    },
+    "src/ui/admin/Coupons/UsageProgressField/index.tsx": {
+      "path": "src/ui/admin/Coupons/UsageProgressField/index.tsx",
+      "type": "component",
+      "domain": "admin",
+      "patterns": ["client-component"],
+      "aiSummary": "Shows usage progress bar on coupon detail view",
+      "dependencies": ["react", "@payloadcms/ui"]
+    },
+    "src/ui/admin/CourseEnrollmentsWidget/index.tsx": {
+      "path": "src/ui/admin/CourseEnrollmentsWidget/index.tsx",
+      "type": "component",
+      "domain": "admin",
+      "patterns": ["client-component"],
+      "aiSummary": "Top courses ranked by enrollment count for the admin dashboard",
+      "dependencies": ["react", "@payloadcms/ui", "lucide-react"]
+    },
+    "src/ui/admin/CourseLessonsSorter/index.tsx": {
+      "path": "src/ui/admin/CourseLessonsSorter/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "@payloadcms/ui", "lucide-react"]
     },
     "src/ui/admin/ExerciseContentEditor/BlockTypeSelector.tsx": {
       "path": "src/ui/admin/ExerciseContentEditor/BlockTypeSelector.tsx",
@@ -4417,11 +5538,11 @@
     },
     "src/ui/admin/ExerciseContentEditor/editors/HtmlBlockEditor.tsx": {
       "path": "src/ui/admin/ExerciseContentEditor/editors/HtmlBlockEditor.tsx",
-      "type": "unknown",
+      "type": "component",
       "domain": "general",
       "patterns": ["client-component"],
-      "aiSummary": "",
-      "dependencies": ["dompurify", "next/dynamic", "react"]
+      "aiSummary": "Raw HTML editor for the exercise HtmlBlock — admin-only.",
+      "dependencies": ["react"]
     },
     "src/ui/admin/ExerciseContentEditor/editors/InlineRichTextEditor.tsx": {
       "path": "src/ui/admin/ExerciseContentEditor/editors/InlineRichTextEditor.tsx",
@@ -4575,6 +5696,14 @@
       "aiSummary": "",
       "dependencies": ["react"]
     },
+    "src/ui/admin/LessonBlocksField/InlineExerciseEditor.tsx": {
+      "path": "src/ui/admin/LessonBlocksField/InlineExerciseEditor.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
     "src/ui/admin/LessonBlocksField/index.tsx": {
       "path": "src/ui/admin/LessonBlocksField/index.tsx",
       "type": "unknown",
@@ -4582,6 +5711,78 @@
       "patterns": ["client-component"],
       "aiSummary": "",
       "dependencies": ["react", "@payloadcms/ui", "next/navigation"]
+    },
+    "src/ui/admin/LessonDuplicateButton/LessonDuplicateButton.tsx": {
+      "path": "src/ui/admin/LessonDuplicateButton/LessonDuplicateButton.tsx",
+      "type": "component",
+      "domain": "lessons",
+      "patterns": ["admin-action-modal", "client-component"],
+      "aiSummary": "Opens a modal to pick a variation level, then POSTs to /api/lessons/:id/duplicate.",
+      "dependencies": ["react", "@payloadcms/ui"]
+    },
+    "src/ui/admin/LessonDuplicationReview/DiffPreview/AdminBlockRenderer.tsx": {
+      "path": "src/ui/admin/LessonDuplicationReview/DiffPreview/AdminBlockRenderer.tsx",
+      "type": "component",
+      "domain": "admin",
+      "patterns": ["client-component"],
+      "aiSummary": "Read-only block renderer for admin diff preview.",
+      "dependencies": ["react"]
+    },
+    "src/ui/admin/LessonDuplicationReview/DiffPreview/ExercisePair.tsx": {
+      "path": "src/ui/admin/LessonDuplicationReview/DiffPreview/ExercisePair.tsx",
+      "type": "component",
+      "domain": "admin",
+      "patterns": ["tailwind-component", "client-component"],
+      "aiSummary": "Renders a single source-vs-output exercise pair with diff classification.",
+      "dependencies": ["react"]
+    },
+    "src/ui/admin/LessonDuplicationReview/DiffPreview/index.tsx": {
+      "path": "src/ui/admin/LessonDuplicationReview/DiffPreview/index.tsx",
+      "type": "component",
+      "domain": "admin",
+      "patterns": ["client-component"],
+      "aiSummary": "Shows source vs variation side-by-side with diff classification for all exercises.",
+      "dependencies": ["react"]
+    },
+    "src/ui/admin/LessonDuplicationReview/ReviewLinkButton.tsx": {
+      "path": "src/ui/admin/LessonDuplicationReview/ReviewLinkButton.tsx",
+      "type": "component",
+      "domain": "admin",
+      "patterns": ["admin-action-link", "client-component"],
+      "aiSummary": "Renders a button that navigates to /admin/lesson-duplications/<id>.",
+      "dependencies": ["react", "next/link", "@payloadcms/ui"]
+    },
+    "src/ui/admin/LessonDuplicationReview/SidebarLink/index.tsx": {
+      "path": "src/ui/admin/LessonDuplicationReview/SidebarLink/index.tsx",
+      "type": "component",
+      "domain": "admin",
+      "patterns": ["admin-sidebar-link", "client-component"],
+      "aiSummary": "Navigation link for lesson duplication review in the admin sidebar",
+      "dependencies": ["next/link", "react"]
+    },
+    "src/ui/admin/LessonDuplicationReview/index.tsx": {
+      "path": "src/ui/admin/LessonDuplicationReview/index.tsx",
+      "type": "component",
+      "domain": "admin",
+      "patterns": ["review-list", "client-component"],
+      "aiSummary": "Admin review UI for lesson duplication failures. Lets admin skip, regenerate, or keep each failed exercise.",
+      "dependencies": ["react", "next/link"]
+    },
+    "src/ui/admin/LessonDuplicationReview/lib/diff.ts": {
+      "path": "src/ui/admin/LessonDuplicationReview/lib/diff.ts",
+      "type": "utility",
+      "domain": "lesson-duplication",
+      "patterns": ["diff-classifier"],
+      "aiSummary": "Classifies the type of difference between two exercise block arrays.",
+      "dependencies": []
+    },
+    "src/ui/admin/LessonExportButton/LessonExportButton.tsx": {
+      "path": "src/ui/admin/LessonExportButton/LessonExportButton.tsx",
+      "type": "component",
+      "domain": "lessons",
+      "patterns": ["admin-action-button", "client-component"],
+      "aiSummary": "Exports a lesson and its exercises as a JSON file for backup or offline review.",
+      "dependencies": ["react", "@payloadcms/ui"]
     },
     "src/ui/admin/MediaPreview/AudioPreview.tsx": {
       "path": "src/ui/admin/MediaPreview/AudioPreview.tsx",
@@ -4711,13 +5912,77 @@
       "aiSummary": "Navigation link for PDF conversion in the admin sidebar",
       "dependencies": ["next/link", "react"]
     },
-    "src/ui/admin/QuillField/index.tsx": {
-      "path": "src/ui/admin/QuillField/index.tsx",
+    "src/ui/admin/ProductItems/TypeBadgeCell/index.tsx": {
+      "path": "src/ui/admin/ProductItems/TypeBadgeCell/index.tsx",
       "type": "unknown",
       "domain": "general",
       "patterns": ["client-component"],
       "aiSummary": "",
-      "dependencies": ["dompurify", "@payloadcms/ui", "next/dynamic", "react"]
+      "dependencies": ["react"]
+    },
+    "src/ui/admin/Products/EditView/index.tsx": {
+      "path": "src/ui/admin/Products/EditView/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "@payloadcms/ui", "payload"]
+    },
+    "src/ui/admin/Products/SaveButton/index.tsx": {
+      "path": "src/ui/admin/Products/SaveButton/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "@payloadcms/ui", "payload"]
+    },
+    "src/ui/admin/QuillField/index.tsx": {
+      "path": "src/ui/admin/QuillField/index.tsx",
+      "type": "component",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "Raw HTML editor for HtmlBlock — admin-only content creation.",
+      "dependencies": ["@payloadcms/ui", "react"]
+    },
+    "src/ui/admin/RecentTransactionsWidget/index.tsx": {
+      "path": "src/ui/admin/RecentTransactionsWidget/index.tsx",
+      "type": "component",
+      "domain": "admin",
+      "patterns": ["client-component"],
+      "aiSummary": "Recent transactions list for the admin dashboard",
+      "dependencies": ["lucide-react", "react", "@payloadcms/ui"]
+    },
+    "src/ui/admin/RevenueWidget/index.tsx": {
+      "path": "src/ui/admin/RevenueWidget/index.tsx",
+      "type": "component",
+      "domain": "admin",
+      "patterns": ["client-component"],
+      "aiSummary": "Revenue metric cards for the admin dashboard",
+      "dependencies": ["lucide-react", "react", "@payloadcms/ui"]
+    },
+    "src/ui/admin/TopProductsWidget/index.tsx": {
+      "path": "src/ui/admin/TopProductsWidget/index.tsx",
+      "type": "component",
+      "domain": "admin",
+      "patterns": ["client-component"],
+      "aiSummary": "Top products ranked by revenue for the admin dashboard",
+      "dependencies": ["react", "@payloadcms/ui"]
+    },
+    "src/ui/admin/TransactionEditView/index.tsx": {
+      "path": "src/ui/admin/TransactionEditView/index.tsx",
+      "type": "component",
+      "domain": "admin",
+      "patterns": ["client-component"],
+      "aiSummary": "Full payment timeline view replacing Payload's default table layout",
+      "dependencies": ["react", "@payloadcms/ui", "lucide-react"]
+    },
+    "src/ui/admin/TransactionStatusCell/index.tsx": {
+      "path": "src/ui/admin/TransactionStatusCell/index.tsx",
+      "type": "component",
+      "domain": "admin",
+      "patterns": ["client-component"],
+      "aiSummary": "Shows Hebrew label with color badge for transaction status",
+      "dependencies": ["react"]
     },
     "src/ui/admin/TranslationButton/TranslateAction.tsx": {
       "path": "src/ui/admin/TranslationButton/TranslateAction.tsx",
@@ -4839,6 +6104,22 @@
       "aiSummary": "",
       "dependencies": ["next/navigation", "react"]
     },
+    "src/ui/admin/exercise-conversion/FullConvertLatexButton/index.tsx": {
+      "path": "src/ui/admin/exercise-conversion/FullConvertLatexButton/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
+    "src/ui/admin/exercise-conversion/FullConvertMediaButton/index.tsx": {
+      "path": "src/ui/admin/exercise-conversion/FullConvertMediaButton/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
     "src/ui/admin/exercise-conversion/LatexImportSection/index.tsx": {
       "path": "src/ui/admin/exercise-conversion/LatexImportSection/index.tsx",
       "type": "unknown",
@@ -4927,6 +6208,14 @@
       "aiSummary": "",
       "dependencies": ["react"]
     },
+    "src/ui/web/AdminBar/AdminBarWrapper.tsx": {
+      "path": "src/ui/web/AdminBar/AdminBarWrapper.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["next/navigation"]
+    },
     "src/ui/web/AdminBar/index.tsx": {
       "path": "src/ui/web/AdminBar/index.tsx",
       "type": "unknown",
@@ -4934,6 +6223,14 @@
       "patterns": ["tailwind-component", "client-component"],
       "aiSummary": "",
       "dependencies": ["@payloadcms/admin-bar", "next/navigation", "react"]
+    },
+    "src/ui/web/BrandLogo.tsx": {
+      "path": "src/ui/web/BrandLogo.tsx",
+      "type": "component",
+      "domain": "brands",
+      "patterns": ["client-component"],
+      "aiSummary": "Generic brand logo wrapper that renders the active brand's Logo component.",
+      "dependencies": []
     },
     "src/ui/web/Card/index.tsx": {
       "path": "src/ui/web/Card/index.tsx",
@@ -4971,9 +6268,9 @@
       "path": "src/ui/web/GuidedExplanationRunner/index.tsx",
       "type": "unknown",
       "domain": "general",
-      "patterns": ["client-component"],
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
-      "dependencies": ["react"]
+      "dependencies": ["react", "lucide-react"]
     },
     "src/ui/web/GuidedExplanationRunner/useGuidedPlayer.ts": {
       "path": "src/ui/web/GuidedExplanationRunner/useGuidedPlayer.ts",
@@ -5039,14 +6336,6 @@
       "aiSummary": "",
       "dependencies": ["dompurify", "react"]
     },
-    "src/ui/web/TelescopeLogo/index.tsx": {
-      "path": "src/ui/web/TelescopeLogo/index.tsx",
-      "type": "unknown",
-      "domain": "general",
-      "patterns": ["tailwind-component"],
-      "aiSummary": "",
-      "dependencies": ["next/image", "react"]
-    },
     "src/ui/web/UserDropdown/index.tsx": {
       "path": "src/ui/web/UserDropdown/index.tsx",
       "type": "unknown",
@@ -5110,6 +6399,14 @@
       "patterns": ["tailwind-component", "i18n-component", "client-component"],
       "aiSummary": "",
       "dependencies": ["react"]
+    },
+    "src/ui/web/chat/MobileChatToggle/index.tsx": {
+      "path": "src/ui/web/chat/MobileChatToggle/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component", "i18n-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["lucide-react", "react"]
     },
     "src/ui/web/chat/TTSButton/index.tsx": {
       "path": "src/ui/web/chat/TTSButton/index.tsx",
@@ -5508,6 +6805,14 @@
       "aiSummary": "",
       "dependencies": ["react", "lucide-react"]
     },
+    "src/ui/web/exerciserenderer/ExerciseWorksheet/index.tsx": {
+      "path": "src/ui/web/exerciserenderer/ExerciseWorksheet/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["tailwind-component", "client-component"],
+      "aiSummary": "",
+      "dependencies": ["react"]
+    },
     "src/ui/web/exerciserenderer/answers/McqAnswerUI/index.tsx": {
       "path": "src/ui/web/exerciserenderer/answers/McqAnswerUI/index.tsx",
       "type": "unknown",
@@ -5732,6 +7037,14 @@
       "aiSummary": "",
       "dependencies": ["react", "framer-motion", "lucide-react"]
     },
+    "src/ui/web/exerciserenderer/utils/safeMathEval.ts": {
+      "path": "src/ui/web/exerciserenderer/utils/safeMathEval.ts",
+      "type": "utility",
+      "domain": "exercises",
+      "patterns": ["math-expression-parser"],
+      "aiSummary": "Safe math expression evaluator using mathjs to prevent code injection",
+      "dependencies": ["mathjs"]
+    },
     "src/ui/web/footer/RowLabel.tsx": {
       "path": "src/ui/web/footer/RowLabel.tsx",
       "type": "unknown",
@@ -5859,6 +7172,30 @@
       "patterns": ["client-component"],
       "aiSummary": "",
       "dependencies": []
+    },
+    "src/ui/web/learning-agent/AgentChatWindow/index.tsx": {
+      "path": "src/ui/web/learning-agent/AgentChatWindow/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["framer-motion", "lucide-react", "react", "sonner"]
+    },
+    "src/ui/web/learning-agent/FloatingAgentButton/index.tsx": {
+      "path": "src/ui/web/learning-agent/FloatingAgentButton/index.tsx",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["lucide-react"]
+    },
+    "src/ui/web/learning-agent/hooks/useLearningAgentChat.ts": {
+      "path": "src/ui/web/learning-agent/hooks/useLearningAgentChat.ts",
+      "type": "unknown",
+      "domain": "general",
+      "patterns": ["client-component"],
+      "aiSummary": "",
+      "dependencies": ["react", "sonner"]
     },
     "src/ui/web/media/AudioMedia/index.tsx": {
       "path": "src/ui/web/media/AudioMedia/index.tsx",
@@ -6028,6 +7365,14 @@
       "aiSummary": "",
       "dependencies": ["react", "class-variance-authority", "lucide-react"]
     },
+    "src/ui/web/shared/LatexDocumentViewer/consolidate-latex-blocks.ts": {
+      "path": "src/ui/web/shared/LatexDocumentViewer/consolidate-latex-blocks.ts",
+      "type": "utility",
+      "domain": "latex",
+      "patterns": ["aggregator"],
+      "aiSummary": "Walks an ordered list of exercises and concatenates every LaTeX block",
+      "dependencies": []
+    },
     "src/ui/web/shared/LatexDocumentViewer/index.tsx": {
       "path": "src/ui/web/shared/LatexDocumentViewer/index.tsx",
       "type": "component",
@@ -6163,11 +7508,19 @@
       "patterns": ["tailwind-component", "variant-component"],
       "aiSummary": "",
       "dependencies": ["react", "class-variance-authority"]
+    },
+    "src/utils/diff.ts": {
+      "path": "src/utils/diff.ts",
+      "type": "utility",
+      "domain": "lesson-duplication",
+      "patterns": ["diff-classifier"],
+      "aiSummary": "Classifies the type of difference between two exercise block arrays.",
+      "dependencies": []
     }
   },
   "metadata": {
-    "generatedAt": "2026-04-21T07:56:18.855Z",
-    "totalFiles": 569,
-    "totalPatterns": 140
+    "generatedAt": "2026-05-28T20:43:26.672Z",
+    "totalFiles": 690,
+    "totalPatterns": 180
   }
 }

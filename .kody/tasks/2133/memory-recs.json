@@ -1,0 +1,26 @@
+[
+  {
+    "type": "lesson",
+    "name": "jsx-in-ts-causes-ts1005-error",
+    "hook": "JSX in .ts files causes TS1005 error — rename to .tsx",
+    "body": "When creating React email template components inline in a service file, TypeScript throws `error TS1005: '>' expected` if the file is named `.ts`. JSX requires a `.tsx` extension.\nFix: rename the file from `purchase-receipt-service.ts` to `purchase-receipt-service.tsx`.",
+    "why": "TypeScript only allows JSX syntax in files with the .tsx extension. Using .ts causes a cryptic parse error at the first JSX element.",
+    "confidence": 1.0
+  },
+  {
+    "type": "lesson",
+    "name": "payload-email-send-type-workaround",
+    "hook": "payload.email.send() needs `as any` cast — type doesn't expose send method",
+    "body": "Payload CMS's InitializedEmailAdapter TypeScript type does not expose a `.send()` method, causing `TS2339: Property 'send' does not exist on type 'InitializedEmailAdapter'`. Workaround: cast `payload.email as any` before calling `.send()`.\n```typescript\nawait (payload.email as any).send({ to: userEmail, subject: '...', html })\n```",
+    "why": "Payload's email adapter interface is typed narrowly. The runtime adapter does have a send method (or falls back to console/log adapter), but the TypeScript type doesn't reflect it. The cast is safe since we're in the email service and it's the only way to call send.",
+    "confidence": 1.0
+  },
+  {
+    "type": "lesson",
+    "name": "verify-db-state-not-mock-calls-in-int-tests",
+    "hook": "Integration tests should verify DB state, not mock call counts",
+    "body": "When testing webhook → DB update flows, verifying `emailSentAt` directly on the transaction record is more reliable than checking mock function call counts. Mock call counts can accumulate across tests in the same describe block if mocks are not properly reset, causing flaky test failures.\nFix: create a helper `getTransactionEmailSentAt(txId)` that queries the DB, and assert on that value.",
+    "why": "The original approach checked `expect(sendPurchaseReceipt).toHaveBeenCalledTimes(1)`. Since the mock was module-level and tests ran in the same describe block, call counts accumulated. Checking actual DB state is the ground truth and avoids mock-isolation issues.",
+    "confidence": 1.0
+  }
+]

@@ -122,11 +122,21 @@ export function middleware(request: NextRequest) {
     const isHttps = request.nextUrl.protocol === 'https:'
     const isProd = process.env.NODE_ENV === 'production'
 
+    // CHIPS: when this request is being served INSIDE a cross-origin
+    // iframe (the Kody dashboard's preview pane is the prime example),
+    // SameSite=Lax cookies are not written by modern browsers and the
+    // user's language choice silently vanishes. Detect the embedded
+    // context via Sec-Fetch-Site (browsers set this on every fetch) and
+    // emit a Partitioned + SameSite=None + Secure cookie so it sticks.
+    const fetchSite = request.headers.get('sec-fetch-site')
+    const isCrossSiteEmbed = fetchSite === 'cross-site' && (isHttps || isProd)
+
     response.cookies.set(cookieName, locale, {
       maxAge: 31536000,
       path: '/',
-      sameSite: 'lax',
-      secure: isHttps || isProd,
+      sameSite: isCrossSiteEmbed ? 'none' : 'lax',
+      secure: isCrossSiteEmbed || isHttps || isProd,
+      ...(isCrossSiteEmbed ? { partitioned: true } : {}),
       // Only set domain when it's safe/valid (custom domain).
       ...(cookieDomain ? { domain: cookieDomain } : {}),
     })
