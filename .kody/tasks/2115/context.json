@@ -1,0 +1,17 @@
+{
+  "taskId": "2115",
+  "taskType": "pr",
+  "target": "2115",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed field-level afterRead hooks to use siblingData instead of doc (FieldHookArgs vs CollectionAfterReadHook type mismatch)",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/hooks/coupons/computeListDisplayFields-hook.ts",
+    "src/server/payload/collections/Coupons.ts"
+  ],
+  "sessionLog": null,
+  "startedAt": "2026-05-27T06:20:00Z",
+  "finishedAt": "2026-05-27T07:40:00Z"
+}

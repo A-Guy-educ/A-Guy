@@ -1,0 +1,19 @@
+{
+  "taskId": "2203",
+  "taskType": "pr",
+  "target": "2203",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "All 21 conflicted files resolved. 4 files had real conflict markers (event/session JSONLs); 17 had no markers (state files with identical content on both sides). secrets.enc doesn't exist in origin/main (added on PR branch). last-run.jsonl markers are embedded in JSON strings, not file-level conflicts.",
+  "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2203",
+  "runUrl": null,
+  "filesTouched": [
+    ".kody/events/vibe-1534-1778599744175-e6z6bm.jsonl",
+    ".kody/events/vibe-1587-1778744760133-fqhjxq.jsonl",
+    ".kody/sessions/vibe-1534-1778599744175-e6z6bm.jsonl",
+    ".kody/sessions/vibe-1587-1778744760133-fqhjxq.jsonl"
+  ],
+  "sessionLog": null,
+  "startedAt": "2026-05-30T16:40:00Z",
+  "finishedAt": "2026-05-30T16:41:00Z"
+}

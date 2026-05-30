@@ -65,6 +65,7 @@ export async function createStripeCheckout(
 export async function verifyStripeWebhook(
   payload: Buffer,
   signature: string,
+  tolerance?: number,
 ): Promise<Stripe.Event> {
   const { stripeWebhookSecret } = getPaymentEnv()
 
@@ -73,7 +74,7 @@ export async function verifyStripeWebhook(
   }
 
   const stripe = getStripeClient()
-  return stripe.webhooks.constructEvent(payload, signature, stripeWebhookSecret)
+  return stripe.webhooks.constructEvent(payload, signature, stripeWebhookSecret, tolerance ?? 300)
 }
 
 /**

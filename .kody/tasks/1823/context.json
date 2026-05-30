@@ -1,0 +1,17 @@
+{
+  "taskId": "1823",
+  "taskType": "bug",
+  "target": "issue-1823",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed StatsDashboard to handle non-OK API responses with proper error state",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/stats/_components/StatsDashboard.tsx",
+    "tests/int/stats-dashboard-api.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1823.jsonl",
+  "startedAt": "2026-05-23T01:30:00Z",
+  "finishedAt": "2026-05-23T01:50:00Z"
+}

@@ -33,12 +33,16 @@ export async function localizeTeacherProfiles(
 
   // Step 1: Drop the legacy unique index on slug so per-locale docs can share slugs
   try {
-    const db = (payload.db as any)?.connection?.db
+    const db = (payload.db as unknown as { connection?: { db?: import('mongodb').Db } })?.connection
+      ?.db
     if (db) {
       const collection = db.collection('teacher_profiles')
       const indexes = await collection.indexes()
-      const slugUniqueIndex = indexes.find((idx: any) => idx.key?.slug && idx.unique === true)
-      if (slugUniqueIndex) {
+      const slugUniqueIndex = indexes.find(
+        (idx: { key?: Record<string, unknown>; unique?: boolean; name?: string }) =>
+          idx.key?.slug && idx.unique === true,
+      )
+      if (slugUniqueIndex?.name) {
         await collection.dropIndex(slugUniqueIndex.name)
         payload.logger?.info('[localizeTeacherProfiles] Dropped legacy unique index on slug')
       }
@@ -57,8 +61,22 @@ export async function localizeTeacherProfiles(
     overrideAccess: true,
   })
 
+  type LegacyTeacherProfile = {
+    id: string
+    slug: string
+    locale?: string
+    label?: string
+    label_he?: string
+    label_en?: string
+    description?: string
+    description_he?: string
+    description_en?: string
+    systemPrompt?: string | { id: string }
+    isEnabled?: boolean
+  }
+
   for (const doc of allProfiles.docs) {
-    const profile = doc as any
+    const profile = doc as unknown as LegacyTeacherProfile
 
     // Skip if fully migrated (has locale AND label)
     if (profile.locale && profile.label) {
@@ -69,6 +87,10 @@ export async function localizeTeacherProfiles(
     try {
       const promptId =
         typeof profile.systemPrompt === 'object' ? profile.systemPrompt.id : profile.systemPrompt
+      if (!promptId) {
+        skipped++
+        continue
+      }
 
       // Determine Hebrew label/description from legacy fields
       const heLabel = profile.label_he ?? profile.label ?? profile.slug

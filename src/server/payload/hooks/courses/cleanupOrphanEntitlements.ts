@@ -40,12 +40,14 @@ export const cleanupOrphanEntitlements: CollectionAfterDeleteHook = async ({ id,
   // Phase 2 — remove the orphan entitlement from all affected users in a single
   // bulk write. Using raw MongoDB $pull avoids one round-trip per user (550 → 1).
   if (collectedIds.length > 0) {
-    const db = (req.payload.db as any).connection?.db as import('mongodb').Db
+    const db = (req.payload.db as unknown as { connection?: { db: import('mongodb').Db } })
+      .connection?.db as import('mongodb').Db
+    const pullUpdate = {
+      $pull: { courseEntitlements: { course: new ObjectId(id) } },
+    } as any // eslint-disable-line @typescript-eslint/no-explicit-any -- MongoDB UpdateFilter typing for $pull on nested array
     await db
       .collection('users')
-      .updateMany({ _id: { $in: collectedIds.map((id) => new ObjectId(id)) } }, {
-        $pull: { courseEntitlements: { course: new ObjectId(id) } },
-      } as any)
+      .updateMany({ _id: { $in: collectedIds.map((id) => new ObjectId(id)) } }, pullUpdate)
     usersModified = collectedIds.length
     removedCount = collectedIds.length // each user had exactly 1 entitlement to this course
   }
