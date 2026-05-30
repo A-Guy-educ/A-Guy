@@ -182,6 +182,40 @@
       },
       "failedToLoadCourse": "טעינת הקורס נכשלה",
       "tryAgain": "נסה שוב"
+    },
+    "purchases": {
+      "title": "הרכישות שלי",
+      "refresh": "רענן",
+      "status": {
+        "pending": "בהמתנה",
+        "succeeded": "הושלם",
+        "failed": "נכשל",
+        "refunded": "הוחזר"
+      },
+      "couponApplied": "קופון: {code}",
+      "unknownProduct": "מוצר לא ידוע",
+      "empty": {
+        "title": "אין רכישות עדיין",
+        "description": "טרם ביצעת רכישות. עיין במוצרים שלנו כדי להתחיל.",
+        "cta": "עיין במוצרים"
+      },
+      "backToPurchases": "חזרה לרכישות",
+      "purchasedOn": "נרכש ב",
+      "amount": "סכום",
+      "provider": "ספק",
+      "transactionId": "מזהה עסקה",
+      "status": "סטטוס",
+      "coupon": "קופון",
+      "pendingHelpText": "התשלום שלך מעובד. זה עשוי לקחת מספר רגעים.",
+      "refreshStatus": "רענן סטטוס",
+      "unlockedItems": "פריטים שנפתחו",
+      "courses": "קורסים",
+      "features": "תכונות",
+      "refunded": "הוחזר",
+      "refundedAmount": "סכום החזר",
+      "errorLoading": "טעינת העסקה נכשלה",
+      "notFound": "העסקה לא נמצאה",
+      "viewProduct": "צפה במוצר"
     }
   },
   "roles": {
@@ -219,10 +253,10 @@
     "visibleRenderersDescription": "בחר אילו כרטיסיות (מדיה, PDF, אינטראקטיבי) יוצגו לתלמידים בשיעור זה. כרטיסיית מדיה מופיעה רק כאשר לשיעור יש קבצים מצורפים.",
     "lessonViewMode": "מצב תצוגת שיעור",
     "lessonViewModeMedia": "מדיה",
-    "lessonViewModePdf": "PDF",
+    "lessonViewModePdf": "תצוגת גלילה",
     "lessonViewModeInteractive": "אינטראקטיבי",
     "pdfBadge": "PDF",
-    "pdfView": "תצוגת PDF",
+    "scrollView": "תצוגת גלילה",
     "interactiveExercises": "תרגילים אינטראקטיביים",
     "exercisesTitle": "תרגילים אינטראקטיביים",
     "exercisesDescription": "השלם את התרגילים הבאים כדי לתרגל את מה שלמדת.",
@@ -421,7 +455,9 @@
     "chat": {
       "chatWelcome": "היי! אני עוזר הבינה המלאכותית שלך למנהלים. שאל אותי על קורסים, פרקים, שיעורים, תרגילים או מדיה במערכת.",
       "chatInputPlaceholder": "שאל שאלה...",
-      "chatAuthRequired": "אנא התחבר כדי לגשת לצ'אט המנהלים"
+      "chatAuthRequired": "אנא התחבר כדי לגשת לצ'אט המנהלים",
+      "openChat": "פתח צ'אט AI",
+      "modalTitle": "עוזר AI למנהלים"
     },
     "chatLink": "צ'אט עם AI"
   },
@@ -715,6 +751,56 @@
     "error": {
       "authRequired": "אנא התחבר כדי להשתמש בעוזר הלמידה",
       "sendFailed": "שליחת ההודעה נכשלה. אנא נסה שוב."
+    }
+  },
+  "products": {
+    "catalogTitle": "מוצרים",
+    "catalogDescription": "עיין במוצרים הזמינים שלנו והתחל ללמוד עוד היום.",
+    "noProducts": "אין מוצרים זמינים כרגע.",
+    "oneTimeLabel": "רכישה חד-פעמית",
+    "subscriptionLabel": "מנוי",
+    "perMonth": "לחודש",
+    "perYear": "לשנה",
+    "includedItems": "מה כלול במוצר?",
+    "buyButton": "רכוש עכשיו",
+    "loginToBuy": "התחבר כדי לרכוש",
+    "redirecting": "מעביר לתשלום...",
+    "couponLabel": "קוד קופון",
+    "couponPlaceholder": "הזן קוד קופון",
+    "applyCoupon": "החל",
+    "couponApplied": "הקופון הוחל: {code} — מחיר סופי: {amount}",
+    "remove": "הסר",
+    "errors": {
+      "authRequired": "אנא התחבר כדי לבצע רכישה.",
+      "productNotFound": "מוצר זה אינו זמין עוד.",
+      "productNotActive": "מוצר זה אינו זמין עוד.",
+      "invalidCoupon": "קוד הקופון אינו תקף או פג תוקף.",
+      "checkoutFailed": "לא ניתן להתחיל את התשלום. אנא נסה שוב."
+    }
+  },
+  "checkout": {
+    "success": {
+      "missingSession": "לא נמצאה ישיבת תשלום",
+      "noSessionDescription": "לא הצלחנו למצוא את ישיבת התשלום שלך. אם השלמת תשלום, אנא צור קשר עם התמיכה.",
+      "processing": "מעבד תשלום...",
+      "processingDescription": "התשלום שלך מעובד. הדף יתעדכן אוטומטית.",
+      "refresh": "רענן",
+      "confirmedTitle": "התשלום אושר!",
+      "confirmedDescription": "התשלום התקבל והגישה שלך הוענקה. ברוך הבא!",
+      "productLabel": "מוצר: {product}",
+      "pendingTitle": "התשלום התקבל",
+      "pendingDescription": "קיבלנו את התשלום שלך. הגישה שלך מוקמת — בדרך כלל זה לוקח כמה רגעים.",
+      "paymentFailed": "התשלום נכשל",
+      "paymentFailedDescription": "לא ניתן היה לעבד את התשלום. אנא נסה שוב או צור קשר עם התמיכה.",
+      "backToProducts": "עיין במוצרים",
+      "goHome": "לעמוד הבית"
+    },
+    "cancel": {
+      "title": "התשלום בוטל",
+      "description": "אין בעיה — התשלום שלך בוטל ולא חויבת.",
+      "productLabel": "המוצר שניסית לרכוש: {product}",
+      "backToProduct": "נסה שוב",
+      "browseProducts": "עיין בכל המוצרים"
     }
   }
 }

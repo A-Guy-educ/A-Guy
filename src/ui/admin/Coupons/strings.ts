@@ -43,6 +43,21 @@ interface CouponStrings {
 
   // ListView
   addCoupon: string
+
+  // List columns (derived/computed fields)
+  statusActive: string
+  statusExpired: string
+  statusExhausted: string
+  statusInactive: string
+  statusScheduled: string
+  usageLabel: string
+  expiresLabel: string
+  expiresNever: string
+
+  // Detail view
+  usageProgress: string
+  usageRemaining: string
+  usageExhausted: string
 }
 
 const EN: CouponStrings = {
@@ -83,6 +98,21 @@ const EN: CouponStrings = {
 
   // ListView
   addCoupon: 'Add Coupon',
+
+  // List columns
+  statusActive: 'Active',
+  statusExpired: 'Expired',
+  statusExhausted: 'Exhausted',
+  statusInactive: 'Inactive',
+  statusScheduled: 'Scheduled',
+  usageLabel: 'Usage',
+  expiresLabel: 'Expires',
+  expiresNever: 'Never expires',
+
+  // Detail view
+  usageProgress: 'Usage',
+  usageRemaining: 'remaining',
+  usageExhausted: 'Exhausted',
 }
 
 const HE: CouponStrings = {
@@ -123,6 +153,21 @@ const HE: CouponStrings = {
 
   // ListView
   addCoupon: 'הוסף קופון',
+
+  // List columns
+  statusActive: 'פעיל',
+  statusExpired: 'תם תוקף',
+  statusExhausted: 'נוצל',
+  statusInactive: 'לא פעיל',
+  statusScheduled: 'מתוזמן',
+  usageLabel: 'שימוש',
+  expiresLabel: 'תוקף',
+  expiresNever: 'ללא הגבלה',
+
+  // Detail view
+  usageProgress: 'שימוש',
+  usageRemaining: 'נותרו',
+  usageExhausted: 'נוצל',
 }
 
 export function getCouponStrings(lang: string): CouponStrings {

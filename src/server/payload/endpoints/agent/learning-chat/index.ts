@@ -142,11 +142,12 @@ async function persistAssistantMessage(
 
   const updatedMessages = [...trimMessagesForUpdate(allMessages), assistantMessage]
 
-  // Use as any to bypass type checking - Payload handles the internal message structure
+  // Payload handles the internal message structure; cast required to bypass field-level typing
   await payload.update({
     collection: 'conversations',
     id: conversationId,
     data: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload field-level message typing differs from runtime shape
       messages: updatedMessages as any,
       lastMessageAt: new Date().toISOString(),
     },
@@ -251,6 +252,7 @@ export async function agentLearningChat(
       collection: 'conversations',
       id: conversationId,
       data: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Payload field-level message typing differs from runtime shape
         messages: allMessages as any,
         lastMessageAt: new Date().toISOString(),
       },

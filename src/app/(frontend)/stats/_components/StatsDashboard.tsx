@@ -83,9 +83,11 @@ export function StatsDashboard({
   const [timeframe, setTimeframe] = useState(initialTimeframe)
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
+    setError(null)
     try {
       const params = new URLSearchParams()
       if (courseId !== 'all') {
@@ -100,9 +102,17 @@ export function StatsDashboard({
       if (response.ok) {
         const result = await response.json()
         setData(result)
+      } else {
+        const errorText = await response.text().catch(() => '')
+        setError(
+          `Failed to load statistics (${response.status}${errorText ? `: ${errorText}` : ''})`,
+        )
+        setData(null)
       }
-    } catch (error) {
-      console.error('Failed to fetch dashboard data:', error)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error'
+      setError(`Failed to load statistics: ${message}`)
+      setData(null)
     } finally {
       setLoading(false)
     }
@@ -208,6 +218,8 @@ export function StatsDashboard({
               <ActivityTimeline />
             </motion.div>
           </motion.div>
+        ) : error ? (
+          <div className="text-center py-section-lg text-destructive">{error}</div>
         ) : (
           <div className="text-center py-section-lg text-muted-foreground">{t('errorLoading')}</div>
         )}

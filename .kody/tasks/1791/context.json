@@ -1,0 +1,17 @@
+{
+  "taskId": "1791",
+  "taskType": "issue",
+  "target": "1791",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed CSP img-src policy to allow gravatar.com on admin routes",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "next.config.js",
+    "tests/int/csp-vercel-feedback-admin.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/1791.jsonl",
+  "startedAt": "2026-05-22T14:47:00Z",
+  "finishedAt": "2026-05-22T14:48:00Z"
+}

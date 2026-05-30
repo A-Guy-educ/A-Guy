@@ -111,34 +111,20 @@ export async function populateLessonBlocks(
 
       const existingBlocks = parseBlocks(lesson.blocks)
 
-      // Build set of existing ref IDs
-      const existingRefs = new Set<string>()
-      for (const b of existingBlocks) {
-        if (b.blockType === 'exerciseRef' && b.exercise) existingRefs.add(`exercise:${b.exercise}`)
-        if (b.blockType === 'contentPageRef' && b.contentPage)
-          existingRefs.add(`contentPage:${b.contentPage}`)
-      }
+      // Skip lessons that already have curated blocks. Merging would re-add
+      // blocks an admin intentionally removed (the bug we're fixing).
+      if (existingBlocks.length > 0) continue
 
-      // Only add blocks that don't already exist
-      const toAdd = newBlocks.filter((b) => {
-        const key =
-          b.blockType === 'exerciseRef' ? `exercise:${b.exercise}` : `contentPage:${b.contentPage}`
-        return !existingRefs.has(key)
-      })
-
-      if (toAdd.length === 0) continue
-
-      const merged = [...existingBlocks, ...toAdd]
       await payload.update({
         collection: 'lessons',
         id: lessonId,
-        data: { blocks: JSON.stringify(merged) },
+        data: { blocks: JSON.stringify(newBlocks) },
         overrideAccess: true,
         context: { _skipBlockSync: true },
       })
 
       lessonsUpdated++
-      blocksAdded += toAdd.length
+      blocksAdded += newBlocks.length
     } catch {
       errors++
       payload.logger?.warn(

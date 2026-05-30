@@ -343,7 +343,7 @@ export const Lessons: CollectionConfig = {
       defaultValue: ['media', 'pdf', 'interactive'],
       options: [
         { label: 'Media (attached files)', value: 'media' },
-        { label: 'PDF (worksheet view)', value: 'pdf' },
+        { label: 'Scroll view', value: 'pdf' },
         { label: 'Interactive (exercise pager)', value: 'interactive' },
       ],
       admin: {
