@@ -1,0 +1,25 @@
+{
+  "taskId": "2111",
+  "taskType": "issue",
+  "target": "2111",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "All changes implemented and verified: virtual fields with afterRead hooks, cell components, usage progress UI field, new strings, and tests",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/collections/Coupons.ts",
+    "src/server/payload/hooks/coupons/computeListDisplayFields-hook.ts",
+    "src/ui/admin/Coupons/Cells/StatusCell/index.tsx",
+    "src/ui/admin/Coupons/Cells/UsageCell/index.tsx",
+    "src/ui/admin/Coupons/Cells/ExpiresCell/index.tsx",
+    "src/ui/admin/Coupons/UsageProgressField/index.tsx",
+    "src/ui/admin/Coupons/EditView/index.tsx",
+    "src/ui/admin/Coupons/strings.ts",
+    "tests/int/coupons.int.spec.ts",
+    "src/payload-types.ts"
+  ],
+  "sessionLog": ".kody/sessions/2111.jsonl",
+  "startedAt": "2026-05-26T09:50:00Z",
+  "finishedAt": "2026-05-26T09:58:00Z"
+}

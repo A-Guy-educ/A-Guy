@@ -1,0 +1,17 @@
+{
+  "taskId": "2136",
+  "taskType": "issue",
+  "target": "2136-add-per-user-rate-limit-to-checkout-endpoint",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added per-user rate limit to checkout endpoint using existing checkAuthenticatedRateLimit utility, with super-admin exemption, 429+Retry-After response, and logging.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/payments/checkout/route.ts",
+    "tests/int/checkout-rate-limit.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2136.jsonl",
+  "startedAt": "2026-05-27T10:12:00Z",
+  "finishedAt": "2026-05-27T10:13:00Z"
+}

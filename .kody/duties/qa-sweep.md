@@ -15,11 +15,12 @@ to the inbox. This catches regressions and rough edges in already-shipped
 features that the changelog-verification duty (which only tests *new* entries)
 never revisits.
 
-`disabled: true` only to avoid auto-activating QA — this repo is already set up:
-`qa.fallbackUrl` in `kody.config.json` (`https://dev.aguy.co.il`) resolves the
-target URL, and `.kody/qa-guide.md` carries login credentials + the route list,
-so `qa-engineer` can log in and browse. Flip to `disabled: false` to go live; no
-other setup needed.
+This duty is **live** (no `disabled:` key → enabled by default). The repo is
+fully set up: `qa.fallbackUrl` in `kody.config.json` (`https://dev.aguy.co.il`)
+resolves the target URL, the `LOGIN_USER` variable + `LOGIN_PASSWORD` secret
+carry the QA credentials, and the `.kody/context/*.md` entries tagged for
+`qa-engineer` carry the route list + flows, so `qa-engineer` can log in and
+browse. To pause it, add `disabled: true` to the frontmatter.
 
 **Cadence.** Set by the `every:` frontmatter (the dashboard schedule dropdown)
 and enforced by the engine — the duty won't tick more often than its interval.
@@ -38,12 +39,14 @@ A full sweep is the most expensive QA run, so the default is daily (`every: 1d`)
    close the tracking issue, clear `data.openIssue`.
 4. **Open, ≥ 2h old, no report** → comment the stall, close it, clear state
    (the next eligible tick re-runs). A stuck sweep must never wedge the job.
-5. **Otherwise** (none open) → open a tracking issue and
-   dispatch with no scope (URL resolves from `qa.fallbackUrl`):
+5. **Otherwise** (none open) → open a tracking issue and dispatch with no
+   scope via **typed workflow_dispatch** — never a bot `@kody` comment
+   (the webhook's bot-author guard silently drops those, which is exactly
+   how this duty used to stall for hours):
    ```
    gh issue create --title "QA sweep $(date -u +%Y-%m-%d)" --label kody:qa-sweep \
      --body "Automated broad QA sweep; qa-engineer reports here."
-   gh issue comment <n> --body "@kody qa-engineer --issue <n>"
+   gh workflow run kody.yml -f executable=qa-engineer -f issue_number=<n>
    ```
    Set `data.openIssue = <n>` and `data.lastRunISO = now`.
 
@@ -75,6 +78,9 @@ itself; it's gated behind your approval.
 
 - `gh issue list`, `gh issue create`, `gh issue view`, `gh issue comment`,
   `gh issue close`.
+- `gh workflow run kody.yml` — typed cross-run dispatch for `qa-engineer`
+  (never substitute `gh issue comment "@kody qa-engineer …"`; that path is
+  bot-filtered and silently stalls).
 
 ## Restrictions
 

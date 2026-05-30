@@ -504,6 +504,53 @@ describe('PaymentStats syncPaymentStats hook', () => {
     expect(stats.docs[0].succeededCount).toBe(2)
   })
 
+  it('concurrent succeeded webhooks on same date+currency: final revenue equals sum of all amounts (no race loss)', async () => {
+    // Simulate 10 concurrent webhook events for the same date+currency.
+    // With atomic $inc upsert (no read-modify-write), no counts are lost.
+    const CONCURRENT_COUNT = 10
+    const AMOUNT = 500 // agorot each
+
+    const txIds = `ps-concurrent-${Date.now()}`
+    const date = new Date().toISOString().split('T')[0]
+
+    // Fire all 10 creates concurrently
+    await Promise.all(
+      Array.from({ length: CONCURRENT_COUNT }, (_, i) =>
+        payload.create({
+          collection: 'transactions',
+          data: {
+            user: userId,
+            product: productId,
+            provider: 'stripe',
+            providerTransactionId: `${txIds}-${i}`,
+            status: 'succeeded',
+            amount: AMOUNT,
+            currency: 'ILS',
+          } as any,
+          overrideAccess: true,
+        }),
+      ),
+    )
+
+    const stats = await payload.find({
+      collection: 'payment_stats',
+      where: {
+        date: { equals: date },
+        currency: { equals: 'ILS' },
+      },
+      depth: 0,
+      overrideAccess: true,
+    })
+
+    expect(stats.totalDocs).toBe(1)
+    // The critical assertion: revenue must equal the full sum, not a lesser value
+    // caused by concurrent read-modify-write overwrites
+    expect(stats.docs[0].totalRevenueAgorot).toBe(CONCURRENT_COUNT * AMOUNT)
+    expect(stats.docs[0].succeededCount).toBe(CONCURRENT_COUNT)
+    expect(stats.docs[0].transactionCount).toBe(CONCURRENT_COUNT)
+    expect(stats.docs[0].newCustomersCount).toBe(CONCURRENT_COUNT)
+  })
+
   it('admin-only access: non-admin cannot create payment_stats', async () => {
     // Create a non-admin user
     const student = await payload.create({

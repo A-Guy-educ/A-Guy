@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Tenant-scoped product filtering",
+    "body": "The /products page currently shows ALL active products (queryActiveProducts has no tenant filter). Per the issue, products should be scoped to the user's tenant. The getMeUser() call is missing from the products page, and the product query needs a tenant filter. This was deferred because Products collection has optional tenant (null = global) and tenant isolation logic in checkout API is complex.\n\nThe checkout API (src/app/api/payments/checkout/route.ts lines 108-127) already has tenant isolation logic that checks: null-tenant product = global (accessible to all), tenant-scoped product = only accessible to same-tenant users. This same pattern should be applied in queryActiveProducts to filter by the logged-in user's tenant.",
+    "rationale": "Products collection has optionalTenantField — products with no tenant are global/legacy and should be visible to all. Products with a tenant should only show to matching tenant users. The checkout API already implements this pattern correctly.",
+    "priority": "medium"
+  }
+]
