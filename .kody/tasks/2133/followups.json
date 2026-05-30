@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Configure email adapter in production",
+    "body": "Currently payload.email is undefined in dev/test — the no-op fallback logs a warning and returns false. Once an email adapter (e.g. Resend, SendGrid) is configured in payload.config.ts, actual emails will be sent and emailSentAt will be set on transactions. Update .env and payload.config.ts with appropriate email credentials.",
+    "rationale": "The purchase receipt email won't actually be delivered to users until an email adapter is configured. The infrastructure (templates, service, webhook integration) is complete.",
+    "priority": "medium"
+  },
+  {
+    "title": "Add user locale to Users collection",
+    "body": "The purchase-receipt-service defaults userLocale to 'he' when sending the email. The Users collection currently has no locale field. Consider adding a 'locale' field (enum: 'he' | 'en') to the Users collection so the receipt email can be sent in the user's preferred language. The template system (purchase-receipt.en.tsx / purchase-receipt.he.tsx) already supports both locales.",
+    "rationale": "Users who prefer English will receive Hebrew receipts because we can't detect their preference. Adding a locale field to Users and passing it through the webhook would fix this.",
+    "priority": "low"
+  }
+]

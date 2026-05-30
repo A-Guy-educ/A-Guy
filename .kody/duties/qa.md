@@ -27,9 +27,10 @@ browser cost.
 
 `disabled: true` only to avoid auto-activating QA — this repo is already set up:
 `CHANGELOG.md` has a populated `## [Unreleased]` section, `qa.fallbackUrl` in
-`kody.config.json` (`https://dev.aguy.co.il`) resolves the target URL, and
-`.kody/qa-guide.md` carries login credentials + the route list. Flip to
-`disabled: false` to go live; no other setup needed.
+`kody.config.json` (`https://dev.aguy.co.il`) resolves the target URL, the
+`LOGIN_USER` variable + `LOGIN_PASSWORD` secret carry the QA credentials, and
+the `.kody/context/*.md` entries tagged for `qa-engineer` carry the route list
++ flows. Flip to `disabled: false` to go live; no other setup needed.
 
 **Per tick (one action max):**
 
@@ -61,8 +62,12 @@ browser cost.
    bottom-most one with a `[#<pr>]` link and no marker. If none, idle. For it:
    1. Open a tracking issue:
       `gh issue create --title "QA: <title> (#<pr>)" --label kody:qa --body "Automated QA pass for changelog entry #<pr>; qa-engineer reports here."`
-   2. Dispatch the pass onto it (URL resolves from `qa.fallbackUrl`):
-      `gh issue comment <tracking> --body "@kody qa-engineer --scope \"<title>\" --issue <tracking>"`
+   2. Dispatch the pass onto it via **typed workflow_dispatch** — never a
+      bot `@kody` comment (the webhook's bot-author guard silently drops
+      those, which is exactly how this duty used to stall for hours).
+      `qa-engineer` reads the scope from the tracking issue title via its
+      `deriveQaScopeFromIssue` preflight, so no `--scope` flag is needed:
+      `gh workflow run kody.yml -f executable=qa-engineer -f issue_number=<tracking>`
    3. Mark the bullet ` · 🔄 QA (#<tracking>)` via a read-modify-write PUT to the
       Contents API (re-read the sha, swap the one line, retry ≤ 3 on 409):
       `gh api -X PUT repos/{owner}/{repo}/contents/CHANGELOG.md -f message="chore(qa): start QA for #<pr>" -f content="<base64>" -f sha="<sha>"`.
@@ -102,6 +107,9 @@ _Confirm or dismiss in the dashboard inbox. QA will not act on its own._
   **only** a bullet's trailing marker).
 - `gh issue list`, `gh issue create`, `gh issue view`, `gh issue comment`,
   `gh issue close`.
+- `gh workflow run kody.yml` — typed cross-run dispatch for `qa-engineer`
+  (never substitute `gh issue comment "@kody qa-engineer …"`; that path is
+  bot-filtered and silently stalls).
 
 ## Restrictions
 

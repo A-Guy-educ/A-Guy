@@ -1,12 +1,17 @@
 model_list:
-  - model_name: claude-opus
+  - model_name: claude-opus-4-6
     litellm_params:
-      model: claude-3-opus-20240229
+      model: anthropic/claude-opus-4-6
       api_key: os.environ/ANTHROPIC_API_KEY
 
-  - model_name: claude-sonnet
+  - model_name: claude-opus-4-7
     litellm_params:
-      model: claude-3-5-sonnet-20240620
+      model: anthropic/claude-opus-4-7
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: claude-sonnet-4-6
+    litellm_params:
+      model: anthropic/claude-sonnet-4-6
       api_key: os.environ/ANTHROPIC_API_KEY
 
   - model_name: gpt-4o
@@ -22,8 +27,9 @@ model_list:
 router_settings:
   retries: 3
   fallbacks:
-    - claude-opus: gpt-4o
-    - claude-sonnet: gpt-4o-mini
+    - claude-opus-4-6: gpt-4o
+    - claude-opus-4-7: gpt-4o
+    - claude-sonnet-4-6: gpt-4o-mini
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY

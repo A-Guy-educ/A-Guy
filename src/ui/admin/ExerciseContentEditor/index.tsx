@@ -3,8 +3,8 @@
 import { ExerciseBlockDefaults, generateId } from '@/server/payload/collections/Exercises/defaults'
 import type { ContentBlock, InlineRichText } from '@/server/payload/collections/Exercises/types'
 import { useField, useForm } from '@payloadcms/ui'
-import { Copy, FileCode, MoveDown, MoveUp, Plus, Trash2 } from 'lucide-react'
-import React from 'react'
+import { Copy, FileCode, GripVertical, Plus, Trash2, AlertCircle } from 'lucide-react'
+import React, { useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { BlockTypeSelector } from './BlockTypeSelector'
 import { FullJsonEditor } from './FullJsonEditor'
@@ -98,6 +98,18 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const originalContentRef = React.useRef<any>(fieldValue)
 
+  // Blocks ref for drag-and-drop (avoids dependency issues)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const blocksRef = React.useRef<any[]>([])
+
+  // Drag-and-drop state
+  const [dragIndex, setDragIndex] = React.useState<number | null>(null)
+  const [dropTarget, setDropTarget] = React.useState<number | null>(null)
+
+  // Delete confirmation dialog state
+  const [deleteConfirmBlockId, setDeleteConfirmBlockId] = React.useState<string | null>(null)
+  const [showDeleteWarning, setShowDeleteWarning] = React.useState(false)
+
   // Helper to update local state and prevent form modification
   const updateLocalValue = React.useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -151,8 +163,12 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
     }
   }, [localValue, updateLocalValue])
 
-  // Get blocks array safely
-  const blocks: ContentBlock[] = localValue?.blocks || []
+  // Get blocks array safely and keep ref in sync
+  const blocks: ContentBlock[] = React.useMemo(() => {
+    const b = localValue?.blocks || []
+    blocksRef.current = b
+    return b
+  }, [localValue?.blocks])
 
   // Open block type selector
   const handleAddBlock = (index?: number) => {
@@ -233,6 +249,66 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
 
     updateLocalValue({ blocks: newBlocks })
     setSelectedBlockId(duplicatedBlock.id)
+  }
+
+  // Drag-and-drop handlers
+  const handleDragStart = useCallback((e: React.DragEvent, idx: number) => {
+    setDragIndex(idx)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', String(idx))
+  }, [])
+
+  const handleDragOver = useCallback((e: React.DragEvent, idx: number) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDropTarget(idx)
+  }, [])
+
+  const handleDragLeave = useCallback(() => {
+    setDropTarget(null)
+  }, [])
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent, toIdx: number) => {
+      e.preventDefault()
+      const fromIdx = dragIndex
+      setDragIndex(null)
+      setDropTarget(null)
+      if (fromIdx !== null && fromIdx !== toIdx) {
+        const currentBlocks = blocksRef.current
+        const newBlocks = [...currentBlocks]
+        const [movedBlock] = newBlocks.splice(fromIdx, 1)
+        newBlocks.splice(toIdx, 0, movedBlock)
+        updateLocalValue({ blocks: newBlocks })
+      }
+    },
+    [dragIndex, updateLocalValue],
+  )
+
+  const handleDragEnd = useCallback(() => {
+    setDragIndex(null)
+    setDropTarget(null)
+  }, [])
+
+  // Delete block with confirmation
+  const confirmDeleteBlock = (blockId: string) => {
+    if (blocks.length === 1) {
+      setShowDeleteWarning(true)
+      return
+    }
+    setDeleteConfirmBlockId(blockId)
+  }
+
+  const handleConfirmDelete = () => {
+    if (deleteConfirmBlockId) {
+      handleDeleteBlock(deleteConfirmBlockId)
+      setDeleteConfirmBlockId(null)
+    }
+  }
+
+  const handleCancelDelete = () => {
+    setDeleteConfirmBlockId(null)
+    setShowDeleteWarning(false)
   }
 
   // Apply JSON changes
@@ -385,10 +461,17 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
                 selectedBlockId={selectedBlockId}
                 onSelect={setSelectedBlockId}
                 onAddBlock={handleAddBlock}
-                onDeleteBlock={handleDeleteBlock}
                 onUpdateBlock={handleUpdateBlock}
                 onMoveBlock={handleMoveBlock}
                 onDuplicateBlock={handleDuplicateBlock}
+                dragIndex={dragIndex}
+                dropTarget={dropTarget}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onDragEnd={handleDragEnd}
+                onRequestDelete={confirmDeleteBlock}
               />
             </div>
           ) : (
@@ -410,10 +493,17 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
               selectedBlockId={selectedBlockId}
               onSelect={setSelectedBlockId}
               onAddBlock={handleAddBlock}
-              onDeleteBlock={handleDeleteBlock}
               onUpdateBlock={handleUpdateBlock}
               onMoveBlock={handleMoveBlock}
               onDuplicateBlock={handleDuplicateBlock}
+              dragIndex={dragIndex}
+              dropTarget={dropTarget}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onDragEnd={handleDragEnd}
+              onRequestDelete={confirmDeleteBlock}
             />
           </div>
         </div>
@@ -424,6 +514,54 @@ export const ExerciseContentEditor: React.FC<{ path: string }> = ({ path }) => {
         onClose={() => setBlockTypeSelectorOpen(false)}
         onSelect={handleBlockTypeSelected}
       />
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirmBlockId && (
+        <div className="delete-confirm-overlay" onClick={handleCancelDelete}>
+          <div className="delete-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="delete-confirm-header">
+              <AlertCircle size={20} />
+              <h3>Delete Block?</h3>
+            </div>
+            <p className="delete-confirm-body">
+              This action cannot be undone. The block will be permanently deleted.
+            </p>
+            <div className="delete-confirm-actions">
+              <button className="delete-confirm-cancel" onClick={handleCancelDelete} type="button">
+                Cancel
+              </button>
+              <button className="delete-confirm-delete" onClick={handleConfirmDelete} type="button">
+                Delete Block
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Warning Dialog */}
+      {showDeleteWarning && (
+        <div className="delete-confirm-overlay" onClick={() => setShowDeleteWarning(false)}>
+          <div className="delete-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="delete-confirm-header delete-confirm-header--warning">
+              <AlertCircle size={20} />
+              <h3>Cannot Delete Last Block</h3>
+            </div>
+            <p className="delete-confirm-body">
+              An exercise must have at least one block. Please add a new block before deleting this
+              one.
+            </p>
+            <div className="delete-confirm-actions">
+              <button
+                className="delete-confirm-cancel"
+                onClick={() => setShowDeleteWarning(false)}
+                type="button"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -453,6 +591,8 @@ function renderQuestionEditor(
   onMoveDown: () => void,
   onDuplicate: () => void,
   onDelete: () => void,
+  canMoveUp: boolean,
+  canMoveDown: boolean,
 ): React.ReactNode {
   if (block.type === 'question_select' && block.variant === 'true_false') {
     return (
@@ -464,8 +604,8 @@ function renderQuestionEditor(
         onMoveDown={onMoveDown}
         onDuplicate={onDuplicate}
         onDelete={onDelete}
-        canMoveUp={blockIndex > 0}
-        canMoveDown={blockIndex < blockCount - 1}
+        canMoveUp={canMoveUp}
+        canMoveDown={canMoveDown}
         canDelete={blockCount > 1}
       >
         <TrueFalseEditor
@@ -487,8 +627,8 @@ function renderQuestionEditor(
         onMoveDown={onMoveDown}
         onDuplicate={onDuplicate}
         onDelete={onDelete}
-        canMoveUp={blockIndex > 0}
-        canMoveDown={blockIndex < blockCount - 1}
+        canMoveUp={canMoveUp}
+        canMoveDown={canMoveDown}
         canDelete={blockCount > 1}
       >
         <McqEditor
@@ -510,8 +650,8 @@ function renderQuestionEditor(
         onMoveDown={onMoveDown}
         onDuplicate={onDuplicate}
         onDelete={onDelete}
-        canMoveUp={blockIndex > 0}
-        canMoveDown={blockIndex < blockCount - 1}
+        canMoveUp={canMoveUp}
+        canMoveDown={canMoveDown}
         canDelete={blockCount > 1}
       >
         <FreeResponseEditor
@@ -533,8 +673,8 @@ function renderQuestionEditor(
         onMoveDown={onMoveDown}
         onDuplicate={onDuplicate}
         onDelete={onDelete}
-        canMoveUp={blockIndex > 0}
-        canMoveDown={blockIndex < blockCount - 1}
+        canMoveUp={canMoveUp}
+        canMoveDown={canMoveDown}
         canDelete={blockCount > 1}
       >
         <TableEditor
@@ -554,8 +694,8 @@ function renderQuestionEditor(
         onMoveDown={onMoveDown}
         onDuplicate={onDuplicate}
         onDelete={onDelete}
-        canMoveUp={blockIndex > 0}
-        canMoveDown={blockIndex < blockCount - 1}
+        canMoveUp={canMoveUp}
+        canMoveDown={canMoveDown}
         canDelete={blockCount > 1}
       >
         <MatchingEditor
@@ -577,8 +717,8 @@ function renderQuestionEditor(
         onMoveDown={onMoveDown}
         onDuplicate={onDuplicate}
         onDelete={onDelete}
-        canMoveUp={blockIndex > 0}
-        canMoveDown={blockIndex < blockCount - 1}
+        canMoveUp={canMoveUp}
+        canMoveDown={canMoveDown}
         canDelete={blockCount > 1}
       >
         <SvgEditor
@@ -598,8 +738,8 @@ function renderQuestionEditor(
         onMoveDown={onMoveDown}
         onDuplicate={onDuplicate}
         onDelete={onDelete}
-        canMoveUp={blockIndex > 0}
-        canMoveDown={blockIndex < blockCount - 1}
+        canMoveUp={canMoveUp}
+        canMoveDown={canMoveDown}
         canDelete={blockCount > 1}
       >
         <GeometryEditor
@@ -621,8 +761,8 @@ function renderQuestionEditor(
         onMoveDown={onMoveDown}
         onDuplicate={onDuplicate}
         onDelete={onDelete}
-        canMoveUp={blockIndex > 0}
-        canMoveDown={blockIndex < blockCount - 1}
+        canMoveUp={canMoveUp}
+        canMoveDown={canMoveDown}
         canDelete={blockCount > 1}
       >
         <AxisEditor
@@ -642,8 +782,8 @@ function renderQuestionEditor(
         onMoveDown={onMoveDown}
         onDuplicate={onDuplicate}
         onDelete={onDelete}
-        canMoveUp={blockIndex > 0}
-        canMoveDown={blockIndex < blockCount - 1}
+        canMoveUp={canMoveUp}
+        canMoveDown={canMoveDown}
         canDelete={blockCount > 1}
       >
         <LatexBlockEditor
@@ -663,8 +803,8 @@ function renderQuestionEditor(
         onMoveDown={onMoveDown}
         onDuplicate={onDuplicate}
         onDelete={onDelete}
-        canMoveUp={blockIndex > 0}
-        canMoveDown={blockIndex < blockCount - 1}
+        canMoveUp={canMoveUp}
+        canMoveDown={canMoveDown}
         canDelete={blockCount > 1}
       >
         <MultiAxisEditor
@@ -684,26 +824,31 @@ interface BlockListProps {
   selectedBlockId: string | null
   onSelect: (id: string) => void
   onAddBlock: (index?: number) => void
-  onDeleteBlock: (id: string) => void
   onUpdateBlock: (id: string, updates: Partial<ContentBlock>) => void
   onMoveBlock: (id: string, direction: 'up' | 'down') => void
   onDuplicateBlock: (id: string) => void
+  // Drag-and-drop props
+  dragIndex: number | null
+  dropTarget: number | null
+  onDragStart: (e: React.DragEvent, idx: number) => void
+  onDragOver: (e: React.DragEvent, idx: number) => void
+  onDragLeave: () => void
+  onDrop: (e: React.DragEvent, toIdx: number) => void
+  onDragEnd: () => void
+  // Delete confirmation
+  onRequestDelete: (id: string) => void
 }
 
 function ContentBlockHeader({
   blockId,
   index,
-  blockCount,
-  onMoveBlock,
   onDuplicateBlock,
-  onDeleteBlock,
+  onRequestDelete,
 }: {
   blockId: string
   index: number
-  blockCount: number
-  onMoveBlock: (id: string, direction: 'up' | 'down') => void
   onDuplicateBlock: (id: string) => void
-  onDeleteBlock: (id: string) => void
+  onRequestDelete: (id: string) => void
 }) {
   return (
     <div className="block-header">
@@ -711,24 +856,6 @@ function ContentBlockHeader({
         <span className="block-number">Block {index + 1}</span>
       </div>
       <div className="block-actions">
-        <button
-          className="block-action-button"
-          onClick={() => onMoveBlock(blockId, 'up')}
-          disabled={index === 0}
-          title="Move up"
-          type="button"
-        >
-          <MoveUp size={14} />
-        </button>
-        <button
-          className="block-action-button"
-          onClick={() => onMoveBlock(blockId, 'down')}
-          disabled={index === blockCount - 1}
-          title="Move down"
-          type="button"
-        >
-          <MoveDown size={14} />
-        </button>
         <button
           className="block-action-button"
           onClick={() => onDuplicateBlock(blockId)}
@@ -739,8 +866,7 @@ function ContentBlockHeader({
         </button>
         <button
           className="block-action-button block-action-button--danger"
-          onClick={() => onDeleteBlock(blockId)}
-          disabled={blockCount === 1}
+          onClick={() => onRequestDelete(blockId)}
           title="Delete block"
           type="button"
         >
@@ -756,10 +882,16 @@ function BlockList({
   selectedBlockId,
   onSelect,
   onAddBlock,
-  onDeleteBlock,
   onUpdateBlock,
-  onMoveBlock,
   onDuplicateBlock,
+  dragIndex,
+  dropTarget,
+  onDragStart,
+  onDragOver,
+  onDragLeave,
+  onDrop,
+  onDragEnd,
+  onRequestDelete,
 }: BlockListProps) {
   return (
     <div className="block-list">
@@ -769,96 +901,129 @@ function BlockList({
         const isMedia = block.type === 'media'
 
         return (
-          <div
-            key={block.id}
-            className={`block-item ${selectedBlockId === block.id ? 'block-item--selected' : ''}`}
-          >
-            {isRichText ? (
-              <>
-                <ContentBlockHeader
-                  blockId={block.id}
-                  index={index}
-                  blockCount={blocks.length}
-                  onMoveBlock={onMoveBlock}
-                  onDuplicateBlock={onDuplicateBlock}
-                  onDeleteBlock={onDeleteBlock}
-                />
-                <div className="block-content">
-                  <div onClick={() => onSelect(block.id)} onFocus={() => onSelect(block.id)}>
-                    <InlineRichTextEditor
-                      value={{
-                        value: block.value,
-                        mediaIds: block.mediaIds || [],
-                        type: 'rich_text',
-                        format: 'md-math-v1',
-                      }}
-                      onChange={(newValue: InlineRichText) =>
-                        onUpdateBlock(block.id, {
-                          value: newValue.value,
-                          mediaIds: newValue.mediaIds,
-                        })
+          <React.Fragment key={block.id}>
+            {/* Between-block add button */}
+            <div className="between-block-add">
+              <button
+                className="between-block-add-button"
+                onClick={() => onAddBlock(index - 1)}
+                type="button"
+                title="Add block above"
+              >
+                <Plus size={12} />
+              </button>
+            </div>
+
+            <div
+              className={`block-item ${selectedBlockId === block.id ? 'block-item--selected' : ''} ${
+                dragIndex === index ? 'block-item--dragging' : ''
+              } ${dropTarget === index ? 'block-item--drop-target' : ''}`}
+              draggable
+              onDragStart={(e) => onDragStart(e, index)}
+              onDragOver={(e) => onDragOver(e, index)}
+              onDragLeave={onDragLeave}
+              onDrop={(e) => onDrop(e, index)}
+              onDragEnd={onDragEnd}
+            >
+              <div className="block-drag-handle" title="Drag to reorder">
+                <GripVertical size={16} />
+              </div>
+
+              {isRichText ? (
+                <>
+                  <ContentBlockHeader
+                    blockId={block.id}
+                    index={index}
+                    onDuplicateBlock={onDuplicateBlock}
+                    onRequestDelete={onRequestDelete}
+                  />
+                  <div className="block-content">
+                    <div onClick={() => onSelect(block.id)} onFocus={() => onSelect(block.id)}>
+                      <InlineRichTextEditor
+                        value={{
+                          value: block.value,
+                          mediaIds: block.mediaIds || [],
+                          type: 'rich_text',
+                          format: 'md-math-v1',
+                        }}
+                        onChange={(newValue: InlineRichText) =>
+                          onUpdateBlock(block.id, {
+                            value: newValue.value,
+                            mediaIds: newValue.mediaIds,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : isMedia ? (
+                <>
+                  <ContentBlockHeader
+                    blockId={block.id}
+                    index={index}
+                    onDuplicateBlock={onDuplicateBlock}
+                    onRequestDelete={onRequestDelete}
+                  />
+                  <div className="block-content" onClick={() => onSelect(block.id)}>
+                    <MediaBlockEditor
+                      block={
+                        block as import('@/server/payload/collections/Exercises/types').MediaBlock
                       }
+                      onChange={(updatedBlock) => {
+                        onUpdateBlock(block.id, updatedBlock)
+                      }}
                     />
                   </div>
-                </div>
-              </>
-            ) : isMedia ? (
-              <>
-                <ContentBlockHeader
-                  blockId={block.id}
-                  index={index}
-                  blockCount={blocks.length}
-                  onMoveBlock={onMoveBlock}
-                  onDuplicateBlock={onDuplicateBlock}
-                  onDeleteBlock={onDeleteBlock}
-                />
-                <div className="block-content" onClick={() => onSelect(block.id)}>
-                  <MediaBlockEditor
-                    block={
-                      block as import('@/server/payload/collections/Exercises/types').MediaBlock
-                    }
-                    onChange={(updatedBlock) => {
-                      onUpdateBlock(block.id, updatedBlock)
-                    }}
+                </>
+              ) : isHtml ? (
+                <>
+                  <ContentBlockHeader
+                    blockId={block.id}
+                    index={index}
+                    onDuplicateBlock={onDuplicateBlock}
+                    onRequestDelete={onRequestDelete}
                   />
+                  <div className="block-content" onClick={() => onSelect(block.id)}>
+                    <HtmlBlockEditor
+                      block={
+                        block as import('@/server/payload/collections/Exercises/types').HtmlBlock
+                      }
+                      onChange={(updatedBlock) => onUpdateBlock(block.id, updatedBlock)}
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="question-block-json-editor">
+                  {renderQuestionEditor(
+                    block,
+                    (updatedBlock) => onUpdateBlock(block.id, updatedBlock),
+                    index,
+                    blocks.length,
+                    () => {},
+                    () => {},
+                    () => onDuplicateBlock(block.id),
+                    () => onRequestDelete(block.id),
+                    false, // canMoveUp - using drag-and-drop instead
+                    false, // canMoveDown - using drag-and-drop instead
+                  )}
                 </div>
-              </>
-            ) : isHtml ? (
-              <>
-                <ContentBlockHeader
-                  blockId={block.id}
-                  index={index}
-                  blockCount={blocks.length}
-                  onMoveBlock={onMoveBlock}
-                  onDuplicateBlock={onDuplicateBlock}
-                  onDeleteBlock={onDeleteBlock}
-                />
-                <div className="block-content" onClick={() => onSelect(block.id)}>
-                  <HtmlBlockEditor
-                    block={
-                      block as import('@/server/payload/collections/Exercises/types').HtmlBlock
-                    }
-                    onChange={(updatedBlock) => onUpdateBlock(block.id, updatedBlock)}
-                  />
-                </div>
-              </>
-            ) : (
-              <div className="question-block-json-editor">
-                {renderQuestionEditor(
-                  block,
-                  (updatedBlock) => onUpdateBlock(block.id, updatedBlock),
-                  index,
-                  blocks.length,
-                  () => onMoveBlock(block.id, 'up'),
-                  () => onMoveBlock(block.id, 'down'),
-                  () => onDuplicateBlock(block.id),
-                  () => onDeleteBlock(block.id),
-                )}
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          </React.Fragment>
         )
       })}
+
+      {/* Add block button at the end */}
+      <div className="between-block-add">
+        <button
+          className="between-block-add-button"
+          onClick={() => onAddBlock(blocks.length - 1)}
+          type="button"
+          title="Add block below"
+        >
+          <Plus size={12} />
+        </button>
+      </div>
 
       <button className="add-block-button" onClick={() => onAddBlock()} type="button">
         <Plus size={16} />

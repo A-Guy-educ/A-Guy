@@ -1,0 +1,17 @@
+{
+  "taskId": "1793",
+  "taskType": "issue",
+  "target": "1793-p2-posts-page-shows-misleading-search-produced-no",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed PageRange component to distinguish between search and list views; added isSearch prop so list views show 'No {plural} yet.' instead of misleading 'Search produced no results.'",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/PageRange/index.tsx",
+    "tests/unit/components/PageRange.test.tsx"
+  ],
+  "sessionLog": ".kody/sessions/1793-p2-posts-page-shows-misleading-search-produced-no.jsonl",
+  "startedAt": "2026-05-22T16:40:00Z",
+  "finishedAt": "2026-05-22T16:46:00Z"
+}

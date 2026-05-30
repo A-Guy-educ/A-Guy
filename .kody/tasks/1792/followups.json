@@ -1,0 +1,8 @@
+[
+  {
+    "title": "admin-transactions-rest-api.int.spec.ts test timeout",
+    "body": "The new test file tests/int/admin-transactions-rest-api.int.spec.ts has a 300s beforeAll timeout because MongoDB container + Payload onInit takes ~90s in CI. If tests are run in parallel with other tests using the shared MongoDB container, race conditions may occur. Consider: (1) run this test serially, or (2) increase the hook timeout further, or (3) skip in CI and rely on e2e smoke tests.",
+    "rationale": "The test correctly verifies the /api/transactions endpoint works, but the slow startup may cause CI flakiness.",
+    "priority": "low"
+  }
+]
