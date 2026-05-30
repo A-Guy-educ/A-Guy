@@ -4,11 +4,11 @@
   "target": "PR #1547 (chore/auto-resolve-deterministic-tick)",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Prettier formatting issue on kody.config.json was investigated and resolved - format:check passes",
+  "reason": "Single symmetric conflict in .kody/last-run.jsonl — both sides appended different session events; resolved by taking HEAD version.",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/1547",
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26337446933",
-  "filesTouched": [],
-  "sessionLog": ".kody/sessions/56e60707-c949-4d1b-8ed7-8e01b1728cb1.jsonl",
-  "startedAt": "2026-05-23T16:39:00.000Z",
-  "finishedAt": "2026-05-23T16:51:00.000Z"
+  "runUrl": null,
+  "filesTouched": [".kody/last-run.jsonl"],
+  "sessionLog": null,
+  "startedAt": "2026-05-30T17:15:00.000Z",
+  "finishedAt": "2026-05-30T17:16:00.000Z"
 }
