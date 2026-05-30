@@ -1,6 +1,19 @@
-# PR #2153 — Fix round 3: Feedback-driven overflow and responsive fixes
+# PR #2153 — Merge conflict resolution with dev
 
-## This round: remaining global CSS and JSXGraphBoard container fixes
+## Task: Resolve git merge conflict from `git merge origin/dev`
+
+### Conflicted file: `.kody/last-run.jsonl`
+This is a session log file (JSONL). Both HEAD and origin/dev had different session logs:
+- **HEAD**: 75 lines, session_id `d248d67d...`
+- **origin/dev**: 133 lines, session_id `86afddb9...` (more complete)
+
+**Resolution**: Took the origin/dev version (133-line session log) as it represents the more recent and complete session. The file was validated as correct JSONL after resolution.
+
+**Note**: All other source code files had no conflicts. The conflict markers found by grep in this file were all literal text inside JSON string values (session log descriptions), not actual git conflict markers.
+
+---
+
+## Previous handoff (round 3, pre-merge):
 
 ### globals.css: html and body overflow-x hidden
 `html` element (line ~261) and `body` element (line ~207) were missing `overflow-x: hidden`. Added to both:
