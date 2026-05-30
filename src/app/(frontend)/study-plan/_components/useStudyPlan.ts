@@ -28,13 +28,18 @@ export function useStudyPlan(): UseStudyPlanReturn {
 
   // Fetch existing plan on mount
   useEffect(() => {
+    const controller = new AbortController()
+
     async function fetchPlan() {
       try {
         setIsLoading(true)
+        // 15s timeout to prevent indefinite hanging
+        const timeoutId = setTimeout(() => controller.abort(), 15000)
         const response = await fetch(
           `/api/study-plan?gradeLevel=${encodeURIComponent(gradeLevel)}&courseId=default-course`,
-          { credentials: 'include' },
+          { credentials: 'include', signal: controller.signal },
         )
+        clearTimeout(timeoutId)
 
         if (!response.ok) {
           throw new Error('Failed to fetch plan')
@@ -46,6 +51,7 @@ export function useStudyPlan(): UseStudyPlanReturn {
           setPlan(data.data)
         }
       } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return
         console.error('Error fetching study plan:', err)
         setError(err instanceof Error ? err.message : 'Unknown error')
       } finally {
@@ -54,6 +60,8 @@ export function useStudyPlan(): UseStudyPlanReturn {
     }
 
     fetchPlan()
+
+    return () => controller.abort()
   }, [gradeLevel])
 
   const generatePlan = useCallback(

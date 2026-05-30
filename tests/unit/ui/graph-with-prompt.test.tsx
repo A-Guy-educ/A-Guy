@@ -219,7 +219,7 @@ describe('GraphWithPrompt Component', () => {
   // ============================================================
 
   describe('worksheet mode: 60/40 proportions', () => {
-    it('applies flex-[3] to prompt and flex-[2] max-w-[25rem] to graph for textLeft side-by-side', () => {
+    it('applies flex-[3] to prompt and flex-[2] with 25rem inline max-width to graph for textLeft side-by-side', () => {
       const { container } = render(
         <GraphWithPrompt
           blockId="test-block"
@@ -231,14 +231,16 @@ describe('GraphWithPrompt Component', () => {
         </GraphWithPrompt>,
       )
       const promptWrapper = container.querySelector('[data-testid="prompt-wrapper"]')
-      const graphChild = container.querySelector('[data-testid="graph-child"]')
+      const graphChild = container.querySelector<HTMLElement>('[data-testid="graph-child"]')
 
       expect(promptWrapper?.className).toContain('flex-[3]')
       expect(graphChild?.className).toContain('flex-[2]')
-      expect(graphChild?.className).toContain('max-w-[25rem]')
+      // The maxWidth cap is applied via inline style because Tailwind JIT
+      // cannot generate arbitrary classes from a runtime template literal.
+      expect(graphChild?.style.maxWidth).toBe('25rem')
     })
 
-    it('applies flex-[3] to prompt and flex-[2] max-w-[25rem] to graph for textRight side-by-side', () => {
+    it('applies flex-[3] to prompt and flex-[2] with 25rem inline max-width to graph for textRight side-by-side', () => {
       const { container } = render(
         <GraphWithPrompt
           blockId="test-block"
@@ -250,11 +252,11 @@ describe('GraphWithPrompt Component', () => {
         </GraphWithPrompt>,
       )
       const promptWrapper = container.querySelector('[data-testid="prompt-wrapper"]')
-      const graphChild = container.querySelector('[data-testid="graph-child"]')
+      const graphChild = container.querySelector<HTMLElement>('[data-testid="graph-child"]')
 
       expect(promptWrapper?.className).toContain('flex-[3]')
       expect(graphChild?.className).toContain('flex-[2]')
-      expect(graphChild?.className).toContain('max-w-[25rem]')
+      expect(graphChild?.style.maxWidth).toBe('25rem')
     })
 
     it('applies 50/50 proportions when proportions is "50-50"', () => {
@@ -386,7 +388,7 @@ describe('GraphWithPrompt Component', () => {
       expect(promptWrapper?.className).not.toMatch(/order/)
     })
 
-    it('textRight: graph has sm:order-last so prompt appears first on mobile', () => {
+    it('textRight: graph reorders below prompt on mobile, returns to DOM order on desktop', () => {
       const { container } = render(
         <GraphWithPrompt
           blockId="test-block"
@@ -399,8 +401,12 @@ describe('GraphWithPrompt Component', () => {
       )
       const graphChild = container.querySelector('[data-testid="graph-child"]')
 
-      // Graph is first in DOM (textRight) → needs sm:order-last so prompt is visual-first on mobile
-      expect(graphChild?.className).toContain('sm:order-last')
+      // Mobile: order-last pushes graph below the prompt so the prompt reads first.
+      // Desktop: sm:order-none restores DOM order so the layout matches the
+      // textRight semantic (graph on the left, prompt on the right inside the
+      // dir='ltr' container).
+      expect(graphChild?.className).toContain('order-last')
+      expect(graphChild?.className).toContain('sm:order-none')
     })
 
     it('interactive mode (no worksheetLayout) does not apply sm:order classes', () => {

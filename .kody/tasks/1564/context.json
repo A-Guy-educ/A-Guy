@@ -1,14 +1,17 @@
 {
   "taskId": "1564",
   "taskType": "pr",
-  "target": "PR #1564",
+  "target": "1505-doc-drift-srclibaicron",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Fixed integration test mock by restoring the variation-service mock (was incorrectly changed to mock the orchestrator module directly, which didn't apply)",
-  "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/1564",
+  "reason": "Both conflicts were symmetric (transactionId fixture value only); resolved to HEAD side in both files. Typecheck failure is pre-existing (stale payload-types.ts from merge, not introduced by resolution).",
+  "prUrl": null,
   "runUrl": null,
-  "filesTouched": ["tests/int/lesson-duplication-orchestrator.int.spec.ts"],
-  "sessionLog": ".kody/sessions/current.jsonl",
-  "startedAt": "2026-05-24T12:00:00.000Z",
-  "finishedAt": "2026-05-24T13:44:00.000Z"
+  "filesTouched": [
+    "tests/int/course-entitlement-cascade-delete.int.spec.ts",
+    "tests/int/dashboard-metrics.int.spec.ts"
+  ],
+  "sessionLog": null,
+  "startedAt": "2026-05-30T16:00:00Z",
+  "finishedAt": "2026-05-30T16:14:00Z"
 }

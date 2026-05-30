@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Run dedup-payment-stats.ts on production before deploying the index change",
+    "body": "The unique compound index on (date, currency) cannot be created if duplicate rows already exist in production. Run `pnpm tsx scripts/dedup-payment-stats.ts --execute` against the production MongoDB before deploying this change.",
+    "rationale": "If duplicates exist, index creation will fail and block the deploy.",
+    "priority": "high"
+  },
+  {
+    "title": "Monitor PaymentStats counts after deploying concurrent webhook fix",
+    "body": "Watch payment_stats counts in the first hours after deploying — confirm no counts are lost and the aggregation is correct under concurrent load.",
+    "rationale": "The atomic upsert changes the write path; monitoring confirms the fix works in production.",
+    "priority": "medium"
+  }
+]

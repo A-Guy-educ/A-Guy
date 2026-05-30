@@ -1,0 +1,48 @@
+/* InlineExerciseEditor Styles */
+
+.inline-exercise-editor {
+  width: 100%;
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  background: var(--theme-elevation-0);
+}
+
+.inline-exercise-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--theme-elevation-50);
+  border-bottom: 1px solid var(--theme-elevation-150);
+}
+
+.inline-exercise-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--theme-text);
+}
+
+.inline-exercise-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inline-exercise-blocks {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.inline-exercise-block-item {
+  /* Block items have clear separation */
+}
+
+/* Editor save button override for inline context */
+.inline-exercise-editor .editor-save-button {
+  padding: 6px 16px;
+  font-size: 13px;
+}

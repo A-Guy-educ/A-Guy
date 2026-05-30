@@ -160,6 +160,40 @@
       "failedToLoadCourse": "Failed to load course",
       "tryAgain": "Try Again"
     },
+    "purchases": {
+      "title": "My Purchases",
+      "refresh": "Refresh",
+      "status": {
+        "pending": "Pending",
+        "succeeded": "Succeeded",
+        "failed": "Failed",
+        "refunded": "Refunded"
+      },
+      "couponApplied": "Coupon: {code}",
+      "unknownProduct": "Unknown Product",
+      "empty": {
+        "title": "No purchases yet",
+        "description": "You haven't made any purchases. Browse our products to get started.",
+        "cta": "Browse Products"
+      },
+      "backToPurchases": "Back to Purchases",
+      "purchasedOn": "Purchased on",
+      "amount": "Amount",
+      "provider": "Provider",
+      "transactionId": "Transaction ID",
+      "status": "Status",
+      "coupon": "Coupon",
+      "pendingHelpText": "Your payment is being processed. This may take a few moments.",
+      "refreshStatus": "Refresh Status",
+      "unlockedItems": "Unlocked Items",
+      "courses": "Courses",
+      "features": "Features",
+      "refunded": "Refunded",
+      "refundedAmount": "Refunded amount",
+      "errorLoading": "Failed to load transaction",
+      "notFound": "Transaction not found",
+      "viewProduct": "View Product"
+    },
     "signup": {
       "title": "Create Account",
       "subtitle": "Sign up to start learning",
@@ -219,10 +253,10 @@
     "visibleRenderersDescription": "Choose which tabs (Media, PDF, Interactive) are visible to students for this lesson. Media tab only appears when the lesson has attached files.",
     "lessonViewMode": "Lesson view mode",
     "lessonViewModeMedia": "Media",
-    "lessonViewModePdf": "PDF",
+    "lessonViewModePdf": "Scroll view",
     "lessonViewModeInteractive": "Interactive",
     "pdfBadge": "PDF",
-    "pdfView": "PDF View",
+    "scrollView": "Scroll View",
     "interactiveExercises": "Interactive Exercises",
     "exercisesTitle": "Interactive Exercises",
     "exercisesDescription": "Complete the following exercises to practice what you've learned.",
@@ -421,7 +455,9 @@
     "chat": {
       "chatWelcome": "Hi! I'm your admin AI assistant. Ask me about courses, chapters, lessons, exercises, or media in your system.",
       "chatInputPlaceholder": "Ask a question...",
-      "chatAuthRequired": "Please log in to access admin chat"
+      "chatAuthRequired": "Please log in to access admin chat",
+      "openChat": "Open AI Chat",
+      "modalTitle": "Admin AI Assistant"
     },
     "chatLink": "Chat with AI"
   },
@@ -715,6 +751,56 @@
     "error": {
       "authRequired": "Please log in to use the learning assistant",
       "sendFailed": "Failed to send message. Please try again."
+    }
+  },
+  "products": {
+    "catalogTitle": "Products",
+    "catalogDescription": "Browse our available products and start learning today.",
+    "noProducts": "No products available at this time.",
+    "oneTimeLabel": "One-time purchase",
+    "subscriptionLabel": "Subscription",
+    "perMonth": "per month",
+    "perYear": "per year",
+    "includedItems": "What&apos;s Included",
+    "buyButton": "Buy Now",
+    "loginToBuy": "Log in to Buy",
+    "redirecting": "Redirecting to checkout...",
+    "couponLabel": "Coupon Code",
+    "couponPlaceholder": "Enter coupon code",
+    "applyCoupon": "Apply",
+    "couponApplied": "Coupon applied: {code} — final price: {amount}",
+    "remove": "Remove",
+    "errors": {
+      "authRequired": "Please log in to make a purchase.",
+      "productNotFound": "This product is no longer available.",
+      "productNotActive": "This product is no longer available.",
+      "invalidCoupon": "This coupon code is invalid or expired.",
+      "checkoutFailed": "Unable to start checkout. Please try again."
+    }
+  },
+  "checkout": {
+    "success": {
+      "missingSession": "No Session Found",
+      "noSessionDescription": "We couldn&apos;t find your payment session. If you completed a payment, please contact support.",
+      "processing": "Processing Payment...",
+      "processingDescription": "Your payment is being processed. This page will update automatically.",
+      "refresh": "Refresh",
+      "confirmedTitle": "Payment Confirmed!",
+      "confirmedDescription": "Your payment was received and your access has been granted. Welcome aboard!",
+      "productLabel": "Product: {product}",
+      "pendingTitle": "Payment Received",
+      "pendingDescription": "We&apos;ve received your payment. Your access is being set up — this usually takes a few moments.",
+      "paymentFailed": "Payment Failed",
+      "paymentFailedDescription": "Your payment could not be processed. Please try again or contact support.",
+      "backToProducts": "Browse Products",
+      "goHome": "Go to Home"
+    },
+    "cancel": {
+      "title": "Payment Cancelled",
+      "description": "No worries — your payment was cancelled and you haven&apos;t been charged.",
+      "productLabel": "Product you were purchasing: {product}",
+      "backToProduct": "Try Again",
+      "browseProducts": "Browse All Products"
     }
   }
 }
