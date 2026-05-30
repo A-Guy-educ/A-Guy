@@ -1,32 +1,32 @@
 {
   "version": 1,
-  "rev": 199,
-  "cursor": "redispatch-2026-05-30T06:30:19Z",
+  "rev": 200,
+  "cursor": "redispatch-2026-05-30T07:42:22Z",
   "data": {
     "dryRunLog": [
       {
         "issueNumber": 2138,
         "action": "resume",
         "reason": "core.status=running, history age >40min (2026-05-27T11:31:24.959Z), no blockers",
-        "plannedAt": "2026-05-30T06:30:19Z"
+        "plannedAt": "2026-05-30T07:42:22Z"
       },
       {
         "issueNumber": 2130,
         "action": "resume",
         "reason": "core.status=running, history age >40min (2026-05-27T07:50:53.680Z), no blockers",
-        "plannedAt": "2026-05-30T06:30:19Z"
+        "plannedAt": "2026-05-30T07:42:22Z"
       },
       {
         "issueNumber": 1536,
         "action": "resume",
         "reason": "core.status=running, history age >40min (2026-05-12T08:13:21.749Z), no blockers",
-        "plannedAt": "2026-05-30T06:30:19Z"
+        "plannedAt": "2026-05-30T07:42:22Z"
       }
     ],
     "perIssue": {},
-    "lastFiredAt": "2026-05-30T06:31:09.217Z",
+    "lastFiredAt": "2026-05-30T07:43:09.226Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 58544
+    "lastDurationMs": 52806
   },
   "done": false
 }
