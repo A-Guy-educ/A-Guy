@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Disable orphaned CodeQL Security Scan workflow (221673461)",
+    "body": "The workflow at `.github/workflows/codeql.yml` was deleted from the repo (commit 671ad929e: 'chore(ci): Remove codeql workflow (GHAS not enabled)') because SARIF upload fails without GitHub Advanced Security. However, GitHub still shows workflow ID 221673461 as 'active'. It should be disabled via GitHub Settings → Actions → workflows, since it can no longer run (file is gone) but still appears in CI checks. This is a GitHub UI action, not a code change.",
+    "rationale": "The orphaned workflow clutters the CI check list and may confuse future debugging. The current GitHub-native CodeQL (workflow 275913330) is the active scanner.",
+    "priority": "low"
+  },
+  {
+    "title": "Merge PR from branch 2242-dev-ci-red-on-36463a9-codeql",
+    "body": "Branch `2242-dev-ci-red-on-36463a9-codeql` opened PR #2243 with the same format-string fixes (commit b1771286d). That PR is still open and has not been merged. Since this task (#2244) applies the same fixes to the current dev, PR #2243 should be closed as superseded and replaced by this branch's PR.",
+    "rationale": "Avoids duplicate PRs with identical changes. The #2243 fix was on an older commit; this task's PR will be for the current dev.",
+    "priority": "medium"
+  }
+]

@@ -177,7 +177,7 @@ export class VercelBlobAdapter {
       await del(url, { token: this.token })
       return true
     } catch (error) {
-      console.error(`[VercelBlob] Failed to delete blob: ${url}`, error)
+      console.error('[VercelBlob] Failed to delete blob:', url, error)
       return false
     }
   }

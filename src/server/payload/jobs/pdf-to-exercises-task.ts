@@ -344,7 +344,7 @@ export const pdfToExercisesTask = {
         cause?: { message?: string }
         name?: string
       }
-      console.error(`[PDF→Exercises] Job ${job.id} failed:`, error)
+      console.error('[PDF→Exercises] Job', job.id, 'failed:', error)
       await updateJobStatus(payload as unknown as { db: unknown }, job.id, 'failed', {
         ...output,
         error: err.message,

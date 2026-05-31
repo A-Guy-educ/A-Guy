@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "codeql-format-string-requires-separate-args",
+    "hook": "CodeQL format-string alerts need separate console.error args",
+    "body": "CodeQL flags console.error(`message ${userData}`, error) as a format-string vulnerability because an attacker who controls `userData` could inject format specifiers (%s, %d, etc.) to read/write stack memory. The fix is to pass user-controlled values as separate arguments: console.error('message', userData, ':', error) — this is safe because console methods treat subsequent args as data, not format strings.\n\n**Why:** This is the second CodeQL format-string fix task (after #2242), confirming the pattern is recurring. Both were triggered by the same underlying issue: multiple developers using template literals with dynamic data in error logging.\n\n**How to apply:** When CodeQL reports a format-string alert on console.error/warn/log, convert template literals to separate arguments. Search for `console\\.error\\(\\`.*\\$\\{` across the codebase whenever addressing this type of alert.",
+    "why": "Without this fix, CodeQL will fail on the dev branch, blocking merges. Format-string vulnerabilities can be exploited to read sensitive data from stack memory.",
+    "confidence": 0.95
+  }
+]
