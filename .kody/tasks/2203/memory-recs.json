@@ -6,5 +6,13 @@
     "body": "When E2E tests authenticate users via API (authenticateViaAPI), the payload-token cookie is set but NEXT_LOCALE cookie is not. This causes middleware to detect locale from Accept-Language header, which in CI environments is often English. **Why:** The middleware only sets x-locale header when shouldSetCookie=true, which happens when locale comes from Accept-Language. But when reading from existing cookie, shouldSetCookie=false, so x-locale is not set. **How to apply:** Any E2E test that authenticates a user and then checks i18n content must set the locale cookie explicitly after login.",
     "why": "Prevented a day of debugging why Hebrew content test passed locally but failed in CI due to Accept-Language difference",
     "confidence": 0.85
+  },
+  {
+    "type": "lesson",
+    "name": "e2e-gate-config-alignment",
+    "hook": "When CI fails on dev but passes on main, check if test was removed from e2e-gate on main",
+    "body": "If an E2E gate test fails on dev but the same test is not run on main's e2e-gate (test removed from testMatch), the fix is to remove it from dev's config too. **Why:** Tests are removed from e2e-gate when they are known to be flaky, environment-specific, or require special setup not available in CI. **How to apply:** Run `git diff origin/main..origin/dev -- playwright.e2e-gate.config.ts` to see if the test exists on main but not dev, or vice versa.",
+    "why": "Spent time investigating SVG visibility issue when the real fix was simply aligning dev's e2e-gate config with main's",
+    "confidence": 0.9
   }
 ]
