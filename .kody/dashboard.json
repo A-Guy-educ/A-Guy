@@ -2,5 +2,22 @@
   "version": 1,
   "defaultPreviewUrl": "https://www.dev.aguy.co.il/",
   "defaultChatEntryKey": "kody:minimax/MiniMax-M2.7-highspeed",
-  "brainFlyChatEnabled": true
+  "brainFlyChatEnabled": true,
+  "namedPreviews": [
+    {
+      "id": "default",
+      "label": "Dev",
+      "url": "https://www.dev.aguy.co.il"
+    },
+    {
+      "id": "prod-esw0",
+      "label": "Prod",
+      "url": "https://www.aguy.co.il"
+    },
+    {
+      "id": "demo-08az",
+      "label": "Demo",
+      "url": "https://lucky-semifreddo-b8d135.netlify.app"
+    }
+  ]
 }
