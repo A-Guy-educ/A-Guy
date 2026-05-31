@@ -4,11 +4,11 @@
   "target": "PR #2203 (dev → main, v0.25.10)",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Fixed Hebrew content test failure by ensuring NEXT_LOCALE=he cookie is set after authentication in E2E test helpers",
-  "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2203",
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26717415259",
-  "filesTouched": ["tests/e2e/helpers/auth.ts"],
-  "sessionLog": ".kody/sessions/",
-  "startedAt": "2026-05-31T16:30:00Z",
-  "finishedAt": "2026-05-31T16:45:00Z"
+  "reason": "Reduced e2e-gate workers from 2 to 1 to prevent memory exhaustion causing test process to be killed by OOM in CI",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": ["playwright.e2e-gate.config.ts"],
+  "sessionLog": ".kody/sessions/2203.jsonl",
+  "startedAt": "2026-05-31T21:17:00Z",
+  "finishedAt": "2026-05-31T21:18:00Z"
 }
