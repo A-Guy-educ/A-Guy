@@ -76,6 +76,7 @@ jobs:
       pull-requests: write
       contents: write
       actions: read
+      id-token: write # OIDC: Namespace remote builder
     steps:
       - name: Mint GitHub App token
         id: app-token
