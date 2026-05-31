@@ -10,7 +10,6 @@
 import type { CollectionConfig } from 'payload'
 
 import { adminOnly } from '../access/adminOnly'
-import { authenticated } from '../access/authenticated'
 import { createdByField } from '../fields/createdBy'
 import { tenantField } from '../fields/tenant'
 import { statusTransitionGuard } from './Transactions/hooks/statusTransitionGuard-hook'
@@ -19,12 +18,14 @@ import { syncPaymentStats } from './Transactions/hooks/syncPaymentStats-hook'
 export const Transactions: CollectionConfig = {
   slug: 'transactions',
   access: {
-    create: authenticated, // Only authenticated users can create (via API)
+    create: () => false, // Only created via webhooks/checkout with overrideAccess: true
     read: adminOnly, // Only admins can read all transactions
     update: adminOnly, // Only admins can update (e.g., mark as succeeded/failed)
     delete: adminOnly, // Only admins can delete
   },
   admin: {
+    description:
+      'Transactions are auto-created by payment webhooks and the checkout route. Manual creation is disabled — dangling records break revenue stats, refunds, and the purchases page.',
     useAsTitle: 'createdAt',
     defaultColumns: ['createdAt', 'user', 'product', 'amount', 'currency', 'status', 'provider'],
     listSearchableFields: ['providerTransactionId'],
