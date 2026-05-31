@@ -5,5 +5,42 @@
     "welcomeTitle": "Welcome to A-Guy",
     "heroSubtitle": "A-Guy Your Personal Tutor",
     "homepageTitle": "Home - A-Guy"
+  },
+  "account": {
+    "purchases": {
+      "title": "My Purchases",
+      "refresh": "Refresh",
+      "statuses": {
+        "pending": "Pending",
+        "succeeded": "Succeeded",
+        "failed": "Failed",
+        "refunded": "Refunded"
+      },
+      "couponApplied": "Coupon: {code}",
+      "unknownProduct": "Unknown Product",
+      "empty": {
+        "title": "No purchases yet",
+        "description": "You haven't made any purchases. Browse our products to get started.",
+        "cta": "Browse Products"
+      },
+      "backToPurchases": "Back to Purchases",
+      "purchasedOn": "Purchased on",
+      "amount": "Amount",
+      "provider": "Provider",
+      "transactionId": "Transaction ID",
+      "statusLabel": "Status",
+      "coupon": "Coupon",
+      "pendingHelpText": "Your payment is being processed. This may take a few moments.",
+      "refreshStatus": "Refresh Status",
+      "tryAgain": "Try Again",
+      "unlockedItems": "Unlocked Items",
+      "courses": "Courses",
+      "features": "Features",
+      "refunded": "Refunded",
+      "refundedAmount": "Refunded amount",
+      "errorLoading": "Failed to load transaction",
+      "notFound": "Transaction not found",
+      "viewProduct": "View Product"
+    }
   }
 }
