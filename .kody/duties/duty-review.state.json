@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "rev": 26,
+  "rev": 27,
   "cursor": "reported",
   "data": {
     "cycle": 2,
-    "lastRunISO": "2026-05-31T00:09:09Z",
-    "nextEligibleISO": "2026-05-31T06:09:09Z",
+    "lastRunISO": "2026-05-31T06:58:03Z",
+    "nextEligibleISO": "2026-05-31T12:58:03Z",
     "reviewed": [
       "approval-gate",
       "architecture-audit",
@@ -13,7 +13,8 @@
       "cleanup-branches",
       "clear-empty-goals",
       "coverage-floor",
-      "dead-code-sweep"
+      "dead-code-sweep",
+      "dependency-bump"
     ],
     "verdicts": {
       "approval-gate": {
@@ -45,8 +46,8 @@
         "verdict": "broken"
       },
       "dependency-bump": {
-        "note": "pending",
-        "verdict": "pending"
+        "note": "script .kody/scripts/dependency-bump-tick.py does not exist; body still references legacy .kody/jobs/ path for state (file removed from tracking per #1502); disabled=true masks behavioral finding",
+        "verdict": "broken"
       },
       "design-review": {
         "note": "pending",
@@ -113,9 +114,9 @@
         "verdict": "pending"
       }
     },
-    "lastFiredAt": "2026-05-31T00:11:06.436Z",
+    "lastFiredAt": "2026-05-31T06:58:38.954Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 134854
+    "lastDurationMs": 145488
   },
   "done": false
 }
