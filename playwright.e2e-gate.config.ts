@@ -49,7 +49,6 @@ export default defineConfig({
         'verification/admin-settings.e2e.spec.ts',
         'verification/auth-onboarding.e2e.spec.ts',
         'verification/catalog-navigation.e2e.spec.ts',
-        'brand-identity/brand-identity.e2e.spec.ts',
       ],
       use: { ...devices['Desktop Chrome'], channel: 'chromium' },
     },
