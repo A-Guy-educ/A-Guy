@@ -115,7 +115,7 @@ function deliverToHandlers(envelope: SystemEventEnvelope<unknown>): void {
       try {
         handler(envelope)
       } catch (error) {
-        console.error(`[SystemEvents] Handler error for ${envelope.name}:`, error)
+        console.error('[SystemEvents] Handler error for', envelope.name, ':', error)
       }
     }
   }
@@ -125,7 +125,7 @@ function deliverToHandlers(envelope: SystemEventEnvelope<unknown>): void {
     try {
       handler(envelope)
     } catch (error) {
-      console.error(`[SystemEvents] AnyHandler error:`, error)
+      console.error('[SystemEvents] AnyHandler error:', error)
     }
   }
 }

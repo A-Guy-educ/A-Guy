@@ -37,7 +37,7 @@ export function initAnalyticsSubscriber(): () => void {
       try {
         handler(envelope)
       } catch (error) {
-        console.error(`[Analytics] Error handling ${event}:`, error)
+        console.error('[Analytics] Error handling', event, ':', error)
         // Never throw - fail-safe
       }
     })

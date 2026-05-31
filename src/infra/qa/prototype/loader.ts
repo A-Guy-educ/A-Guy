@@ -177,7 +177,7 @@ async function loadPrototypeFromPath(filePath: string, name: string): Promise<Pr
       interactions,
     }
   } catch (error) {
-    console.error(`Failed to load prototype ${name}:`, error)
+    console.error('Failed to load prototype', name, ':', error)
     return null
   }
 }

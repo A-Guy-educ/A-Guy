@@ -1,0 +1,23 @@
+{
+  "taskId": "2242",
+  "taskType": "issue",
+  "target": "CodeQL failure on commit 36463a9",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed format string vulnerability in 11 console.error calls across 8 files",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/exercises/[id]/page.tsx",
+    "src/infra/analytics/system-events-subscriber.ts",
+    "src/infra/blob/vercel-blob-adapter.ts",
+    "src/infra/qa/fixtures/loader.ts",
+    "src/infra/qa/prototype/loader.ts",
+    "src/infra/system-events/bus.ts",
+    "src/server/payload/jobs/pdf-to-exercises-task.ts",
+    "src/server/payload/jobs/pdf-to-exercises-v2-task.ts"
+  ],
+  "sessionLog": ".kody/sessions/13c1b1f4-af4d-474a-88b8-7161f0e300c0.jsonl",
+  "startedAt": "2026-05-31T21:43:00Z",
+  "finishedAt": "2026-05-31T21:51:00Z"
+}
