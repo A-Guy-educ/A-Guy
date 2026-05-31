@@ -4,11 +4,11 @@
   "target": "PR #2203 (dev → main, v0.25.10)",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Fixed Node.js ESM JSON import error by adding import attribute to JSON imports",
+  "reason": "Fixed Hebrew content test failure by ensuring NEXT_LOCALE=he cookie is set after authentication in E2E test helpers",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2203",
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26715320895",
-  "filesTouched": ["src/brands/aguy/index.ts"],
-  "sessionLog": ".kody/sessions/gh-26716132348-1.jsonl",
-  "startedAt": "2026-05-31T14:39:47.2600849Z",
-  "finishedAt": "2026-05-31T19:45:00Z"
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26717415259",
+  "filesTouched": ["tests/e2e/helpers/auth.ts"],
+  "sessionLog": ".kody/sessions/",
+  "startedAt": "2026-05-31T16:30:00Z",
+  "finishedAt": "2026-05-31T16:45:00Z"
 }

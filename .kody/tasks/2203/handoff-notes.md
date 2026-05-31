@@ -1,19 +1,28 @@
-## Root Cause
+## E2E Test Failures on PR #2203
 
-Node.js 22 (used in CI) enforces ESM import assertions for JSON files. The error:
+### Fixed: Hebrew Content Test Failure
 
-```
-TypeError: Module "file:///home/runner/work/A-Guy/A-Guy/src/brands/aguy/messages/en.json" needs an import attribute of "type: json"
-```
+**Problem**: The test `content renders correctly in Hebrew` was failing because:
+1. Test authenticates via `authenticateViaAPI` which sets `payload-token` cookie but NOT `NEXT_LOCALE` cookie
+2. Middleware checks `NEXT_LOCALE` cookie first, then falls back to `Accept-Language` header
+3. In CI, browser `Accept-Language` is often `en`, so middleware sets locale to `en`
+4. Page renders in English instead of Hebrew, test fails
 
-## Fix
+**Fix**: Modified `setupAuthenticatedUser` in `tests/e2e/helpers/auth.ts` to set `NEXT_LOCALE=he` cookie after successful authentication in all code paths.
 
-`src/brands/aguy/index.ts` lines 13–14: added `with { type: "json" }` import attribute to both `en.json` and `he.json` imports.
+### Remaining: Header Logo Test (Flaky)
 
-## Why it worked before
+**Problem**: Test `header logo is present` finds SVG element but reports it as hidden. Marked as "flaky" in CI (passes sometimes), suggesting timing or environmental issue.
 
-Local dev used a different Node.js version or the project was using CommonJS-style `require()`. The CI runner (Node 22) requires explicit import attributes for JSON under ESM.
+**Next step**: Investigate CSS visibility, loading states, or CI environment differences that might cause the logo to be temporarily hidden.
+
+## Files Changed
+
+- `tests/e2e/helpers/auth.ts` — Added `NEXT_LOCALE=he` cookie setting after authentication
 
 ## Verification
 
-`mcp__kody-verify__verify` passed on first attempt (typecheck + lint + tests).
+- TypeScript check: PASSED
+- ESLint: PASSED
+- Format check: PASSED
+- Quality gates: PASSED
