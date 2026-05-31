@@ -1,0 +1,17 @@
+{
+  "taskId": "2231",
+  "taskType": "issue",
+  "target": "dev branch CodeQL failure on b7bcf835",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed two CodeQL format-string vulnerabilities by replacing template literal interpolation with %s placeholder + separate argument",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/jobs/pdf-to-exercises-task.ts",
+    "src/server/payload/jobs/pdf-to-exercises-v2-task.ts"
+  ],
+  "sessionLog": null,
+  "startedAt": "2026-05-31T19:15:00Z",
+  "finishedAt": "2026-05-31T19:17:00Z"
+}
