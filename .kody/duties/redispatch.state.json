@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 234,
-  "cursor": "redispatch-2026-05-31T20:44:48Z",
+  "rev": 235,
+  "cursor": "redispatch-2026-05-31T21:46:28Z",
   "data": {
     "dryRunLog": [
       {
@@ -53,45 +53,21 @@
         "plannedAt": "2026-05-04T09:06:58Z"
       },
       {
-        "issueNumber": 1363,
-        "action": "skip",
-        "reason": "core.status=running, lastOutcome=2026-04-27T09:49:12.100Z (~8d old) > 40min threshold. No in-progress run. Open kody PR #1364 by aguyaharonyair. No fresh kody comment (<40min). Filter: 'no open kody-authored PR' → drop. Dry-run: no action taken.",
-        "plannedAt": "2026-05-05T09:06:58Z"
-      },
-      {
-        "issueNumber": 1360,
-        "action": "skip",
-        "reason": "core.status=running, lastOutcome=2026-04-27T09:58:29.549Z (~8d old) > 40min threshold. No in-progress run. Open kody PR #1366 by aguyaharonyair. No fresh kody comment (<40min). Filter: 'no open kody-authored PR' → drop. Dry-run: no action taken.",
-        "plannedAt": "2026-05-05T09:06:58Z"
-      },
-      {
-        "issueNumber": 1382,
-        "action": "skip",
-        "reason": "Issue #1382 is CLOSED (2026-05-04T11:21:53Z). Per-issue entry garbage collected from perIssue. Dry-run: no action taken.",
-        "plannedAt": "2026-05-05T09:06:58Z"
-      },
-      {
-        "issueNumber": 2138,
-        "action": "resume",
-        "reason": "core.status=running, history age >40min (2026-05-27T11:31:24.959Z), no blockers",
-        "plannedAt": "2026-05-31T20:44:48Z"
-      },
-      {
         "issueNumber": 2130,
         "action": "resume",
         "reason": "core.status=running, history age >40min (2026-05-27T07:50:53.680Z), no blockers",
-        "plannedAt": "2026-05-31T20:44:48Z"
+        "plannedAt": "2026-05-31T21:46:28Z"
       },
       {
         "issueNumber": 1536,
         "action": "resume",
         "reason": "core.status=running, history age >40min (2026-05-12T08:13:21.749Z), no blockers",
-        "plannedAt": "2026-05-31T20:44:48Z"
+        "plannedAt": "2026-05-31T21:46:28Z"
       }
     ],
-    "lastFiredAt": "2026-05-31T20:45:36.179Z",
+    "lastFiredAt": "2026-05-31T21:47:47.741Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 54856,
+    "lastDurationMs": 88562,
     "perIssue": {}
   },
   "done": false
