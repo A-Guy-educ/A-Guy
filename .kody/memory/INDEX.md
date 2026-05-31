@@ -68,3 +68,5 @@ git activity belongs in `git log`, not here.
 - [Mobile Chat Toggle Inside Chatinterface](mobile-chat-toggle-inside-chatinterface.md) — MobileChatToggle renders inside ChatInterface not SplitPaneLayout (type: lesson)
 
 - [Fab Open State Via Ischatvisible Prop](fab-open-state-via-ischatvisible-prop.md) — FAB open state combines internal isOpen + external isChatVisible prop (type: decision)
+
+- [E2E Test Locale Setup](e2e-test-locale-setup.md) — E2E tests must set locale cookie after auth (type: lesson)

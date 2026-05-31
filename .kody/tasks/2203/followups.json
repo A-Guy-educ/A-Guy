@@ -1,8 +1,1 @@
-[
-  {
-    "title": "Header logo SVG reported as hidden in E2E test",
-    "body": "The test 'header logo is present' finds the SVG element (12 locators resolved) but Playwright reports it as hidden. Investigate if this is a CSS visibility issue, timing issue, or environmental difference in CI. Locator: 'header a[href=\"/\"] svg'.first(). This is marked as 'flaky' in CI (passes sometimes), suggesting a timing or environmental issue.",
-    "rationale": "This is a CI failure that needs investigation. The SVG exists in DOM but is reported as hidden - could be CSS animation, loading state, or rendering issue specific to CI environment.",
-    "priority": "high"
-  }
-]
+[]
