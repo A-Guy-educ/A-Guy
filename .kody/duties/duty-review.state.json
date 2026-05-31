@@ -1,18 +1,19 @@
 {
   "version": 1,
-  "rev": 25,
+  "rev": 26,
   "cursor": "reported",
   "data": {
     "cycle": 2,
-    "lastRunISO": "2026-05-30T17:38:48Z",
-    "nextEligibleISO": "2026-05-30T23:38:48Z",
+    "lastRunISO": "2026-05-31T00:09:09Z",
+    "nextEligibleISO": "2026-05-31T06:09:09Z",
     "reviewed": [
       "approval-gate",
       "architecture-audit",
       "ceo-performance-review",
       "cleanup-branches",
       "clear-empty-goals",
-      "coverage-floor"
+      "coverage-floor",
+      "dead-code-sweep"
     ],
     "verdicts": {
       "approval-gate": {
@@ -40,8 +41,8 @@
         "verdict": "broken"
       },
       "dead-code-sweep": {
-        "note": "pending",
-        "verdict": "pending"
+        "note": "script .kody/scripts/dead-code-sweep-tick.py never implemented despite body refactor on 2026-05-28 explicitly noting it needed to be created; state at legacy .kody/jobs/ path with schema mismatch (openIssue: 1493 vs report's #1527)",
+        "verdict": "broken"
       },
       "dependency-bump": {
         "note": "pending",
@@ -112,9 +113,9 @@
         "verdict": "pending"
       }
     },
-    "lastFiredAt": "2026-05-30T17:40:35.001Z",
+    "lastFiredAt": "2026-05-31T00:11:06.436Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 119655
+    "lastDurationMs": 134854
   },
   "done": false
 }
