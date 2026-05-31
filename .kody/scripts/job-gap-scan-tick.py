@@ -314,6 +314,22 @@ def write_report(body: str) -> None:
     REPORT_PATH.write_text(body)
 
 
+# The `_Last updated:_` line carries a fresh timestamp every run. Stripping it
+# lets us tell a *substantive* change (new proposal, recorded verdict, history
+# row) from a timestamp-only churn that would otherwise commit on every tick.
+VOLATILE_REPORT_LINE_RE = re.compile(r"^_Last updated:.*$", re.MULTILINE)
+
+
+def normalize_report(text: str) -> str:
+    return VOLATILE_REPORT_LINE_RE.sub("", text).strip()
+
+
+def report_is_unchanged(new_report: str) -> bool:
+    if not REPORT_PATH.exists():
+        return False
+    return normalize_report(REPORT_PATH.read_text()) == normalize_report(new_report)
+
+
 def commit_and_push(slug: str | None) -> bool:
     paths = [
         str(STATE_PATH.relative_to(REPO_ROOT)),
@@ -387,11 +403,13 @@ def main() -> int:
         eligible.append(cand)
 
     chosen: Candidate | None = None
+    proposal_already_recorded = False
     if eligible:
         eligible.sort(key=lambda c: c.roi, reverse=True)
         chosen = eligible[0]
         log(f"chose {chosen.slug} (roi={chosen.roi})")
         existing_meta = state["proposed"].get(chosen.slug, {})
+        proposal_already_recorded = "firstSuggestedISO" in existing_meta
         first = existing_meta.get("firstSuggestedISO") or iso(now)
         state["proposed"][chosen.slug] = {
             "firstSuggestedISO": first,
@@ -399,9 +417,6 @@ def main() -> int:
         }
     else:
         log("no eligible proposals")
-
-    state["lastRunISO"] = iso(now)
-    save_state(state)
 
     current_section = render_current(chosen, now) if chosen else render_caught_up()
     history_section = render_history(state, verdicts)
@@ -412,6 +427,16 @@ def main() -> int:
         f"{current_section}\n"
         f"{history_section}"
     )
+
+    # Daily ticks that re-pick the same proposal differ only in timestamps.
+    # Skip the write/commit entirely so we don't churn `.kody/` on every run —
+    # cadence is engine-enforced via `every:`, so `lastRunISO` need not persist.
+    if proposal_already_recorded and report_is_unchanged(report):
+        log("tick complete: no substantive change (skipped write + commit)")
+        return 0
+
+    state["lastRunISO"] = iso(now)
+    save_state(state)
     write_report(report)
 
     if os.environ.get("JOB_GAP_SCAN_NO_COMMIT") == "1":

@@ -762,6 +762,9 @@
     "perMonth": "per month",
     "perYear": "per year",
     "includedItems": "What&apos;s Included",
+    "items": {
+      "unnamed": "Unnamed item"
+    },
     "buyButton": "Buy Now",
     "loginToBuy": "Log in to Buy",
     "redirecting": "Redirecting to checkout...",

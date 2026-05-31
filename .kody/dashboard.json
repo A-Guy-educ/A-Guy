@@ -2,5 +2,20 @@
   "version": 1,
   "defaultPreviewUrl": "https://www.dev.aguy.co.il/",
   "defaultChatEntryKey": "kody:minimax/MiniMax-M2.7-highspeed",
-  "brainFlyChatEnabled": true
+  "brainFlyChatEnabled": true,
+  "namedPreviews": [
+    {
+      "id": "default",
+      "label": "Dev",
+      "url": "https://kp-866cab-8111e4-br-ef260e.fly.dev"
+    },
+    {
+      "id": "prod-esw0",
+      "label": "Prod",
+      "url": "https://www.aguy.co.il"
+    }
+  ],
+  "branchPreviews": [
+    "dev"
+  ]
 }
