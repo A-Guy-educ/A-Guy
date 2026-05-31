@@ -58,16 +58,25 @@ gh api repos/A-Guy-educ/A-Guy/commits/$sha/status \
   --jq '{state, statuses: [.statuses[] | {context, state}]}'
 ```
 
-`$sha` is `dev`'s tip — use it as `headSha` for dedup. Decide:
+`$sha` is `dev`'s tip — use it as `headSha` for dedup. **First exclude Kody's
+own engine jobs:** any check-run whose `name` is one of `run`, `kody`,
+`job-tick`, `goal-tick`, `worker-ask`, `chat` is a `kody.yml` run, not one of
+`dev`'s gating CI checks. Reacting to those would be self-referential (this duty
+*dispatches* `run`) and could loop — ignore them entirely. From the **remaining**
+checks, decide:
 
-- Any check-run with `status` ∈ `queued` / `in_progress` (not `completed`) →
-  **CI still running.** Decide nothing this tick; leave it alone.
-- All checks completed **and** none has `conclusion` ∈ `failure`, `timed_out`,
-  `startup_failure`, `action_required` **and** the combined `status.state` is
-  not `failure` → **green.** Nothing to do.
-- Otherwise → **red.** Collect every failing check (its `name` and
-  `details_url`). Any event, any workflow — CodeQL, CI, lint, tests all count.
-  Ignore `success` / `skipped` / `neutral` / `cancelled` conclusions.
+- **RED** — at least one remaining check has `conclusion` ∈ `failure`,
+  `timed_out`, `startup_failure`, `action_required` (or the combined
+  `status.state == "failure"`). **Act now, even if other checks are still
+  running** — a terminal failure won't un-fail, and `dev` almost always has
+  some Kody job in flight, so waiting for *everything* to finish would starve
+  the duty. Collect every failing check's `name` + `details_url`.
+- **PENDING** — no failures, but some remaining check is still `queued` /
+  `in_progress`. CI hasn't decided yet; decide nothing this tick.
+- **GREEN** — all remaining checks completed and none failing. Nothing to do.
+
+Only the four terminal-failure conclusions above count as red; ignore
+`success` / `skipped` / `neutral` / `cancelled`.
 
 ### 2. Dedup + in-flight guard (REQUIRED — runs before any write)
 
