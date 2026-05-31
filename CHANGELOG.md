@@ -172,7 +172,7 @@
 - acquire issue-2184 (d45e2e28e)
 - release (f87e03789)
 - acquire issue-2181 (44fb012b5)
-- #2101: [HtmlBlock] Remove all HTML sanitization restrictions in admin (#2116) (e13a99b33)
+- #2101: [HtmlBlock] Remove all HTML sanitization restrictions in admin (#2116) (e13a99b33) · ✅ QA 2026-05-31
 - #2160: Thin white strip at the very top of the homepage (#2161) (87cd70375) · ✅ QA 2026-05-31
 - Revert "fix(test): Restore required collection field on User mock" (892aa299d)
 - Revert "perf(build): Upgrade Next 16 and Payload 3.85, enable Turbopack production build" (610c87100)
