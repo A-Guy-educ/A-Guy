@@ -39,7 +39,9 @@ test.describe('brand identity smoke tests', () => {
 
   test('themeColor meta tag matches brand themeColor.light', async ({ page }) => {
     await page.goto('/')
-    const themeColorMeta = await page.locator('meta[name="theme-color"]').getAttribute('content')
+    const themeColorMeta = await page
+      .locator('meta[name="theme-color"][media="(prefers-color-scheme: light)"]')
+      .getAttribute('content')
     expect(themeColorMeta).toBe(themeColorLight)
   })
 
