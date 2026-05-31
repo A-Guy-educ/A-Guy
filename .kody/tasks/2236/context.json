@@ -1,0 +1,17 @@
+{
+  "taskId": "2236",
+  "taskType": "issue",
+  "target": "09bd3835b",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed 2 CodeQL format-string vulnerabilities by converting template literals to separate arguments in console.error calls",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/jobs/pdf-to-exercises-task.ts",
+    "src/server/payload/jobs/pdf-to-exercises-v2-task.ts"
+  ],
+  "sessionLog": ".kody/sessions/cca9d4eb-9527-46c2-be05-a7fc322787e2.jsonl",
+  "startedAt": "2026-05-31T20:15:02Z",
+  "finishedAt": "2026-05-31T20:22:00Z"
+}
