@@ -263,16 +263,59 @@ export async function setupAuthenticatedUser(
   // Use API-based authentication (most reliable)
   try {
     await authenticateViaAPI(page, testUser)
+
+    // Set Hebrew locale cookie so middleware uses Hebrew by default
+    // This ensures i18n content renders correctly in tests
+    await page.context().addCookies([
+      {
+        name: 'NEXT_LOCALE',
+        value: 'he',
+        domain: 'localhost',
+        path: '/',
+        httpOnly: false,
+        secure: false,
+        sameSite: 'Lax',
+      },
+    ])
+
     return testUser
   } catch (_error) {
     // If API login fails, the user might have been created but password doesn't match
     // Try signup to recreate with correct password
     try {
       await authenticateViaSignup(page, testUser)
+
+      // Set Hebrew locale cookie so middleware uses Hebrew by default
+      await page.context().addCookies([
+        {
+          name: 'NEXT_LOCALE',
+          value: 'he',
+          domain: 'localhost',
+          path: '/',
+          httpOnly: false,
+          secure: false,
+          sameSite: 'Lax',
+        },
+      ])
+
       return testUser
     } catch (_signupError) {
       // If signup also fails, try API login one more time (user might have been created by signup)
       await authenticateViaAPI(page, testUser)
+
+      // Set Hebrew locale cookie so middleware uses Hebrew by default
+      await page.context().addCookies([
+        {
+          name: 'NEXT_LOCALE',
+          value: 'he',
+          domain: 'localhost',
+          path: '/',
+          httpOnly: false,
+          secure: false,
+          sameSite: 'Lax',
+        },
+      ])
+
       return testUser
     }
   }

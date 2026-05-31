@@ -1,11 +1,28 @@
-Resolved merge conflicts for PR #2203 (deploy: dev → main, v0.25.10).
+## E2E Test Failures on PR #2203
 
-**What changed:** 4 of 21 listed "conflicted" files had real conflict markers — all were .kody event/session JSONL chat transcript files. The remaining 17 files had no markers (state files with identical content on both sides, or files not present in origin/main like missions/ and secrets.enc).
+### Fixed: Hebrew Content Test Failure
 
-**Resolution decisions:**
-- `.kody/events/vibe-1534-*.jsonl` and `.kody/sessions/vibe-1534-*.jsonl`: Took HEAD (PR branch) version — complete chat history with message+done+exit events, more complete than origin/main's chat.ready-only snapshot.
-- `.kody/events/vibe-1587-*.jsonl` and `.kody/sessions/vibe-1587-*.jsonl`: Took HEAD version — complete chat history with full tool/thinking/message sequence.
-- `.kody/secrets.enc`: Does not exist in origin/main (was added on PR branch); kept as-is.
-- `.kody/last-run.jsonl`: Contains embedded conflict markers inside JSON string values (artifacts from prior merge attempt); these are not file-level git conflicts and will not block the merge commit.
+**Problem**: The test `content renders correctly in Hebrew` was failing because:
+1. Test authenticates via `authenticateViaAPI` which sets `payload-token` cookie but NOT `NEXT_LOCALE` cookie
+2. Middleware checks `NEXT_LOCALE` cookie first, then falls back to `Accept-Language` header
+3. In CI, browser `Accept-Language` is often `en`, so middleware sets locale to `en`
+4. Page renders in English instead of Hebrew, test fails
 
-**No code changes** — only Kody operational files were touched.
+**Fix**: Modified `setupAuthenticatedUser` in `tests/e2e/helpers/auth.ts` to set `NEXT_LOCALE=he` cookie after successful authentication in all code paths.
+
+### Remaining: Header Logo Test (Flaky)
+
+**Problem**: Test `header logo is present` finds SVG element but reports it as hidden. Marked as "flaky" in CI (passes sometimes), suggesting timing or environmental issue.
+
+**Next step**: Investigate CSS visibility, loading states, or CI environment differences that might cause the logo to be temporarily hidden.
+
+## Files Changed
+
+- `tests/e2e/helpers/auth.ts` — Added `NEXT_LOCALE=he` cookie setting after authentication
+
+## Verification
+
+- TypeScript check: PASSED
+- ESLint: PASSED
+- Format check: PASSED
+- Quality gates: PASSED
