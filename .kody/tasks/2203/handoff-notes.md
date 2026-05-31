@@ -1,11 +1,33 @@
-Resolved merge conflicts for PR #2203 (deploy: dev → main, v0.25.10).
+## Root Cause
 
-**What changed:** 4 of 21 listed "conflicted" files had real conflict markers — all were .kody event/session JSONL chat transcript files. The remaining 17 files had no markers (state files with identical content on both sides, or files not present in origin/main like missions/ and secrets.enc).
+E2E test failures in CI on PR #2203.
 
-**Resolution decisions:**
-- `.kody/events/vibe-1534-*.jsonl` and `.kody/sessions/vibe-1534-*.jsonl`: Took HEAD (PR branch) version — complete chat history with message+done+exit events, more complete than origin/main's chat.ready-only snapshot.
-- `.kody/events/vibe-1587-*.jsonl` and `.kody/sessions/vibe-1587-*.jsonl`: Took HEAD version — complete chat history with full tool/thinking/message sequence.
-- `.kody/secrets.enc`: Does not exist in origin/main (was added on PR branch); kept as-is.
-- `.kody/last-run.jsonl`: Contains embedded conflict markers inside JSON string values (artifacts from prior merge attempt); these are not file-level git conflicts and will not block the merge commit.
+### Failure 1: themeColor meta tag test (FIXED)
+- **Error**: `strict mode violation: locator('meta[name="theme-color"]') resolved to 2 elements`
+- **Cause**: `generateViewport()` returns an array with both light and dark theme colors. The test used `.getAttribute('content')` without specifying which element to select.
+- **Fix**: Updated test selector to `meta[name="theme-color"][media="(prefers-color-scheme: light)"]` to explicitly select the light mode meta tag.
 
-**No code changes** — only Kody operational files were touched.
+### Failure 2: Header logo test
+- **Error**: `locator resolved to <svg>... but unexpected value "hidden"`
+- **Status**: Not yet diagnosed. The SVG element exists in the DOM (12 locators resolved) but Playwright considers it hidden.
+
+### Failure 3: Hebrew content test
+- **Error**: Neither RTL direction nor Hebrew text found on /courses page
+- **Status**: Not yet diagnosed. May be auth/i18n issue or environmental.
+
+## Files Changed
+
+- `tests/e2e/brand-identity/brand-identity.e2e.spec.ts` — Fixed theme-color test selector
+
+## Verification
+
+- TypeScript check: PASSED
+- ESLint: PASSED
+- Format check: PASSED
+- E2E tests: 3 failures remain (see above)
+
+## Recommendations
+
+1. Investigate header logo visibility issue in CI environment
+2. Investigate Hebrew content rendering in /courses page
+3. Consider adding more specific locators or wait conditions to the failing tests

@@ -1,0 +1,17 @@
+{
+  "taskId": "2211",
+  "taskType": "issue",
+  "target": "2211",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "access.create set to () => false; admin.description updated; all existing tests use overrideAccess: true so no regressions",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/collections/Transactions.ts",
+    "tests/int/transaction-access-create.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2211.jsonl",
+  "startedAt": "2026-05-31T12:47:00.000Z",
+  "finishedAt": "2026-05-31T13:10:00.000Z"
+}
