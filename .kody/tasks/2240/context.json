@@ -1,0 +1,23 @@
+{
+  "taskId": "2240",
+  "taskType": "issue",
+  "target": "d83d46dbb",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed all CodeQL flagged console.error calls with user-controlled format strings",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/exercises/[id]/page.tsx",
+    "src/infra/analytics/system-events-subscriber.ts",
+    "src/infra/qa/fixtures/loader.ts",
+    "src/infra/qa/prototype/loader.ts",
+    "src/infra/blob/vercel-blob-adapter.ts",
+    "src/infra/system-events/bus.ts",
+    "src/server/payload/jobs/pdf-to-exercises-v2-task.ts",
+    "src/server/payload/jobs/pdf-to-exercises-task.ts"
+  ],
+  "sessionLog": ".kody/sessions/5adfc281-dac7-4aa5-ade3-8be77608b46c.jsonl",
+  "startedAt": "2026-05-31T21:15:17Z",
+  "finishedAt": "2026-05-31T21:16:00Z"
+}

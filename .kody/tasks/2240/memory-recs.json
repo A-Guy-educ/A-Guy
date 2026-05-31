@@ -1,0 +1,9 @@
+[
+  {
+    "type": "lesson",
+    "name": "codeql-format-string-user-controlled-data",
+    "hook": "CodeQL flags console.error with template literals using user data",
+    "body": "CodeQL flags `console.error(`[msg] ${userData}`, err)` as a user-controlled format string vulnerability. The fix is to use separate arguments: `console.error('[msg]', userData, ':', err)`.\n\n**Why:** Template literals with user-controlled data in console.error/create issues allow format string attacks. Using separate arguments avoids this.\n\n**How to apply:** When CodeQL reports \"javascript/eslint-plugin/codeql/diagnostics/format-stringInjection\" on a console.error call, convert the template literal to separate arguments.",
+    "confidence": 0.95
+  }
+]

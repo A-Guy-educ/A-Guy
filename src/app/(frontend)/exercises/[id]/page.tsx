@@ -69,7 +69,7 @@ export default async function ExercisePage({ params: paramsPromise }: Args) {
       </div>
     )
   } catch (error) {
-    console.error(`Error fetching exercise ${id}:`, error)
+    console.error('Error fetching exercise', id, ':', error)
     return notFound()
   }
 }

@@ -171,7 +171,7 @@ export const pdfToExercisesV2Task = {
         } catch (pageError: unknown) {
           const pageErrorMessage =
             pageError instanceof Error ? pageError.message : 'Detection failed'
-          console.error(`[V2] Failed to detect on page ${i}:`, pageErrorMessage)
+          console.error('[V2] Failed to detect on page', i, ':', pageErrorMessage)
           detections.push({
             contentStartY: 0,
             contentEndY: 1,
@@ -274,7 +274,7 @@ export const pdfToExercisesV2Task = {
       return output
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      console.error(`[V2] Job ${job.id} failed:`, error)
+      console.error('[V2] Job', job.id, 'failed:', error)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await updateJobStatus(payload as any, job.id, 'failed', {
         ...output,
@@ -402,6 +402,6 @@ async function updateJobStatus(
   try {
     await coll.updateOne({ _id: new ObjectId(jobId) }, { $set: update })
   } catch (err) {
-    console.error(`[V2] Failed to update job status:`, err)
+    console.error('[V2] Failed to update job status:', err)
   }
 }

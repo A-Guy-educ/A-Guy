@@ -36,7 +36,7 @@ export async function loadFixture(name: string): Promise<Fixture | null> {
 
     return result.success ? result.data : null
   } catch (error) {
-    console.error(`Failed to load fixture ${name}:`, error)
+    console.error('Failed to load fixture', name, ':', error)
     return null
   }
 }
