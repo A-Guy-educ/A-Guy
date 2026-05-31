@@ -1,28 +1,12 @@
 {
   "version": 1,
-  "rev": 244,
+  "rev": 245,
   "cursor": "idle",
   "data": {
-    "prs": {
-      "2164": {
-        "fp": "sync|241512a250b30a3f174147c1e71db7e1b41b0e1c",
-        "stage": "sync-auto",
-        "lastActAt": "2026-05-31T17:45:13Z"
-      },
-      "2180": {
-        "fp": "sync|241d9c4ce468a601a558bab572da6d85bf472667",
-        "stage": "sync-auto",
-        "lastActAt": "2026-05-31T17:45:15Z"
-      },
-      "2193": {
-        "fp": "sync|b45f2d1fe08336bfb7f142625188cc9b1ee88830",
-        "stage": "sync-auto",
-        "lastActAt": "2026-05-31T17:45:18Z"
-      }
-    },
-    "lastFiredAt": "2026-05-31T17:45:35.852Z",
+    "prs": {},
+    "lastFiredAt": "2026-05-31T18:10:39.186Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 60700
+    "lastDurationMs": 41467
   },
   "done": false
 }
