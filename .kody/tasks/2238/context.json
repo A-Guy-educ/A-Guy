@@ -1,0 +1,17 @@
+{
+  "taskId": "2238",
+  "taskType": "issue",
+  "target": "dev CI red on b123a134 (CodeQL)",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed CodeQL format-string vulnerability in console.error calls by replacing template literals with comma-separated arguments in pdf-to-exercises-task.ts and pdf-to-exercises-v2-task.ts",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/jobs/pdf-to-exercises-task.ts",
+    "src/server/payload/jobs/pdf-to-exercises-v2-task.ts"
+  ],
+  "sessionLog": ".kody/sessions/",
+  "startedAt": "2026-05-31T20:45:00Z",
+  "finishedAt": "2026-05-31T20:46:00Z"
+}
