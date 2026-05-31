@@ -103,7 +103,7 @@ export function ProductDetailContent({ product }: ProductDetailContentProps) {
                     className="flex items-center gap-content-gap-xs text-body-sm text-muted-foreground"
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                    {itemObj.lesson?.title ?? itemObj.featureKey ?? String(item)}
+                    {itemObj.lesson?.title ?? itemObj.featureKey ?? t('items.unnamed')}
                   </li>
                 )
               })}
