@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "rev": 1,
+  "rev": 2,
   "cursor": "idle",
   "data": {
     "lastFixedSha": "",
     "lastActAt": "",
-    "lastFiredAt": "2026-05-31T17:43:31.518Z",
+    "lastFiredAt": "2026-05-31T17:44:41.989Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 33059
+    "lastDurationMs": 30443
   },
   "done": false
 }
