@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "rev": 27,
+  "rev": 28,
   "cursor": "reported",
   "data": {
     "cycle": 2,
-    "lastRunISO": "2026-05-31T06:58:03Z",
-    "nextEligibleISO": "2026-05-31T12:58:03Z",
+    "lastRunISO": "2026-05-31T13:03:35Z",
+    "nextEligibleISO": "2026-05-31T19:03:35Z",
     "reviewed": [
       "approval-gate",
       "architecture-audit",
@@ -14,7 +14,8 @@
       "clear-empty-goals",
       "coverage-floor",
       "dead-code-sweep",
-      "dependency-bump"
+      "dependency-bump",
+      "design-review"
     ],
     "verdicts": {
       "approval-gate": {
@@ -50,8 +51,8 @@
         "verdict": "broken"
       },
       "design-review": {
-        "note": "pending",
-        "verdict": "pending"
+        "note": "cadence guard (6d) contradicts frontmatter every: 7d; body has no kody-job-next-state block; state.json never created; lastRunISO never persisted",
+        "verdict": "broken"
       },
       "docs-code": {
         "note": "pending",
@@ -114,9 +115,9 @@
         "verdict": "pending"
       }
     },
-    "lastFiredAt": "2026-05-31T06:58:38.954Z",
+    "lastFiredAt": "2026-05-31T13:07:34.762Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 145488
+    "lastDurationMs": 325409
   },
   "done": false
 }
