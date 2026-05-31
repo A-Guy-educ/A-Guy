@@ -1904,6 +1904,8 @@ export interface ProductItem {
   createdAt: string;
 }
 /**
+ * Transactions are auto-created by payment webhooks and the checkout route. Manual creation is disabled — dangling records break revenue stats, refunds, and the purchases page.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "transactions".
  */
