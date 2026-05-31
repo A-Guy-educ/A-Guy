@@ -42,7 +42,7 @@ export const queryProductBySlug = cache(
       where: { and: conditions },
       limit: 1,
       pagination: false,
-      depth: 1,
+      depth: 2,
       overrideAccess: false,
     })
 

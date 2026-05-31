@@ -10,8 +10,8 @@ import type { Brand } from '../types'
 import { aguyConfig } from './config'
 import { Logo } from './components/Logo'
 
-import en from './messages/en.json'
-import he from './messages/he.json'
+import en from './messages/en.json' with { type: 'json' }
+import he from './messages/he.json' with { type: 'json' }
 
 export const aguyBrand: Brand = {
   config: aguyConfig,

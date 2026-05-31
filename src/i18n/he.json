@@ -762,6 +762,9 @@
     "perMonth": "לחודש",
     "perYear": "לשנה",
     "includedItems": "מה כלול במוצר?",
+    "items": {
+      "unnamed": "פריט ללא שם"
+    },
     "buyButton": "רכוש עכשיו",
     "loginToBuy": "התחבר כדי לרכוש",
     "redirecting": "מעביר לתשלום...",
