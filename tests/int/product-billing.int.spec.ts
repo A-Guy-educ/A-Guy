@@ -15,6 +15,7 @@ import { AccountRole } from '@/server/payload/collections/Users/roles'
 import config from '@payload-config'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
+import { queryProductBySlug } from '@/server/repos/queries/products'
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest'
 
 const hasDatabaseUrl = !!process.env.DATABASE_URL
@@ -820,5 +821,85 @@ describe.skipIf(!hasDatabaseUrl)('Products.items relationship', () => {
 
     const reReadItems = reRead.items as unknown as Array<{ id: string; featureKey: string }>
     expect(reReadItems.length).toBe(2)
+  })
+
+  it('queryProductBySlug should return lesson titles for items at depth 2', async () => {
+    const admin = await getAdminUser()
+
+    // Find an existing lesson to reference
+    const existingLessons = await payload.find({
+      collection: 'lessons',
+      limit: 1,
+      overrideAccess: true,
+      depth: 1,
+    })
+    const lesson = existingLessons.docs[0]
+    if (!lesson) {
+      expect.fail('No lessons found in database')
+    }
+
+    // Create a lesson-type ProductItem
+    const lessonItem = await payload.create({
+      collection: 'product-items',
+      data: {
+        type: 'lesson',
+        lesson: lesson.id,
+        isHighlighted: false,
+      },
+      user: admin as any,
+      overrideAccess: false,
+    })
+    trackProductItem(lessonItem.id)
+
+    // Create a feature-type ProductItem
+    const featureItem = await payload.create({
+      collection: 'product-items',
+      data: {
+        type: 'feature',
+        featureKey: 'certificate',
+        isHighlighted: false,
+      },
+      user: admin as any,
+      overrideAccess: false,
+    })
+    trackProductItem(featureItem.id)
+
+    // Create a product with both items
+    const product = await payload.create({
+      collection: 'products',
+      data: {
+        name: 'Lesson Title Depth Test',
+        billingType: 'one_time',
+        price: 99,
+        currency: 'USD',
+        items: [lessonItem.id, featureItem.id],
+      } as any,
+      user: admin as any,
+      overrideAccess: false,
+    })
+    trackProduct(product.id)
+
+    // queryProductBySlug must return lesson titles at depth 2
+    const queried = await queryProductBySlug({ slug: product.slug! })
+
+    expect(queried).not.toBeNull()
+    const items = queried!.items as unknown as Array<{
+      id: string
+      type: string
+      lesson?: { id: string; title?: string }
+      featureKey?: string
+    }>
+
+    const lessonItemResult = items.find((i) => i.type === 'lesson')
+    expect(lessonItemResult).toBeDefined()
+    // lesson.title must be populated (not undefined) at depth 2
+    expect(lessonItemResult!.lesson?.title).toBeDefined()
+    expect(typeof lessonItemResult!.lesson!.title).toBe('string')
+    expect(lessonItemResult!.lesson!.title!.length).toBeGreaterThan(0)
+
+    // featureKey should also be present
+    const featureItemResult = items.find((i) => i.type === 'feature')
+    expect(featureItemResult).toBeDefined()
+    expect(featureItemResult!.featureKey).toBe('certificate')
   })
 })
