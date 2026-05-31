@@ -184,5 +184,5 @@
 - #1823: [P2] Stats page chart area renders empty (#1860) (7314e89b2)
 - Format ExerciseContentEditor css with prettier (5de4fc368)
 - add executable/base workflow_dispatch inputs for goal task dispatch (b3a6d66b0)
-- #1534: יצירת כפתור צ'אט באדמין לגישה לסוכן AI (#1591) (b41d23bf4) · 🔄 QA (#2208)
+- #1534: יצירת כפתור צ'אט באדמין לגישה לסוכן AI (#1591) (b41d23bf4) · ⚠️ QA 2026-05-31 (#2208)
 - Skip Vercel build when only .kody content changed (bf74de6e5)## [v0.25.9] - 2026-05-26- chore: release v0.25.9 ([#2121](https://github.com/A-Guy-educ/A-Guy/pull/2121)) — @kodyade[bot]- #2113: Add public product catalog page and checkout success/cancel pages ([#2117_(https://github.com/A-Guy-educ/A-Guy/pull/2117)) — @aguyaharonyair- #2112: Add PayPal sandbox key smoke test script + developer setup doc ([#2114](https://github.com/A-Guy-educ/A-Guy/pull/2114)) — @aguyaharonyair- #2104: [Admin] Lesson page — show all exercises inline with full conten… ([#2108](https://github.com/A-Guy-educ/A-Guy/pull/2108)) — @aguyaharonyair- fix(lesson-blocks): Persist exercise deletions in lesson blocks UI ([#2109](https://github.com/A-Guy-educ/A-Guy/pull/2109)) — @aguyshayb · ⚠️ QA 2026-05-30 (#2204)- #2011: Fail closed in checkout tenant guard when user has no tenant ([#2012](https://github.com/A-Guy-educ/A-Guy/pull/2012)) — @kodyade · ⚠️ QA 2026-05-25 (#2079)test content
