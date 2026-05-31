@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Update StatusBadge and StatusDisplay to use 'statuses' key",
+    "body": "The StatusBadge in PurchasesPageContent.tsx and StatusDisplay in TransactionDetailContent.tsx both call t(`status.${status}`), but the brand messages now use 'statuses' (not 'status') due to JSON duplicate key constraints. The components need updating to t(`statuses.${status}`) to match the new brand message keys, OR the namespace passed to useTranslations needs to be changed to align with the existing auth.purchases namespace.",
+    "rationale": "The StatusBadge and StatusDisplay components render raw keys (status.pending, etc.) because the brand messages use 'statuses' but the components call t('status.${status}'). This is a code change needed in the components, not just a message fix.",
+    "priority": "high"
+  },
+  {
+    "title": "Rename status field label key from statusLabel to status",
+    "body": "In TransactionDetailContent.tsx line 309, t('status') is called for the status field label. The brand message uses 'statusLabel' to avoid JSON duplicate key conflict with the status object. Either rename the key in the brand messages back to 'status' (requires separating status types into a different namespace like 'statuses') and keep statusLabel in base, or update the component to call t('statusLabel'). The test and messages currently use statusLabel which works but diverges from the component's t('status') call.",
+    "rationale": "The component calls t('status') but the brand message has it as 'statusLabel'. Without a component change, this label will render as 'status' (raw key) in the UI.",
+    "priority": "high"
+  }
+]
