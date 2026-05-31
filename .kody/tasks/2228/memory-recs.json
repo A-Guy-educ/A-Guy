@@ -1,0 +1,23 @@
+[
+  {
+    "type": "lesson",
+    "name": "payload-json-messages-untyped",
+    "hook": "Conversations messages field stores opaque JSON without validation",
+    "body": "The `messages` field in Conversations collection is `type: 'json'` with no validation. Application code in `conversation-service.ts` defines the expected shape (role, content, timestamp, hidden, media, chatAssets). No compile-time or runtime enforcement exists.\n\nWhy: Storing untyped JSON means typos in message shape only surface at runtime in chat UI. Adding a Zod `validateBeforeChange` hook would catch malformed messages at write time.\n\nHow to apply: Before adding new JSON fields, define a Zod schema and add a `beforeChange` validation hook.",
+    "confidence": 0.9
+  },
+  {
+    "type": "lesson",
+    "name": "stringly-typed-select-fields",
+    "hook": "Payload select fields (accessType, role) use string options without TypeScript union enforcement",
+    "body": "Several Payload collections use `type: 'select'` with string options (e.g., Courses.accessType: 'free'|'paid'|'mandatory'|'gated', Users.role: 'admin'|'editor'|'user'). TypeScript sees these as `string`, not the specific literal union.\n\nWhy: Callers switch on string values which only fail at runtime if a typo is made. The pattern is widespread in this codebase.\n\nHow to apply: Define a TypeScript union type matching the select options and add a `beforeChange` hook to validate the field value matches the union.",
+    "confidence": 0.85
+  },
+  {
+    "type": "lesson",
+    "name": "in-memory-rate-limit-serverless-broken",
+    "hook": "In-memory Map rate limiter resets on serverless cold start",
+    "body": "rate-limit.ts uses `new Map()` for rate limit counters. On Vercel serverless (scale-to-zero), every new instance starts with an empty map, allowing users to bypass rate limits.\n\nWhy: Serverless functions don't share memory. Rate limit state must be persisted in MongoDB (already available as Payload/Mongoose).\n\nHow to apply: Use MongoDB atomic operations for rate limiting. Payload's Local API or raw Mongo driver can handle this.",
+    "confidence": 0.95
+  }
+]

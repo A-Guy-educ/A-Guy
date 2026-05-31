@@ -1,0 +1,32 @@
+[
+  {
+    "title": "Add unique compound index on UserProgress (user, lesson)",
+    "body": "Add a unique compound index to UserProgress collection to prevent duplicate progress docs when concurrent lesson completions occur. Fix in src/server/payload/collections/UserProgress.ts.",
+    "rationale": "Without a unique index on (user, lesson), concurrent API calls could create multiple progress documents for the same user+lesson combination.",
+    "priority": "medium"
+  },
+  {
+    "title": "Migrate rate limiting from in-memory Map to MongoDB",
+    "body": "Replace the in-memory Map in src/server/services/rate-limit.ts with MongoDB-based counters. The current implementation fails in serverless environments (Vercel) where each cold start resets state.",
+    "rationale": "Users can bypass rate limits by triggering new serverless instances. This is a security issue for the checkout and chat endpoints.",
+    "priority": "high"
+  },
+  {
+    "title": "Extract pdfToExercisesV2Task.handler into pipeline class",
+    "body": "Refactor the 130+ line handler in src/server/payload/jobs/pdf-to-exercises-v2-task.ts into a PdfToExercisesPipeline class with named pass methods (pass0_renderPages, pass1_textDetect, etc.).",
+    "rationale": "The god-function pattern makes the job handler hard to test, debug, and extend. Each pass should be independently testable.",
+    "priority": "medium"
+  },
+  {
+    "title": "Replace plain-object error throws with typed Error subclasses",
+    "body": "In src/server/services/exercise-conversion/helpers.ts, functions like parseExtractorResponseText throw plain objects { code, message } instead of Error subclasses. Fix by defining a ParseError class and using it consistently.",
+    "rationale": "Plain object throws don't have stack traces and can't be caught with instanceof checks. Makes debugging harder in production.",
+    "priority": "low"
+  },
+  {
+    "title": "Replace console.error with structured logger in runner route",
+    "body": "src/app/api/exercises/convert/runner/route.ts:64 uses console.error for heartbeat failures. Replace with the project logger (pino) for structured logging and Sentry integration.",
+    "rationale": "console.error bypasses the project's structured logging infrastructure (pino + Sentry capture). Failures won't be visible in log aggregation dashboards.",
+    "priority": "low"
+  }
+]
