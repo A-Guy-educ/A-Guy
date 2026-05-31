@@ -173,7 +173,7 @@
 - release (f87e03789)
 - acquire issue-2181 (44fb012b5)
 - #2101: [HtmlBlock] Remove all HTML sanitization restrictions in admin (#2116) (e13a99b33)
-- #2160: Thin white strip at the very top of the homepage (#2161) (87cd70375)
+- #2160: Thin white strip at the very top of the homepage (#2161) (87cd70375) · ✅ QA 2026-05-31
 - Revert "fix(test): Restore required collection field on User mock" (892aa299d)
 - Revert "perf(build): Upgrade Next 16 and Payload 3.85, enable Turbopack production build" (610c87100)
 - Revert "fix(build): Drop --turbopack from prod build, breaks Vercel launcher" (520f6e0ae)
@@ -181,7 +181,7 @@
 - Assert title and badge are separate values (8fbaa0b50)
 - release (3c26a5bc6)
 - acquire issue-2170 (a8df194f9)
-- #1823: [P2] Stats page chart area renders empty (#1860) (7314e89b2) · 🔄 QA (#2221)
+- #1823: [P2] Stats page chart area renders empty (#1860) (7314e89b2) · ⚠️ QA 2026-05-31 (#2221)
 - Format ExerciseContentEditor css with prettier (5de4fc368)
 - add executable/base workflow_dispatch inputs for goal task dispatch (b3a6d66b0)
 - #1534: יצירת כפתור צ'אט באדמין לגישה לסוכן AI (#1591) (b41d23bf4) · ⚠️ QA 2026-05-31 (#2208)
