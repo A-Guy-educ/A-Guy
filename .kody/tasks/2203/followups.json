@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "title": "Header logo SVG reported as hidden in E2E test",
+    "body": "The test 'header logo is present' finds the SVG element (12 locators resolved) but Playwright reports it as hidden. Investigate if this is a CSS visibility issue, timing issue, or environmental difference in CI. Locator: 'header a[href=\"/\"] svg'.first()",
+    "rationale": "This is a blocking CI failure that needs to be resolved before the PR can merge",
+    "priority": "high"
+  },
+  {
+    "title": "Hebrew content not rendering on /courses page in E2E test",
+    "body": "The test 'content renders correctly in Hebrew' fails because neither RTL direction nor Hebrew text is found on the page after login. Check if this is an auth issue, i18n configuration issue, or page rendering problem in CI environment. File: tests/e2e/verification/admin-settings.e2e.spec.ts:34",
+    "rationale": "This is a blocking CI failure that needs to be resolved before the PR can merge",
+    "priority": "high"
+  }
+]

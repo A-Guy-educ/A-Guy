@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-import { useAuth } from '@payloadcms/ui'
+import { useCurrentUser } from '@/client/hooks/useCurrentUser'
 import { useTranslations } from '@/ui/web/providers/I18n'
 import { Button } from '@/ui/web/components/button'
 import { Loader2 } from 'lucide-react'
@@ -19,8 +19,16 @@ interface BuyButtonProps {
 export function BuyButton({ productId, productName: _productName, couponCode }: BuyButtonProps) {
   const t = useTranslations('products')
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, isLoading: isAuthLoading } = useCurrentUser()
   const [isLoading, setIsLoading] = useState(false)
+
+  if (isAuthLoading) {
+    return (
+      <Button disabled className="w-full h-14 text-body-md font-bold rounded-xl" size="lg">
+        <Loader2 className="w-5 h-5 animate-spin me-2" />
+      </Button>
+    )
+  }
 
   if (!user) {
     return (
