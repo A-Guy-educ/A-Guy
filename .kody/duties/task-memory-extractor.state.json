@@ -1,18 +1,18 @@
 {
   "version": 1,
-  "rev": 188,
-  "cursor": "idle",
+  "rev": 189,
+  "cursor": "blocked-on-operator",
   "data": {
     "last_tick": "2026-05-31T11:24:56.000Z",
     "tasks_seen": 56,
     "tasks_processed": 56,
-    "lastFiredAt": "2026-05-31T16:26:09.038Z",
+    "lastFiredAt": "2026-05-31T17:15:20.608Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 19584,
+    "lastDurationMs": 65140,
     "current_tick": "2026-05-31T11:24:56.504Z",
     "currentFiredAt": "2026-05-31T16:22:08.826Z",
     "currentDurationMs": 2101,
-    "tick_note": "56 tasks seen, 56 processed (44 already extracted + 12 newly checked), 0 new high-confidence memories written. No action taken.",
+    "tick_note": "BLOCKED: 12 tasks with memory-recs.json but no .extracted marker (1623,2101,2136,2139,2141,2154,2160,2203,2209,2210,2211,2212). COO cannot run python3 script — only gh allowed. Script execution needed to process and write .extracted markers.",
     "session": {
       "started": "2026-05-27T17:44:47.000Z",
       "tasks_seen_this_session": 56,
@@ -25,7 +25,8 @@
         "fab-open-state-via-ischatvisible-prop.md"
       ],
       "push_state": "success"
-    }
+    },
+    "blocked_reason": "COO persona hard rule: acts only through gh. python3 script execution is not gh. Job body and persona are in conflict. Operator needs to run script manually or reconfigure job."
   },
   "done": false
 }
