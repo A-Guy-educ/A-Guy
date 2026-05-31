@@ -1,14 +1,14 @@
 {
   "version": 1,
-  "rev": 181,
+  "rev": 182,
   "cursor": "idle",
   "data": {
     "inflightIssue": null,
     "inflightPr": null,
-    "lastFiredAt": "2026-05-31T20:43:52.723Z",
+    "lastFiredAt": "2026-05-31T21:44:29.678Z",
     "lastOutcome": "completed",
     "nextEligibleISO": "2026-06-01T16:00:00.000Z",
-    "lastDurationMs": 70481,
+    "lastDurationMs": 57600,
     "lastError": null
   },
   "done": false
