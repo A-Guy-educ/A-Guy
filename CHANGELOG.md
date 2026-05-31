@@ -181,7 +181,7 @@
 - Assert title and badge are separate values (8fbaa0b50)
 - release (3c26a5bc6)
 - acquire issue-2170 (a8df194f9)
-- #1823: [P2] Stats page chart area renders empty (#1860) (7314e89b2)
+- #1823: [P2] Stats page chart area renders empty (#1860) (7314e89b2) · 🔄 QA (#2221)
 - Format ExerciseContentEditor css with prettier (5de4fc368)
 - add executable/base workflow_dispatch inputs for goal task dispatch (b3a6d66b0)
 - #1534: יצירת כפתור צ'אט באדמין לגישה לסוכן AI (#1591) (b41d23bf4) · ⚠️ QA 2026-05-31 (#2208)
