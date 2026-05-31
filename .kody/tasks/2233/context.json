@@ -1,0 +1,17 @@
+{
+  "taskId": "2233",
+  "taskType": "issue",
+  "target": "2233-dev-ci-red-on-9ed795d-codeql-e2e-gate-pr-main",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Applied CodeQL format-string fix to two console.error calls that were using template literals with variables instead of %s placeholders",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/jobs/pdf-to-exercises-task.ts",
+    "src/server/payload/jobs/pdf-to-exercises-v2-task.ts"
+  ],
+  "sessionLog": ".kody/sessions/a12d9db9-4d70-4371-af3b-bed12282ba61.jsonl",
+  "startedAt": "2026-05-31T19:51:00Z",
+  "finishedAt": "2026-05-31T20:08:00Z"
+}
