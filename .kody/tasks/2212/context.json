@@ -1,0 +1,18 @@
+{
+  "taskId": "2212",
+  "taskType": "issue",
+  "target": "2212-add-missing-i18n-keys-for-accountpurchases-page",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added all account.purchases.* i18n keys to brand messages files with English and Hebrew translations",
+  "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2215",
+  "runUrl": null,
+  "filesTouched": [
+    "src/brands/aguy/messages/en.json",
+    "src/brands/aguy/messages/he.json",
+    "tests/unit/brands-account-purchases-i18n.test.ts"
+  ],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-05-31T13:25:00Z",
+  "finishedAt": "2026-05-31T13:33:00Z"
+}
