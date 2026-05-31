@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "rev": 5,
+  "rev": 6,
   "cursor": "idle",
   "data": {
     "lastRunISO": "2026-05-28T00:00:00Z",
     "nextEligibleISO": "2026-05-31T00:00:00Z",
-    "lastFiredAt": "2026-05-30T22:09:25.996Z",
+    "lastFiredAt": "2026-05-31T22:39:13.008Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 49746,
+    "lastDurationMs": 43533,
     "disabledReason": "verb chore --issue verified in engine README; coverage heuristic not yet confirmed against codebase — disabled=true in job body"
   },
   "done": false
