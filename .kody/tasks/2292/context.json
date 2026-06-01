@@ -1,0 +1,14 @@
+{
+  "taskId": "2292",
+  "taskType": "issue",
+  "target": "2292",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added Add Exercise and Add Content Page buttons to the Lesson Blocks empty state, replacing static text with interactive buttons that navigate to the admin collection pages",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": ["src/ui/admin/LessonBlocksField/index.tsx"],
+  "sessionLog": ".kody/sessions/2292.jsonl",
+  "startedAt": "2026-06-01T15:47:00.000Z",
+  "finishedAt": "2026-06-01T16:11:00.000Z"
+}

@@ -11,6 +11,7 @@ import {
   FileText,
   Trash2,
   Pencil,
+  Plus,
 } from 'lucide-react'
 
 import { InlineExerciseEditor } from './InlineExerciseEditor'
@@ -106,6 +107,17 @@ export const LessonBlocksField: React.FC<{ path: string }> = ({ path }) => {
   // Title cache (refId -> title)
   const [titleCache, setTitleCache] = useState<Record<string, string>>({})
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set())
+
+  // Lesson ID extracted from URL pathname (e.g. /admin/collections/lessons/:id)
+  const [lessonId, setLessonId] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Parse lesson ID from pathname like /admin/collections/lessons/:id
+    const match = window.location.pathname.match(/\/admin\/collections\/lessons\/([^/]+)/)
+    if (match) {
+      setLessonId(match[1])
+    }
+  }, [])
 
   // Extract inline titles from populated objects into cache on first render
   useEffect(() => {
@@ -299,7 +311,84 @@ export const LessonBlocksField: React.FC<{ path: string }> = ({ path }) => {
               fontSize: 13,
             }}
           >
-            No blocks yet. Create exercises or content pages for this lesson.
+            <div style={{ marginBottom: 12 }}>No blocks yet.</div>
+            <div
+              style={{
+                display: 'flex',
+                gap: 8,
+                justifyContent: 'center',
+                flexWrap: 'wrap',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  const base = '/admin/collections/exercises/new'
+                  router.push(lessonId ? `${base}?lesson=${lessonId}` : base)
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '8px 16px',
+                  border: '2px dashed var(--theme-elevation-200)',
+                  borderRadius: 6,
+                  background: 'transparent',
+                  color: 'var(--theme-elevation-600)',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--theme-elevation-400)'
+                  e.currentTarget.style.color = 'var(--theme-elevation-800)'
+                  e.currentTarget.style.background = 'var(--theme-elevation-50)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--theme-elevation-200)'
+                  e.currentTarget.style.color = 'var(--theme-elevation-600)'
+                  e.currentTarget.style.background = 'transparent'
+                }}
+              >
+                <Plus size={14} />
+                Add Exercise
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const base = '/admin/collections/content-pages/new'
+                  router.push(lessonId ? `${base}?lesson=${lessonId}` : base)
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '8px 16px',
+                  border: '2px dashed var(--theme-elevation-200)',
+                  borderRadius: 6,
+                  background: 'transparent',
+                  color: 'var(--theme-elevation-600)',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--theme-elevation-400)'
+                  e.currentTarget.style.color = 'var(--theme-elevation-800)'
+                  e.currentTarget.style.background = 'var(--theme-elevation-50)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--theme-elevation-200)'
+                  e.currentTarget.style.color = 'var(--theme-elevation-600)'
+                  e.currentTarget.style.background = 'transparent'
+                }}
+              >
+                <Plus size={14} />
+                Add Content Page
+              </button>
+            </div>
           </div>
         )}
 
