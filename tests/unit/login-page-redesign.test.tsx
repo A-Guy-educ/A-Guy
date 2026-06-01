@@ -139,6 +139,15 @@ describe('LoginForm - Google only mode (password disabled)', () => {
     expect(screen.queryByLabelText(/אימייל/)).toBeNull()
     expect(screen.queryByLabelText(/סיסמה/)).toBeNull()
   })
+
+  it('renders Hebrew brand.heroSubtitle correctly (not raw key)', () => {
+    renderWithPasswordDisabled(<LoginForm brandHeroSubtitle="A-Guy המורה הפרטי שלכם" />)
+
+    // The brand heroSubtitle should be the Hebrew text, NOT the raw i18n key
+    expect(screen.getByText('A-Guy המורה הפרטי שלכם')).toBeTruthy()
+    // It should NOT display the raw key
+    expect(screen.queryByText('auth.login.brand.heroSubtitle')).toBeNull()
+  })
 })
 
 describe('LoginForm - Password enabled mode', () => {

@@ -4,11 +4,13 @@ import { HelpCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 import { SystemLink } from '@/infra/loading/components/SystemLink'
-import { useTranslations } from '@/ui/web/providers/I18n'
+import { useI18n, useTranslations } from '@/ui/web/providers/I18n'
 import { LoginForm } from './LoginForm'
 
 export function LoginPageContent() {
+  const { t: tRoot } = useI18n()
   const t = useTranslations('auth.login')
+  const brandHeroSubtitle = tRoot('brand.heroSubtitle')
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background via-primary/5 to-accent/5 py-section-lg">
@@ -34,7 +36,7 @@ export function LoginPageContent() {
         transition={{ duration: 0.5, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
         className="relative w-full max-w-md px-4"
       >
-        <LoginForm />
+        <LoginForm brandHeroSubtitle={brandHeroSubtitle} />
       </motion.div>
 
       {/* Help Link */}

@@ -1,0 +1,18 @@
+{
+  "taskId": "2271",
+  "taskType": "issue",
+  "target": "2271-p1-fix-exposed-i18n-key-authloginbrandherosubtitle",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed the exposed i18n key issue by passing brandHeroSubtitle as a prop from LoginPageContent",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/login/LoginForm.tsx",
+    "src/app/(frontend)/login/LoginPageContent.tsx",
+    "tests/unit/login-page-redesign.test.tsx"
+  ],
+  "sessionLog": ".kody/sessions/2271-p1-fix-exposed-i18n-key-authloginbrandherosubtitle.jsonl",
+  "startedAt": "2026-06-01T15:47:00.000Z",
+  "finishedAt": "2026-06-01T16:02:00.000Z"
+}
