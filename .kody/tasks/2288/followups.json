@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Pre-existing test failure: processes chat request successfully for authenticated user",
+    "body": "This test fails with NotFound error in ConversationService.getCourseIdFromContext at line 451. The test creates a user and exercise but the exercise's chapter/course hierarchy may not be fully set up. This is unrelated to admin mode chat.",
+    "rationale": "Test isolation issue - the test should set up full context hierarchy or mock the context validation",
+    "priority": "low"
+  }
+]
