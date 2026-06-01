@@ -1,0 +1,19 @@
+{
+  "taskId": "2274",
+  "taskType": "issue",
+  "target": "2274",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed admin dashboard footer to read version from package.json instead of falling back to 'dev' placeholder",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/VersionInfo/index.tsx",
+    "src/env.d.ts",
+    "src/types/package-json-raw.d.ts",
+    "tests/unit/admin/version-info.test.tsx"
+  ],
+  "sessionLog": ".kody/runs/gh-26781360895-1/session.jsonl",
+  "startedAt": "2026-06-01T20:54:00Z",
+  "finishedAt": "2026-06-01T21:00:30Z"
+}

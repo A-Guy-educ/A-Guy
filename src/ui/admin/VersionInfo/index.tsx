@@ -3,7 +3,9 @@
 import React from 'react'
 
 // Version from package.json - fallback to 'dev' if not available
-const VERSION = process.env.NEXT_PUBLIC_APP_VERSION || 'dev'
+import packageJsonRaw from '../../../../package.json?raw'
+const packageJson = JSON.parse(packageJsonRaw)
+const VERSION = packageJson.version || 'dev'
 
 /**
  * VersionInfo component for admin footer
