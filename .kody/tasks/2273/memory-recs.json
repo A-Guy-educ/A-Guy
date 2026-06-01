@@ -1,0 +1,9 @@
+[
+  {
+    "type": "lesson",
+    "name": "orphan-exercise-failures-in-duplication-pipeline",
+    "hook": "Orchestrator crash window can leave exercises in failures without outputExercises entry",
+    "body": "When createOutputExercise (writes exercise to Mongo) succeeds but appendOutputExercise (records the mapping) fails, the exercise appears in failures[] without a corresponding entry in outputExercises[]. This 'orphan failure' pattern occurs at the crash window between lines 908-913 of orchestrator.ts.\n\n**Why:** The lesson duplication orchestrator uses a two-step process: createOutputExercise writes the exercise doc to Mongo, then appendOutputExercise records the source→output mapping. If the process crashes between these steps, the exercise is saved but the mapping is never recorded. The review UI only iterated outputExercises, missing these orphan failures entirely.\n\n**How to apply:** When reviewing stats counter or exercise state computation for the lesson duplication pipeline, account for the possibility that failures[] may contain sourceExerciseIds not present in outputExercises[].",
+    "confidence": 0.95
+  }
+]

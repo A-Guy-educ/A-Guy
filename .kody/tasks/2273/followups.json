@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Exercise state counts failed=0 in all scenarios",
+    "body": "The 'failed' count in countByState is always 0 because computeExerciseStates never produces a 'failed' state — only 'succeeded', 'needs_review', and 'pending'. The status banner renders counts.failed but it will never be non-zero under the current algorithm. This is pre-existing (not introduced by this fix) and is scope creep for issue #2273.",
+    "rationale": "The 'failed' state was intentionally not produced by computeExerciseStates per its documented design. The banner shows it but it never increments.",
+    "priority": "low"
+  }
+]

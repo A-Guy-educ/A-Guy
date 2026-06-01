@@ -1,0 +1,17 @@
+{
+  "taskId": "2273",
+  "taskType": "issue",
+  "target": "2273",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed computeExerciseStates to count orphan failures (exercises with failures but no outputExercises entry)",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/LessonDuplicationReview/lib/exerciseState.ts",
+    "tests/unit/admin/lesson-duplication-review-stats-counter.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-06-01T19:37:00Z",
+  "finishedAt": "2026-06-01T19:39:00Z"
+}

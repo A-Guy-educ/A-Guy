@@ -37,10 +37,14 @@ export interface ExerciseState {
  * Computes ExerciseState[] from record data.
  *
  * Algorithm:
- * 1. For each outputExercise in outputExercises:
+ * 1. Build failure lookup: sourceExerciseId → unresolved failure codes
+ * 2. For each outputExercise in outputExercises:
  *    a. If outputExerciseId ∈ reviewedIds → state = 'succeeded'
  *    b. Else if sourceExerciseId has any unresolved failure → state = 'needs_review', failureCodes = codes
  *    c. Else → state = 'succeeded' (in outputExercises but no failures)
+ * 3. For each sourceExerciseId in failures not covered by outputExercises
+ *    (orphan failures — exercise failed before createOutputExercise recorded a mapping):
+ *    a. state = 'needs_review', failureCodes = codes, outputExerciseId = orphan:<sourceExerciseId>
  *
  * Note: 'failed' and 'pending' states are not produced by this function.
  * 'failed' would require a distinct failure mode beyond unresolved failures.
@@ -63,9 +67,12 @@ export function computeExerciseStates(
   }
 
   const states: ExerciseState[] = []
+  // Track source exercise IDs that have an outputExercises entry
+  const coveredSources = new Set<string>()
 
   for (const entry of outputExercises) {
     const { sourceExerciseId, outputExerciseId } = entry
+    coveredSources.add(sourceExerciseId)
 
     if (reviewedIds.has(outputExerciseId)) {
       states.push({ outputExerciseId, sourceExerciseId, state: 'succeeded', failureCodes: [] })
@@ -79,6 +86,20 @@ export function computeExerciseStates(
     } else {
       // In outputExercises but not reviewed and no failures — treat as succeeded
       states.push({ outputExerciseId, sourceExerciseId, state: 'succeeded', failureCodes: [] })
+    }
+  }
+
+  // Handle orphan failures: exercises that failed before a outputExercises mapping
+  // was recorded (e.g. createOutputExercise threw a crash-window error).
+  // These exercises have failures but no corresponding outputExerciseId.
+  for (const sourceExerciseId of Object.keys(failuresBySource)) {
+    if (!coveredSources.has(sourceExerciseId)) {
+      states.push({
+        outputExerciseId: `orphan:${sourceExerciseId}`,
+        sourceExerciseId,
+        state: 'needs_review',
+        failureCodes: failuresBySource[sourceExerciseId],
+      })
     }
   }
 
