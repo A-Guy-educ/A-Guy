@@ -1,13 +1,14 @@
-## Merge Conflict Resolution for PR #1524
+## CI Fix for PR #1524
 
-### Files with Conflicts
-- `.kody/last-run.jsonl` — Session log file (runtime artifact, not source code)
+### Root Cause
+`pnpm format:check` was failing because `kody.config.json` had Prettier formatting deviations. Secondary issue: `src/payload-types.ts` was stale (not regenerated after schema changes in this branch), causing `pnpm typecheck` to fail.
 
-### Resolution
-- **`.kody/last-run.jsonl`**: Asymmetric conflict — HEAD had 25 lines (session `9a6dbd6a`), origin/dev had 133 lines (session `86afddb9`). Took MERGE_HEAD (origin/dev) version since runtime session logs represent transient state, not code changes. The resulting file has 140 lines.
+### Fixes Applied
+1. **`kody.config.json`**: Ran `pnpm format -- kody.config.json` to auto-fix Prettier deviations
+2. **`src/payload-types.ts`**: Ran `pnpm generate:types` to regenerate stale types, then staged the result
 
-### Why MERGE_HEAD was chosen
-The `.kody/last-run.jsonl` file is a runtime session log recording Kody's tool invocations and thoughts. It is not source code and carries no lasting semantic meaning beyond the session that produced it. Preferring origin/dev's version is standard for transient/runtime artifacts — the merge commit on dev already integrated that state.
+### Verification
+All quality gates pass: typecheck, lint, format:check.
 
 ### Status
-All conflicts resolved and staged. No remaining unmerged files.
+Both files staged and verified. CI should now be green.
