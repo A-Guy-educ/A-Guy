@@ -1,0 +1,18 @@
+{
+  "taskId": "2257",
+  "taskType": "issue",
+  "target": "dev branch CI failures (refresh, CodeQL) at commit 69cbb7e5a",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed two CI failures: (1) CodeQL format string vulnerability alerts in pdf-to-exercises-task.ts and pdf-to-exercises-v2-task.ts by reverting template literals to comma-separated arguments; (2) AI Docs Refresh pnpm setup failure by updating version from 9 to 10.33.0 in ai-docs-refresh.yml",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/jobs/pdf-to-exercises-task.ts",
+    "src/server/payload/jobs/pdf-to-exercises-v2-task.ts",
+    ".github/workflows/ai-docs-refresh.yml"
+  ],
+  "sessionLog": ".kody/sessions/2257-session.jsonl",
+  "startedAt": "2026-06-01T02:31:00Z",
+  "finishedAt": "2026-06-01T02:50:00Z"
+}

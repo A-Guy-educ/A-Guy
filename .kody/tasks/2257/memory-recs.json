@@ -1,0 +1,16 @@
+[
+  {
+    "type": "lesson",
+    "name": "codeql-format-string-template-literal",
+    "hook": "CodeQL flags template literals with interpolation as format string vulnerability",
+    "body": "CodeQL's JavaScript analysis flags `console.error(`string ${userData} more`)` as 'Use of externally-controlled format string' even though JavaScript's console.error doesn't interpret format specifiers. The safe pattern is comma-separated arguments: `console.error('string', userData, ' more')`.\n\nWhy: Template literal interpolation `${userData}` is flagged by CodeQL's heuristic that detects user data in strings passed to logging functions. The comma-separated pattern passes user data as separate arguments, avoiding the alert.\n\nHow to apply: When CodeQL flags a console.error/console.log/warn with a template literal containing `${...}`, convert to comma-separated arguments.",
+    "confidence": 0.9
+  },
+  {
+    "type": "decision",
+    "name": "pnpm-version-10-33-0-for-action-setup",
+    "hook": "pnpm/action-setup@v4 works with version 10.33.0 not 9",
+    "body": "The pnpm/action-setup@v4 GitHub Action works reliably with version 10.33.0 (the project's lockfile version) but fails with version 9. This was discovered when inspector.yml was fixed by changing from 9 to 10.33.0.\n\nWhy: The pnpm/action-setup action downloads pnpm from npm, and version 10.33.0 is the current stable release that the action handles correctly. Version 9 may have distribution issues or action compatibility problems.\n\nHow to apply: When configuring pnpm/action-setup@v4 in GitHub Actions workflows, use version: 10.33.0 (or the version matching your lockfile) rather than version: 9.",
+    "confidence": 0.8
+  }
+]
