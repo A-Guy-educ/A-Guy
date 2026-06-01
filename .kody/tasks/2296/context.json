@@ -1,0 +1,17 @@
+{
+  "taskId": "2296",
+  "taskType": "issue",
+  "target": "2296",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed LessonBlocksField to show Add buttons when rows.length < 2 (not only when rows.length === 0), enabling QA to add a 2nd block and verify reorder controls",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/LessonBlocksField/index.tsx",
+    "tests/e2e/lesson-blocks-field.e2e.spec.ts"
+  ],
+  "sessionLog": null,
+  "startedAt": "2026-06-01T19:35:00Z",
+  "finishedAt": "2026-06-01T19:48:00Z"
+}

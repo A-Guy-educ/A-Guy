@@ -1,0 +1,8 @@
+[
+  {
+    "title": "LessonBlocksField Add buttons navigate away from lesson (not inline add)",
+    "body": "The Add Exercise and Add Content Page buttons navigate to /admin/collections/exercises/new?lesson=<id> and /admin/collections/content-pages/new respectively — they do NOT add a block inline to the current lesson. After creating a new exercise/page, the user must then somehow add it to the lesson blocks. If the creation flow doesn't auto-add the block, the UX is still broken even after this fix.",
+    "rationale": "Users still need a way to add an existing (already-created) exercise/content page to a lesson's blocks — not just create a new one. The current navigation-based add buttons don't solve the core problem of being able to add a 2nd block.",
+    "priority": "medium"
+  }
+]

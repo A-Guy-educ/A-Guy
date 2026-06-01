@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "lessonblocksfield-add-ui-single-block",
+    "hook": "LessonBlocksField add buttons need to show when rows.length < 2, not only when rows.length === 0",
+    "body": "LessonBlocksField's Add Exercise / Add Content Page buttons only showed when the block list was empty (rows.length === 0). This made it impossible to add a 2nd block to test reorder controls when starting from 1 block. The fix changes the condition to rows.length < 2 so the add buttons persist when there's 1 block.\n\nWhy: QA reported being unable to verify reorder controls because they could not add a 2nd block — the add UI was hidden once rows.length > 0.",
+    "why": "A custom field component with empty-state-only add buttons creates a dead-end UX: users with 1 block cannot add more. Always show add buttons until ≥2 blocks exist.",
+    "confidence": 0.9
+  }
+]

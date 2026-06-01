@@ -321,7 +321,7 @@ export const LessonBlocksField: React.FC<{ path: string }> = ({ path }) => {
           overflow: 'hidden',
         }}
       >
-        {rows.length === 0 && (
+        {rows.length < 2 && (
           <div
             style={{
               padding: '24px 16px',
@@ -330,7 +330,7 @@ export const LessonBlocksField: React.FC<{ path: string }> = ({ path }) => {
               fontSize: 13,
             }}
           >
-            <div style={{ marginBottom: 12 }}>No blocks yet.</div>
+            {rows.length === 0 && <div style={{ marginBottom: 12 }}>No blocks yet.</div>}
             <div
               style={{
                 display: 'flex',
