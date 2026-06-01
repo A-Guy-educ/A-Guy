@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "syncpaymentstats-hook-req-context-guard",
+    "hook": "afterChange hooks: optional chaining protects context access",
+    "body": "The guard `if (!req?.context)` in syncPaymentStats afterChange hook was overly broad — it caused early returns when `req.context` was undefined (as in webhook handlers that don't pass `req` to payload.update). The correct guard is `if (req?.context?._skipPaymentStatsUpsert)` which uses optional chaining to safely handle undefined req. The first guard was redundant since the second guard with optional chaining already handles undefined gracefully.\n\nWhy: Bug where webhook-initiated transaction updates (no req.context) skipped payment_stats upserts, causing data inconsistency between Transactions and PaymentStats collections.\n\nHow to apply: When writing afterChange/beforeChange hooks that use `req.context`, always use `req?.context?._skipFlag` pattern, never `if (!req?.context)`.",
+    "why": "The bug manifested when webhook handlers called payload.update without a req argument — req was undefined, req?.context was undefined, !req?.context was true, and the hook returned early skipping the payment_stats upsert. The fix changes to optional chaining pattern that correctly allows execution when req or req.context is undefined.",
+    "confidence": 0.85
+  }
+]

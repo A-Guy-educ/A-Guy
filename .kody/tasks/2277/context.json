@@ -1,0 +1,17 @@
+{
+  "taskId": "2277",
+  "taskType": "issue",
+  "target": "2277-p1-paymentstats-has-records-but-transactions-colle",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed syncPaymentStats hook guard in webhook context; added test for webhook-style updates",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/collections/Transactions/hooks/syncPaymentStats-hook.ts",
+    "tests/int/payment-stats.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/live-1778178602855-fkdz4l.jsonl",
+  "startedAt": "2026-06-01T15:40:00.000Z",
+  "finishedAt": "2026-06-01T16:10:00.000Z"
+}

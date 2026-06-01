@@ -24,13 +24,9 @@ export const syncPaymentStats: CollectionAfterChangeHook = async ({
   operation,
   req,
 }) => {
-  // Guard: skip if req.context is not available (e.g., webhook context without full req)
-  if (!req?.context) {
-    return doc
-  }
-
-  // Guard: skip if already triggered by ourselves
-  if (req.context._skipPaymentStatsUpsert) {
+  // Guard: skip if already triggered by ourselves (use optional chaining to handle
+  // cases where req or req.context is undefined, such as in webhook handler calls)
+  if (req?.context?._skipPaymentStatsUpsert) {
     return doc
   }
 

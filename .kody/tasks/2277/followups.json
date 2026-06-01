@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Investigate why Transactions collection is empty despite payment_stats having 8 transaction counts",
+    "body": "The bug describes payment_stats with 8 transactions (4 succeeded, 2 refunded, 2 failed) while the Transactions collection is entirely empty. My fix addresses the webhook path (syncPaymentStats hook guard). However, the bug raises a question: if payment_stats has these specific counts, transactions MUST have existed at some point to generate them. Possible causes: (1) transactions were deleted via admin UI or API, (2) a bug in transaction creation path, (3) the payment_stats data was seeded/imported separately. Investigate whether a beforeDelete hook is needed on Transactions to prevent orphaned payment_stats records, or whether the Transactions were deleted through normal admin access.",
+    "rationale": "The payment_stats aggregate data requires source transaction records to be meaningful. Without understanding why Transactions is empty, there may be a data integrity issue beyond the webhook path.",
+    "priority": "medium"
+  }
+]

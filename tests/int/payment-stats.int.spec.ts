@@ -337,6 +337,62 @@ describe('PaymentStats syncPaymentStats hook', () => {
     expect(stats.docs[0].refundedCount).toBe(1)
   })
 
+  it('webhook-style pending→succeeded update (no req) creates PaymentStats row', async () => {
+    // Simulate what happens in a real webhook handler:
+    // payload.update is called WITHOUT passing a `req` argument.
+    // This reproduces the bug where webhook-initiated transaction updates
+    // skip the syncPaymentStats hook because req?.context is undefined.
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'stripe',
+        providerTransactionId: `ps-${stripeProviderTxId}-webhook1`,
+        status: 'pending',
+        amount: 5000,
+        currency: 'ILS',
+      } as any,
+      overrideAccess: true,
+    })
+
+    // Verify no PaymentStats row was created yet (pending is not countable)
+    const beforeStats = await payload.find({
+      collection: 'payment_stats',
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect(beforeStats.totalDocs).toBe(0)
+
+    // Simulate webhook updating to succeeded — explicit undefined req (mimics real webhook handleEvent call)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await payload.update({
+      collection: 'transactions',
+      id: tx.id,
+      data: { status: 'succeeded' } as any,
+      // NOTE: explicit undefined req — this is what happens when handleEvent calls payload.update
+      req: undefined as any,
+      overrideAccess: true,
+    })
+
+    const stats = await payload.find({
+      collection: 'payment_stats',
+      where: {
+        date: { equals: tx.createdAt.split('T')[0] },
+        currency: { equals: 'ILS' },
+      },
+      depth: 0,
+      overrideAccess: true,
+    })
+
+    // This assertion FAILS with the current bug: the !req?.context guard causes
+    // the hook to skip when req is undefined, so payment_stats is not updated.
+    expect(stats.totalDocs).toBe(1)
+    expect(stats.docs[0].totalRevenueAgorot).toBe(5000)
+    expect(stats.docs[0].succeededCount).toBe(1)
+    expect(stats.docs[0].transactionCount).toBe(1)
+  })
+
   it('idempotency: update with same status does not double-count', async () => {
     const tx = await payload.create({
       collection: 'transactions',
