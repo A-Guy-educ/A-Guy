@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "json-null-vs-zod-optional",
+    "hook": "JSON.stringify converts null to 'null' string which fails Zod optional validation",
+    "body": "When a frontend React component uses `useState<string | null>(null)` and that state is sent in a JSON body, `JSON.stringify({ conversationId: null })` produces `{\"conversationId\": null}` - not an omitted key. When the backend parses this JSON, `conversationId` becomes the value `null`, NOT `undefined`. Zod's `.optional()` only accepts `undefined`, not `null`, so the schema validation fails with a 400 error.\n\n**Why:** The distinction between `null` and `undefined` in JavaScript/JSON is subtle but important. `JSON.stringify` preserves `null` as the literal `null` keyword but omits `undefined`.\n\n**How to apply:** When designing Zod schemas for fields that come from JSON bodies where frontend state might be `null`, use `.nullable().optional()` instead of just `.optional()` to accept both `string | null | undefined`.",
+    "why": "This bug caused the Learning Assistant to completely break (400 error) for ALL users because the frontend always sends null for new conversations. The fix is simple but non-obvious if you don't know the JSON.stringify behavior.",
+    "confidence": 0.95
+  }
+]

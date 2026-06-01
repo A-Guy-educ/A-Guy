@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Frontend could omit null conversationId from request body",
+    "body": "The frontend could be modified to omit `conversationId` entirely when it's null, rather than sending `\"conversationId\": null`. This would be cleaner but is optional since the backend now handles both cases.",
+    "rationale": "The current fix handles null on the backend, but it would be more idiomatic for the frontend to not send null values for optional fields.",
+    "priority": "low"
+  }
+]

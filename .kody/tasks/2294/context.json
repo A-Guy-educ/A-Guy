@@ -1,0 +1,17 @@
+{
+  "taskId": "2294",
+  "taskType": "issue",
+  "target": "2294-p1-chat-sends-fail-with-400-error-learning-assista",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed schema to accept null for conversationId field",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/endpoints/agent/learning-chat.ts",
+    "tests/int/learning-chat-endpoint.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/.jsonl",
+  "startedAt": "2026-06-01T15:48:00Z",
+  "finishedAt": "2026-06-01T16:00:00Z"
+}

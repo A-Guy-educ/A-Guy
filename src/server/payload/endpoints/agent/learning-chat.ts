@@ -38,7 +38,9 @@ import { ConversationService } from '@/server/services/conversation-service'
 const learningChatRequestSchema = z.object({
   message: z.string().min(1).max(2000),
   acknowledgment: z.string().min(1),
-  conversationId: z.string().optional(),
+  // conversationId can be string, null (from frontend JSON.stringify), or undefined (omitted)
+  // Frontend initializes as null and JSON.stringify produces "conversationId": null
+  conversationId: z.string().nullable().optional(),
   gradeLevel: z.string().min(1),
   mediaIds: z.array(z.string()).max(5).optional(),
   chatAssetIds: z.array(z.string()).max(5).optional(),
