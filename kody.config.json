@@ -12,7 +12,9 @@
   "github": {
     "owner": "A-Guy-educ",
     "repo": "A-Guy",
-    "operators": ["aguyaharonyair"]
+    "operators": [
+      "aguyaharonyair"
+    ]
   },
   "agent": {
     "model": "minimax/MiniMax-M2.7-highspeed"
@@ -22,7 +24,9 @@
   },
   "release": {
     "releaseBranch": "main",
-    "versionFiles": ["package.json"],
+    "versionFiles": [
+      "package.json"
+    ],
     "e2eCommand": "npx tsx scripts/release-e2e-gate.ts",
     "timeoutMs": 1800000
   },
@@ -36,5 +40,14 @@
     "default": "run"
   },
   "defaultExecutable": "classify",
-  "defaultPrExecutable": "fix"
+  "defaultPrExecutable": "fix",
+  "access": {
+    "allowedAssociations": [
+      "OWNER",
+      "COLLABORATOR",
+      "CONTRIBUTOR",
+      "FIRST_TIME_CONTRIBUTOR",
+      "MEMBER"
+    ]
+  }
 }

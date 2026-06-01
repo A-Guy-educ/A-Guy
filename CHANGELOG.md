@@ -162,7 +162,7 @@
 - acquire issue-2199 (37ef55166)
 - release (41a9a4114)
 - acquire issue-2199 (1759fdf30)
-- #2139: Rename "PDF view" to "Scroll view" and align content per locale (#2154) (78ba2b2ff)
+- #2139: Rename "PDF view" to "Scroll view" and align content per locale  · 🔄 QA (#2267)
 - release (8a2034817)
 - acquire issue-2199 (cad7eddea)
 - Revert "#1785: Remove bottom chat input bar from lesson page on mobile (#1790)" (c50bfd9d0)
@@ -172,7 +172,7 @@
 - acquire issue-2184 (d45e2e28e)
 - release (f87e03789)
 - acquire issue-2181 (44fb012b5)
-- #2101: [HtmlBlock] Remove all HTML sanitization restrictions in admin (#2116) (e13a99b33)
+- #2101: [HtmlBlock] Remove all HTML sanitization restrictions in admin (#2116) (e13a99b33) · ✅ QA 2026-05-31
 - #2160: Thin white strip at the very top of the homepage (#2161) (87cd70375) · ✅ QA 2026-05-31
 - Revert "fix(test): Restore required collection field on User mock" (892aa299d)
 - Revert "perf(build): Upgrade Next 16 and Payload 3.85, enable Turbopack production build" (610c87100)
