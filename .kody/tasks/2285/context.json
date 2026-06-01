@@ -1,0 +1,17 @@
+{
+  "taskId": "2285",
+  "taskType": "issue",
+  "target": "GitHub issue #2285 - Gravatar images blocked by CSP in admin panel",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed CSP img-src in next.config.js to use *.gravatar.com instead of gravatar.com, allowing www.gravatar.com",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "next.config.js",
+    "tests/int/csp-vercel-feedback-admin.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/.jsonl",
+  "startedAt": "2026-06-01T17:45:00Z",
+  "finishedAt": "2026-06-01T17:58:00Z"
+}
