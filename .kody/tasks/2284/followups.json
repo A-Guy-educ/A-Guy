@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Verify issue #2284 is resolved in staging/production",
+    "body": "The fix was merged on 2026-05-31 but issue was opened on 2026-06-01, suggesting QA tested an outdated environment. Verify the '7th-grade-prep-math' product page now shows 'Unnamed item' (or correct lesson titles/feature keys) instead of '[object Object]'.",
+    "rationale": "Issue was likely filed based on stale QA data from an environment not yet redeployed with the fix.",
+    "priority": "low"
+  }
+]

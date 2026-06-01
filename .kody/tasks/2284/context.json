@@ -1,0 +1,14 @@
+{
+  "taskId": "2284",
+  "taskType": "issue",
+  "target": "GitHub issue #2284",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fix already applied by commit e943abda4 (merged 2026-05-31) before issue was created (2026-06-01). No code changes needed.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [],
+  "sessionLog": ".kody/sessions/live-test-1776849352.jsonl",
+  "startedAt": "2026-06-01T19:30:00Z",
+  "finishedAt": "2026-06-01T19:51:00Z"
+}
