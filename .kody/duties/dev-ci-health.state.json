@@ -1,13 +1,15 @@
 {
   "version": 1,
-  "rev": 22,
+  "rev": 23,
   "cursor": "idle",
   "data": {
-    "lastFixedSha": "6f78efaf24b99df0e5480fe59a3a3a38731e14ff",
-    "lastActAt": "2026-06-01T05:39:21.333Z",
-    "lastFiredAt": "2026-06-01T07:31:56.569Z",
+    "lastFixedSha": "8ca67e759ed578c9e7de41dd617038fb353f0726",
+    "lastActAt": "2026-06-01T08:16:00.000Z",
+    "lastFiredAt": "2026-06-01T09:20:49.580Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 34492
+    "lastDurationMs": 56655,
+    "issueNumber": 2266,
+    "workflowRunId": "26746269741"
   },
   "done": false
 }
