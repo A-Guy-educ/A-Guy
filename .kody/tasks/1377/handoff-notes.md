@@ -1,7 +1,9 @@
-Resolved merge conflict for PR #1377 (docs(tests): Document route-handler patterns and admin two-step).
+Fixed CI failure for PR #1377 (docs: Document route-handler patterns).
 
-**What changed:** Single conflicted file — `.kody/last-run.jsonl` (a Kody session log).
+**Root cause:** `src/payload-types.ts` was stale — schema changes were committed without regenerating types, causing the typecheck CI step to fail.
 
-**Resolution:** Took HEAD (PR branch) version. This session log file records the current Kody session's activity. The origin/dev version was from a different session context and is not meaningfully mergeable with the current session's log.
+**Fix applied:** Ran `pnpm generate:types` and committed the regenerated types (commit 0e15e36e2). Pushed to `docs/testing-patterns-for-route-handlers` branch.
 
-**No code or documentation changes** — only the Kody operational session log file was touched.
+**Verification:** Quality gates pass on second attempt (attempt 1 failed on stale types, attempt 2 succeeded after regeneration).
+
+No documentation content was changed — only the generated types file.
