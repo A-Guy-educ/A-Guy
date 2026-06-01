@@ -1,0 +1,18 @@
+{
+  "taskId": "2255",
+  "taskType": "issue",
+  "target": "dev CI on 986efb7 (inspect + CodeQL failures)",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed 2 root causes: (1) pnpm version mismatch in inspector.yml (9 vs 10.33.0), (2) console.error format-string alerts in two job task files",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    ".github/workflows/inspector.yml",
+    "src/server/payload/jobs/pdf-to-exercises-task.ts",
+    "src/server/payload/jobs/pdf-to-exercises-v2-task.ts"
+  ],
+  "sessionLog": ".kody/sessions/gh-26730583392-1.jsonl",
+  "startedAt": "2026-06-01T01:36:00Z",
+  "finishedAt": "2026-06-01T01:37:30Z"
+}
