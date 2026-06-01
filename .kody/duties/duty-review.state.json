@@ -1,22 +1,13 @@
 {
   "version": 1,
-  "rev": 30,
+  "rev": 31,
   "cursor": "reported",
   "data": {
-    "cycle": 2,
-    "lastRunISO": "2026-06-01T01:36:01Z",
-    "nextEligibleISO": "2026-06-01T07:36:01Z",
+    "cycle": 3,
+    "lastRunISO": "2026-06-01T09:22:31Z",
+    "nextEligibleISO": "2026-06-01T15:22:31Z",
     "reviewed": [
-      "approval-gate",
-      "architecture-audit",
-      "ceo-performance-review",
-      "cleanup-branches",
-      "clear-empty-goals",
-      "coverage-floor",
-      "dead-code-sweep",
-      "dependency-bump",
-      "design-review",
-      "docs-code"
+      "dev-ci-health"
     ],
     "verdicts": {
       "approval-gate": {
@@ -53,6 +44,10 @@
       },
       "design-review": {
         "note": "cadence guard (6d) contradicts frontmatter every: 7d; body has no kody-job-next-state block; state.json never created; lastRunISO never persisted",
+        "verdict": "broken"
+      },
+      "dev-ci-health": {
+        "note": "kody-job-next-state block present but missing required fields lastRunISO and nextEligibleISO used by duty-review engine; state file never created; allowed-commands does not list gh workflow run (dispatch step)",
         "verdict": "broken"
       },
       "docs-code": {
@@ -116,9 +111,9 @@
         "verdict": "pending"
       }
     },
-    "lastFiredAt": "2026-06-01T01:36:25.972Z",
+    "lastFiredAt": "2026-06-01T09:23:01.014Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 158891
+    "lastDurationMs": 126592
   },
   "done": false
 }
