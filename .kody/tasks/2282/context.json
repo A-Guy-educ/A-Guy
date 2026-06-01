@@ -1,0 +1,17 @@
+{
+  "taskId": "2282",
+  "taskType": "issue",
+  "target": "2282-p1-buybutton-shows-log-in-to-buy-to-authenticated",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed useCurrentUser to send Authorization header with JWT token when calling /api/users/me",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/client/hooks/useCurrentUser.ts",
+    "tests/unit/hooks/useCurrentUser.test.ts"
+  ],
+  "sessionLog": ".kody/sessions/2282.jsonl",
+  "startedAt": "2026-06-01T17:50:00Z",
+  "finishedAt": "2026-06-01T17:53:30Z"
+}

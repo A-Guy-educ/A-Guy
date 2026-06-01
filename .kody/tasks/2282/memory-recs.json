@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "use-current-user-needs-auth-header",
+    "hook": "useCurrentUser requires Authorization header for /api/users/me",
+    "body": "useCurrentUser's fetch to /api/users/me must send the JWT token as Authorization: JWT <token> header, not just the cookie. Payload's /api/users/me endpoint validates the token via the Authorization header, not just credentials: 'include'. The server-side getMeUser reads the token and sends it as Authorization header - the client-side hook must do the same.",
+    "why": "Without the Authorization header, Payload returns null user even when the payload-token cookie is present, causing authenticated users to see 'Log in to Buy' instead of checkout.",
+    "confidence": 0.95
+  }
+]

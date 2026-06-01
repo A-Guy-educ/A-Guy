@@ -10,6 +10,20 @@ interface UseCurrentUserReturn {
   refetch: () => Promise<void>
 }
 
+function getAuthToken(): string | null {
+  if (typeof document === 'undefined') return null
+  const cookies = document.cookie.split(';')
+  for (const cookie of cookies) {
+    const [key, ...valueParts] = cookie.split('=')
+    const trimmedKey = key.trim()
+    // Match payload-token (default) or any {prefix}-token cookie set by Payload auth
+    if (trimmedKey === 'payload-token' || trimmedKey.endsWith('-token')) {
+      return valueParts.join('=')
+    }
+  }
+  return null
+}
+
 export function useCurrentUser(): UseCurrentUserReturn {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -19,9 +33,15 @@ export function useCurrentUser(): UseCurrentUserReturn {
     setIsLoading(true)
     setError(null)
     try {
+      const token = getAuthToken()
+      const headers: Record<string, string> = {}
+      if (token) {
+        headers['Authorization'] = `JWT ${token}`
+      }
       const response = await fetch('/api/users/me', {
         credentials: 'include',
         cache: 'no-store',
+        headers,
       })
       if (response.ok) {
         const data = await response.json()
