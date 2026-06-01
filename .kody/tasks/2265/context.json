@@ -1,0 +1,16 @@
+{
+  "taskId": "2265",
+  "taskType": "pr",
+  "target": "2265",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed failing integration test by checking env block for secrets instead of run script",
+  "prUrl": null,
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26738576120",
+  "filesTouched": [
+    "tests/int/media-cleanup-workflow.int.spec.ts"
+  ],
+  "sessionLog": null,
+  "startedAt": "2026-06-01T07:05:00Z",
+  "finishedAt": "2026-06-01T07:05:45Z"
+}

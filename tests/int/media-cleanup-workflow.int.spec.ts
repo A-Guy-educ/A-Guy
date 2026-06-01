@@ -69,11 +69,10 @@ describe('Media Cleanup GitHub Workflow', () => {
     const cleanupStep = workflow.jobs.cleanup.steps.find(
       (step: WorkflowStep) => step.name === 'Call cleanup endpoint',
     )
-    const runScript = cleanupStep.run
 
-    // Verify it uses GitHub secrets
-    expect(runScript).toContain('secrets.CRON_ENDPOINT')
-    expect(runScript).toContain('secrets.CRON_SECRET')
+    // Verify env block passes GitHub secrets as environment variables
+    expect(cleanupStep.env.CRON_ENDPOINT).toContain('secrets.CRON_ENDPOINT')
+    expect(cleanupStep.env.CRON_SECRET).toContain('secrets.CRON_SECRET')
   })
 
   it('should handle HTTP errors', async () => {
