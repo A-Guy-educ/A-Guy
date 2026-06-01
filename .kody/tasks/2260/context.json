@@ -1,0 +1,17 @@
+{
+  "taskId": "2260",
+  "taskType": "issue",
+  "target": "dev CI red on 792f130 — fix-links, CodeQL",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed pnpm version mismatch in doc-link-fixer.yml (removed explicit version: 9) and aligned ai-docs-refresh.yml to exact version 10.33.0",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    ".github/workflows/doc-link-fixer.yml",
+    ".github/workflows/ai-docs-refresh.yml"
+  ],
+  "sessionLog": ".kody/sessions/2260dev-ci-red-on-792f130-fix-links-codeql.jsonl",
+  "startedAt": "2026-06-01T04:00:00Z",
+  "finishedAt": "2026-06-01T04:02:00Z"
+}
