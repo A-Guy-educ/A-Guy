@@ -391,8 +391,28 @@ export async function POST(request: NextRequest) {
       })
     }
   } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error))
     payload.logger.error(
-      { error, productId, userId: user.id, provider },
+      {
+        err,
+        errorMessage: err.message,
+        errorStack: err.stack,
+        ...(error && typeof error === 'object' && 'code' in error
+          ? { errorCode: (error as any).code }
+          : {}),
+        ...(error && typeof error === 'object' && 'type' in error
+          ? { errorType: (error as any).type }
+          : {}),
+        ...(error && typeof error === 'object' && 'raw' in error
+          ? { errorRaw: (error as any).raw }
+          : {}),
+        ...(error && typeof error === 'object' && 'statusCode' in error
+          ? { errorStatusCode: (error as any).statusCode }
+          : {}),
+        productId,
+        userId: user.id,
+        provider,
+      },
       'Payment provider checkout creation failed',
     )
 
@@ -448,9 +468,12 @@ export async function POST(request: NextRequest) {
     })
     transactionId = transaction.id
   } catch (error) {
+    const err = error instanceof Error ? error : new Error(String(error))
     payload.logger.error(
       {
-        error,
+        err,
+        errorMessage: err.message,
+        errorStack: err.stack,
         productId,
         userId: user.id,
         provider,
@@ -471,8 +494,15 @@ export async function POST(request: NextRequest) {
         'Cancelled orphaned provider checkout session',
       )
     } catch (cancelError) {
+      const err = cancelError instanceof Error ? cancelError : new Error(String(cancelError))
       payload.logger.error(
-        { cancelError, providerTransactionId: providerResult.providerSessionId, provider },
+        {
+          err,
+          errorMessage: err.message,
+          errorStack: err.stack,
+          providerTransactionId: providerResult.providerSessionId,
+          provider,
+        },
         'Failed to cancel orphaned provider checkout session — manual intervention may be required',
       )
     }

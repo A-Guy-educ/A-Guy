@@ -1,0 +1,19 @@
+{
+  "taskId": "2276",
+  "taskType": "issue",
+  "target": "2276-surface-real-error-message-and-stack-in-webhook-ch",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed pino error serializer key mismatch in all payment catch blocks; added errorMessage, errorStack, and provider-specific field extraction; added integration test",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/payments/checkout/route.ts",
+    "src/app/api/webhooks/stripe/route.ts",
+    "src/app/api/webhooks/paypal/route.ts",
+    "tests/int/checkout-error-logging.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/38d27a15-6760-49c1-aae1-3cacd63fd0ee.jsonl",
+  "startedAt": "2026-06-01T00:00:00.000Z",
+  "finishedAt": "2026-06-01T15:26:24.000Z"
+}

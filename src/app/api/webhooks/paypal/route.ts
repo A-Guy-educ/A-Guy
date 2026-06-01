@@ -112,7 +112,13 @@ export async function POST(request: NextRequest) {
       errorMessage.includes('Missing required PayPal webhook headers')
     ) {
       payload.logger.error(
-        { error: err, sourceIp, bodySnippet },
+        {
+          err: err instanceof Error ? err : new Error(String(err)),
+          errorMessage: err instanceof Error ? err.message : String(err),
+          errorStack: err instanceof Error ? err.stack : undefined,
+          sourceIp,
+          bodySnippet,
+        },
         'PayPal webhook misconfiguration — returning 400',
       )
       return NextResponse.json({ error: 'Invalid webhook configuration' }, { status: 400 })
@@ -120,7 +126,13 @@ export async function POST(request: NextRequest) {
 
     // Transient error (network issue calling PayPal verify API) → 500, PayPal will retry
     payload.logger.error(
-      { error: err, sourceIp, bodySnippet },
+      {
+        err: err instanceof Error ? err : new Error(String(err)),
+        errorMessage: err instanceof Error ? err.message : String(err),
+        errorStack: err instanceof Error ? err.stack : undefined,
+        sourceIp,
+        bodySnippet,
+      },
       'PayPal webhook signature verification threw transient error — returning 500',
     )
     return NextResponse.json({ error: 'Verification failed' }, { status: 500 })
@@ -154,7 +166,12 @@ export async function POST(request: NextRequest) {
     }
     // Unexpected error — log and return 500 so provider retries
     payload.logger.error(
-      { error: err, eventId: event.id },
+      {
+        err: err instanceof Error ? err : new Error(String(err)),
+        errorMessage: err instanceof Error ? err.message : String(err),
+        errorStack: err instanceof Error ? err.stack : undefined,
+        eventId: event.id,
+      },
       'PayPal webhook: unexpected error during dedup gate',
     )
     return NextResponse.json({ error: 'Dedup gate error' }, { status: 500 })
@@ -165,7 +182,12 @@ export async function POST(request: NextRequest) {
     await handleEvent(payload, event)
   } catch (err) {
     payload.logger.error(
-      { error: err, eventType: event.event_type },
+      {
+        err: err instanceof Error ? err : new Error(String(err)),
+        errorMessage: err instanceof Error ? err.message : String(err),
+        errorStack: err instanceof Error ? err.stack : undefined,
+        eventType: event.event_type,
+      },
       'PayPal webhook handler error',
     )
     return NextResponse.json({ error: 'Handler error' }, { status: 500 })
@@ -394,7 +416,12 @@ async function handleEvent(
           await consumeCouponOnPayment(payload, transaction as any, transaction.tenant as string)
         } catch (err) {
           payload.logger.error(
-            { error: err, transactionId: transaction.id },
+            {
+              err: err instanceof Error ? err : new Error(String(err)),
+              errorMessage: err instanceof Error ? err.message : String(err),
+              errorStack: err instanceof Error ? err.stack : undefined,
+              transactionId: transaction.id,
+            },
             'Coupon consumption failed — returning 500 so provider retries',
           )
           throw err

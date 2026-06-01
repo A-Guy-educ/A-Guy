@@ -77,16 +77,37 @@ export async function POST(request: NextRequest) {
       (err instanceof Stripe.errors.StripeError && err.type === 'StripeSignatureVerificationError')
 
     if (isSignatureError) {
+      const e = err instanceof Error ? err : new Error(String(err))
       payload.logger.warn(
-        { error: err, sourceIp, bodySnippet },
+        {
+          err: e,
+          errorMessage: e.message,
+          errorStack: e.stack,
+          sourceIp,
+          bodySnippet,
+        },
         'Stripe webhook signature verification failed — returning 400',
       )
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
     }
 
     // Transient error (network issue, missing config, etc.) — provider should retry
+    const e = err instanceof Error ? err : new Error(String(err))
     payload.logger.error(
-      { error: err, sourceIp, bodySnippet },
+      {
+        err: e,
+        errorMessage: e.message,
+        errorStack: e.stack,
+        ...(err && typeof err === 'object' && 'code' in err
+          ? { errorCode: (err as any).code }
+          : {}),
+        ...(err && typeof err === 'object' && 'type' in err
+          ? { errorType: (err as any).type }
+          : {}),
+        ...(err && typeof err === 'object' && 'raw' in err ? { errorRaw: (err as any).raw } : {}),
+        sourceIp,
+        bodySnippet,
+      },
       'Stripe webhook signature verification threw transient error — returning 500',
     )
     return NextResponse.json({ error: 'Verification failed' }, { status: 500 })
@@ -116,7 +137,12 @@ export async function POST(request: NextRequest) {
     }
     // Unexpected error — log and return 500 so provider retries
     payload.logger.error(
-      { error: err, eventId: event.id },
+      {
+        err: err instanceof Error ? err : new Error(String(err)),
+        errorMessage: err instanceof Error ? err.message : String(err),
+        errorStack: err instanceof Error ? err.stack : undefined,
+        eventId: event.id,
+      },
       'Stripe webhook: unexpected error during dedup gate',
     )
     return NextResponse.json({ error: 'Dedup gate error' }, { status: 500 })
@@ -126,7 +152,15 @@ export async function POST(request: NextRequest) {
   try {
     await handleEvent(payload, event)
   } catch (err) {
-    payload.logger.error({ error: err, eventType: event.type }, 'Stripe webhook handler error')
+    payload.logger.error(
+      {
+        err: err instanceof Error ? err : new Error(String(err)),
+        errorMessage: err instanceof Error ? err.message : String(err),
+        errorStack: err instanceof Error ? err.stack : undefined,
+        eventType: event.type,
+      },
+      'Stripe webhook handler error',
+    )
     return NextResponse.json({ error: 'Handler error' }, { status: 500 })
   }
 
@@ -338,7 +372,12 @@ async function handleEvent(
           // Do NOT swallow — log and re-throw so the webhook returns 500 and provider retries.
           // Entitlements are already granted (idempotent), so retry is safe for coupon consumption.
           payload.logger.error(
-            { error: err, transactionId: transaction.id },
+            {
+              err: err instanceof Error ? err : new Error(String(err)),
+              errorMessage: err instanceof Error ? err.message : String(err),
+              errorStack: err instanceof Error ? err.stack : undefined,
+              transactionId: transaction.id,
+            },
             'Coupon consumption failed — returning 500 so provider retries',
           )
           throw err
@@ -434,7 +473,12 @@ async function handleEvent(
           await consumeCouponOnPayment(payload, transaction as any, transaction.tenant as string)
         } catch (err) {
           payload.logger.error(
-            { error: err, transactionId: transaction.id },
+            {
+              err: err instanceof Error ? err : new Error(String(err)),
+              errorMessage: err instanceof Error ? err.message : String(err),
+              errorStack: err instanceof Error ? err.stack : undefined,
+              transactionId: transaction.id,
+            },
             'Coupon consumption failed — returning 500 so provider retries',
           )
           throw err
