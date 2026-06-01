@@ -1,0 +1,13 @@
+---
+name: overrideAccess-true-does-not-bypass-hooks
+title: Overrideaccess True Does Not Bypass Hooks
+type: lesson
+source: task:2224
+recorded_at: 2026-06-01T11:29:50Z
+---
+
+When using Payload's Local API with `overrideAccess: true`, hooks (beforeChange, afterRead, etc.) still run. The flag only bypasses collection-level and field-level access control checks. This is a common misconception - there is no built-in way to skip hooks entirely in the Local API. If you need to verify raw stored values without transformation, you must query the database directly rather than relying on overrideAccess.
+
+**Why:** The failing tests in coupons.int.spec.ts incorrectly assumed findByID with overrideAccess: true would return raw stored values. The correct behavior is that afterRead hooks transform values on all reads, regardless of overrideAccess. This was confirmed by the existing passing test at line 1314 which explicitly acknowledges 'afterRead runs on all reads'.
+
+**Source task:** `2224`

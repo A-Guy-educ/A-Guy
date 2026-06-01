@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Add shekel placeholder hint for fixed discount in CreateCouponModal",
+    "body": "The CreateCouponModal shows '₪0' as placeholder for fixed discounts in English, but the app is Hebrew-primary. The placeholder should be localized or the field should have a descriptive label hint explaining the unit. The discountType description in Coupons.ts already hints at the ILS unit, but the modal placeholder doesn't convey it clearly enough for a Hebrew-speaking admin.",
+    "rationale": "Admin UX: a Hebrew admin seeing '₪0' might not understand the placeholder means shekels. Should use the same localized hint approach used for other fields in the modal.",
+    "priority": "low"
+  },
+  {
+    "title": "Update coupons.int.spec.ts beforeAll timeout from 60s to 180s",
+    "body": "The beforeAll hook in tests/int/coupons.int.spec.ts has a hardcoded `60_000` (60s) timeout which causes the tests to fail in environments where global setup takes longer (as seen in this run). The global vitest config uses 180s. Update the timeout in the test file to `180_000`.",
+    "rationale": "The test suite is unreliable due to this timeout mismatch. Other integration tests in the project use the global timeout correctly.",
+    "priority": "medium"
+  }
+]

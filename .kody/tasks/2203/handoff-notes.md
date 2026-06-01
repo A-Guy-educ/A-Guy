@@ -1,14 +1,13 @@
-DONE
+# PR #2203 CI Fix
 
-COMMIT_MSG: fix(ci): align pnpm version in ai-docs-refresh workflow with package.json
+## What happened
+CI workflow failed on `pnpm format:check` step, specifically on `kody.config.json`.
 
-The AI Docs Refresh daily workflow was failing at the pnpm setup step because:
-- `.github/workflows/ai-docs-refresh.yml` specified `version: 9`
-- `package.json` specifies `"packageManager": "pnpm@10.33.0"`
+## Analysis
+The failure was transient. The file was recently reformatted in commit `c8cd6a43d` ("chore(ci): Reformat kody.config.json from dev merge drift"). All checks pass locally:
+- `pnpm typecheck` - passes
+- `pnpm lint` - passes (warning only)  
+- `pnpm format:check` - passes
 
-The `pnpm/action-setup@v4` action rejects conflicting versions. Fixed by updating
-the workflow's `version` from `9` to `10` (line 30 of the workflow file).
-
-No other workflow files needed changes — other workflows already use `version: 9`
-which is still compatible with their respective package.json entries (those don't
-specify a packageManager field, or pin to v9).
+## Resolution
+No code changes were needed. The CI failure was likely due to a caching issue or the file being in a different state when CI ran vs. when checked locally.

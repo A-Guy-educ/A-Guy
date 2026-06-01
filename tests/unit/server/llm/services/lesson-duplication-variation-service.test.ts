@@ -917,9 +917,11 @@ describe('generateVariation', () => {
     )
 
     expect(callInputs).toHaveLength(2)
-    // Pass 1: raw JSON schema derived from the input exercise.
+    // Pass 1: outputJsonSchema intentionally omitted — Gemini 3.1-pro-preview
+    // silently drops hint/solution/fullSolution when responseSchema is supplied.
+    // Validation is now post-hoc via sanitizeAiBlocks + payload.create's Zod schema.
     expect(callInputs[0].outputSchema).toBeUndefined()
-    expect(callInputs[0].outputJsonSchema).toBeDefined()
+    expect(callInputs[0].outputJsonSchema).toBeUndefined()
     // Pass 2: outputSchema intentionally omitted — text-only, post-hoc Zod validation.
     // Gemini's responseSchema collapses per-block shape (issue #1748).
     expect(callInputs[1].outputSchema).toBeUndefined()
