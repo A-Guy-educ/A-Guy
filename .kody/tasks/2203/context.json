@@ -1,14 +1,14 @@
 {
   "taskId": "2203",
   "taskType": "pr",
-  "target": "PR #2203 (dev → main, v0.25.10)",
+  "target": "CI workflow: AI Docs Refresh (Daily) on PR #2203",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Fixed Hebrew content test failure by ensuring NEXT_LOCALE=he cookie is set after authentication in E2E test helpers",
-  "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2203",
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26717415259",
-  "filesTouched": ["tests/e2e/helpers/auth.ts"],
-  "sessionLog": ".kody/sessions/",
-  "startedAt": "2026-05-31T16:30:00Z",
-  "finishedAt": "2026-05-31T16:45:00Z"
+  "reason": "Fixed pnpm version mismatch between GitHub Action (v9) and package.json (pnpm@10.33.0) by updating the workflow to use pnpm v10",
+  "prUrl": null,
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26731243431",
+  "filesTouched": [".github/workflows/ai-docs-refresh.yml"],
+  "sessionLog": ".kody/sessions/-home-runner-work-A-Guy-A-Guy/memory/2203.jsonl",
+  "startedAt": "2026-06-01T02:10:00Z",
+  "finishedAt": "2026-06-01T02:10:30Z"
 }

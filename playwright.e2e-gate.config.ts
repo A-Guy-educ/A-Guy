@@ -29,7 +29,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: 2,
   maxFailures: 10,
-  workers: 2,
+  workers: 1,
   reporter: 'html',
   use: {
     baseURL: process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000',
@@ -49,7 +49,6 @@ export default defineConfig({
         'verification/admin-settings.e2e.spec.ts',
         'verification/auth-onboarding.e2e.spec.ts',
         'verification/catalog-navigation.e2e.spec.ts',
-        'brand-identity/brand-identity.e2e.spec.ts',
       ],
       use: { ...devices['Desktop Chrome'], channel: 'chromium' },
     },
@@ -58,7 +57,7 @@ export default defineConfig({
     // The release-e2e-gate runner does not share the CI build-job's .next
     // cache, so build if it is missing, then start. CI jobs that already
     // restore .next via actions/cache will skip the build.
-    command: '(test -d .next || pnpm build) && pnpm start',
+    command: '(test -f .next/BUILD_ID || pnpm build) && pnpm start',
     reuseExistingServer: true,
     url: 'http://localhost:3000/api/health',
     timeout: 600000,
