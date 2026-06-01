@@ -1,0 +1,14 @@
+{
+  "taskId": "2259",
+  "taskType": "pr",
+  "target": "PR #2259 (2257-dev-ci-red-on-69cbb7e-refresh-codeql)",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Single conflict in ai-docs-refresh.yml resolved: pnpm version 10.33.0 kept (HEAD) vs 10 (dev)",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [".github/workflows/ai-docs-refresh.yml"],
+  "sessionLog": null,
+  "startedAt": "2026-06-01T00:00:00Z",
+  "finishedAt": "2026-06-01T00:01:00Z"
+}

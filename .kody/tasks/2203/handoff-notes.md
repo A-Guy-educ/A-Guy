@@ -1,27 +1,14 @@
-## Root Cause
+DONE
 
-The CI E2E Gate job was failing with:
-```
-TypeError: Module "file:///home/runner/work/A-Guy/A-Guy/src/brands/aguy/messages/en.json" needs an import attribute of "type: json"
-```
+COMMIT_MSG: fix(ci): align pnpm version in ai-docs-refresh workflow with package.json
 
-This error occurs in Node.js ESM mode when importing JSON files without the `with { type: 'json' }` attribute. The brands bundle (`src/brands/aguy/index.ts`) was importing JSON message files without this attribute.
+The AI Docs Refresh daily workflow was failing at the pnpm setup step because:
+- `.github/workflows/ai-docs-refresh.yml` specified `version: 9`
+- `package.json` specifies `"packageManager": "pnpm@10.33.0"`
 
-## Fix Applied
+The `pnpm/action-setup@v4` action rejects conflicting versions. Fixed by updating
+the workflow's `version` from `9` to `10` (line 30 of the workflow file).
 
-Changed in `src/brands/aguy/index.ts`:
-```typescript
-// Before (broken):
-import en from './messages/en.json'
-import he from './messages/he.json'
-
-// After (fixed):
-import en from './messages/en.json' with { type: 'json' }
-import he from './messages/he.json' with { type: 'json' }
-```
-
-This was fixed in commit `7be0e3f01` which is already present in the dev branch.
-
-## Verification
-
-All quality gates pass: typecheck, lint, and tests pass locally (verified via mcp__kody-verify__verify).
+No other workflow files needed changes — other workflows already use `version: 9`
+which is still compatible with their respective package.json entries (those don't
+specify a packageManager field, or pin to v9).
