@@ -6,7 +6,7 @@
   "exitCode": 0,
   "reason": "kody.config.json arrays were formatted across multiple lines instead of single line per Prettier rules, and was missing trailing newline",
   "prUrl": null,
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26765609637",
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26785148238",
   "filesTouched": ["kody.config.json"],
   "sessionLog": ".kody/sessions/current.jsonl",
   "startedAt": "2026-06-01T15:30:00.000Z",
