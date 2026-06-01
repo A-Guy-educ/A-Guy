@@ -1,0 +1,17 @@
+{
+  "taskId": "2298",
+  "taskType": "issue",
+  "target": "2298",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added Add Exercise and Add Content Page buttons to the empty state in LessonBlocksField, matching the ExerciseContentEditor empty state pattern.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/LessonBlocksField/index.tsx",
+    "tests/e2e/lesson-blocks-field.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2298-p0-add-no-button-in-lesson-blocks-empty-state.jsonl",
+  "startedAt": "2026-06-01T15:46:00.000Z",
+  "finishedAt": "2026-06-01T15:47:30.000Z"
+}

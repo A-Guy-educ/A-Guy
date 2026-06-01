@@ -110,6 +110,59 @@ test.afterAll(async () => {
   await cleanupVerificationData(data)
 })
 
+/**
+ * E2E test for LessonBlocksField empty state add buttons (#2298)
+ *
+ * Tests that the empty state in LessonBlocksField shows "Add Exercise"
+ * and "Add Content Page" buttons so users can create blocks inline
+ * without having to navigate away to the Exercises/Content Pages collections.
+ */
+test('shows Add Exercise and Add Content Page buttons in empty state', async ({ page }) => {
+  test.skip(!data, 'No test data available')
+
+  // Use the seeded lesson but ensure it has no blocks
+  const { lessonId } = data!.course
+  const payload = await getPayload({ config })
+
+  // Clear any existing blocks to ensure empty state
+  await payload.update({
+    collection: 'lessons',
+    id: lessonId,
+    data: { blocks: JSON.stringify([]) },
+    overrideAccess: true,
+  })
+
+  await loginAsAdmin(page)
+  await page.goto(`/admin/collections/lessons/${lessonId}`)
+  await page.waitForLoadState('domcontentloaded')
+
+  // Wait for the LessonBlocksField to be visible
+  const lessonBlocksLabel = page.getByText('Lesson Blocks')
+  await expect(lessonBlocksLabel).toBeVisible({ timeout: 15_000 })
+
+  // Empty state message should be visible
+  const emptyMessage = page.getByText(
+    'No blocks yet. Create exercises or content pages for this lesson.',
+  )
+  await expect(emptyMessage).toBeVisible({ timeout: 10_000 })
+
+  // Add Exercise button should be visible
+  const addExerciseBtn = page.getByRole('button', { name: 'Add Exercise' })
+  await expect(addExerciseBtn).toBeVisible({ timeout: 10_000 })
+
+  // Add Content Page button should be visible
+  const addContentPageBtn = page.getByRole('button', { name: 'Add Content Page' })
+  await expect(addContentPageBtn).toBeVisible({ timeout: 10_000 })
+
+  // Both buttons should navigate to the correct create pages
+  await addExerciseBtn.click()
+  await expect(page).toHaveURL(/\/admin\/collections\/exercises\/create/)
+  await page.goBack()
+
+  await addContentPageBtn.click()
+  await expect(page).toHaveURL(/\/admin\/collections\/content-pages\/create/)
+})
+
 test.describe('LessonBlocksField inline exercise display', () => {
   test('shows exercise content blocks inline (not just titles) on lesson edit page', async ({
     page,

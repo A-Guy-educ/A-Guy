@@ -11,6 +11,7 @@ import {
   FileText,
   Trash2,
   Pencil,
+  Plus,
 } from 'lucide-react'
 
 import { InlineExerciseEditor } from './InlineExerciseEditor'
@@ -299,7 +300,65 @@ export const LessonBlocksField: React.FC<{ path: string }> = ({ path }) => {
               fontSize: 13,
             }}
           >
-            No blocks yet. Create exercises or content pages for this lesson.
+            <div style={{ marginBottom: 12 }}>
+              No blocks yet. Create exercises or content pages for this lesson.
+            </div>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => router.push('/admin/collections/exercises/create')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '6px 14px',
+                  borderRadius: 6,
+                  border: '1px solid var(--theme-elevation-150)',
+                  background: 'var(--theme-elevation-50)',
+                  color: 'var(--theme-text)',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--theme-elevation-100)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'var(--theme-elevation-50)'
+                }}
+              >
+                <Plus size={14} />
+                Add Exercise
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push('/admin/collections/content-pages/create')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '6px 14px',
+                  borderRadius: 6,
+                  border: '1px solid var(--theme-elevation-150)',
+                  background: 'var(--theme-elevation-50)',
+                  color: 'var(--theme-text)',
+                  fontSize: 13,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--theme-elevation-100)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'var(--theme-elevation-50)'
+                }}
+              >
+                <Plus size={14} />
+                Add Content Page
+              </button>
+            </div>
           </div>
         )}
 
