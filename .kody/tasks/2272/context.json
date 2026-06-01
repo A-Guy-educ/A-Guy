@@ -1,0 +1,17 @@
+{
+  "taskId": "2272",
+  "taskType": "issue",
+  "target": "2272-p2-gravatar-image-blocked-by-csp-despite-being-in",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed CSP img-src for /admin routes: replaced gravatar.com with *.gravatar.com wildcard so secure.gravatar.com (and all other subdomains) are covered",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "next.config.js",
+    "tests/int/csp-vercel-feedback-admin.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2272.jsonl",
+  "startedAt": "2026-06-01T17:47:00Z",
+  "finishedAt": "2026-06-01T17:54:00Z"
+}
