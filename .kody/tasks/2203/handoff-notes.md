@@ -1,28 +1,13 @@
-## E2E Test Failures on PR #2203
+DONE
 
-### Fixed: Hebrew Content Test Failure
+COMMIT_MSG: fix(ci): align pnpm version in doc-link-fixer workflow with package.json
 
-**Problem**: The test `content renders correctly in Hebrew` was failing because:
-1. Test authenticates via `authenticateViaAPI` which sets `payload-token` cookie but NOT `NEXT_LOCALE` cookie
-2. Middleware checks `NEXT_LOCALE` cookie first, then falls back to `Accept-Language` header
-3. In CI, browser `Accept-Language` is often `en`, so middleware sets locale to `en`
-4. Page renders in English instead of Hebrew, test fails
+The Doc Link Fixer (Daily) workflow was failing at the pnpm setup step because:
+- `.github/workflows/doc-link-fixer.yml` specified `version: 9`
+- `package.json` specifies `"packageManager": "pnpm@10.33.0"`
 
-**Fix**: Modified `setupAuthenticatedUser` in `tests/e2e/helpers/auth.ts` to set `NEXT_LOCALE=he` cookie after successful authentication in all code paths.
+The `pnpm/action-setup@v4` action rejects conflicting versions. Fixed by updating
+the workflow's `version` from `9` to `10.33.0` (line 34 of the workflow file).
 
-### Remaining: Header Logo Test (Flaky)
-
-**Problem**: Test `header logo is present` finds SVG element but reports it as hidden. Marked as "flaky" in CI (passes sometimes), suggesting timing or environmental issue.
-
-**Next step**: Investigate CSS visibility, loading states, or CI environment differences that might cause the logo to be temporarily hidden.
-
-## Files Changed
-
-- `tests/e2e/helpers/auth.ts` — Added `NEXT_LOCALE=he` cookie setting after authentication
-
-## Verification
-
-- TypeScript check: PASSED
-- ESLint: PASSED
-- Format check: PASSED
-- Quality gates: PASSED
+Note: A prior run on this same PR already fixed `.github/workflows/ai-docs-refresh.yml`
+for the same issue. This run fixes the remaining `doc-link-fixer.yml` workflow.
