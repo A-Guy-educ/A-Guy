@@ -1,0 +1,14 @@
+{
+  "taskId": "2262",
+  "taskType": "issue",
+  "target": "dev CI red on b655aa2 — CodeQL",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed pnpm version mismatch in ai-docs-refresh.yml (version: 10 -> 10.33.0) to match package.json and doc-link-fixer.yml",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [".github/workflows/ai-docs-refresh.yml"],
+  "sessionLog": ".kody/sessions/gh-26737292026-1/events.jsonl",
+  "startedAt": "2026-06-01T05:40:54Z",
+  "finishedAt": "2026-06-01T05:51:16Z"
+}
