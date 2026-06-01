@@ -1,14 +1,14 @@
 {
   "version": 1,
-  "rev": 21,
-  "cursor": "awaiting-result",
+  "rev": 22,
+  "cursor": "idle",
   "data": {
     "lastRunISO": "2026-05-31T10:35:00Z",
     "nextEligibleISO": "2026-06-01T10:35:00Z",
-    "openIssue": 2222,
-    "lastFiredAt": "2026-05-31T11:56:59.722Z",
+    "openIssue": null,
+    "lastFiredAt": "2026-06-01T13:29:14.977Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 24091
+    "lastDurationMs": 60164
   },
   "done": false
 }
