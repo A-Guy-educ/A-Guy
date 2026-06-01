@@ -1,12 +1,18 @@
 {
   "version": 1,
-  "rev": 258,
+  "rev": 259,
   "cursor": "idle",
   "data": {
-    "prs": {},
-    "lastFiredAt": "2026-06-01T01:38:22.174Z",
+    "prs": {
+      "2203": {
+        "fp": "fix-ci|69cbb7e5a7e17b782e7525c65d620c7a733e34b0",
+        "stage": "fix-ci-auto",
+        "lastActAt": "2026-06-01T02:33:15Z"
+      }
+    },
+    "lastFiredAt": "2026-06-01T02:33:39.108Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 65786
+    "lastDurationMs": 59527
   },
   "done": false
 }
