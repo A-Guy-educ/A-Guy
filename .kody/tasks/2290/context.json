@@ -1,0 +1,15 @@
+{
+  "taskId": "2290",
+  "taskType": "issue",
+  "target": "2290-p2-gravatar-images-blocked-by-content-security-pol",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed CSP img-src to use *.gravatar.com (subdomain wildcard) instead of bare gravatar.com, which does not match www.gravatar.com per CSP host matching rules.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "next.config.js",
+    "tests/int/csp-vercel-feedback-admin.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2290-p2-gravatar-images-blocked-by-content-security-pol.jsonl"
+}

@@ -82,7 +82,7 @@ describe('CSP Configuration - Vercel Feedback Script on /admin', () => {
     expect(connectSrc).toContain('vercel.live')
   })
 
-  it('should include gravatar.com in img-src for /admin routes', async () => {
+  it('should include *.gravatar.com in img-src for /admin routes to allow www.gravatar.com', async () => {
     const configContent = fs.readFileSync(nextConfigPath, 'utf8')
 
     // Extract the /admin route CSP
@@ -96,7 +96,10 @@ describe('CSP Configuration - Vercel Feedback Script on /admin', () => {
 
     expect(imgSrcMatch).not.toBeNull()
     const imgSrc = imgSrcMatch![1]
-    // Admin routes MUST have gravatar.com in img-src for user avatars to load
-    expect(imgSrc).toContain('gravatar.com')
+    // Admin routes MUST have *.gravatar.com (not just gravatar.com) in img-src
+    // because Gravatar images load from www.gravatar.com, and in CSP a bare
+    // host like "gravatar.com" does NOT match subdomains like "www.gravatar.com".
+    // The wildcard "*.gravatar.com" is required to allow www.gravatar.com.
+    expect(imgSrc).toContain('*.gravatar.com')
   })
 })
