@@ -1,0 +1,18 @@
+{
+  "taskId": "2289",
+  "taskType": "issue",
+  "target": "2289",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed 400 error by changing conversationId schema from z.string().optional() to z.string().nullish() in both learning-chat.ts and index.ts. Frontend sends conversationId: null but Zod rejects null for .optional().",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/endpoints/agent/learning-chat.ts",
+    "src/server/payload/endpoints/agent/learning-chat/index.ts",
+    "tests/int/learning-chat-schema.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2289.jsonl",
+  "startedAt": "2026-06-01T22:10:00Z",
+  "finishedAt": "2026-06-01T22:43:00Z"
+}

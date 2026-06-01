@@ -40,7 +40,7 @@ import {
 export const learningChatRequestSchema = z.object({
   message: z.string().min(1).max(2000),
   acknowledgment: z.string().min(1).optional().default('Understood'),
-  conversationId: z.string().optional(),
+  conversationId: z.string().nullish(),
   gradeLevel: z.string().min(1),
 })
 
@@ -220,7 +220,7 @@ export async function agentLearningChat(
     const conversation = await getOrCreateUserConversation(
       conversationService,
       userId,
-      existingConversationId,
+      existingConversationId ?? undefined,
     )
     const conversationId = conversation.id
 
