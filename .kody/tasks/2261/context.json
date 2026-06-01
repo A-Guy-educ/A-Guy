@@ -1,0 +1,14 @@
+{
+  "taskId": "2261",
+  "taskType": "pr",
+  "target": "PR #2261 (2260-dev-ci-red-on-792f130-fix-links-codeql)",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Single asymmetric conflict in doc-link-fixer.yml resolved by taking origin/dev side (remove version pin, align with package.json)",
+  "prUrl": null,
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/gh-26737339596-1",
+  "filesTouched": [".github/workflows/doc-link-fixer.yml"],
+  "sessionLog": ".kody/runs/gh-26737339596-1/events.jsonl",
+  "startedAt": "2026-06-01T05:42:26Z",
+  "finishedAt": "2026-06-01T05:43:00Z"
+}
