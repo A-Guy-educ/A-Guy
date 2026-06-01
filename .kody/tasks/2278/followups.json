@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Investigate why Transactions collection appears empty in admin UI",
+    "body": "The QA issue (#2278) reported that the Transactions collection appears empty while PaymentStats has data. The syncPaymentStats webhook fix ensures payment_stats is updated when webhooks change transaction statuses, but it does not retroactively create missing transaction records. If the Transactions collection is genuinely empty (not a UI/filter issue), investigate whether: (1) checkout flow is creating transactions successfully, (2) webhooks are correctly identifying transactions by providerTransactionId, or (3) transactions were deleted after payment_stats records were created.",
+    "rationale": "Without individual transaction records, PaymentStats amounts cannot be verified — the core complaint in #2278. The fix prevents future desync but doesn't explain why Transactions appears empty.",
+    "priority": "medium"
+  }
+]
