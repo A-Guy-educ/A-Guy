@@ -257,4 +257,48 @@ test.describe('LessonBlocksField inline exercise display', () => {
       .catch(() => false)
     expect(hasSaveMechanism).toBe(true)
   })
+
+  test('shows confirmation dialog before deleting a block (#2299)', async ({ page }) => {
+    test.skip(!data, 'No test data available')
+
+    // Seed lesson with exercises to have blocks to delete
+    const result = await seedLessonWithExercises()
+    test.skip(!result, 'Failed to seed lesson with exercises')
+    const { lessonId } = result!
+
+    await loginAsAdmin(page)
+    await page.goto(`/admin/collections/lessons/${lessonId}`)
+    await page.waitForLoadState('domcontentloaded')
+
+    // Wait for the lesson blocks to be visible
+    const lessonBlocksLabel = page.getByText('Lesson Blocks')
+    await expect(lessonBlocksLabel).toBeVisible({ timeout: 15_000 })
+
+    // Count blocks before deletion
+    const deleteButtons = page.locator('button[title="Delete"]')
+    const blockCountBefore = await deleteButtons.count()
+    expect(blockCountBefore).toBeGreaterThan(0)
+
+    // Set up a dialog handler to cancel the confirmation
+    // If no dialog appears and the bug exists, this handler will never fire
+    let dialogAppeared = false
+    page.on('dialog', async (dialog) => {
+      dialogAppeared = true
+      await dialog.dismiss()
+    })
+
+    // Click the first delete button
+    await deleteButtons.first().click()
+
+    // Give the UI a moment to react
+    await page.waitForTimeout(500)
+
+    // The fix should show a confirmation dialog before deletion
+    // If the bug exists, dialogAppeared will be false (no confirmation dialog)
+    expect(dialogAppeared).toBe(true)
+
+    // Block count should remain the same since we cancelled
+    const blockCountAfter = await deleteButtons.count()
+    expect(blockCountAfter).toBe(blockCountBefore)
+  })
 })

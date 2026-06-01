@@ -210,6 +210,7 @@ export const LessonBlocksField: React.FC<{ path: string }> = ({ path }) => {
 
   const deleteBlock = useCallback(
     (index: number) => {
+      if (!window.confirm('Are you sure you want to remove this block from the lesson?')) return
       const next = [...blocks]
       next.splice(index, 1)
       updateBlocks(next)
