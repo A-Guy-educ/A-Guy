@@ -1,13 +1,12 @@
 {
   "version": 1,
-  "rev": 28,
+  "rev": 29,
   "cursor": "idle",
   "data": {
     "issueNumber": 2303,
-    "lastFiredAt": "2026-06-01T19:32:44.869Z",
-    "workflowRunId": "26746269741",
+    "lastFiredAt": "2026-06-01T20:52:14.220Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 24520
+    "lastDurationMs": 28914
   },
   "done": false
 }
