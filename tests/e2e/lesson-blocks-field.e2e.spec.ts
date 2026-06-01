@@ -204,4 +204,44 @@ test.describe('LessonBlocksField inline exercise display', () => {
       .catch(() => false)
     expect(hasSaveMechanism).toBe(true)
   })
+
+  test('shows confirmation dialog before deleting a block', async ({ page }) => {
+    test.skip(!data, 'No test data available')
+
+    const result = await seedLessonWithExercises()
+    test.skip(!result, 'Failed to seed lesson with exercises')
+    const { lessonId } = result!
+
+    await loginAsAdmin(page)
+    await page.goto(`/admin/collections/lessons/${lessonId}`)
+    await page.waitForLoadState('domcontentloaded')
+
+    // Wait for the lesson blocks to be visible
+    const lessonBlocksLabel = page.getByText('Lesson Blocks')
+    await expect(lessonBlocksLabel).toBeVisible({ timeout: 15_000 })
+
+    // Wait for exercise content to appear (verifies inline rendering)
+    const exerciseContent = page.getByText('What is 2 + 2?')
+    await expect(exerciseContent).toBeVisible({ timeout: 15_000 })
+
+    // Click the delete (trash) button for the first block
+    const deleteButtons = page.locator('button[title="Delete"]')
+    await expect(deleteButtons.first()).toBeVisible({ timeout: 15_000 })
+    await deleteButtons.first().click()
+
+    // Confirmation dialog should appear
+    const confirmDialog = page.getByText('Delete Block?')
+    await expect(confirmDialog).toBeVisible({ timeout: 5_000 })
+
+    // Click Cancel to keep the block
+    const cancelButton = page.getByRole('button', { name: 'Cancel' })
+    await expect(cancelButton).toBeVisible({ timeout: 5_000 })
+    await cancelButton.click()
+
+    // After cancel, the confirmation dialog should be gone
+    await expect(confirmDialog).not.toBeVisible({ timeout: 5_000 })
+
+    // The block content should still be visible (not deleted)
+    await expect(exerciseContent).toBeVisible({ timeout: 5_000 })
+  })
 })

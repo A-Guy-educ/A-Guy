@@ -12,6 +12,7 @@ import {
   Trash2,
   Pencil,
   Plus,
+  AlertCircle,
 } from 'lucide-react'
 
 import { InlineExerciseEditor } from './InlineExerciseEditor'
@@ -103,6 +104,9 @@ export const LessonBlocksField: React.FC<{ path: string }> = ({ path }) => {
   // Drag-and-drop state
   const [dragIndex, setDragIndex] = useState<number | null>(null)
   const [dropTarget, setDropTarget] = useState<number | null>(null)
+
+  // Delete confirmation dialog state
+  const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null)
 
   // Title cache (refId -> title)
   const [titleCache, setTitleCache] = useState<Record<string, string>>({})
@@ -227,6 +231,21 @@ export const LessonBlocksField: React.FC<{ path: string }> = ({ path }) => {
     },
     [blocks, updateBlocks],
   )
+
+  const handleRequestDelete = useCallback((index: number) => {
+    setDeleteConfirmIndex(index)
+  }, [])
+
+  const handleConfirmDelete = useCallback(() => {
+    if (deleteConfirmIndex !== null) {
+      deleteBlock(deleteConfirmIndex)
+      setDeleteConfirmIndex(null)
+    }
+  }, [deleteConfirmIndex, deleteBlock])
+
+  const handleCancelDelete = useCallback(() => {
+    setDeleteConfirmIndex(null)
+  }, [])
 
   const editBlock = useCallback(
     (refId: string, blockType: string) => {
@@ -539,7 +558,7 @@ export const LessonBlocksField: React.FC<{ path: string }> = ({ path }) => {
               </button>
               <button
                 type="button"
-                onClick={() => deleteBlock(row.index)}
+                onClick={() => handleRequestDelete(row.index)}
                 style={{
                   padding: 4,
                   border: 'none',
@@ -565,6 +584,37 @@ export const LessonBlocksField: React.FC<{ path: string }> = ({ path }) => {
           </div>
         ))}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirmIndex !== null && (
+        <div className="lb-delete-confirm-overlay" onClick={handleCancelDelete}>
+          <div className="lb-delete-confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="lb-delete-confirm-header">
+              <AlertCircle size={20} />
+              <h3>Delete Block?</h3>
+            </div>
+            <p className="lb-delete-confirm-body">
+              This action cannot be undone. The block will be permanently removed from the lesson.
+            </p>
+            <div className="lb-delete-confirm-actions">
+              <button
+                className="lb-delete-confirm-cancel"
+                onClick={handleCancelDelete}
+                type="button"
+              >
+                Cancel
+              </button>
+              <button
+                className="lb-delete-confirm-delete"
+                onClick={handleConfirmDelete}
+                type="button"
+              >
+                Delete Block
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
