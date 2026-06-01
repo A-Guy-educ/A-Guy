@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "rev": 29,
+  "rev": 30,
   "cursor": "reported",
   "data": {
     "cycle": 2,
-    "lastRunISO": "2026-05-31T13:03:35Z",
-    "nextEligibleISO": "2026-05-31T19:03:35Z",
+    "lastRunISO": "2026-06-01T01:36:01Z",
+    "nextEligibleISO": "2026-06-01T07:36:01Z",
     "reviewed": [
       "approval-gate",
       "architecture-audit",
@@ -15,7 +15,8 @@
       "coverage-floor",
       "dead-code-sweep",
       "dependency-bump",
-      "design-review"
+      "design-review",
+      "docs-code"
     ],
     "verdicts": {
       "approval-gate": {
@@ -55,8 +56,8 @@
         "verdict": "broken"
       },
       "docs-code": {
-        "note": "pending",
-        "verdict": "pending"
+        "note": "no kody-job-next-state block in body; state.json never created; lastRunISO never persisted; evidence shows at least one issue was opened (#2186)",
+        "verdict": "broken"
       },
       "docs-readme": {
         "note": "pending",
@@ -82,6 +83,10 @@
         "note": "pending",
         "verdict": "pending"
       },
+      "qa": {
+        "note": "pending",
+        "verdict": "pending"
+      },
       "qa-sweep": {
         "note": "lastRunISO frozen at 2026-05-23; duty body updated 2026-05-28 but state not; cursor idle with no open issue — duty completed but engine stopped invoking 5+ days ago",
         "verdict": "broken"
@@ -89,10 +94,6 @@
       "qa-verify": {
         "note": "state.json never created; duty body created 2026-05-27, 0 commits to state file ever; data.inflightPr, data.inflightSinceISO never persisted",
         "verdict": "broken"
-      },
-      "qa": {
-        "note": "pending",
-        "verdict": "pending"
       },
       "redispatch": {
         "note": "pending",
@@ -115,9 +116,9 @@
         "verdict": "pending"
       }
     },
-    "lastFiredAt": "2026-05-31T19:11:22.797Z",
+    "lastFiredAt": "2026-06-01T01:36:25.972Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 32510
+    "lastDurationMs": 158891
   },
   "done": false
 }
