@@ -1,13 +1,12 @@
 {
   "version": 1,
-  "rev": 32,
+  "rev": 33,
   "cursor": "reported",
   "data": {
-    "cycle": 3,
-    "lastRunISO": "2026-06-01T15:40:44Z",
-    "nextEligibleISO": "2026-06-01T21:40:44Z",
+    "cycle": 4,
+    "lastRunISO": "2026-06-01T22:06:22Z",
+    "nextEligibleISO": "2026-06-02T04:06:22Z",
     "reviewed": [
-      "dev-ci-health",
       "approval-gate"
     ],
     "verdicts": {
@@ -52,7 +51,7 @@
         "verdict": "broken"
       },
       "docs-code": {
-        "note": "no kody-job-next-state block in body; state.json never created; lastRunISO never persisted; evidence shows at least one issue was opened (#2186)",
+        "note": "no kody-job-next-state block; state.json never created; lastRunISO never persisted; evidence shows at least one issue was opened (#2186)",
         "verdict": "broken"
       },
       "docs-readme": {
@@ -112,9 +111,9 @@
         "verdict": "warn"
       }
     },
-    "lastFiredAt": "2026-06-01T15:41:13.356Z",
+    "lastFiredAt": "2026-06-01T22:06:47.689Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 144080
+    "lastDurationMs": 150401
   },
   "done": false
 }
