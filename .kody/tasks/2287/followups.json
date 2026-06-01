@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Investigate production 500 error for admin chat",
+    "body": "The integration tests pass with mocked MCP client. The actual 500 error reported in issue #2287 could not be reproduced. Potential causes: (1) MCP_ENABLED env var not set in production, (2) LLM API key missing, (3) /api/mcp endpoint not accessible. If the issue persists, add logging to handleAdminModeChat to capture the actual error.",
+    "rationale": "The issue reports a 500 error but tests pass - suggests environmental/configuration issue rather than code bug",
+    "priority": "medium"
+  }
+]

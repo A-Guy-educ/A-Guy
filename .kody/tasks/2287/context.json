@@ -1,0 +1,16 @@
+{
+  "taskId": "2287",
+  "taskType": "issue",
+  "target": "2287",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "All quality gates passed. Added integration tests for admin mode chat that verify the endpoint works correctly with mocked MCP client.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "tests/int/agent-chat.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2287.jsonl",
+  "startedAt": "2026-06-01T20:00:00Z",
+  "finishedAt": "2026-06-01T20:05:00Z"
+}

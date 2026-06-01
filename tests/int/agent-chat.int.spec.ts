@@ -92,8 +92,17 @@ vi.mock('@/server/services/rate-limit', () => ({
   getRateLimitStats: vi.fn(async () => ({ size: 0, maxRequests: 10, windowMs: 60000 })),
 }))
 
+// Mock MCP client to prevent real HTTP calls to /api/mcp
+vi.mock('@/server/repos/mcp/client/mcp-client', () => ({
+  getMCPClient: vi.fn(() => ({
+    listTools: vi.fn(async () => []),
+    callTool: vi.fn(async () => ({ content: [] })),
+  })),
+}))
+
 let payload: Payload
 let testUserId: string
+let testAdminUserId: string
 let testExerciseId: string | undefined
 let testChapterId: string
 let testPromptId: string
@@ -112,6 +121,17 @@ beforeAll(
       },
     })
     testUserId = user.id
+
+    // Create an admin user for admin mode tests
+    const adminUser = await payload.create({
+      collection: 'users',
+      data: {
+        email: `admin-chat-int-${Date.now()}@example.com`,
+        password: 'test123456',
+        role: 'admin',
+      },
+    })
+    testAdminUserId = adminUser.id
 
     // Create a category first (required by courses)
     const category = await payload.create({
@@ -244,6 +264,13 @@ afterAll(async () => {
     await payload.delete({
       collection: 'users',
       id: testUserId,
+    })
+  }
+
+  if (testAdminUserId) {
+    await payload.delete({
+      collection: 'users',
+      id: testAdminUserId,
     })
   }
 
@@ -652,5 +679,81 @@ describe.skipIf(!hasDatabaseUrl)('agentChat endpoint', () => {
       } as any)
       testSystemPromptId = newSystemPrompt.id
     }, 30000)
+  })
+
+  describe('admin mode', () => {
+    it('returns 200 for admin user with adminMode=true and no context', async () => {
+      const req = {
+        payload,
+        headers: new Headers(),
+        user: { id: testAdminUserId, role: 'admin' } as PayloadRequest['user'],
+        json: async () => ({
+          message: 'Hello admin',
+          acknowledgment: 'ack-admin',
+          adminMode: true,
+        }),
+      } as unknown as PayloadRequest & { json: () => Promise<unknown> }
+
+      const res = await agentChat(req)
+      if (res.status !== 200) {
+        const body = await res.clone().json()
+        throw new Error(`Expected 200 but got ${res.status}: ${JSON.stringify(body)}`)
+      }
+      const body = await res.json()
+      expect(body.success).toBe(true)
+      expect(body.conversationId).toBeDefined()
+      expect(body.contextKey).toBe(`users:${testAdminUserId}`)
+    })
+
+    it('returns 401 when adminMode=true but user is not authenticated', async () => {
+      const req = {
+        payload,
+        headers: new Headers(),
+        user: null,
+        json: async () => ({
+          message: 'Hello admin',
+          acknowledgment: 'ack-admin',
+          adminMode: true,
+        }),
+      } as unknown as PayloadRequest & { json: () => Promise<unknown> }
+
+      const res = await agentChat(req)
+      expect(res.status).toBe(401)
+    })
+
+    it('returns 400 when adminMode=true but acknowledgment is missing', async () => {
+      const req = {
+        payload,
+        headers: new Headers(),
+        user: { id: testAdminUserId, role: 'admin' } as PayloadRequest['user'],
+        json: async () => ({
+          message: 'Hello admin',
+          adminMode: true,
+        }),
+      } as unknown as PayloadRequest & { json: () => Promise<unknown> }
+
+      const res = await agentChat(req)
+      expect(res.status).toBe(400)
+    })
+
+    it('uses student user conversation even when student sends adminMode=true', async () => {
+      // When a non-admin user sends adminMode=true, it should be treated as regular chat
+      // (adminMode requires isAdmin to be true, so it falls through to context check)
+      const req = {
+        payload,
+        headers: new Headers(),
+        user: { id: testUserId, role: 'student' } as PayloadRequest['user'],
+        json: async () => ({
+          message: 'Hello',
+          acknowledgment: 'ack-1',
+          adminMode: true,
+          // No context IDs - should return 400
+        }),
+      } as unknown as PayloadRequest & { json: () => Promise<unknown> }
+
+      const res = await agentChat(req)
+      // Non-admin + adminMode=true + no context = 400 (missing context ID)
+      expect(res.status).toBe(400)
+    })
   })
 })
