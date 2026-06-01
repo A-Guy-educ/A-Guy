@@ -1,0 +1,17 @@
+{
+  "taskId": "2283",
+  "taskType": "issue",
+  "target": "2283",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed computeExerciseStates to count failures whose source exercises have no output entry",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/LessonDuplicationReview/lib/exerciseState.ts",
+    "tests/unit/admin/lesson-duplication-review-counters.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-06-01T15:45:00Z",
+  "finishedAt": "2026-06-01T15:47:30Z"
+}

@@ -9,7 +9,7 @@
 /** Valid exercise review states shown in tabs and pills. */
 export type ExerciseReviewState = 'succeeded' | 'needs_review' | 'failed' | 'pending'
 
-interface FailureEntry {
+export interface FailureEntry {
   exerciseRef: string
   sectionIndex: number
   code: string
@@ -18,7 +18,7 @@ interface FailureEntry {
   resolved: boolean
 }
 
-interface OutputExerciseEntry {
+export interface OutputExerciseEntry {
   sourceExerciseId: string
   outputExerciseId: string
   strategy: string
@@ -41,11 +41,11 @@ export interface ExerciseState {
  *    a. If outputExerciseId ∈ reviewedIds → state = 'succeeded'
  *    b. Else if sourceExerciseId has any unresolved failure → state = 'needs_review', failureCodes = codes
  *    c. Else → state = 'succeeded' (in outputExercises but no failures)
+ * 2. For each failure whose sourceExerciseId has no output exercise entry:
+ *    a. If unresolved → state = 'needs_review' (e.g., GENERATION_FAILED before output was created)
  *
  * Note: 'failed' and 'pending' states are not produced by this function.
  * 'failed' would require a distinct failure mode beyond unresolved failures.
- * 'pending' would require tracking source exercises with no output exercise mapping,
- * which is not currently computed here.
  *
  * Complexity: O(N × F) where N = outputExercises, F = failures.
  */
@@ -64,8 +64,12 @@ export function computeExerciseStates(
 
   const states: ExerciseState[] = []
 
+  // Track which source exercise IDs have an output exercise entry
+  const sourceIdsWithOutput = new Set<string>()
+
   for (const entry of outputExercises) {
     const { sourceExerciseId, outputExerciseId } = entry
+    sourceIdsWithOutput.add(sourceExerciseId)
 
     if (reviewedIds.has(outputExerciseId)) {
       states.push({ outputExerciseId, sourceExerciseId, state: 'succeeded', failureCodes: [] })
@@ -79,6 +83,22 @@ export function computeExerciseStates(
     } else {
       // In outputExercises but not reviewed and no failures — treat as succeeded
       states.push({ outputExerciseId, sourceExerciseId, state: 'succeeded', failureCodes: [] })
+    }
+  }
+
+  // Count failures for source exercises that have NO output exercise entry.
+  // These are exercises that failed before an output was ever created
+  // (e.g., GENERATION_FAILED) or were skipped and removed from outputExercises.
+  // Use empty string as outputExerciseId placeholder since the counter only
+  // uses the state field (countByState ignores the ID fields).
+  for (const sourceExerciseId of Object.keys(failuresBySource)) {
+    if (!sourceIdsWithOutput.has(sourceExerciseId)) {
+      states.push({
+        outputExerciseId: '',
+        sourceExerciseId,
+        state: 'needs_review',
+        failureCodes: failuresBySource[sourceExerciseId],
+      })
     }
   }
 
