@@ -1,0 +1,17 @@
+{
+  "taskId": "2279",
+  "taskType": "issue",
+  "target": "2279",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed dashboard revenue widgets to query Payment_stats collection instead of transactions for revenue metrics aggregation, while keeping topProducts from transactions",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/admin/dashboard-metrics/route.ts",
+    "tests/int/admin-dashboard-revenue-metrics-1641.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-06-01T19:30:00Z",
+  "finishedAt": "2026-06-01T19:50:00Z"
+}

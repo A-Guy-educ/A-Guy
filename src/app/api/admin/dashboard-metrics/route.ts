@@ -140,6 +140,27 @@ interface CurrencyRevenue {
   [currencyCode: string]: number
 }
 
+// Row types for findAll results — used to disambiguate between the two findAll calls
+// in the Promise.all so TypeScript correctly infers paymentStatsResult vs allTransactions.
+interface PaymentStatsRow {
+  date?: string
+  currency?: string
+  totalRevenueAgorot?: number
+  refundedAgorot?: number
+  failedAgorot?: number
+  transactionCount?: number
+  succeededCount?: number
+  refundedCount?: number
+  failedCount?: number
+}
+
+interface TransactionRow {
+  status?: string
+  amount?: number
+  currency?: string
+  product?: unknown
+}
+
 interface TopProduct {
   productName: string
   agorot: number
@@ -295,6 +316,7 @@ export async function GET(req: Request) {
     examLessons,
     returningUsersResult,
     totalUsersInPeriod,
+    paymentStatsResult,
     allTransactions,
   ] = await Promise.all([
     // Active users today/yesterday
@@ -563,6 +585,55 @@ export async function GET(req: Request) {
           totalPages: number
         }>,
     ),
+    // Revenue metrics: authoritative data from Payment_stats (aggregated daily per currency).
+    // topProducts still comes from transactions since Payment_stats doesn't track products.
+    findAll<{
+      date?: string
+      currency?: string
+      totalRevenueAgorot?: number
+      refundedAgorot?: number
+      failedAgorot?: number
+      transactionCount?: number
+      succeededCount?: number
+      refundedCount?: number
+      failedCount?: number
+    }>(
+      (page) =>
+        payload.find({
+          collection: 'payment_stats',
+          where: {
+            date: { greater_than_equal: periodStart.toISOString().split('T')[0] },
+          },
+          limit: 500,
+          page,
+          overrideAccess: true,
+          select: {
+            date: true,
+            currency: true,
+            totalRevenueAgorot: true,
+            refundedAgorot: true,
+            failedAgorot: true,
+            transactionCount: true,
+            succeededCount: true,
+            refundedCount: true,
+            failedCount: true,
+          },
+        }) as Promise<{
+          docs: {
+            date?: string
+            currency?: string
+            totalRevenueAgorot?: number
+            refundedAgorot?: number
+            failedAgorot?: number
+            transactionCount?: number
+            succeededCount?: number
+            refundedCount?: number
+            failedCount?: number
+          }[]
+          hasNextPage: boolean
+          totalPages: number
+        }>,
+    ),
   ])
 
   // Calculate avg time spent (allUserStats is already a flat array from findAll)
@@ -630,8 +701,8 @@ export async function GET(req: Request) {
     }
   }
 
-  // Revenue metrics aggregation
-  // allTransactions is already a flat array from findAll
+  // Revenue metrics aggregation — source of truth is Payment_stats (aggregated daily per currency).
+  // paymentStatsResult.docs is already a flat array from findAll.
   const totalRevenueByCurrency: CurrencyRevenue = { ILS: 0, USD: 0, EUR: 0 }
   let refundedTotal = 0
   let failedTotal = 0
@@ -639,31 +710,33 @@ export async function GET(req: Request) {
   let nonPendingCount = 0
   const productRevenueMap = new Map<string, number>()
 
-  for (const tx of allTransactions) {
-    const amount = tx.amount || 0
-    const currency = tx.currency || 'ILS'
+  for (const row of paymentStatsResult as PaymentStatsRow[]) {
+    const currency = row.currency || 'ILS'
+    totalRevenueByCurrency[currency] =
+      (totalRevenueByCurrency[currency] || 0) + (row.totalRevenueAgorot || 0)
+    refundedTotal += row.refundedAgorot || 0
+    failedTotal += row.failedAgorot || 0
+    succeededCount += row.succeededCount || 0
+    nonPendingCount += (row.succeededCount || 0) + (row.refundedCount || 0) + (row.failedCount || 0)
+  }
 
+  const revenueTransactionCount = (paymentStatsResult as PaymentStatsRow[]).reduce(
+    (sum, row) => sum + (row.transactionCount || 0),
+    0,
+  )
+  const successRate =
+    nonPendingCount > 0 ? Math.round((succeededCount / nonPendingCount) * 1000) / 10 : 0
+
+  // topProducts: still aggregate from allTransactions since Payment_stats has no product info
+  for (const tx of allTransactions as TransactionRow[]) {
     if (tx.status === 'succeeded') {
-      totalRevenueByCurrency[currency] = (totalRevenueByCurrency[currency] || 0) + amount
-      succeededCount++
-      nonPendingCount++
-      // Aggregate by product
+      const amount = tx.amount || 0
       const productId = extractProductId(tx.product)
       if (productId) {
         productRevenueMap.set(productId, (productRevenueMap.get(productId) || 0) + amount)
       }
-    } else if (tx.status === 'refunded') {
-      refundedTotal += amount
-      nonPendingCount++
-    } else if (tx.status === 'failed') {
-      failedTotal += amount
-      nonPendingCount++
     }
   }
-
-  const revenueTransactionCount = allTransactions.length
-  const successRate =
-    nonPendingCount > 0 ? Math.round((succeededCount / nonPendingCount) * 1000) / 10 : 0
 
   // Resolve top 5 products by revenue
   const uniqueProductIds = Array.from(productRevenueMap.keys())

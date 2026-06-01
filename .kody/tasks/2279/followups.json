@@ -1,0 +1,8 @@
+[
+  {
+    "title": "RecentTransactionsWidget queries /api/transactions directly",
+    "body": "The RecentTransactionsWidget component (/admin dashboard) fetches directly from /api/transactions?limit=5 rather than using dashboard-metrics. This is a separate data source from revenue metrics but may also need review if the intent is to show Payment_stats-synced data consistently.",
+    "rationale": "The issue specifically targets revenue widget empty states. RecentTransactionsWidget is not a revenue widget but shares the same empty-state symptom. Worth reviewing whether it should also use Payment_stats-synced data.",
+    "priority": "low"
+  }
+]

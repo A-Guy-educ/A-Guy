@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "dashboard-revenue-from-payment-stats",
+    "hook": "Revenue widgets must query Payment_stats not transactions",
+    "body": "The /api/admin/dashboard-metrics route was computing revenue metrics (totalRevenueAgorot, refundedAgorot, failedAgorot, transactionCount, successRate) by querying the transactions collection directly. The authoritative source for these aggregated values is Payment_stats (daily aggregated payment KPIs). The fix queries Payment_stats for revenue metrics while keeping topProducts from transactions (since Payment_stats has no product field).",
+    "why": "Payment_stats is populated by the syncPaymentStats hook on every transaction change and is the canonical source for revenue data. Direct transactions queries miss daily aggregation, timezone alignment, and the sync hook's status-transition accounting (e.g., reversing revenue on refund).",
+    "confidence": 0.95
+  }
+]

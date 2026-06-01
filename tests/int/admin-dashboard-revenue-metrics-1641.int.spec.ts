@@ -300,4 +300,56 @@ describe.skipIf(!hasDatabaseUrl)('GET /api/admin/dashboard-metrics revenue metri
       )
     }
   })
+
+  it('revenue metrics come from Payment_stats, not raw transactions', async () => {
+    // Create a transaction with a known amount
+    const knownAmount = 7_500 // 75 ILS in agorot
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: adminUserId,
+        product: product1Id,
+        provider: 'stripe',
+        providerTransactionId: `revenue_test_ps_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        status: 'succeeded',
+        amount: knownAmount,
+        currency: 'ILS',
+      } as any,
+      overrideAccess: true,
+    })
+    transactionIds.push(tx.id)
+
+    // Verify sync hook populated Payment_stats for the transaction's date
+    const txDate = tx.createdAt.split('T')[0]
+    const paymentStatsRows = await payload.find({
+      collection: 'payment_stats',
+      where: {
+        date: { equals: txDate },
+        currency: { equals: 'ILS' },
+      },
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect(paymentStatsRows.totalDocs).toBeGreaterThan(0)
+    const paymentStatsRow = paymentStatsRows.docs[0] as {
+      totalRevenueAgorot: number
+      transactionCount: number
+      succeededCount: number
+    }
+    expect(paymentStatsRow.totalRevenueAgorot).toBe(knownAmount)
+    expect(paymentStatsRow.transactionCount).toBe(1)
+    expect(paymentStatsRow.succeededCount).toBe(1)
+
+    // Now call the dashboard API and verify it returns revenue from Payment_stats
+    const req = new Request(`http://localhost:3000/api/admin/dashboard-metrics?period=month`, {
+      headers: { Authorization: `JWT ${adminToken}` },
+    })
+    const res = await GET(req)
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    // The API should return revenue from Payment_stats, which matches our known amount
+    expect(body.revenueMetrics.totalRevenueAgorot.ILS).toBeGreaterThanOrEqual(knownAmount)
+    expect(body.revenueMetrics.transactionCount).toBeGreaterThanOrEqual(1)
+  })
 })
