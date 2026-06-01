@@ -1,0 +1,9 @@
+[
+  {
+    "type": "lesson",
+    "name": "codeql-externally-controlled-format-string",
+    "hook": "console.error with job.id interpolation triggers CodeQL alert",
+    "body": "CodeQL rule `js/printf-args` (Use of externally-controlled format string) triggers when a value from an external source is interpolated into a string passed to console methods. The fix is to pass the external value as a separate argument: `console.error('msg:', externalValue)` instead of `console.error(`msg ${externalValue}`)`.\n\n**Why:** job.id comes from Payload's job queue; job.input can contain user-controlled data. CodeQL treats the whole job object as externally-controlled, so even job.id triggers the alert when interpolated.\n\n**How to apply:** When CodeQL flags a console.* call with an interpolated value from a queue/job/external source, pass that value as a separate argument instead.",
+    "confidence": 0.85
+  }
+]

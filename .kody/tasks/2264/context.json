@@ -1,0 +1,17 @@
+{
+  "taskId": "2264",
+  "taskType": "issue",
+  "target": "dev CI CodeQL failure",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed two CodeQL format-string alerts by passing job.id as a separate argument instead of interpolating",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/jobs/pdf-to-exercises-task.ts",
+    "src/server/payload/jobs/pdf-to-exercises-v2-task.ts"
+  ],
+  "sessionLog": ".kody/sessions/2264.jsonl",
+  "startedAt": "2026-06-01T06:10:00Z",
+  "finishedAt": "2026-06-01T06:12:00Z"
+}
