@@ -1,0 +1,18 @@
+{
+  "taskId": "2297",
+  "taskType": "issue",
+  "target": "2297",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed admin footer showing 'vdev' by creating /api/version endpoint that reads from package.json, and updating VersionInfo client component to fetch from that API instead of using NEXT_PUBLIC_APP_VERSION env var",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/version/route.ts",
+    "src/ui/admin/VersionInfo/index.tsx",
+    "tests/e2e/admin-version-footer.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/live-test-1776849549.jsonl",
+  "startedAt": "2026-06-01T19:37:00Z",
+  "finishedAt": "2026-06-01T19:39:00Z"
+}

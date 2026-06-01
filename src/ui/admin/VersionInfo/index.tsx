@@ -1,21 +1,27 @@
 'use client'
 
-import React from 'react'
-
-// Version from package.json - fallback to 'dev' if not available
-const VERSION = process.env.NEXT_PUBLIC_APP_VERSION || 'dev'
+import React, { useEffect, useState } from 'react'
 
 /**
  * VersionInfo component for admin footer
- * Displays version and build date from package.json and environment
+ * Displays version and build date from package.json via API
  * @ai-summary Version/build date display for admin footer
  */
 export const VersionInfo: React.FC = () => {
-  // Read version from environment variable or use fallback
-  const version = VERSION
+  const [version, setVersion] = useState<string>('dev')
+  const [buildDate, setBuildDate] = useState<string>('')
 
-  // Read build date from environment variable or use current date
-  const buildDate = process.env.BUILD_DATE || new Date().toISOString().split('T')[0]
+  useEffect(() => {
+    // Fetch version from API (reads from package.json)
+    fetch('/api/version')
+      .then((res) => res.json())
+      .then((data) => setVersion(data.version || 'dev'))
+      .catch(() => setVersion('dev'))
+
+    // Build date from environment variable or use current date
+    const dateFromEnv = process.env.NEXT_PUBLIC_BUILD_DATE
+    setBuildDate(dateFromEnv || new Date().toISOString().split('T')[0])
+  }, [])
 
   // Format the display string
   const versionDisplay = `v${version}`
