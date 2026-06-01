@@ -26,9 +26,14 @@ jobs:
     steps:
       - name: Call cleanup endpoint
         run: |
+          if [ -z "$CRON_ENDPOINT" ]; then
+            echo "Error: CRON_ENDPOINT secret is not set. Please configure it in GitHub Actions environment secrets."
+            exit 1
+          fi
+
           response=$(curl -s -w "\n%{http_code}" -X POST \
-            "${{ secrets.CRON_ENDPOINT }}/api/cron/media-expiry" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "$CRON_ENDPOINT/api/cron/media-expiry" \
+            -H "Authorization: Bearer $CRON_SECRET" \
             -H "Content-Type: application/json")
 
           http_code=$(echo "$response" | tail -n1)
@@ -43,3 +48,6 @@ jobs:
           fi
 
           echo "Cleanup completed successfully"
+        env:
+          CRON_ENDPOINT: ${{ secrets.CRON_ENDPOINT }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}

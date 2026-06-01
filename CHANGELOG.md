@@ -162,7 +162,7 @@
 - acquire issue-2199 (37ef55166)
 - release (41a9a4114)
 - acquire issue-2199 (1759fdf30)
-- #2139: Rename "PDF view" to "Scroll view" and align content per locale (#2154) (78ba2b2ff)
+- #2139: Rename "PDF view" to "Scroll view" and align content per locale  · 🔄 QA (#2267)
 - release (8a2034817)
 - acquire issue-2199 (cad7eddea)
 - Revert "#1785: Remove bottom chat input bar from lesson page on mobile (#1790)" (c50bfd9d0)
