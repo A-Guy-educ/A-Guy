@@ -1,14 +1,11 @@
-DONE
+## Fix: CI Prettier check failing on kody.config.json
 
-COMMIT_MSG: fix(ci): align pnpm version in ai-docs-refresh workflow with package.json
+### Root Cause
+kody.config.json had formatting issues detected by Prettier in the CI "Fast Gate" step.
 
-The AI Docs Refresh daily workflow was failing at the pnpm setup step because:
-- `.github/workflows/ai-docs-refresh.yml` specified `version: 9`
-- `package.json` specifies `"packageManager": "pnpm@10.33.0"`
+### What Changed
+Ran `pnpm format -- kody.config.json` which rewrote the file with correct Prettier formatting. No manual content changes were needed.
 
-The `pnpm/action-setup@v4` action rejects conflicting versions. Fixed by updating
-the workflow's `version` from `9` to `10` (line 30 of the workflow file).
-
-No other workflow files needed changes — other workflows already use `version: 9`
-which is still compatible with their respective package.json entries (those don't
-specify a packageManager field, or pin to v9).
+### Verification
+- `pnpm format:check -- kody.config.json` passes (All matched files use Prettier code style)
+- Full quality gates pass via `mcp__kody-verify__verify`

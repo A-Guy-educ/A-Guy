@@ -90,8 +90,13 @@ export function createGenkitErrorAdapter(providerType: LLMProviderType) {
       message.includes('429') ||
       message.includes('too many requests')
     ) {
+      // Preserve the raw provider message — Gemini distinguishes per-minute
+      // RPM caps, per-day quotas, and concurrent-request limits in the
+      // underlying error text. The previous generic "rate limit exceeded"
+      // dropped that signal. Truncate to keep the wrapped error readable.
+      const rawDetail = String(error.message).slice(0, 400)
       return new LLMError(
-        `${providerType} API rate limit exceeded`,
+        `${providerType} API rate limit exceeded — raw: ${rawDetail}`,
         LLMErrorCode.RATE_LIMIT_ERROR,
         providerType,
         true,
