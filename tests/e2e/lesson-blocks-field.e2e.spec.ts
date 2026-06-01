@@ -258,6 +258,90 @@ test.describe('LessonBlocksField inline exercise display', () => {
     expect(hasSaveMechanism).toBe(true)
   })
 
+  /**
+   * E2E test for LessonBlocksField add buttons with single block (#2300)
+   *
+   * When a lesson has exactly 1 block, the Move up/down controls are both disabled.
+   * To verify reorder works, users need to be able to add a 2nd block — but the
+   * Add Exercise / Add Content Page buttons only appeared in the empty (0 blocks) state.
+   * This test verifies they also appear when ≥1 block exists.
+   */
+  test('shows Add Exercise and Add Content Page buttons when lesson has exactly 1 block', async ({
+    page,
+  }) => {
+    test.skip(!data, 'No test data available')
+
+    const { lessonId } = data!.course
+    const payload = await getPayload({ config })
+
+    // Create a single exercise and update lesson to have exactly 1 block
+    const mcq = await payload.create({
+      collection: 'exercises',
+      data: {
+        title: 'Single Block Test MCQ',
+        slug: `single-block-test-mcq-${Date.now()}`,
+        lesson: lessonId,
+        status: 'published',
+        content: buildMcqExercise(),
+      } as any,
+      overrideAccess: true,
+      draft: false,
+    })
+
+    const singleBlock = [{ blockType: 'exerciseRef', exercise: mcq.id, id: `ref-${mcq.id}` }]
+    await payload.update({
+      collection: 'lessons',
+      id: lessonId,
+      data: { blocks: JSON.stringify(singleBlock) },
+      overrideAccess: true,
+    })
+
+    await loginAsAdmin(page)
+    await page.goto(`/admin/collections/lessons/${lessonId}`)
+    await page.waitForLoadState('domcontentloaded')
+
+    // Wait for the LessonBlocksField to be visible
+    const lessonBlocksLabel = page.getByText('Lesson Blocks')
+    await expect(lessonBlocksLabel).toBeVisible({ timeout: 15_000 })
+
+    // Empty state should NOT be visible (we have 1 block)
+    const emptyMessage = page.getByText(
+      'No blocks yet. Create exercises or content pages for this lesson.',
+    )
+    await expect(emptyMessage).not.toBeVisible()
+
+    // Add Exercise button MUST be visible even with 1 block
+    const addExerciseBtn = page.getByRole('button', { name: 'Add Exercise' })
+    await expect(addExerciseBtn).toBeVisible({ timeout: 10_000 })
+
+    // Add Content Page button MUST be visible even with 1 block
+    const addContentPageBtn = page.getByRole('button', { name: 'Add Content Page' })
+    await expect(addContentPageBtn).toBeVisible({ timeout: 10_000 })
+
+    // Both buttons should still navigate to the correct create pages
+    await addExerciseBtn.click()
+    await expect(page).toHaveURL(/\/admin\/collections\/exercises\/create/)
+    await page.goBack()
+
+    await addContentPageBtn.click()
+    await expect(page).toHaveURL(/\/admin\/collections\/content-pages\/create/)
+
+    // Clean up the created exercise
+    try {
+      await payload.delete({ collection: 'exercises', id: mcq.id, overrideAccess: true })
+    } catch {
+      // ignore
+    }
+
+    // Restore lesson to empty state
+    await payload.update({
+      collection: 'lessons',
+      id: lessonId,
+      data: { blocks: JSON.stringify([]) },
+      overrideAccess: true,
+    })
+  })
+
   test('shows confirmation dialog before deleting a block (#2299)', async ({ page }) => {
     test.skip(!data, 'No test data available')
 

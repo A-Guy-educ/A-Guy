@@ -1,0 +1,17 @@
+{
+  "taskId": "2300",
+  "taskType": "issue",
+  "target": "issue #2300",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed LessonBlocksField to show Add Exercise and Add Content Page buttons in a footer area when ≥1 block exists, complementing the existing empty-state buttons",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/LessonBlocksField/index.tsx",
+    "tests/e2e/lesson-blocks-field.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2300-p2-move-updown-reorder-controls-unverifiable-with.jsonl",
+  "startedAt": "2026-06-01T19:35:00Z",
+  "finishedAt": "2026-06-01T19:40:00Z"
+}

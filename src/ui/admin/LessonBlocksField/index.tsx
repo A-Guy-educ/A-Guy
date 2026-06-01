@@ -535,6 +535,74 @@ export const LessonBlocksField: React.FC<{ path: string }> = ({ path }) => {
             )}
           </div>
         ))}
+
+        {/* Add-block buttons shown when ≥1 block exists (footer area) */}
+        {rows.length > 0 && (
+          <div
+            style={{
+              padding: '12px 16px',
+              display: 'flex',
+              gap: 8,
+              flexWrap: 'wrap',
+              borderTop: '1px solid var(--theme-elevation-100)',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => router.push('/admin/collections/exercises/create')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '4px 12px',
+                borderRadius: 6,
+                border: '1px solid var(--theme-elevation-150)',
+                background: 'var(--theme-elevation-50)',
+                color: 'var(--theme-text)',
+                fontSize: 12,
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--theme-elevation-100)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--theme-elevation-50)'
+              }}
+            >
+              <Plus size={12} />
+              Add Exercise
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push('/admin/collections/content-pages/create')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '4px 12px',
+                borderRadius: 6,
+                border: '1px solid var(--theme-elevation-150)',
+                background: 'var(--theme-elevation-50)',
+                color: 'var(--theme-text)',
+                fontSize: 12,
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--theme-elevation-100)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--theme-elevation-50)'
+              }}
+            >
+              <Plus size={12} />
+              Add Content Page
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
