@@ -1,1 +1,8 @@
-[]
+[
+  {
+    "title": "Configure CRON_ENDPOINT in GitHub Actions production environment",
+    "body": "The workflow expects CRON_ENDPOINT secret to be set in the 'production' environment. This should point to the deployed Vercel app URL (e.g., https://a-guy-educ.vercel.app or custom domain). The CRON_SECRET must also match the CRON_SECRET env var in the deployed application.",
+    "rationale": "The validation guard now catches the missing secret, but the actual endpoint URL is never called until secrets are configured.",
+    "priority": "high"
+  }
+]
