@@ -1,0 +1,17 @@
+{
+  "taskId": "2295",
+  "taskType": "issue",
+  "target": "2295",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added secure.gravatar.com to admin CSP img-src directive",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "next.config.js",
+    "tests/int/csp-vercel-feedback-admin.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/",
+  "startedAt": "2026-06-01T17:49:00+00:00",
+  "finishedAt": "2026-06-01T18:06:42+00:00"
+}

@@ -99,4 +99,24 @@ describe('CSP Configuration - Vercel Feedback Script on /admin', () => {
     // Admin routes MUST have gravatar.com in img-src for user avatars to load
     expect(imgSrc).toContain('gravatar.com')
   })
+
+  it('should include secure.gravatar.com in img-src for /admin routes', async () => {
+    const configContent = fs.readFileSync(nextConfigPath, 'utf8')
+
+    // Extract the /admin route CSP
+    const adminRouteMatch = configContent.match(
+      /source:\s*'\/admin\/:path\*'[\s\S]*?Content-Security-Policy[\s\S]*?value:\s*"([^"]+)"/,
+    )
+    expect(adminRouteMatch).not.toBeNull()
+
+    const csp = adminRouteMatch![1]
+    const imgSrcMatch = csp.match(/img-src\s+([^;]+)/)
+
+    expect(imgSrcMatch).not.toBeNull()
+    const imgSrc = imgSrcMatch![1]
+    // Admin routes MUST have secure.gravatar.com in img-src because Gravatar
+    // redirects from www.gravatar.com to secure.gravatar.com, and CSP is checked
+    // on the final redirected URL (Issue #2295)
+    expect(imgSrc).toContain('secure.gravatar.com')
+  })
 })
