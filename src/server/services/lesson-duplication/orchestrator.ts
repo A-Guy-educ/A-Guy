@@ -913,17 +913,32 @@ export async function runDuplicationOrchestrator(
         await appendOutputExercise(payload, duplicationId, mapping)
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Unknown create error'
+        // Pull Payload's nested validation errors (each has field path + message)
+        // so we can see exactly which block field tripped Zod, not just the
+        // surface "Content > Content" envelope error.
+        const payloadErrors = (err as { data?: { errors?: unknown[] } })?.data?.errors
         logger.error(
-          { exerciseRef: exercise.id, err },
+          {
+            exerciseRef: exercise.id,
+            payloadValidationErrors: payloadErrors,
+            blocks: result.blocks,
+            err,
+          },
           'createOutputExercise failed — exercise dropped from output lesson',
         )
+        // Surface the nested validation message in the failure record so
+        // admins can act on it without having to read server logs.
+        const detail =
+          Array.isArray(payloadErrors) && payloadErrors.length > 0
+            ? `: ${JSON.stringify(payloadErrors).slice(0, 1000)}`
+            : ''
         await appendFailure(
           payload,
           duplicationId,
           exercise.id,
           0,
           GENERATION_FAILURE_CODE,
-          `Failed to save variation: ${message}`,
+          `Failed to save variation: ${message}${detail}`,
         )
       }
     }
