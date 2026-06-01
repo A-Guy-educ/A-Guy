@@ -1,0 +1,17 @@
+{
+  "taskId": "2286",
+  "taskType": "issue",
+  "target": "2286-p2-gravatar-avatar-blocked-by-csp-on-all-admin-pag",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed CSP img-src directive for admin routes: changed 'gravatar.com' to '*.gravatar.com' so www.gravatar.com avatar URLs are permitted",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "next.config.js",
+    "tests/int/csp-vercel-feedback-admin.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/d37656fa-0482-4e42-a59e-da83597e837e.jsonl",
+  "startedAt": "2026-06-01T20:57:41Z",
+  "finishedAt": "2026-06-01T21:08:00Z"
+}
