@@ -1,0 +1,14 @@
+{
+  "taskId": "2249",
+  "taskType": "issue",
+  "target": "2249",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "PR #2161 AdminBarWrapper change was doc-irrelevant — AdminBarWrapper is a frontend component, not a Payload admin field component. docs/admin-components/README.md covers Payload admin field components registered in collection configs; AdminBarWrapper lives in src/ui/web/AdminBar/ and conditionally renders AdminBar using Next.js useSelectedLayoutSegments.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [],
+  "sessionLog": ".kody/sessions/invalid",
+  "startedAt": "2026-06-02T00:00:00.000Z",
+  "finishedAt": "2026-06-02T00:00:00.000Z"
+}
