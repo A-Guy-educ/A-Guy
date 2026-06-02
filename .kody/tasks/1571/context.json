@@ -4,11 +4,11 @@
   "target": "1569-feat-support-cmdctrlenter-to-send-message-in-admin",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "kody.config.json still failed format:check after previous fix; re-ran pnpm format -- kody.config.json to fully resolve",
+  "reason": "kody.config.json Prettier formatting: single-element arrays must be inline and trailing newline required. Ran 'pnpm prettier kody.config.json --write' to fix.",
   "prUrl": null,
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26792946240",
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26794706362",
   "filesTouched": ["kody.config.json"],
   "sessionLog": null,
-  "startedAt": "2026-06-02T02:29:00.000Z",
-  "finishedAt": "2026-06-02T02:29:05.000Z"
+  "startedAt": "2026-06-02T02:32:00.000Z",
+  "finishedAt": "2026-06-02T02:33:00.000Z"
 }
