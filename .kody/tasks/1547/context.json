@@ -1,14 +1,14 @@
 {
   "taskId": "1547",
   "taskType": "pr",
-  "target": "PR #1547 (chore/auto-resolve-deterministic-tick)",
+  "target": "chore/auto-resolve-deterministic-tick",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Single symmetric conflict in .kody/last-run.jsonl — both sides appended different session events; resolved by taking HEAD version.",
+  "reason": "Docker Hub timeout fix: replaced services: block with explicit docker steps with 5 retries and pre-pull across all 5 jobs",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/1547",
   "runUrl": null,
-  "filesTouched": [".kody/last-run.jsonl"],
-  "sessionLog": null,
-  "startedAt": "2026-05-30T17:15:00.000Z",
-  "finishedAt": "2026-05-30T17:16:00.000Z"
+  "filesTouched": [".github/workflows/ci.yml"],
+  "sessionLog": ".kody/sessions/1547.jsonl",
+  "startedAt": "2026-06-02T00:00:00.000Z",
+  "finishedAt": "2026-06-02T00:00:00.000Z"
 }

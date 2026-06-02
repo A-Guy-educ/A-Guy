@@ -1,12 +1,24 @@
-## PR #1547 Merge Conflict Resolution
+## CI MongoDB Docker Hub Timeout Fix
 
-**Issue:** `git merge origin/dev` into `chore/auto-resolve-deterministic-tick` produced a conflict in `.kody/last-run.jsonl`.
+**Problem:** `docker pull mongo:7` was timing out with `context deadline exceeded` errors reaching Docker Hub registry. This affected the Integration Tests job (and other jobs using MongoDB services).
 
-**Conflict type:** Symmetric — both branches appended different session events to the JSONL log.
+**Root cause:** Docker Hub connectivity issues from GitHub Actions runners, not a code problem.
 
-**Resolution:** Took HEAD's version (the PR's branch) since `.kody/last-run.jsonl` is a session runtime log, not a configuration file. The dev branch's events were from a different session run and the HEAD version accurately reflects this branch's activity.
+**Fix applied to `.github/workflows/ci.yml`:**
 
-**File resolved:**
-- `.kody/last-run.jsonl` — 75-line valid JSONL, taken from HEAD stage
+Replaced all 5 `services: mongodb:` blocks with explicit Docker steps:
 
-**No quality gates needed** — this is a session log file, not source code.
+1. `docker/setup-buildx-action@v3` — sets up Buildx for better Docker handling
+2. Pre-pull step with 5 retries and 10s backoff between attempts
+3. `docker run -d --name mongodb -p 27017:27017 mongo:7` — starts container explicitly
+4. Wait-for-ready loop using `docker exec mongodb mongosh --eval 'db.runCommand({ ping: 1 })'`
+
+**Jobs updated:**
+- `integration-tests`
+- `build`
+- `e2e-gate`
+- `e2e-system-tests`
+- `qa-scenarios-core`
+- `qa-scenarios-full`
+
+**Why this works:** The pre-pull with retries handles transient Docker Hub network failures. Buildx can use Docker layer caching to speed up subsequent pulls. The explicit `docker run` bypasses GitHub Actions' service container pull mechanism which had no retry logic.

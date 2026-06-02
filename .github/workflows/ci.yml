@@ -94,17 +94,6 @@ jobs:
       DEFAULT_TENANT_SLUG: default
       BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
 
-    services:
-      mongodb:
-        image: mongo:7
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -119,6 +108,34 @@ jobs:
         with:
           node-version: '22'
           cache: 'pnpm'
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Pre-pull MongoDB image with retries
+        run: |
+          for i in 1 2 3 4 5; do
+            if docker pull mongo:7; then
+              echo "Successfully pulled mongo:7"
+              break
+            fi
+            echo "Attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+
+      - name: Start MongoDB service
+        run: docker run -d --name mongodb -p 27017:27017 mongo:7
+
+      - name: Wait for MongoDB to be ready
+        run: |
+          for i in $(seq 1 30); do
+            if docker exec mongodb mongosh --eval 'db.runCommand({ ping: 1 })' &>/dev/null; then
+              echo "MongoDB is ready"
+              break
+            fi
+            echo "Waiting for MongoDB... ($i/30)"
+            sleep 2
+          done
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -147,17 +164,6 @@ jobs:
       NEXT_PUBLIC_SERVER_URL: ${{ secrets.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000' }}
       BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
 
-    services:
-      mongodb:
-        image: mongo:7
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -172,6 +178,34 @@ jobs:
         with:
           node-version: '22'
           cache: 'pnpm'
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Pre-pull MongoDB image with retries
+        run: |
+          for i in 1 2 3 4 5; do
+            if docker pull mongo:7; then
+              echo "Successfully pulled mongo:7"
+              break
+            fi
+            echo "Attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+
+      - name: Start MongoDB service
+        run: docker run -d --name mongodb -p 27017:27017 mongo:7
+
+      - name: Wait for MongoDB to be ready
+        run: |
+          for i in $(seq 1 30); do
+            if docker exec mongodb mongosh --eval 'db.runCommand({ ping: 1 })' &>/dev/null; then
+              echo "MongoDB is ready"
+              break
+            fi
+            echo "Waiting for MongoDB... ($i/30)"
+            sleep 2
+          done
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -203,17 +237,6 @@ jobs:
       NEXT_PUBLIC_BRAND: aguy
       BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
 
-    services:
-      mongodb:
-        image: mongo:7
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -236,6 +259,34 @@ jobs:
           key: ${{ runner.os }}-next-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-next-
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Pre-pull MongoDB image with retries
+        run: |
+          for i in 1 2 3 4 5; do
+            if docker pull mongo:7; then
+              echo "Successfully pulled mongo:7"
+              break
+            fi
+            echo "Attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+
+      - name: Start MongoDB service
+        run: docker run -d --name mongodb -p 27017:27017 mongo:7
+
+      - name: Wait for MongoDB to be ready
+        run: |
+          for i in $(seq 1 30); do
+            if docker exec mongodb mongosh --eval 'db.runCommand({ ping: 1 })' &>/dev/null; then
+              echo "MongoDB is ready"
+              break
+            fi
+            echo "Waiting for MongoDB... ($i/30)"
+            sleep 2
+          done
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -302,17 +353,6 @@ jobs:
       NEXT_PUBLIC_SERVER_URL: http://localhost:3000
       BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
 
-    services:
-      mongodb:
-        image: mongo:7
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -336,6 +376,34 @@ jobs:
           key: ${{ runner.os }}-next-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-next-
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Pre-pull MongoDB image with retries
+        run: |
+          for i in 1 2 3 4 5; do
+            if docker pull mongo:7; then
+              echo "Successfully pulled mongo:7"
+              break
+            fi
+            echo "Attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+
+      - name: Start MongoDB service
+        run: docker run -d --name mongodb -p 27017:27017 mongo:7
+
+      - name: Wait for MongoDB to be ready
+        run: |
+          for i in $(seq 1 30); do
+            if docker exec mongodb mongosh --eval 'db.runCommand({ ping: 1 })' &>/dev/null; then
+              echo "MongoDB is ready"
+              break
+            fi
+            echo "Waiting for MongoDB... ($i/30)"
+            sleep 2
+          done
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -398,17 +466,6 @@ jobs:
       NEXT_PUBLIC_SERVER_URL: http://localhost:3000
       BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
 
-    services:
-      mongodb:
-        image: mongo:7
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -431,6 +488,34 @@ jobs:
           key: ${{ runner.os }}-next-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-next-
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Pre-pull MongoDB image with retries
+        run: |
+          for i in 1 2 3 4 5; do
+            if docker pull mongo:7; then
+              echo "Successfully pulled mongo:7"
+              break
+            fi
+            echo "Attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+
+      - name: Start MongoDB service
+        run: docker run -d --name mongodb -p 27017:27017 mongo:7
+
+      - name: Wait for MongoDB to be ready
+        run: |
+          for i in $(seq 1 30); do
+            if docker exec mongodb mongosh --eval 'db.runCommand({ ping: 1 })' &>/dev/null; then
+              echo "MongoDB is ready"
+              break
+            fi
+            echo "Waiting for MongoDB... ($i/30)"
+            sleep 2
+          done
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -480,17 +565,6 @@ jobs:
       NEXT_PUBLIC_SERVER_URL: http://localhost:3000
       BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
 
-    services:
-      mongodb:
-        image: mongo:7
-        ports:
-          - 27017:27017
-        options: >-
-          --health-cmd "mongosh --eval 'db.runCommand({ ping: 1 })'"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -513,6 +587,34 @@ jobs:
           key: ${{ runner.os }}-next-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-next-
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Pre-pull MongoDB image with retries
+        run: |
+          for i in 1 2 3 4 5; do
+            if docker pull mongo:7; then
+              echo "Successfully pulled mongo:7"
+              break
+            fi
+            echo "Attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+
+      - name: Start MongoDB service
+        run: docker run -d --name mongodb -p 27017:27017 mongo:7
+
+      - name: Wait for MongoDB to be ready
+        run: |
+          for i in $(seq 1 30); do
+            if docker exec mongodb mongosh --eval 'db.runCommand({ ping: 1 })' &>/dev/null; then
+              echo "MongoDB is ready"
+              break
+            fi
+            echo "Waiting for MongoDB... ($i/30)"
+            sleep 2
+          done
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
