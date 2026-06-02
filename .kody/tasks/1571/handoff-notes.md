@@ -1,9 +1,9 @@
-## Handoff Notes
+## Merge Conflict Resolution for PR #1571
 
-**What was failing:** CI workflow `Fast Gate / Check formatting with Prettier` step failed — `kody.config.json` had Prettier formatting issues.
+**Conflict:** `.github/workflows/preview-validation.yml` — asymmetric: `origin/dev` deleted the file (chore(ci): remove redundant preview workflows), our branch had a modified version (230 lines vs 229 in base).
 
-**Root cause:** `kody.config.json` had two Prettier violations: (1) single-element arrays `["aguyaharonyair"]` and `["package.json"]` were written as multi-line blocks, and (2) file was missing a trailing newline. The previous fix used `pnpm format -- kody.config.json` which did not properly invoke Prettier on the file.
+**Resolution:** Accepted dev's deletion by running `git rm .github/workflows/preview-validation.yml`.
 
-**Fix:** Ran `pnpm prettier kody.config.json --write` to apply correct Prettier formatting (inline single-element arrays + trailing newline).
+**Rationale:** The PR feature (Cmd/Ctrl+Enter to send message in admin chat) is a UI feature completely unrelated to GitHub Actions CI workflows. Dev intentionally removed this file as redundant CI cleanup. No functional dependency exists between the PR feature and this workflow file.
 
-**Verification:** `pnpm prettier --check kody.config.json` now passes, and `mcp__kody-verify__verify` reports all gates green.
+**No remaining conflicts** — all unmerged paths resolved.
