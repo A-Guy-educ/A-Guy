@@ -1,11 +1,9 @@
 ## Handoff Notes
 
-**What was failing:** CI workflow `pnpm format:check` step failed due to formatting issues in `kody.config.json`.
+**What was failing:** CI workflow `Fast Gate / Check formatting with Prettier` step failed — `kody.config.json` had Prettier formatting issues.
 
-**Root cause:** `kody.config.json` had two formatting issues:
-1. Arrays like `operators` and `versionFiles` were formatted across multiple lines instead of Prettier's single-line style for short arrays
-2. File was missing a trailing newline (Prettier requires final newline in JSON files)
+**Root cause:** `kody.config.json` was not passing `prettier --check`. The previous fix in this PR did not fully resolve the issue.
 
-**Fix:** Ran `pnpm format -- "kody.config.json"` to auto-fix the formatting with Prettier.
+**Fix:** Ran `pnpm format -- "kody.config.json"` to re-apply Prettier formatting to `kody.config.json`.
 
-**Verification:** All quality gates pass — `mcp__kody-verify__verify` (typecheck, lint, format:check) all green.
+**Verification:** `pnpm format:check` on `kody.config.json` now passes, and `mcp__kody-verify__verify` reports all gates green (typecheck, lint, format:check).
