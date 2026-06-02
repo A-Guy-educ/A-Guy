@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "hygiene-check-fails-on-pnpm-version-mismatch",
+    "hook": "Hygiene CI fails with pnpm version mismatch between workflow and package.json",
+    "body": "The `repo-hygiene-report.yml` workflow specified `pnpm/action-setup@v4` with `version: 10`, but `package.json` had `packageManager: \"pnpm@10.33.0\"`. This caused `ERR_PNPM_BAD_PM_VERSION` and CI failure. Fix: align the workflow version with package.json.",
+    "why": "When the workflow's pnpm version doesn't match the package.json specification, the pnpm/action-setup@v4 action rejects the mismatch with a hard error, failing the workflow before it even runs the hygiene script.",
+    "confidence": 0.95
+  }
+]

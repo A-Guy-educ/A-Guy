@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Investigate split-pane-layout-mobile-chat.test.tsx failure",
+    "body": "A pre-existing test failure was observed in `tests/unit/components/split-pane-layout-mobile-chat.test.tsx` (line 74 assertion: `expected false to be true`). This is unrelated to the hygiene fix and appears to be a pre-existing issue on dev.",
+    "rationale": "The verify tool showed this test failing, but it is unrelated to the workflow YAML change and predates it.",
+    "priority": "low"
+  },
+  {
+    "title": "knip parse error in payload.config.ts is pre-existing",
+    "body": "The knip tool reports `ParseError: Unexpected token, expected ","` when parsing `src/payload.config.ts` with knip 6.15.0. This has been failing since at least May 24. However, since the hygiene script always exits 0, this doesn't cause CI failure. The parse error appears to be a knip/TypeScript 5.9 compatibility issue but is informational only.",
+    "rationale": "The hygiene script `process.exit(0)` always succeeds, so the knip parse error (which predates this task) doesn't cause CI failure.",
+    "priority": "low"
+  }
+]
