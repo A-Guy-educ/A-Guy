@@ -253,7 +253,7 @@ export const CreateCouponModal: React.FC<CreateCouponModalProps> = ({
                 type="number"
                 value={form.discountValue}
                 onChange={(e) => setForm((prev) => ({ ...prev, discountValue: e.target.value }))}
-                placeholder={form.discountType === 'percentage' ? '0-100' : '0'}
+                placeholder={form.discountType === 'percentage' ? '0-100' : '₪0'}
                 min="0"
                 max={form.discountType === 'percentage' ? '100' : undefined}
                 step={form.discountType === 'percentage' ? '1' : '0.01'}

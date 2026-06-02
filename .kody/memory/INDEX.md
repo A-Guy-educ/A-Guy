@@ -70,3 +70,9 @@ git activity belongs in `git log`, not here.
 - [Fab Open State Via Ischatvisible Prop](fab-open-state-via-ischatvisible-prop.md) — FAB open state combines internal isOpen + external isChatVisible prop (type: decision)
 
 - [E2E Test Locale Setup](e2e-test-locale-setup.md) — E2E tests must set locale cookie after auth (type: lesson)
+
+- [Coupon Fixed Discount Unit Conversion](coupon-fixed-discount-unit-conversion.md) — Threshold-based idempotent shekel↔agorot conversion in beforeChange hook (type: decision)
+
+- [Afterread Hook Siblingdata Vs Value](afterread-hook-siblingdata-vs-value.md) — afterRead hooks use siblingData for cross-field logic (discountType), not just value param (type: decision)
+
+- [Overrideaccess True Does Not Bypass Hooks](overrideAccess-true-does-not-bypass-hooks.md) — overrideAccess: true in Payload Local API bypasses access control only, NOT hooks (type: lesson)

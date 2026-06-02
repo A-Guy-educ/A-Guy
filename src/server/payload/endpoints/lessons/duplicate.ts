@@ -117,16 +117,27 @@ async function deepCloneLesson(req: PayloadRequest, sourceLessonId: string): Pro
   // block schema), don't kill the whole copy. Log it, count it, move on.
   // Without this guard, a 44-exercise lesson with one bad exercise produces
   // zero cloned exercises and a top-level 'Content > Content' error.
+  //
+  // We disable the per-exercise addBlockToLesson hook (via `_skipBlockSync`)
+  // and rebuild the lesson's blocks[] in one atomic write at the end. The
+  // per-exercise hook is fire-and-forget at the framework level — when this
+  // function returns and the serverless function exits, in-flight hook
+  // promises get killed, leaving only the first one's lesson update committed
+  // (lost-update bug observed on 44-exercise geometry clone: 43 FK exercises
+  // created, but only 1 entry in lesson.blocks[]).
   const cloneFailures: Array<{ id: string; reason: string }> = []
+  const newExerciseIds: string[] = []
   for (const exercise of exerciseDocs) {
     try {
       const exData = stripManagedFields(exercise as unknown as Record<string, unknown>)
-      await req.payload.create({
+      const created = await req.payload.create({
         collection: 'exercises',
         data: { ...exData, lesson: newLesson.id } as never,
         overrideAccess: true,
         req,
+        context: { _skipBlockSync: true },
       })
+      newExerciseIds.push(created.id)
     } catch (err) {
       const reason = err instanceof Error ? err.message : 'unknown'
       cloneFailures.push({ id: exercise.id, reason })
@@ -139,6 +150,25 @@ async function deepCloneLesson(req: PayloadRequest, sourceLessonId: string): Pro
     req.payload.logger.warn(
       `[deepCloneLesson] ${cloneFailures.length} of ${exerciseDocs.length} exercises failed to clone for lesson ${sourceLessonId}`,
     )
+  }
+
+  // Final batched write: build the full blocks[] array from the cloned ids
+  // and persist in a single lesson update. `_skipBlockSync` prevents the
+  // resulting lesson afterChange from triggering further block-sync churn.
+  if (newExerciseIds.length > 0) {
+    const blocks = newExerciseIds.map((exId) => ({
+      id: Math.random().toString(36).slice(2, 14),
+      blockType: 'exerciseRef' as const,
+      exercise: exId,
+    }))
+    await req.payload.update({
+      collection: 'lessons',
+      id: newLesson.id,
+      data: { blocks: JSON.stringify(blocks) },
+      overrideAccess: true,
+      req,
+      context: { _skipBlockSync: true },
+    })
   }
 
   return newLesson.id
