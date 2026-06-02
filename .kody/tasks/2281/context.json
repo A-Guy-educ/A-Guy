@@ -1,0 +1,16 @@
+{
+  "taskId": "2281",
+  "taskType": "issue",
+  "target": "2281-p2-webhook-events-collection-is-entirely-empty",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "All 50 tests pass (46 webhook tests + 4 new admin UI access tests). Webhook handlers create WebhookEvents records correctly with overrideAccess: true. The adminOnly access control correctly allows admin users to read records. No code bug found - investigation suggests collection may be empty due to webhooks not firing in the target environment (environmental issue, not code bug).",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "tests/int/webhook-events-admin-access.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-06-02T06:30:00.000Z",
+  "finishedAt": "2026-06-02T06:56:00.000Z"
+}
