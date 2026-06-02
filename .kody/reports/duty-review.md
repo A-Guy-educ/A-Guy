@@ -1,5 +1,4 @@
 # Kody Duty Review
-
 _Rolling 6h cycle — one duty deep-reviewed per tick._
 
 Cycle 4 — 14 broken, 11 warn, 0 healthy of 25 duties.
@@ -30,4 +29,4 @@ Cycle 4 — 14 broken, 11 warn, 0 healthy of 25 duties.
 | security-audit | cto | 1d | warn | no kody-job-next-state block; state.json never created; lastRunISO never persisted; disabled=true design review only |
 | system-audit | coo | 30m | warn | no kody-job-next-state block; state.json never created; lastRunISO never persisted |
 | task-memory-extractor | coo | 30m | warn | no kody-job-next-state block; state.json never created; lastRunISO never persisted |
-| type-debt | kody | 7d (disabled) | warn | no kody-job-next-state block; state.json never created; lastRunISO never persisted |
+| type-debt | kody | 7d (disabled) | warn | no kody-job-next-state block; state.json never created; lastRunISO never persisted
