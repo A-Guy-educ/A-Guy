@@ -1,13 +1,14 @@
 {
   "version": 1,
-  "rev": 33,
+  "rev": 34,
   "cursor": "reported",
   "data": {
     "cycle": 4,
-    "lastRunISO": "2026-06-01T22:06:22Z",
-    "nextEligibleISO": "2026-06-02T04:06:22Z",
+    "lastRunISO": "2026-06-02T05:37:16Z",
+    "nextEligibleISO": "2026-06-02T11:37:16Z",
     "reviewed": [
-      "approval-gate"
+      "approval-gate",
+      "architecture-audit"
     ],
     "verdicts": {
       "approval-gate": {
@@ -111,9 +112,9 @@
         "verdict": "warn"
       }
     },
-    "lastFiredAt": "2026-06-01T22:06:47.689Z",
+    "lastFiredAt": "2026-06-02T05:37:47.500Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 150401
+    "lastDurationMs": 121876
   },
   "done": false
 }
