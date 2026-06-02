@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "rev": 45,
+  "rev": 46,
   "cursor": "idle",
   "data": {
     "issueNumber": 2349,
-    "lastFiredAt": "2026-06-02T15:10:54.307Z",
+    "lastFiredAt": "2026-06-02T16:52:37.339Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 16223
+    "lastDurationMs": 13490
   },
   "done": false
 }
