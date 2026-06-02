@@ -38,6 +38,12 @@
   "defaultExecutable": "classify",
   "defaultPrExecutable": "fix",
   "access": {
-    "allowedAssociations": ["OWNER", "COLLABORATOR", "CONTRIBUTOR", "FIRST_TIME_CONTRIBUTOR"]
+    "allowedAssociations": [
+      "OWNER",
+      "COLLABORATOR",
+      "CONTRIBUTOR",
+      "FIRST_TIME_CONTRIBUTOR",
+      "MEMBER"
+    ]
   }
 }
