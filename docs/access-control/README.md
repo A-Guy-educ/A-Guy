@@ -207,7 +207,38 @@ export const Posts: CollectionConfig = {
 - Logged-in user: `return true` → sees ALL posts
 - Public user: `return { _status: { equals: 'published' } }` → sees ONLY published posts
 
-### Pattern 4: Field-Level Sensitive Data
+### Pattern 4: Webhook-Only Collections
+
+Collections that are created exclusively by internal webhooks or checkout handlers (not by admin or API users). Manual creation is disabled to prevent dangling records that break revenue stats, refunds, and reporting.
+
+```typescript
+export const Transactions: CollectionConfig = {
+  slug: 'transactions',
+  access: {
+    create: () => false, // Only created via webhooks/checkout with overrideAccess: true
+    read: adminOnly,     // Only admins can read
+    update: adminOnly,   // Only admins can update (e.g., mark as succeeded/failed)
+    delete: adminOnly,   // Only admins can delete
+  },
+  // ...
+}
+```
+
+**Why `create: () => false`?**
+- Transactions are created by payment provider webhooks (Stripe, PayPal) and the checkout route
+- Manual creation would create dangling records that break revenue stats, refunds, and the purchases page
+- Internal code creates records with `overrideAccess: true` to bypass this check
+
+```typescript
+// Internal creation (webhook handler or checkout route)
+await payload.create({
+  collection: 'transactions',
+  data: transactionData,
+  overrideAccess: true, // Required — create access returns false for everyone
+})
+```
+
+### Pattern 5: Field-Level Sensitive Data
 
 ```typescript
 export const Users: CollectionConfig = {
@@ -603,6 +634,7 @@ When adding access control to a collection:
 - [ ] **Collection-level access** defined for all operations (read, create, update, delete)
 - [ ] **Public content** uses `anyone` for read access
 - [ ] **User-owned content** has `owner` field with auto-set hook
+- [ ] **Webhook-only collections** use `create: () => false` and internal creation with `overrideAccess: true`
 - [ ] **Sensitive fields** have field-level access control
 - [ ] **Admin-only operations** use `adminOnly` or check role
 - [ ] **Query constraints** return object (not boolean) for row-level security

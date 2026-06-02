@@ -1,0 +1,14 @@
+{
+  "taskId": "2251",
+  "taskType": "issue",
+  "target": "docs-drift-access-control-2225",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added Pattern 4 (Webhook-Only Collections) documenting create: () => false and updated checklist",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": ["docs/access-control/README.md"],
+  "sessionLog": ".kody/sessions/2251-docs-drift-access-control-2225.jsonl",
+  "startedAt": "2026-06-02T05:52:00Z",
+  "finishedAt": "2026-06-02T05:53:30Z"
+}
