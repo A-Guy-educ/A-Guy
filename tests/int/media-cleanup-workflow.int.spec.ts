@@ -69,11 +69,18 @@ describe('Media Cleanup GitHub Workflow', () => {
     const cleanupStep = workflow.jobs.cleanup.steps.find(
       (step: WorkflowStep) => step.name === 'Call cleanup endpoint',
     )
-    const runScript = cleanupStep.run
 
-    // Verify it uses GitHub secrets
-    expect(runScript).toContain('secrets.CRON_ENDPOINT')
-    expect(runScript).toContain('secrets.CRON_SECRET')
+    // Secrets must be passed via env block (not hardcoded in run script).
+    // This is the correct GitHub Actions pattern — secrets should not appear
+    // directly in run: commands.
+    expect(cleanupStep.env).toBeDefined()
+    expect(cleanupStep.env.CRON_ENDPOINT).toBe('${{ secrets.CRON_ENDPOINT }}')
+    expect(cleanupStep.env.CRON_SECRET).toBe('${{ secrets.CRON_SECRET }}')
+
+    // Run script should reference the env vars (shell variables).
+    const runScript = cleanupStep.run
+    expect(runScript).toContain('$CRON_ENDPOINT')
+    expect(runScript).toContain('$CRON_SECRET')
   })
 
   it('should handle HTTP errors', async () => {

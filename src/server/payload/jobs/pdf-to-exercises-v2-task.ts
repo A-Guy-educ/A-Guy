@@ -274,7 +274,7 @@ export const pdfToExercisesV2Task = {
       return output
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      console.error(`[V2] Job ${job.id} failed:`, error)
+      console.error('[V2] Job failed:', job.id, error)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await updateJobStatus(payload as any, job.id, 'failed', {
         ...output,

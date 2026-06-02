@@ -24,10 +24,8 @@ import { getModelRegistryEntry, getProviderModelName } from '../models'
 import { LLMProviderType } from '../providers/types'
 import { logger } from '@/infra/utils/logger'
 import { VariationGenerationError } from '../errors'
-import {
-  buildPass1JsonSchemaForExercise,
-  SolutionDerivationOutputSchema,
-} from '../schemas/lesson-duplication-output'
+import { ContentSchema } from '@/server/payload/collections/Exercises/schemas'
+import { SolutionDerivationOutputSchema } from '../schemas/lesson-duplication-output'
 
 /**
  * Model used for both passes. Pinned to gemini-3.1-pro-preview because:
@@ -71,7 +69,7 @@ import { withTimeout as withSharedTimeout } from '@/infra/utils/with-timeout'
  * function ceiling is 900s, so we still have headroom for the surrounding
  * orchestrator work.
  */
-export const LLM_CALL_TIMEOUT_MS = 300_000
+export const LLM_CALL_TIMEOUT_MS = 600_000
 
 /** Convenience wrapper that pins the default timeout to LLM_CALL_TIMEOUT_MS. */
 function withTimeout<T>(promise: Promise<T>, stage: string): Promise<T> {
@@ -190,15 +188,15 @@ export async function generateVariation(
             messages: [{ role: 'user', content: creativeUserPrompt }],
             model: creativeConfig,
             acknowledgment: `Generating ${level} variation for exercise`,
-            // Schema is derived per-exercise from the input's own shape:
-            // walk the source `content.blocks` JSON, produce a Gemini-dialect
-            // responseSchema that mirrors it. Forces the variation to keep
-            // the same block layout (same types, same nested fields) — no
-            // hallucinated `answer.kind`, no missing variants, no extra
-            // properties. The schema is delivered fresh on every call.
-            outputJsonSchema: buildPass1JsonSchemaForExercise(exercise),
-            // Pinned to gemini-3.1-pro-preview — 2.5-pro mangles complex
-            // schemas (see VARIATION_MODEL_VERSION rationale above).
+            // NOTE: outputJsonSchema intentionally omitted.
+            // Verified live (2026-05-24) that Gemini 3.1-pro-preview silently
+            // ignores responseSchema slots/required for hint/solution/fullSolution
+            // — even when the per-exercise derived schema declares them required,
+            // pass-1 output has 0/N hints. Without the schema, prompt-level rules
+            // produce N/N hints. Same collapse pattern as pass-2 (issue #1748).
+            // Structural validity is enforced post-hoc by sanitizeAiBlocks +
+            // payload.create's strict Zod schema. Keep buildPass1JsonSchemaForExercise
+            // exported in case Gemini's responseSchema improves.
             modelVersion: VARIATION_MODEL_VERSION,
           },
           payload,
@@ -368,36 +366,87 @@ export async function generateVariation(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Strip known AI-hallucinated fields from each block before we run schema
- * validation. Adding cases here is preferred over loosening the Zod schemas.
+ * Schema-driven strip of fields Gemini hallucinates that the strict Exercise
+ * schema rejects. Runs ContentSchema.safeParse, finds every `unrecognized_keys`
+ * issue, deletes those keys at the reported path, and retries — up to a small
+ * iteration limit (in practice 1-2 iterations are enough). Catches the whole
+ * family of "answer has type/rubric", "block has extraField", etc. without
+ * enumerating each one by hand.
  *
- * Known patterns:
- *  - `answer.kind`: only valid on question_geometry / question_axis (uses
- *    QuestionAnswerSchema). On other question blocks Gemini sometimes adds
- *    `kind` by analogy, which the strict McqAnswerSchema rejects.
+ * Before the generic strip, applies targeted field migrations for known
+ * Gemini quirks where the field NAME is wrong but the data is valid (e.g.
+ * `answer.rubric: "x = 4"` for a question_free_response, where the schema
+ * expects `answer.acceptedAnswers: ["x = 4"]`). Migrating beats stripping
+ * here — stripping would lose the actual answer.
+ *
+ * Other Zod failure codes (invalid_type, too_small, etc.) are NOT touched —
+ * those are real validation problems for the orchestrator's catch block to
+ * surface in failures[].
  */
 function sanitizeAiBlocks(blocks: unknown[]): unknown[] {
-  return blocks.map((block) => {
-    if (!block || typeof block !== 'object') return block
-    const b = block as Record<string, unknown>
-    const type = typeof b.type === 'string' ? b.type : ''
+  const envelope = { blocks: structuredClone(blocks) }
 
-    // Strip `answer.kind` on question types where it's not in the schema.
-    if (
-      type.startsWith('question_') &&
-      type !== 'question_geometry' &&
-      type !== 'question_axis' &&
-      b.answer &&
-      typeof b.answer === 'object'
-    ) {
-      const ans = b.answer as Record<string, unknown>
-      if ('kind' in ans) {
-        delete ans.kind
+  // Targeted migration: question_free_response.answer.rubric → answer.acceptedAnswers.
+  // Gemini regularly emits `{ type: "free_response", rubric: "answer text" }`
+  // instead of `{ acceptedAnswers: ["answer text"] }`. Strip would drop the
+  // actual answer; migration preserves it.
+  //
+  // Targeted strip: question_geometry / question_axis carry a discriminated
+  // union answer keyed on `kind` (one of: numeric, mcq, free_response, point,
+  // function). Gemini sometimes emits a different value (e.g. "freeResponse"
+  // camelCase, or a typo) which fails the strict discriminator with
+  // "Invalid input" at `answer.kind`. The whole answer is optional on these
+  // blocks, so dropping it lets the exercise save (admin reviews the missing
+  // answer rather than losing the whole block).
+  const ALLOWED_KINDS = new Set(['numeric', 'mcq', 'free_response', 'point', 'function'])
+  for (const block of envelope.blocks as Array<Record<string, unknown>>) {
+    if (!block || typeof block !== 'object') continue
+    if (block.type === 'question_free_response') {
+      const ans = block.answer as Record<string, unknown> | undefined
+      if (ans && typeof ans === 'object') {
+        if (typeof ans.rubric === 'string' && !Array.isArray(ans.acceptedAnswers)) {
+          ans.acceptedAnswers = [ans.rubric]
+        }
       }
     }
+    if (block.type === 'question_geometry' || block.type === 'question_axis') {
+      const ans = block.answer as Record<string, unknown> | undefined
+      if (ans && typeof ans === 'object') {
+        const kind = ans.kind
+        if (typeof kind !== 'string' || !ALLOWED_KINDS.has(kind)) {
+          delete block.answer
+        }
+      }
+    }
+  }
 
-    return b
-  })
+  const MAX_ITERATIONS = 10
+  for (let i = 0; i < MAX_ITERATIONS; i++) {
+    const result = ContentSchema.safeParse(envelope)
+    if (result.success) break
+    let stripped = false
+    for (const issue of result.error.issues) {
+      if (issue.code !== 'unrecognized_keys') continue
+      const keys = (issue as { keys?: string[] }).keys
+      if (!Array.isArray(keys) || keys.length === 0) continue
+      // issue.path points at the parent object that has the unknown keys.
+      // Walk into envelope to find it.
+      let parent: unknown = envelope
+      for (const segment of issue.path) {
+        if (parent && typeof parent === 'object') {
+          parent = (parent as Record<string | number, unknown>)[segment as string | number]
+        }
+      }
+      if (parent && typeof parent === 'object') {
+        for (const k of keys) {
+          delete (parent as Record<string, unknown>)[k]
+        }
+        stripped = true
+      }
+    }
+    if (!stripped) break // no unrecognized_keys remain; other errors will surface at payload.create
+  }
+  return envelope.blocks
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -576,10 +625,16 @@ function parseSolutionDerivationResponseFromText(text: string): Pass2Patch {
   const cleaned = stripCodeFences(text)
   const parsed = JSON.parse(cleaned)
 
+  // Gemini occasionally returns the bare patch array instead of the
+  // documented `{blocks: [...]}` envelope. Wrap it so the schema can match.
+  // Observed live on a geometry deep run — pass-2 returned `[{id, solution, ...}]`
+  // and validation failed with "expected object, received array".
+  const normalized = Array.isArray(parsed) ? { blocks: parsed } : parsed
+
   // Validate against SolutionDerivationOutputSchema using safeParse.
   // On failure, throw a SyntaxError-compatible error so the existing
   // isJsonParseError retry envelope picks it up (same as a raw JSON parse failure).
-  const result = SolutionDerivationOutputSchema.safeParse(parsed)
+  const result = SolutionDerivationOutputSchema.safeParse(normalized)
   if (!result.success) {
     const err = new SyntaxError(`Zod validation failed: ${result.error.message}`)
     throw err
