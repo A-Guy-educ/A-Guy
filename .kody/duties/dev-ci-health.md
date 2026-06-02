@@ -42,9 +42,13 @@ idempotent, so a re-tick reuses the one open issue instead of creating another.
    code defect, make the smallest change that helps — or none, and say so.
    ```
 
-3. **Dispatch the fix:** `dispatch_workflow({ executable: "run", issueNumber: <number> })`.
+3. **Try to dispatch the fix:** `dispatch_workflow({ executable: "run", issueNumber: <number> })`.
+   The tool only fires when this duty is **trusted (Auto)**; if it's in **Ask**
+   mode it dispatches nothing and returns a not-trusted refusal. Read the result.
 
-4. **Notify once:** `ensure_comment({ issue: <number>, key: "dev-ci-red:dispatched", body: "🧭 CTO auto-ran — dispatched @kody run (failing: <names>). The fix lands as a PR into dev; its own CI must pass before merge." })`.
+4. **Notify once, per outcome:**
+   - **Dispatched (Auto)** → `ensure_comment({ issue: <number>, key: "dev-ci-red:dispatched", body: "🧭 CTO auto-ran — dispatched @kody run (failing: <names>). The fix lands as a PR into dev; its own CI must pass before merge." })`.
+   - **Not dispatched (Ask)** → `ensure_comment({ issue: <number>, key: "dev-ci-red:awaiting", body: "🔴 dev CI is failing (<names>). Awaiting operator — grant this duty **Auto** on the dashboard Trust page to auto-dispatch the fix." })`. Do not dispatch.
 
 5. **`submit_state`** with `{ cursor: "idle", data: {}, done: false }`.
 
