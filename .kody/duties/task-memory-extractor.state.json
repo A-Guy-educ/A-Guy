@@ -1,16 +1,16 @@
 {
   "version": 1,
-  "rev": 223,
+  "rev": 224,
   "cursor": "idle",
   "data": {
-    "last_tick": "2026-06-02T09:05:10.712Z",
+    "last_tick": "2026-06-02T18:36:20.263Z",
     "tasks_seen": 59,
     "tasks_processed": 59,
-    "lastFiredAt": "2026-06-02T20:02:21.443Z",
+    "lastFiredAt": "2026-06-02T20:59:30.971Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 19664,
-    "current_tick": "2026-06-02T09:05:10.712Z",
-    "currentFiredAt": "2026-06-02T18:36:20.263Z",
+    "lastDurationMs": 17498,
+    "current_tick": "2026-06-02T18:36:20.263Z",
+    "currentFiredAt": "2026-06-02T20:15:26.443Z",
     "currentDurationMs": 19779,
     "tick_note": "All 59 tasks with memory-recs.json have .extracted markers. No new work.",
     "session": {
@@ -31,7 +31,7 @@
       "push_state": "success"
     },
     "blocked_reason": null,
-    "current_tick_ran": "2026-06-02T09:05:10.712Z",
+    "current_tick_ran": "2026-06-02T18:36:20.263Z",
     "current_tick_result": "all_done",
     "current_tick_summary": "All 59 tasks with memory-recs.json have .extracted markers. No pending work."
   },
