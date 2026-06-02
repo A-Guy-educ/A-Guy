@@ -1,0 +1,14 @@
+{
+  "taskId": "2343",
+  "taskType": "issue",
+  "target": "2343",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Deleted redundant .github/workflows/preview-validation.yml workflow file",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [".github/workflows/preview-validation.yml"],
+  "sessionLog": ".kody/sessions/.jsonl",
+  "startedAt": "2026-06-02T00:00:00.000Z",
+  "finishedAt": "2026-06-02T00:00:00.000Z"
+}
