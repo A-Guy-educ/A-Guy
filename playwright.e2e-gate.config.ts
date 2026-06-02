@@ -57,7 +57,7 @@ export default defineConfig({
     // The release-e2e-gate runner does not share the CI build-job's .next
     // cache, so build if it is missing, then start. CI jobs that already
     // restore .next via actions/cache will skip the build.
-    command: '(test -d .next || pnpm build) && pnpm start',
+    command: '(test -f .next/BUILD_ID || pnpm build) && pnpm start',
     reuseExistingServer: true,
     url: 'http://localhost:3000/api/health',
     timeout: 600000,

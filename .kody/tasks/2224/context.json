@@ -1,0 +1,16 @@
+{
+  "taskId": "2224",
+  "taskType": "pr",
+  "target": "2220-make-coupons-admin-form-accept-fixed-amounts-in-sh",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed CI failures by correcting test expectations. The tests incorrectly expected findByID with overrideAccess:true to return raw stored values (3000), but overrideAccess only bypasses access control - hooks still run and return afterRead-transformed values (30). Also increased beforeAll timeout from 60s to 180s to match vitest hookTimeout config.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "tests/int/coupons.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2224.jsonl",
+  "startedAt": "2026-05-31T15:30:00.000Z",
+  "finishedAt": "2026-05-31T15:40:00.000Z"
+}

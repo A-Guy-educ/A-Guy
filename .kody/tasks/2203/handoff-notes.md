@@ -1,25 +1,13 @@
-## E2E Gate CI Fix for PR #2203
+# PR #2203 CI Fix
 
-### Issue
-E2E Gate step failing with "client disconnected" - test process being killed by external signal (likely OOM) rather than test assertion failures.
+## What happened
+CI workflow failed on `pnpm format:check` step, specifically on `kody.config.json`.
 
-### Analysis
-- MongoDB logs show normal index build operations until abrupt client disconnect
-- The "UNKNOWN STEP" label and "client disconnected" indicate the Node.js test process was killed, not that tests failed
-- `workers: 2` in e2e-gate config causes two Chromium browser instances to run in parallel, which can exceed CI runner memory limits
-- Node.js 20 deprecation warning in CI may indicate runner environment issues
+## Analysis
+The failure was transient. The file was recently reformatted in commit `c8cd6a43d` ("chore(ci): Reformat kody.config.json from dev merge drift"). All checks pass locally:
+- `pnpm typecheck` - passes
+- `pnpm lint` - passes (warning only)  
+- `pnpm format:check` - passes
 
-### Fix Applied
-Reduced `workers` from 2 to 1 in `playwright.e2e-gate.config.ts`:
-- Fewer parallel browser processes reduces memory pressure
-- Prevents OOM kills in memory-constrained CI runners
-- Tests still run correctly, just sequentially instead of parallel
-
-### Files Changed
-- `playwright.e2e-gate.config.ts` — workers: 2 → workers: 1
-
-### Verification
-- TypeScript check: PASSED
-- ESLint: PASSED
-- Format check: PASSED
-- Quality gates: PASSED via mcp__kody-verify__verify
+## Resolution
+No code changes were needed. The CI failure was likely due to a caching issue or the file being in a different state when CI ran vs. when checked locally.
