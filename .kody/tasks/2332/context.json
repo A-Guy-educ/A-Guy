@@ -1,14 +1,14 @@
 {
   "taskId": "2332",
   "taskType": "issue",
-  "target": "docs-drift issue 2332",
+  "target": "2332-docs-drift-exercise-import-2275",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "PR #2275 log-injection fix is doc-irrelevant; no doc changes needed",
+  "reason": "PR #2275 only changed console.error format strings (log injection prevention); doc at docs/exercise-import/README.md describes architecture/endpoints/validation and is unaffected",
   "prUrl": null,
   "runUrl": null,
   "filesTouched": [],
-  "sessionLog": null,
-  "startedAt": "2026-06-02T00:00:00Z",
-  "finishedAt": "2026-06-02T00:00:00Z"
+  "sessionLog": ".kody/sessions/2332.jsonl",
+  "startedAt": "2026-06-02T17:30:00Z",
+  "finishedAt": "2026-06-02T17:30:30Z"
 }
