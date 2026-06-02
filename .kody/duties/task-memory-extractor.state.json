@@ -1,14 +1,14 @@
 {
   "version": 1,
-  "rev": 212,
+  "rev": 213,
   "cursor": "idle",
   "data": {
     "last_tick": "2026-06-02T00:30:00.000Z",
     "tasks_seen": 59,
     "tasks_processed": 59,
-    "lastFiredAt": "2026-06-02T02:34:12.199Z",
+    "lastFiredAt": "2026-06-02T03:59:37.559Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 32865,
+    "lastDurationMs": 14874,
     "current_tick": "2026-06-02T00:30:00.000Z",
     "currentFiredAt": "2026-06-02T01:49:35.712Z",
     "currentDurationMs": 1234,
@@ -31,7 +31,7 @@
       "push_state": "success"
     },
     "blocked_reason": null,
-    "current_tick_ran": "2026-06-02T01:49:35.712Z",
+    "current_tick_ran": "2026-06-02T02:37:59.000Z",
     "current_tick_result": "all_done",
     "current_tick_summary": "59 tasks seen, 59 skipped (already extracted). 0 new memory files written."
   },
