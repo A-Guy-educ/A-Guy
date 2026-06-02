@@ -83,10 +83,15 @@ that mention is the only thing that routes it into the dashboard inbox:
 
 <one or two sentences: what was tested, the verdict, what confirming does>
 
+<!-- kody-duty: {{duty}} -->
 <!-- kody-cmd: @kody qa-goal --issue <tracking> --scope "<title>" -->
 
 _Confirm or dismiss in the dashboard inbox. QA will not act on its own._
 ```
+
+The `<!-- kody-duty: {{duty}} -->` line is **always required** (even on PASS,
+where the `kody-cmd:` line is omitted) — it's how the dashboard keys trust to
+this duty instead of the shared persona. Copy it verbatim.
 
 `<action>` is `verified` (PASS — clear to ship) or `fix` (CONCERNS/FAIL).
 
