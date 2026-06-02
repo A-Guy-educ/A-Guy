@@ -36,5 +36,15 @@
     "default": "run"
   },
   "defaultExecutable": "classify",
-  "defaultPrExecutable": "fix"
+  "defaultPrExecutable": "fix",
+  "onPullRequest": "preview-build",
+  "access": {
+    "allowedAssociations": [
+      "OWNER",
+      "COLLABORATOR",
+      "CONTRIBUTOR",
+      "FIRST_TIME_CONTRIBUTOR",
+      "MEMBER"
+    ]
+  }
 }
