@@ -1776,11 +1776,11 @@ export interface Coupon {
    */
   code: string;
   /**
-   * Percentage: discountValue is a percent (0-100). Fixed: discountValue is in agorot.
+   * Percentage: discountValue is a percent (0–100). Fixed: discountValue is in ILS (e.g. 30 = ₪30 off).
    */
   discountType: 'percentage' | 'fixed';
   /**
-   * Percentage (0-100) or fixed amount in agorot, depending on discountType
+   * Percentage: % off (0–100, e.g. 30 = 30% off). Fixed: ILS amount off (e.g. 30 = ₪30 off, stored as agorot).
    */
   discountValue: number;
   /**
@@ -1818,6 +1818,10 @@ export interface Coupon {
   status?: string | null;
   usageDisplay?: string | null;
   expiresDisplay?: string | null;
+  /**
+   * Formatted discount for quick scanning
+   */
+  discountDisplay?: string | null;
   /**
    * User who created this document
    */
@@ -3873,6 +3877,7 @@ export interface CouponsSelect<T extends boolean = true> {
   status?: T;
   usageDisplay?: T;
   expiresDisplay?: T;
+  discountDisplay?: T;
   createdBy?: T;
   updatedAt?: T;
   createdAt?: T;

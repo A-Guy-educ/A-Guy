@@ -105,13 +105,15 @@ PR #<pr> passed UI review (linked issue #<issue> verified on its preview).
 Approve to squash-merge it.
 
 <!-- kody-staff: qa -->
+<!-- kody-duty: {{duty}} -->
 ```
 
 The action verb `merge` on the marker line is what the inbox parses; **no
 `kody-cmd:` line** — `merge` is executed by the dashboard (the GitHub squash
-merge), not by an `@kody` command, and the engine never auto-merges. Approve
-records under `staff.qa.merge` in the ledger; after 10 clean approvals it
-graduates to `auto` and step 1 stops asking.
+merge), not by an `@kody` command, and the engine never auto-merges. The
+`<!-- kody-duty: {{duty}} -->` line keys trust to THIS duty (not the shared
+persona) — always include it. Approve records under this duty's `merge` action;
+after 10 clean approvals it graduates to `auto` and step 1 stops asking.
 
 **Fix rec (verdict FAIL):**
 
@@ -121,6 +123,7 @@ graduates to `auto` and step 1 stops asking.
 PR #<pr> still fails UI review: <one line — what ui-review found broken>.
 
 <!-- kody-staff: qa -->
+<!-- kody-duty: {{duty}} -->
 <!-- kody-cmd: @kody fix --pr <pr> "<concern>" -->
 ```
 
