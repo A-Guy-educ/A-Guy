@@ -390,13 +390,33 @@ function sanitizeAiBlocks(blocks: unknown[]): unknown[] {
   // Gemini regularly emits `{ type: "free_response", rubric: "answer text" }`
   // instead of `{ acceptedAnswers: ["answer text"] }`. Strip would drop the
   // actual answer; migration preserves it.
+  //
+  // Targeted strip: question_geometry / question_axis carry a discriminated
+  // union answer keyed on `kind` (one of: numeric, mcq, free_response, point,
+  // function). Gemini sometimes emits a different value (e.g. "freeResponse"
+  // camelCase, or a typo) which fails the strict discriminator with
+  // "Invalid input" at `answer.kind`. The whole answer is optional on these
+  // blocks, so dropping it lets the exercise save (admin reviews the missing
+  // answer rather than losing the whole block).
+  const ALLOWED_KINDS = new Set(['numeric', 'mcq', 'free_response', 'point', 'function'])
   for (const block of envelope.blocks as Array<Record<string, unknown>>) {
     if (!block || typeof block !== 'object') continue
-    if (block.type !== 'question_free_response') continue
-    const ans = block.answer as Record<string, unknown> | undefined
-    if (!ans || typeof ans !== 'object') continue
-    if (typeof ans.rubric === 'string' && !Array.isArray(ans.acceptedAnswers)) {
-      ans.acceptedAnswers = [ans.rubric]
+    if (block.type === 'question_free_response') {
+      const ans = block.answer as Record<string, unknown> | undefined
+      if (ans && typeof ans === 'object') {
+        if (typeof ans.rubric === 'string' && !Array.isArray(ans.acceptedAnswers)) {
+          ans.acceptedAnswers = [ans.rubric]
+        }
+      }
+    }
+    if (block.type === 'question_geometry' || block.type === 'question_axis') {
+      const ans = block.answer as Record<string, unknown> | undefined
+      if (ans && typeof ans === 'object') {
+        const kind = ans.kind
+        if (typeof kind !== 'string' || !ALLOWED_KINDS.has(kind)) {
+          delete block.answer
+        }
+      }
     }
   }
 
@@ -605,10 +625,16 @@ function parseSolutionDerivationResponseFromText(text: string): Pass2Patch {
   const cleaned = stripCodeFences(text)
   const parsed = JSON.parse(cleaned)
 
+  // Gemini occasionally returns the bare patch array instead of the
+  // documented `{blocks: [...]}` envelope. Wrap it so the schema can match.
+  // Observed live on a geometry deep run — pass-2 returned `[{id, solution, ...}]`
+  // and validation failed with "expected object, received array".
+  const normalized = Array.isArray(parsed) ? { blocks: parsed } : parsed
+
   // Validate against SolutionDerivationOutputSchema using safeParse.
   // On failure, throw a SyntaxError-compatible error so the existing
   // isJsonParseError retry envelope picks it up (same as a raw JSON parse failure).
-  const result = SolutionDerivationOutputSchema.safeParse(parsed)
+  const result = SolutionDerivationOutputSchema.safeParse(normalized)
   if (!result.success) {
     const err = new SyntaxError(`Zod validation failed: ${result.error.message}`)
     throw err
