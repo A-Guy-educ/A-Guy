@@ -1,14 +1,14 @@
 {
   "taskId": "2203",
   "taskType": "pr",
-  "target": "PR #2203 (dev → main, v0.25.10)",
+  "target": "PR #2203",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Fixed Hebrew content test failure by ensuring NEXT_LOCALE=he cookie is set after authentication in E2E test helpers",
+  "reason": "CI format check on kody.config.json was transient - file passes prettier locally after recent reformat commit c8cd6a43d",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2203",
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26717415259",
-  "filesTouched": ["tests/e2e/helpers/auth.ts"],
-  "sessionLog": ".kody/sessions/",
-  "startedAt": "2026-05-31T16:30:00Z",
-  "finishedAt": "2026-05-31T16:45:00Z"
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26748671139",
+  "filesTouched": [],
+  "sessionLog": ".kody/sessions/2203.jsonl",
+  "startedAt": "2026-06-01T13:30:00.000Z",
+  "finishedAt": "2026-06-01T13:38:00.000Z"
 }
