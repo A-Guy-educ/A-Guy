@@ -1,0 +1,14 @@
+{
+  "taskId": "2332",
+  "taskType": "issue",
+  "target": "docs-drift issue 2332",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "PR #2275 log-injection fix is doc-irrelevant; no doc changes needed",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [],
+  "sessionLog": null,
+  "startedAt": "2026-06-02T00:00:00Z",
+  "finishedAt": "2026-06-02T00:00:00Z"
+}
