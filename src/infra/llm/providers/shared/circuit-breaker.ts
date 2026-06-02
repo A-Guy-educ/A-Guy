@@ -54,7 +54,16 @@ export class CircuitBreaker {
       this.onSuccess()
       return result
     } catch (error) {
-      this.onFailure()
+      // Rate-limit errors are transient quota signals ("back off and retry"),
+      // not provider-down failures. Counting them against the breaker
+      // threshold causes a cascade: one rate-limit trips the breaker, then
+      // every subsequent call in the same batch fails instantly with
+      // CIRCUIT_OPEN — even though Gemini itself is healthy and would just
+      // accept the next call. Skip the counter for these; the caller's
+      // rate-limit backoff loop handles retries.
+      if (!isRateLimitError(error)) {
+        this.onFailure()
+      }
       throw error
     }
   }
@@ -121,6 +130,19 @@ export class CircuitBreaker {
     this.failureCount = 0
     this.lastFailureTime = 0
   }
+}
+
+/**
+ * Detect rate-limit-shaped errors so the breaker can skip counting them.
+ * Matches: typed LLMError with code RATE_LIMIT_ERROR (preferred), and message
+ * fallbacks for raw provider errors that haven't been wrapped yet.
+ */
+function isRateLimitError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false
+  const e = error as { code?: string; message?: string }
+  if (e.code === 'RATE_LIMIT_ERROR') return true
+  const msg = String(e.message ?? '').toLowerCase()
+  return msg.includes('rate limit') || msg.includes('quota')
 }
 
 /**
