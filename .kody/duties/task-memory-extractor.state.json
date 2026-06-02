@@ -1,18 +1,18 @@
 {
   "version": 1,
-  "rev": 219,
+  "rev": 220,
   "cursor": "idle",
   "data": {
     "last_tick": "2026-06-02T03:59:37.559Z",
     "tasks_seen": 100,
     "tasks_processed": 100,
-    "lastFiredAt": "2026-06-02T13:55:49.323Z",
+    "lastFiredAt": "2026-06-02T15:26:15.764Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 141936,
+    "lastDurationMs": 30705,
     "current_tick": "2026-06-02T03:59:37.559Z",
     "currentFiredAt": "2026-06-02T09:05:10.712Z",
     "currentDurationMs": 1234,
-    "tick_note": "All tasks with memory-recs.json have .extracted markers (100 tasks total, but old-format tasks lack memory-recs.json). Script cannot be executed (COO-only-gh constraint). No new work to do.",
+    "tick_note": "All tasks with memory-recs.json have .extracted markers. Script cannot be executed (COO-only-gh constraint). No new work to do.",
     "session": {
       "started": "2026-05-27T17:44:47.000Z",
       "tasks_seen_this_session": 100,
@@ -33,7 +33,7 @@
     "blocked_reason": null,
     "current_tick_ran": "2026-06-02T09:05:10.712Z",
     "current_tick_result": "all_done",
-    "current_tick_summary": "100 tasks total. Old-format tasks (date-stamped/named) lack memory-recs.json. New-format tasks (numeric IDs) all have .extracted. Script not executed (COO-only-gh constraint). No pending work."
+    "current_tick_summary": "All tasks with memory-recs.json have .extracted markers (100 tasks total). Script not executable under COO gh-only constraint. No pending work."
   },
   "done": false
 }
