@@ -1677,6 +1677,7 @@
 - start interactive session interactive-1778075175838-vd0im6 (1b6229b27)
 ## [Unreleased]
 
+- #2359: Add provider choice (Stripe / PayPal) at checkout ([#2360](https://github.com/A-Guy-educ/A-Guy/pull/2360)) — @kodyade[bot] · ⚠️ QA 2026-06-03 (#2370)
 - fix(courses): Restore lesson titles and study/test page types ([#2173](https://github.com/A-Guy-educ/A-Guy/pull/2173)) — @aguyshayb · ⚠️ QA 2026-06-03 (#2358)
 - #2133: Send purchase confirmation email after webhook payment success ([#2143](https://github.com/A-Guy-educ/A-Guy/pull/2143)) — @kodyade[bot]
 - #2140: Replace mobile draggable chat with a toggle FAB + expanding input ([#2155](https://github.com/A-Guy-educ/A-Guy/pull/2155)) — @kodyade[bot]
@@ -1686,7 +1687,7 @@
 - #1764: [Admin] Block management — add, reorder, delete in lesson worksh… ([#1765](https://github.com/A-Guy-educ/A-Guy/pull/1765)) — @aguyaharonyair
 - #2111: Improve admin Coupons list and detail views — show usage stats a… ([#2115](https://github.com/A-Guy-educ/A-Guy/pull/2115)) — @aguyaharonyair
 - #1534: יצירת כפתור צ'אט באדמין לגישה לסוכן AI ([#1591](https://github.com/A-Guy-educ/A-Guy/pull/1591)) — @aguyaharonyair
-- #2110: Add WebhookEvents collection and dedup all webhook handlers on (… ([#2118](https://github.com/A-Guy-educ/A-Guy/pull/2118)) — @aguyaharonyair
+- #2110: Add WebhookEvents collection and dedup all webhook handlers on (… ([#2118](https://github.com/A-Guy-educ/A-Guy/pull/2118)) — @aguyaharonyair · ✅ QA 2026-06-03
 ## [v0.25.9] - 2026-05-26
 
 - chore: release v0.25.9 ([#2121](https://github.com/A-Guy-educ/A-Guy/pull/2121)) — @kodyade[bot]
