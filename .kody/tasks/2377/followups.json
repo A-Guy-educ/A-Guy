@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Consider removing status=published filter from queryCourseBySlug for authenticated users",
+    "body": "The queryCourseBySlug function was also updated to remove status=published filter for authenticated users. This is consistent with queryPublishedCourses. However, this might be intentional - course detail pages might want to always show published courses regardless of auth status.",
+    "rationale": "The change was made for consistency, but the behavior difference between /courses listing (now shows draft) and /courses/:slug (would show draft) might be intentional",
+    "priority": "low"
+  }
+]

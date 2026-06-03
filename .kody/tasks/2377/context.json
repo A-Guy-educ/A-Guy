@@ -1,0 +1,17 @@
+{
+  "taskId": "2377",
+  "taskType": "issue",
+  "target": "2377",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed courses storefront empty state mismatch by making queryPublishedCourses respect access control - authenticated users now see all their accessible courses (not just published ones)",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/repos/queries/courses.ts",
+    "tests/int/courses-storefront-visibility.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2377-p3-investigate-courses-storefront-empty-state-mism.jsonl",
+  "startedAt": "2026-06-03T20:44:00Z",
+  "finishedAt": "2026-06-03T21:17:00Z"
+}
