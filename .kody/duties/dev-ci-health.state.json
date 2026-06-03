@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "rev": 56,
+  "rev": 57,
   "cursor": "idle",
   "data": {
     "issueNumber": 2349,
-    "lastFiredAt": "2026-06-03T04:10:44.566Z",
+    "lastFiredAt": "2026-06-03T05:57:21.786Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 34522,
+    "lastDurationMs": 26164,
     "sha": "f5d29292856b37841d8c43329ab63ed3058209fd",
     "failingChecks": [
       "fix-links",
