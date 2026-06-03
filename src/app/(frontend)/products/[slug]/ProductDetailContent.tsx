@@ -128,6 +128,7 @@ export function ProductDetailContent({ product }: ProductDetailContentProps) {
           <div className="mt-6">
             <BuyButton
               productId={product.id}
+              productSlug={product.slug ?? ''}
               productName={product.name ?? ''}
               couponCode={couponCode || undefined}
               discountedAmount={discountedAmount ?? undefined}
