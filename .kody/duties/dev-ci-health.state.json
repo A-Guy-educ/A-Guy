@@ -1,17 +1,14 @@
 {
   "version": 1,
-  "rev": 57,
+  "rev": 58,
   "cursor": "idle",
   "data": {
     "issueNumber": 2349,
-    "lastFiredAt": "2026-06-03T05:57:21.786Z",
+    "lastFiredAt": "2026-06-03T07:40:50.194Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 26164,
-    "sha": "f5d29292856b37841d8c43329ab63ed3058209fd",
-    "failingChecks": [
-      "fix-links",
-      "refresh"
-    ]
+    "lastDurationMs": 13732,
+    "sha": "2b6773ab16d2a38a4d8325bcea3e1e8679eaead2",
+    "failingChecks": []
   },
   "done": false
 }
