@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "rev": 39,
+  "rev": 40,
   "cursor": "reported",
   "data": {
     "cycle": 6,
@@ -112,9 +112,9 @@
         "verdict": "warn"
       }
     },
-    "lastFiredAt": "2026-06-03T16:15:03.946Z",
+    "lastFiredAt": "2026-06-03T22:35:33.178Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 94748
+    "lastDurationMs": 36511
   },
   "done": false
 }
