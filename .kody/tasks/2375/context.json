@@ -1,0 +1,17 @@
+{
+  "taskId": "2375",
+  "taskType": "issue",
+  "target": "#2375",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed RequireCourseSelection to redirect to /courses instead of / when no gradeLevel, preventing redirect chain to /start",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/guards/RequireCourseSelection.tsx",
+    "tests/e2e/ask-route.e2e.spec.ts"
+  ],
+  "sessionLog": null,
+  "startedAt": "2026-06-03T18:06:00Z",
+  "finishedAt": "2026-06-03T18:10:00Z"
+}
