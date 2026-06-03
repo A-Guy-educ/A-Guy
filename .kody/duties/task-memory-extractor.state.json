@@ -1,22 +1,20 @@
 {
   "version": 1,
-  "rev": 228,
+  "rev": 229,
   "cursor": "idle",
   "data": {
+    "current_tick": "2026-06-03T02:01:26.000Z",
+    "current_tick_ran": "2026-06-03T02:01:26.000Z",
+    "current_tick_result": "all_done",
+    "current_tick_summary": "All 59 tasks with memory-recs.json have .extracted markers. No pending work.",
+    "lastFiredAt": "2026-06-03T02:58:46.779Z",
+    "lastOutcome": "completed",
+    "lastDurationMs": 22601,
     "last_tick": "2026-06-02T20:15:26.443Z",
     "tasks_seen": 59,
     "tasks_processed": 59,
-    "lastFiredAt": "2026-06-03T01:54:30.033Z",
-    "lastOutcome": "completed",
-    "lastDurationMs": 29967,
-    "current_tick": "2026-06-02T22:57:41.196Z",
-    "currentFiredAt": "2026-06-02T22:57:41.196Z",
-    "currentDurationMs": 2847,
-    "tick_note": "All 59 tasks with memory-recs.json have .extracted markers. No new work.",
+    "blocked_reason": null,
     "session": {
-      "started": "2026-05-27T17:44:47.000Z",
-      "tasks_seen_this_session": 59,
-      "tasks_processed_this_session": 59,
       "memory_files_written": [
         "jsx-in-ts-causes-ts1005-error.md",
         "payload-email-send-type-workaround.md",
@@ -28,12 +26,11 @@
         "afterread-hook-siblingdata-vs-value.md",
         "overrideAccess-true-does-not-bypass-hooks.md"
       ],
-      "push_state": "success"
-    },
-    "blocked_reason": null,
-    "current_tick_ran": "2026-06-03T01:54:19.337Z",
-    "current_tick_result": "all_done",
-    "current_tick_summary": "All 59 tasks with memory-recs.json have .extracted markers. No pending work."
+      "push_state": "success",
+      "started": "2026-05-27T17:44:47.000Z",
+      "tasks_processed_this_session": 59,
+      "tasks_seen_this_session": 59
+    }
   },
   "done": false
 }
