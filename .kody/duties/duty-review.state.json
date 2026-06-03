@@ -1,13 +1,14 @@
 {
   "version": 1,
-  "rev": 36,
+  "rev": 37,
   "cursor": "reported",
   "data": {
     "cycle": 5,
-    "lastRunISO": "2026-06-02T18:24:55Z",
-    "nextEligibleISO": "2026-06-03T00:24:55Z",
+    "lastRunISO": "2026-06-03T01:41:05Z",
+    "nextEligibleISO": "2026-06-03T07:41:05Z",
     "reviewed": [
-      "cleanup-branches"
+      "cleanup-branches",
+      "qa"
     ],
     "verdicts": {
       "approval-gate": {
@@ -79,8 +80,8 @@
         "verdict": "warn"
       },
       "qa": {
-        "note": "no kody-job-next-state block; state.json never created; lastRunISO never persisted",
-        "verdict": "warn"
+        "note": "state frozen at 2026-05-23; lastFiredAt and nextEligibleISO both stale (10+ days); no cadence guard to restart; kody-job-next-state never emitted; nextEligibleISO never recalculated",
+        "verdict": "broken"
       },
       "qa-sweep": {
         "note": "lastRunISO frozen at 2026-05-23; duty body updated 2026-05-28 but state not; cursor idle with no open issue — duty completed but engine stopped invoking 5+ days ago",
@@ -111,9 +112,9 @@
         "verdict": "warn"
       }
     },
-    "lastFiredAt": "2026-06-02T18:25:20.694Z",
+    "lastFiredAt": "2026-06-03T01:41:31.262Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 196754
+    "lastDurationMs": 225820
   },
   "done": false
 }
