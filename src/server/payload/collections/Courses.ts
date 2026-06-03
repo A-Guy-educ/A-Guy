@@ -202,6 +202,9 @@ export const Courses: CollectionConfig = {
       index: true,
       admin: {
         position: 'sidebar',
+        components: {
+          Cell: '@/ui/admin/Courses/Cells/CategoriesCell#CategoriesCell',
+        },
       },
     },
     {
