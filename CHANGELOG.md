@@ -1677,7 +1677,7 @@
 - start interactive session interactive-1778075175838-vd0im6 (1b6229b27)
 ## [Unreleased]
 
-- fix(courses): Restore lesson titles and study/test page types ([#2173](https://github.com/A-Guy-educ/A-Guy/pull/2173)) — @aguyshayb · 🔄 QA (#2358)
+- fix(courses): Restore lesson titles and study/test page types ([#2173](https://github.com/A-Guy-educ/A-Guy/pull/2173)) — @aguyshayb · ⚠️ QA 2026-06-03 (#2358)
 - #2133: Send purchase confirmation email after webhook payment success ([#2143](https://github.com/A-Guy-educ/A-Guy/pull/2143)) — @kodyade[bot]
 - #2140: Replace mobile draggable chat with a toggle FAB + expanding input ([#2155](https://github.com/A-Guy-educ/A-Guy/pull/2155)) — @kodyade[bot]
 - #1823: [P2] Stats page chart area renders empty ([#1860](https://github.com/A-Guy-educ/A-Guy/pull/1860)) — @aguyaharonyair
