@@ -60,10 +60,15 @@ that mention is the only thing that routes it into the dashboard inbox:
 
 <one or two sentences: routes covered, verdict, finding count>
 
+<!-- kody-duty: {{duty}} -->
 <!-- kody-cmd: @kody qa-goal --issue <tracking> --scope "sweep" -->
 
 _Confirm or dismiss in the dashboard inbox. QA will not act on its own._
 ```
+
+The `<!-- kody-duty: {{duty}} -->` line is **always required** (even on a clean
+sweep, where the `kody-cmd:` line is omitted) — it keys trust to this duty.
+Copy it verbatim.
 
 `<action>` is `fix` when the sweep opened findings, or `note` for a clean
 sweep. **On findings**, the `kody-cmd` is
