@@ -5,6 +5,7 @@ import { GRADE_COOKIE_NAME } from '@/client/state/localStorage/userProfile'
 import { pageMetadata } from '@/infra/seo/pageMetadata'
 import { StudyContent } from '../study/_components/StudyContent'
 import { prefetchStudyData } from '@/server/repos/queries/study-page'
+import { RequireCourseSelection } from '@/ui/web/guards/RequireCourseSelection'
 
 export default async function PracticePage() {
   const cookieStore = await cookies()
@@ -16,7 +17,9 @@ export default async function PracticePage() {
 
   return (
     <div>
-      <StudyContent lessonType="practice" prefetchedData={prefetchedData} />
+      <RequireCourseSelection>
+        <StudyContent lessonType="practice" prefetchedData={prefetchedData} />
+      </RequireCourseSelection>
     </div>
   )
 }

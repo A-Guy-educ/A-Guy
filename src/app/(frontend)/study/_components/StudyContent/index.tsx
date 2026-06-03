@@ -133,7 +133,7 @@ export function StudyContent({
     async function loadData() {
       const profile = getUserProfile()
       if (!profile?.gradeLevel) {
-        window.location.href = '/'
+        window.location.href = '/courses'
         return
       }
 

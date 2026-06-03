@@ -1,0 +1,18 @@
+{
+  "taskId": "2376",
+  "taskType": "issue",
+  "target": "issue:#2376",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed /practice redirect: added RequireCourseSelection guard to PracticePage (matching StudyPage pattern) and changed StudyContent loadData() fallback redirect from '/' to '/courses'",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/practice/page.tsx",
+    "src/app/(frontend)/study/_components/StudyContent/index.tsx",
+    "tests/int/study-content-redirect.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2376-p2-restore-practice-route-or-remove-from-route-inv.jsonl",
+  "startedAt": "2026-06-03T19:25:00Z",
+  "finishedAt": "2026-06-03T19:51:00Z"
+}

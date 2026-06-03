@@ -1,0 +1,8 @@
+[
+  {
+    "title": "StudyPage also lacks RequireCourseSelection wrapper",
+    "body": "src/app/(frontend)/study/page.tsx renders StudyContent without RequireCourseSelection, relying on StudyContent's loadData() to redirect to /courses. This works but is inconsistent with the guard pattern. Consider adding RequireCourseSelection for consistency.",
+    "rationale": "Both /study and /practice should follow the same guard pattern for grade-level-gated routes.",
+    "priority": "low"
+  }
+]
