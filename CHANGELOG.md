@@ -1680,7 +1680,7 @@
 - #2359: Add provider choice (Stripe / PayPal) at checkout ([#2360](https://github.com/A-Guy-educ/A-Guy/pull/2360)) — @kodyade[bot] · ⚠️ QA 2026-06-03 (#2370)
 - fix(courses): Restore lesson titles and study/test page types ([#2173](https://github.com/A-Guy-educ/A-Guy/pull/2173)) — @aguyshayb · ⚠️ QA 2026-06-03 (#2358)
 - #2133: Send purchase confirmation email after webhook payment success ([#2143](https://github.com/A-Guy-educ/A-Guy/pull/2143)) — @kodyade[bot] · ⚠️ QA 2026-06-03 (#2383)
-- #2140: Replace mobile draggable chat with a toggle FAB + expanding input ([#2155](https://github.com/A-Guy-educ/A-Guy/pull/2155)) — @kodyade[bot] · 🔄 QA (#2389)
+- #2140: Replace mobile draggable chat with a toggle FAB + expanding input ([#2155](https://github.com/A-Guy-educ/A-Guy/pull/2155)) — @kodyade[bot] · ⚠️ QA 2026-06-03 (#2389)
 - #1823: [P2] Stats page chart area renders empty ([#1860](https://github.com/A-Guy-educ/A-Guy/pull/1860)) — @aguyaharonyair
 - #2135: Fix PaymentStats race condition with atomic $inc upsert and uniq… ([#2142](https://github.com/A-Guy-educ/A-Guy/pull/2142)) — @kodyade[bot]
 - #2134: User can see their purchases and active entitlements at /account… ([#2146](https://github.com/A-Guy-educ/A-Guy/pull/2146)) — @kodyade[bot]
