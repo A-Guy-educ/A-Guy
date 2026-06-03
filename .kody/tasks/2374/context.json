@@ -1,0 +1,17 @@
+{
+  "taskId": "2374",
+  "taskType": "issue",
+  "target": "issue #2374",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed CSP img-src directive to include www.gravatar.com",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "next.config.js",
+    "tests/int/csp-vercel-feedback-admin.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2374.jsonl",
+  "startedAt": "2026-06-03T16:21:00Z",
+  "finishedAt": "2026-06-03T16:24:00Z"
+}
