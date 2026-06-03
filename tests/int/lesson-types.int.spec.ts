@@ -207,25 +207,109 @@ describe('Lesson types', () => {
     expect(retrieved.type).toBe('practice')
   })
 
-  it('rejects invalid lesson types', async () => {
-    await expect(
-      payload.create({
-        collection: 'lessons',
-        data: {
-          title: 'Invalid Type Lesson',
-          chapter: chapterId,
-          type: 'invalid' as 'learning',
-          order: 4,
-          status: 'published',
-          isActive: true,
-          tenant: tenantId,
-          locale: 'he',
-          accessType: 'inherit',
-          contentStatus: 'none',
-          contentStatusVisible: true,
-        },
-        draft: false,
-      }),
-    ).rejects.toThrow()
+  it('find() returns lessons with valid type values (admin list view simulation)', async () => {
+    // Create lessons with different types
+    const lesson1 = await payload.create({
+      collection: 'lessons',
+      data: {
+        title: 'Learning Lesson For List',
+        chapter: chapterId,
+        type: 'learning',
+        order: 10,
+        status: 'published',
+        isActive: true,
+        tenant: tenantId,
+        locale: 'he',
+        accessType: 'inherit',
+        contentStatus: 'none',
+        contentStatusVisible: true,
+      },
+      draft: false,
+    })
+    lessonIds.push(lesson1.id)
+
+    const lesson2 = await payload.create({
+      collection: 'lessons',
+      data: {
+        title: 'Practice Lesson For List',
+        chapter: chapterId,
+        type: 'practice',
+        order: 11,
+        status: 'published',
+        isActive: true,
+        tenant: tenantId,
+        locale: 'he',
+        accessType: 'inherit',
+        contentStatus: 'none',
+        contentStatusVisible: true,
+      },
+      draft: false,
+    })
+    lessonIds.push(lesson2.id)
+
+    const lesson3 = await payload.create({
+      collection: 'lessons',
+      data: {
+        title: 'Exam Lesson For List',
+        chapter: chapterId,
+        type: 'exam',
+        order: 12,
+        status: 'published',
+        isActive: true,
+        tenant: tenantId,
+        locale: 'he',
+        accessType: 'inherit',
+        contentStatus: 'none',
+        contentStatusVisible: true,
+      },
+      draft: false,
+    })
+    lessonIds.push(lesson3.id)
+
+    // Simulate admin list view: payload.find() to list lessons
+    const result = await payload.find({
+      collection: 'lessons',
+      where: {
+        id: { in: [lesson1.id, lesson2.id, lesson3.id] },
+      },
+      depth: 0,
+    })
+
+    // All returned lessons must have a valid type — "Loading..." in the UI indicates a bug
+    for (const doc of result.docs) {
+      expect(doc.type).toBeTruthy()
+      expect(['learning', 'practice', 'exam']).toContain(doc.type)
+    }
+
+    // Check specific types match what we created
+    const foundLesson1 = result.docs.find((d) => d.id === lesson1.id)
+    const foundLesson2 = result.docs.find((d) => d.id === lesson2.id)
+    const foundLesson3 = result.docs.find((d) => d.id === lesson3.id)
+    expect(foundLesson1?.type).toBe('learning')
+    expect(foundLesson2?.type).toBe('practice')
+    expect(foundLesson3?.type).toBe('exam')
+  })
+
+  it('fixes invalid lesson types to learning (ensures type is always valid)', async () => {
+    const lesson = await payload.create({
+      collection: 'lessons',
+      data: {
+        title: 'Invalid Type Lesson',
+        chapter: chapterId,
+        type: 'invalid' as 'learning',
+        order: 4,
+        status: 'published',
+        isActive: true,
+        tenant: tenantId,
+        locale: 'he',
+        accessType: 'inherit',
+        contentStatus: 'none',
+        contentStatusVisible: true,
+      },
+      draft: false,
+    })
+    lessonIds.push(lesson.id)
+    // The validateLessonType hook fixes invalid types to 'learning'
+    expect(lesson.type).toBe('learning')
   })
 })

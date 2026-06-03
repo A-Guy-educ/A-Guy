@@ -1,0 +1,17 @@
+{
+  "taskId": "2362",
+  "taskType": "issue",
+  "target": "2362-p2-lessons-list-type-column-shows-loading-instead",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed afterRead hook to persist type field fixes even when req.user is null during find() list queries. Also updated the test that expected rejection of invalid types (old behavior) to expect the correct fix-to-learning behavior (per issue: 'ensure type field is always valid').",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/collections/Lessons.ts",
+    "tests/int/lesson-types.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2362-session.jsonl",
+  "startedAt": "2026-06-03T11:20:00Z",
+  "finishedAt": "2026-06-03T12:05:00Z"
+}

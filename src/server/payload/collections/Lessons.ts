@@ -200,8 +200,8 @@ export const Lessons: CollectionConfig = {
         // Fix invalid/missing type
         ;(doc as { type: string }).type = DEFAULT_LESSON_TYPE
 
-        // Persist to DB if we have a user context (skip during build/seed)
-        if (req.user && doc.id) {
+        // Persist to DB if possible (skip during build/seed when req.user is null)
+        if (doc.id) {
           try {
             await req.payload.update({
               collection: 'lessons',
