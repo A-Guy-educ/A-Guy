@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "rev": 252,
+  "rev": 253,
   "cursor": "idle",
   "data": {
-    "lastRunISO": "2026-06-03T19:27:14Z",
+    "lastRunISO": "2026-06-03T21:59:00Z",
     "proposed": {
       "sentry-digest": {
         "firstSuggestedISO": "2026-05-20T12:37:00Z",
@@ -26,9 +26,9 @@
         "lastWrittenISO": "2026-05-26T08:39:00Z"
       }
     },
-    "lastFiredAt": "2026-06-03T21:43:46.317Z",
+    "lastFiredAt": "2026-06-03T22:36:13.305Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 47897
+    "lastDurationMs": 34330
   },
   "done": false
 }
