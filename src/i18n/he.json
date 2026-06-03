@@ -778,8 +778,11 @@
       "productNotFound": "מוצר זה אינו זמין עוד.",
       "productNotActive": "מוצר זה אינו זמין עוד.",
       "invalidCoupon": "קוד הקופון אינו תקף או פג תוקף.",
-      "checkoutFailed": "לא ניתן להתחיל את התשלום. אנא נסה שוב."
-    }
+      "checkoutFailed": "לא ניתן להתחיל את התשלום. אנא נסה שוב.",
+      "providerNotConfigured": "ספק התשלום לא הוגדר. אנא צור קשר עם התמיכה."
+    },
+    "payWithCard": "שלם בכרטיס אשראי",
+    "payWithPaypal": "שלם עם PayPal"
   },
   "checkout": {
     "success": {
