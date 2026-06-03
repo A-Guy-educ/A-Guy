@@ -1,0 +1,17 @@
+{
+  "taskId": "2385",
+  "taskType": "issue",
+  "target": "2385",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed React hydration error #418 on purchase detail page by changing depth:0 to depth:1 for product population and restructuring notFound() calls outside try-catch blocks",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/account/purchases/[transactionId]/page.tsx",
+    "tests/e2e/purchase-detail.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/vibe-2199-1780078263818-vyyceh.jsonl",
+  "startedAt": "2026-06-03T21:43:56Z",
+  "finishedAt": "2026-06-03T22:14:41Z"
+}
