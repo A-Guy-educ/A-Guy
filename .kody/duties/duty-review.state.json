@@ -1,13 +1,14 @@
 {
   "version": 1,
-  "rev": 38,
+  "rev": 39,
   "cursor": "reported",
   "data": {
     "cycle": 6,
-    "lastRunISO": "2026-06-03T09:21:39Z",
-    "nextEligibleISO": "2026-06-03T15:21:39Z",
+    "lastRunISO": "2026-06-03T16:14:43Z",
+    "nextEligibleISO": "2026-06-03T22:14:43Z",
     "reviewed": [
-      "approval-gate"
+      "approval-gate",
+      "architecture-audit"
     ],
     "verdicts": {
       "approval-gate": {
@@ -15,7 +16,7 @@
         "verdict": "broken"
       },
       "architecture-audit": {
-        "note": "disabled=true but referenced script does not exist; state path points to deprecated .kody/jobs/",
+        "note": "script never existed; state path in body points to deprecated .kody/jobs/; procedure commits + pushes violating one-action-max",
         "verdict": "broken"
       },
       "ceo-performance-review": {
@@ -78,16 +79,16 @@
         "note": "no kody-job-next-state block; state never created; disabled=true design review only",
         "verdict": "warn"
       },
-      "qa": {
-        "note": "state frozen at 2026-05-23; lastFiredAt and nextEligibleISO both stale (10+ days); no cadence guard to restart",
-        "verdict": "broken"
-      },
       "qa-sweep": {
         "note": "lastRunISO frozen at 2026-05-23; body updated 2026-05-28 but state not; cursor idle with no open issue",
         "verdict": "broken"
       },
       "qa-verify": {
         "note": "state.json never created; duty body created 2026-05-27, 0 commits to state file ever",
+        "verdict": "broken"
+      },
+      "qa": {
+        "note": "state frozen at 2026-05-23; lastFiredAt and nextEligibleISO both stale (10+ days); no cadence guard to restart",
         "verdict": "broken"
       },
       "redispatch": {
@@ -111,9 +112,9 @@
         "verdict": "warn"
       }
     },
-    "lastFiredAt": "2026-06-03T09:22:04.932Z",
+    "lastFiredAt": "2026-06-03T16:15:03.946Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 137273
+    "lastDurationMs": 94748
   },
   "done": false
 }
