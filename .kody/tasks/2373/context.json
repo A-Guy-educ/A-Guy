@@ -1,0 +1,17 @@
+{
+  "taskId": "2373",
+  "taskType": "issue",
+  "target": "issue #2373",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed depth:0 → depth:1 in transaction detail page so product relationship is populated and productName is extracted correctly",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/account/purchases/[transactionId]/page.tsx",
+    "tests/int/purchase-detail-product-name.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2373-p2-purchase-detail-shows-unknown-product-instead-o.jsonl",
+  "startedAt": "2026-06-03T18:08:00Z",
+  "finishedAt": "2026-06-03T18:09:30Z"
+}

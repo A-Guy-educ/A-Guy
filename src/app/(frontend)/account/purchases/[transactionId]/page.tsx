@@ -61,7 +61,7 @@ export default async function TransactionDetailPage({ params: paramsPromise }: P
     const tx = await payload.findByID({
       collection: 'transactions',
       id: transactionId,
-      depth: 0,
+      depth: 1,
       overrideAccess: true,
     })
 
