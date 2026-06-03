@@ -39,21 +39,20 @@ const validateVisibleRenderers: CollectionBeforeChangeHook = async ({ data, oper
 }
 
 /**
- * Ensures the `type` field is always set to a valid value on create/update.
- * Fixes legacy lessons that may have null/invalid type due to schema changes.
+ * Validates the `type` field is always set to a valid value on create/update.
+ * Rejects explicit invalid values (legacy bad data should be fixed via afterRead hook).
  */
 const validateLessonType: CollectionBeforeChangeHook = async ({ data, operation }) => {
   if (operation !== 'create' && operation !== 'update') return data
   if (!data) return data
 
   const type = (data as { type?: string }).type
-  if (type && (VALID_LESSON_TYPES as readonly string[]).includes(type)) {
+  // Null/undefined will be filled by defaultValue — only reject explicitly bad values
+  if (type == null || (VALID_LESSON_TYPES as readonly string[]).includes(type)) {
     return data
   }
 
-  // Fix null/undefined/invalid type with default
-  ;(data as { type: string }).type = DEFAULT_LESSON_TYPE
-  return data
+  throw new Error(`Invalid lesson type "${type}". Must be one of: ${VALID_LESSON_TYPES.join(', ')}`)
 }
 
 export const Lessons: CollectionConfig = {
