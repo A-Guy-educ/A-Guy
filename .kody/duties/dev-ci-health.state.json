@@ -1,16 +1,14 @@
 {
   "version": 1,
-  "rev": 60,
+  "rev": 61,
   "cursor": "idle",
   "data": {
+    "failingChecks": [],
     "issueNumber": 2349,
-    "lastFiredAt": "2026-06-03T11:20:40.976Z",
+    "lastFiredAt": "2026-06-03T12:57:26.850Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 20236,
-    "sha": "edded074fe7af9167325f3d9556313d4b0297109",
-    "failingChecks": [
-      "hygiene"
-    ]
+    "lastDurationMs": 17562,
+    "sha": "2b60ac02a3b82d428cbc84a1fa48fa2c62cd845e"
   },
   "done": false
 }
