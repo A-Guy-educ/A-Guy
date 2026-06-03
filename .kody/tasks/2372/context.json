@@ -1,0 +1,17 @@
+{
+  "taskId": "2372",
+  "taskType": "issue",
+  "target": "2372",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "PayPal checkout 500 bug fixed: getPaymentEnv() threw a differently-formatted error message than the route checked for. Fixed by using includes() instead of exact string equality for credential error detection.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/payments/checkout/route.ts",
+    "tests/int/paypal-checkout-error-handling.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/v2-verify-1779801380.jsonl",
+  "startedAt": "2026-06-03T16:20:00Z",
+  "finishedAt": "2026-06-03T16:34:40Z"
+}
