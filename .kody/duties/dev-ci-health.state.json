@@ -1,18 +1,18 @@
 {
   "version": 1,
-  "rev": 71,
+  "rev": 72,
   "cursor": "idle",
   "data": {
     "failingChecks": [
-      "inspect",
+      "refresh",
       "Fast Gate"
     ],
     "issueNumber": 2349,
-    "lastFiredAt": "2026-06-04T01:33:10.486Z",
+    "lastFiredAt": "2026-06-04T02:45:55.502Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 28663,
-    "sha": "bb983e4d2e2b5cb27b5fb7e5857e5c508f875ecb",
-    "note": "fix already in flight via issue 2349, did not re-dispatch"
+    "lastDurationMs": 44106,
+    "sha": "0e15227e456359299e9469b2847cdee1ba72ddf1",
+    "note": "fix already in flight via issue 2349, did not re-dispatch — new failures on new SHA but issue still open (dedup holds)"
   },
   "done": false
 }
