@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "rev": 8,
+  "rev": 9,
   "cursor": "idle",
   "data": {
     "lastRunISO": "2026-06-01T23:02:02Z",
     "nextEligibleISO": "2026-06-02T23:02:02Z",
-    "lastFiredAt": "2026-06-02T23:40:02.884Z",
+    "lastFiredAt": "2026-06-04T00:12:08.551Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 64050,
+    "lastDurationMs": 31117,
     "disabledReason": null,
     "verificationDone": true,
     "verificationNotes": "chore --issue verb confirmed in engine README. Coverage heuristic (>=4 src files, no header or <50% modules @ai-summary) is clear and actionable. Job can be re-enabled by flipping disabled to false in job definition."
