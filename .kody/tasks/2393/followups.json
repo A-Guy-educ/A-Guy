@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Consider adding field-level update access control to derived fields",
+    "body": "The fix adds admin: { readOnly: true } to status, usageDisplay, expiresDisplay, and discountDisplay, which prevents the admin UI from editing these fields. However, a direct API call with overrideAccess: true could still write to these fields. Consider adding field-level access: { update: () => false } to truly prevent updates via the API. The usesCount field at line 189 of Coupons.ts only has admin: { readOnly: true } and no field-level access update restriction, so this would be a new hardening step beyond the current scope.",
+    "rationale": "Defense in depth: admin: { readOnly: true } is UI-only. A determined API caller could still corrupt stored derived values.",
+    "priority": "low"
+  }
+]

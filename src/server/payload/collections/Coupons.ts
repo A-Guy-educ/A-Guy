@@ -224,6 +224,7 @@ export const Coupons: CollectionConfig = {
       name: 'status',
       type: 'text',
       admin: {
+        readOnly: true,
         components: {
           Cell: '@/ui/admin/Coupons/Cells/StatusCell#CouponStatusCell',
         },
@@ -236,6 +237,7 @@ export const Coupons: CollectionConfig = {
       name: 'usageDisplay',
       type: 'text',
       admin: {
+        readOnly: true,
         components: {
           Cell: '@/ui/admin/Coupons/Cells/UsageCell#CouponUsageCell',
         },
@@ -249,6 +251,7 @@ export const Coupons: CollectionConfig = {
       name: 'expiresDisplay',
       type: 'text',
       admin: {
+        readOnly: true,
         components: {
           Cell: '@/ui/admin/Coupons/Cells/ExpiresCell#CouponExpiresCell',
         },
@@ -263,6 +266,7 @@ export const Coupons: CollectionConfig = {
       name: 'discountDisplay',
       type: 'text',
       admin: {
+        readOnly: true,
         components: {
           Cell: '@/ui/admin/Coupons/Cells/DiscountDisplayCell#CouponDiscountDisplayCell',
         },

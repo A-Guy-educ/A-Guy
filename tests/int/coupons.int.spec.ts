@@ -950,6 +950,74 @@ describe.skipIf(!hasDatabaseUrl)('Coupons Collection', () => {
   })
 
   // -------------------------------------------------------------------------
+  // Derived fields should not be over-writable by admin form submission
+  // -------------------------------------------------------------------------
+
+  describe('Derived fields are read-only in admin', () => {
+    it('should not persist admin-submitted arbitrary values for status, usageDisplay, expiresDisplay, discountDisplay', async () => {
+      const admin = await getAdminUser()
+
+      const coupon = await payload.create({
+        collection: 'coupons',
+        data: {
+          code: `DERIVED-READONLY-${Date.now()}`,
+          discountType: 'percentage',
+          discountValue: 10,
+          currency: 'ILS',
+          maxUses: 100,
+          usesCount: 5,
+          isActive: true,
+        },
+        user: admin as any,
+        overrideAccess: false,
+      })
+      trackCoupon(coupon.id)
+
+      // Read back to get the expected computed values
+      const original = await payload.findByID({
+        collection: 'coupons',
+        id: coupon.id,
+        overrideAccess: true,
+      })
+      expect((original as any).status).toBe('Active')
+      expect((original as any).usageDisplay).toBe('5 / 100')
+      expect((original as any).discountDisplay).toBe('10%')
+
+      // Simulate admin submitting the form with arbitrary values for derived fields
+      // (this is what happens when an admin edits these fields in the admin UI)
+      await payload.update({
+        collection: 'coupons',
+        id: coupon.id,
+        data: {
+          status: 'HACKED_STATUS',
+          usageDisplay: 'HACKED_USAGE',
+          expiresDisplay: 'HACKED_EXPIRES',
+          discountDisplay: 'HACKED_DISCOUNT',
+        },
+        user: admin as any,
+        overrideAccess: false,
+      })
+
+      // Re-read and verify derived fields still show computed values, not submitted ones
+      const reRead = await payload.findByID({
+        collection: 'coupons',
+        id: coupon.id,
+        overrideAccess: true,
+      })
+
+      // The derived fields must NOT reflect the admin-submitted arbitrary values
+      expect((reRead as any).status).not.toBe('HACKED_STATUS')
+      expect((reRead as any).status).toBe('Active')
+
+      expect((reRead as any).usageDisplay).not.toBe('HACKED_USAGE')
+      expect((reRead as any).usageDisplay).toBe('5 / 100')
+
+      expect((reRead as any).discountDisplay).not.toBe('HACKED_DISCOUNT')
+      expect((reRead as any).discountDisplay).toBe('10%')
+    })
+  })
+
+  // -------------------------------------------------------------------------
   // Computed fields (afterRead hooks)
   // -------------------------------------------------------------------------
 
