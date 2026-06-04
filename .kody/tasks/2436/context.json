@@ -1,0 +1,17 @@
+{
+  "taskId": "2436",
+  "taskType": "issue",
+  "target": "2436-p1-no-stripe-webhooks-received-all-transactions-st",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added payment_intent.succeeded handler to Stripe webhook route + wrote 2 tests",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/webhooks/stripe/route.ts",
+    "tests/int/payment-webhook-entitlements.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2436.jsonl",
+  "startedAt": "2026-06-04T17:41:00Z",
+  "finishedAt": "2026-06-04T17:43:45Z"
+}

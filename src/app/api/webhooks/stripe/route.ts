@@ -612,6 +612,96 @@ async function handleEvent(
       break
     }
 
+    case 'payment_intent.succeeded': {
+      const paymentIntentId = event.data.object.id as string
+
+      // Look up transaction by paymentIntentId
+      let transactions = await payload.find({
+        collection: 'transactions',
+        where: {
+          paymentIntentId: { equals: paymentIntentId },
+        },
+        limit: 1,
+        depth: 0,
+        overrideAccess: true,
+      })
+
+      if (transactions.totalDocs === 0) {
+        payload.logger.warn(
+          { paymentIntentId },
+          'Stripe webhook: transaction not found for payment_intent.succeeded',
+        )
+        return
+      }
+
+      const transaction = transactions.docs[0]
+
+      // Idempotency: skip if entitlements already granted
+      if (!transaction.entitlementsGrantedAt) {
+        await grantProductEntitlements(
+          transaction.user as string,
+          transaction.product as string,
+          transaction.id,
+        )
+
+        await payload.update({
+          collection: 'transactions',
+          id: transaction.id,
+          data: {
+            status: 'succeeded',
+            entitlementsGrantedAt: new Date().toISOString(),
+          },
+          overrideAccess: true,
+        })
+      }
+
+      // Coupon consumption — independent from entitlementsGrantedAt, idempotent via couponConsumedAt.
+      // Attempt consumption if couponConsumedAt is null (regardless of entitlementsGrantedAt).
+      const piTxMetadata = transaction.metadata as
+        | {
+            appliedCoupon?: {
+              code: string
+              discountType: string
+              discountValue: number
+              originalAmount?: number
+              discountedAmount?: number
+            } | null
+          }
+        | null
+        | undefined
+      if (!transaction.couponConsumedAt && piTxMetadata?.appliedCoupon) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await consumeCouponOnPayment(payload, transaction as any, transaction.tenant as string)
+        } catch (err) {
+          payload.logger.error(
+            { error: err, transactionId: transaction.id },
+            'Coupon consumption failed — returning 500 so provider retries',
+          )
+          throw err
+        }
+        await payload.update({
+          collection: 'transactions',
+          id: transaction.id,
+          data: { couponConsumedAt: new Date().toISOString() },
+          overrideAccess: true,
+        })
+      }
+
+      // Send purchase receipt email — fire-and-forget.
+      void sendPurchaseReceipt(payload, {
+        transactionId: transaction.id,
+        userId: typeof transaction.user === 'object' ? transaction.user.id : transaction.user,
+        productId:
+          typeof transaction.product === 'object' ? transaction.product.id : transaction.product,
+        providerTransactionId: transaction.providerTransactionId,
+        amount: transaction.amount as number,
+        currency: transaction.currency as string,
+        appliedCoupon: piTxMetadata?.appliedCoupon ?? null,
+      })
+      break
+    }
+
     default:
       // Unhandled event type — acknowledge without processing
       break

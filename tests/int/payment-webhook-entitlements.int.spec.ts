@@ -1089,6 +1089,126 @@ describe('Stripe webhook handler', () => {
       .catch(() => {})
   })
 
+  it('payment_intent.succeeded should update transaction to succeeded and grant entitlements', async () => {
+    // Stripe can send payment_intent.succeeded events for direct PaymentIntents API payments.
+    // The handler must process these events to avoid leaving transactions stuck in pending.
+    const paymentIntentId = `pi_succeeded_${Date.now()}`
+    const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+    vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+      id: 'evt_pi_succeeded',
+      type: 'payment_intent.succeeded',
+      data: { object: { id: paymentIntentId, status: 'succeeded' } },
+    } as any)
+
+    // Create a transaction with this paymentIntentId
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'stripe',
+        providerTransactionId: `cs_fallback_${Date.now()}`, // session ID still stored
+        paymentIntentId: paymentIntentId, // payment intent ID for lookup
+        status: 'pending',
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    const req = new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig_test' },
+    })
+
+    const res = await stripeWebhookHandler(req)
+    expect(res.status).toBe(200)
+
+    const updated = await payload.findByID({
+      collection: 'transactions',
+      id: tx.id,
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect(updated.status).toBe('succeeded')
+
+    // Entitlements should have been granted
+    const user = await payload.findByID({
+      collection: 'users',
+      id: userId,
+      depth: 0,
+      overrideAccess: true,
+    })
+    const courseEntitlements = (user as any).courseEntitlements || []
+    const hasLessonEntitlement = courseEntitlements.some(
+      (e: any) => e.course?.toString() === lessonId || e.course === lessonId,
+    )
+    expect(hasLessonEntitlement).toBe(true)
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+
+  it('payment_intent.succeeded should be idempotent — skip if entitlementsGrantedAt is set', async () => {
+    const paymentIntentId = `pi_succeeded_idem_${Date.now()}`
+    const { verifyStripeWebhook } = await import('@/lib/payment/stripe')
+    vi.mocked(verifyStripeWebhook).mockResolvedValueOnce({
+      id: 'evt_pi_idem',
+      type: 'payment_intent.succeeded',
+      data: { object: { id: paymentIntentId, status: 'succeeded' } },
+    } as any)
+
+    const tx = await payload.create({
+      collection: 'transactions',
+      data: {
+        user: userId,
+        product: productId,
+        provider: 'stripe',
+        providerTransactionId: `cs_pi_idem_${Date.now()}`,
+        paymentIntentId: paymentIntentId,
+        status: 'succeeded',
+        entitlementsGrantedAt: new Date().toISOString(), // Already granted — skip re-grant
+        amount: 1000,
+        currency: 'ILS',
+        tenant: tenantId,
+      } as any,
+      overrideAccess: true,
+    })
+
+    // Clear entitlements so we can verify re-grant was NOT called
+    const usersCollection = payload.db.collections['users']
+    await usersCollection.updateOne(
+      { _id: new ObjectId(userId) },
+      { $set: { courseEntitlements: [], featureEntitlements: [] } },
+    )
+
+    const req = new NextRequest('http://localhost/api/webhooks/stripe', {
+      method: 'POST',
+      headers: { 'stripe-signature': 'sig_test' },
+    })
+
+    await stripeWebhookHandler(req)
+
+    // Entitlements should NOT have been re-granted (entitlementsGrantedAt already set)
+    const user = await payload.findByID({
+      collection: 'users',
+      id: userId,
+      depth: 0,
+      overrideAccess: true,
+    })
+    const courseEntitlements = (user as any).courseEntitlements || []
+    const hasEntitlement = courseEntitlements.some(
+      (e: any) => e.course?.toString() === lessonId || e.course === lessonId,
+    )
+    expect(hasEntitlement).toBe(false)
+
+    await payload
+      .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
+      .catch(() => {})
+  })
+
   it('charge.refunded: full refund should NOT overwrite refundedBy set by admin', async () => {
     // When an admin initiates a refund via the admin route, refundedBy is set to the admin.
     // When charge.refunded fires afterward, it should NOT null out refundedBy.
