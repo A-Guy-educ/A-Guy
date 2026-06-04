@@ -1,0 +1,14 @@
+{
+  "taskId": "2404",
+  "taskType": "issue",
+  "target": "GitHub issue #2404 - React hydration error on purchase detail page",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed hydration mismatch in SystemLink component by deferring loadingManager.register() to useEffect instead of calling it synchronously in the click handler. This prevents useSyncExternalStore's snapshot from changing during React's render phase, which was causing error #418 on subsequent page hydrations.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": ["src/infra/loading/components/SystemLink.tsx"],
+  "sessionLog": ".kody/sessions/2404.jsonl",
+  "startedAt": "2026-06-04T08:00:00Z",
+  "finishedAt": "2026-06-04T08:15:00Z"
+}

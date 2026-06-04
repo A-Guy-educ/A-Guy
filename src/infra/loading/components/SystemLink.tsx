@@ -1,6 +1,6 @@
 'use client'
 
-import React, { forwardRef, useCallback, useState } from 'react'
+import React, { forwardRef, useCallback, useEffect, useRef, useState } from 'react'
 import Link, { type LinkProps } from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { cn } from '@/infra/utils/ui'
@@ -19,7 +19,14 @@ interface SystemLinkProps extends LinkProps {
  * Link component that registers route loading at trigger time
  * Shows local loading indication (reduced opacity) when clicked
  *
- * Use this for all navigation links to provide consistent loading feedback
+ * Use this for all navigation links to provide consistent loading feedback.
+ *
+ * NOTE: Route loading registration is deferred to useEffect to avoid
+ * hydration mismatches. The loadingManager.register() call happens after
+ * mount, so the isRouteBusy snapshot stays consistent between server
+ * (getServerSnapshot returns false) and initial client render (false).
+ * The loading state will show on the subsequent render (before navigation
+ * typically completes).
  */
 export const SystemLink = forwardRef<HTMLAnchorElement, SystemLinkProps>(function SystemLink(
   { href, onClick, children, className, ...props },
@@ -28,10 +35,21 @@ export const SystemLink = forwardRef<HTMLAnchorElement, SystemLinkProps>(functio
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [wasClicked, setWasClicked] = useState(false)
+  const pendingNavigationRef = useRef(false)
   const isRouteLoading = useLoadingState({ key: LOADING_KEYS.ROUTE_TRANSITION })
 
   // Show loading state if this link was clicked and route is loading
   const isLoading = wasClicked && isRouteLoading
+
+  // Register route loading after mount to prevent hydration mismatches.
+  // This runs after the first render completes, so the initial client
+  // render has isRouteBusy = false (matching server), and the loading
+  // state shows on the second render (before navigation completes).
+  useEffect(() => {
+    if (pendingNavigationRef.current) {
+      loadingManager.register(LOADING_KEYS.ROUTE_TRANSITION, 'route')
+    }
+  }, [])
 
   const handleClick = useCallback(
     (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -65,7 +83,10 @@ export const SystemLink = forwardRef<HTMLAnchorElement, SystemLinkProps>(functio
       // Only register loading if actually navigating to different page
       if (currentPath !== targetPath) {
         setWasClicked(true)
-        loadingManager.register(LOADING_KEYS.ROUTE_TRANSITION, 'route')
+        pendingNavigationRef.current = true
+        // NOTE: loadingManager.register() is NOT called here.
+        // It's deferred to useEffect above to prevent hydration mismatches.
+        // The loading state will show on the next render after useEffect fires.
       }
     },
     [href, onClick, pathname, searchParams],

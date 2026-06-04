@@ -1,0 +1,14 @@
+[
+  {
+    "title": "PurchaseRow uses non-existent translation key 'langCode'",
+    "body": "In PurchasesPageContent.tsx line 78: `const localeDir = locale('langCode') === 'he' ? 'he' : 'en'`. The `langCode` key doesn't exist in `auth.account` translations, so `locale('langCode')` always returns the raw key `\"langCode\"`, making `localeDir` always `'en'`. This differs from `TransactionDetailContent` which hardcodes `'he'`. Either add `langCode` to translations or use the correct locale source.",
+    "rationale": "Inconsistent locale handling between list and detail pages - dates may format differently on each page.",
+    "priority": "low"
+  },
+  {
+    "title": "RefundInfo hardcodes Hebrew locale for date formatting",
+    "body": "In TransactionDetailContent.tsx line 203: `formatDate(refundedAt, 'he')` hardcodes Hebrew locale regardless of user preference. Should use the user's actual locale from context.",
+    "rationale": "Users with English locale would see Hebrew date formatting, which is inconsistent with rest of app.",
+    "priority": "low"
+  }
+]
