@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "RequestCookies-toString-not-cookie-string",
+    "hook": "Map.toString() on RequestCookies returns '[object RequestCookies]', not serialized cookies",
+    "body": "When constructing a Cookie header from a Next.js RequestCookies object, do NOT use cookieStore.toString(). RequestCookies extends Map, and Map.prototype.toString() returns '[object RequestCookies]', not the serialized cookie string. Use Array.from(cookieStore).map(([k, v]) => `${k}=${v}`).join('; ') instead.",
+    "why": "This caused the Cookie header sent to /api/users/me to be malformed, potentially breaking session validation for frontend routes while admin worked (which uses a different auth path).",
+    "confidence": 0.9
+  }
+]

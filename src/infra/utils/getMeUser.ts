@@ -35,7 +35,12 @@ export const getMeUser = async (args?: {
   const host = forwardedHost || headerList.get('host')
   const origin = host ? `${forwardedProto || 'http'}://${host}` : getServerSideURL()
 
-  const cookieHeader = cookieStore.toString()
+  // Properly serialize cookies - RequestCookies is a Map, so toString() returns
+  // "[object RequestCookies]" not the actual cookie string. Use Array.from
+  // with the iterator to build a proper cookie header string.
+  const cookieHeader = Array.from(cookieStore)
+    .map(([k, v]) => `${k}=${v}`)
+    .join('; ')
   const headersToSend = new Headers({
     Authorization: `JWT ${token}`,
   })

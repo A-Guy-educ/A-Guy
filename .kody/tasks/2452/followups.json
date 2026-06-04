@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Full E2E login flow test",
+    "body": "Write an E2E test that goes through the full login form flow: navigate to /login, fill credentials, submit, verify redirect and session works for frontend routes",
+    "rationale": "The existing tests mock next/headers or bypass the frontend form. No test covers the actual login form → session → protected route flow end-to-end.",
+    "priority": "medium"
+  },
+  {
+    "title": "Investigate why page remained at /login",
+    "body": "The issue describes page remaining at /login with no error shown after submit. This could indicate a separate bug in how handleSubmit processes the login result or how window.location.href redirect works",
+    "rationale": "The cookie header fix helps session validation, but doesn't explain why the redirect didn't happen in the first place if login was successful.",
+    "priority": "low"
+  }
+]
