@@ -109,9 +109,6 @@ jobs:
           node-version: '22'
           cache: 'pnpm'
 
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Pre-pull MongoDB image with retries
         run: |
           for i in 1 2 3 4 5; do
@@ -178,9 +175,6 @@ jobs:
         with:
           node-version: '22'
           cache: 'pnpm'
-
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
 
       - name: Pre-pull MongoDB image with retries
         run: |
@@ -259,9 +253,6 @@ jobs:
           key: ${{ runner.os }}-next-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-next-
-
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
 
       - name: Pre-pull MongoDB image with retries
         run: |
@@ -377,9 +368,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-next-
 
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Pre-pull MongoDB image with retries
         run: |
           for i in 1 2 3 4 5; do
@@ -489,9 +477,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-next-
 
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Pre-pull MongoDB image with retries
         run: |
           for i in 1 2 3 4 5; do
@@ -587,9 +572,6 @@ jobs:
           key: ${{ runner.os }}-next-${{ github.sha }}
           restore-keys: |
             ${{ runner.os }}-next-
-
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
 
       - name: Pre-pull MongoDB image with retries
         run: |
