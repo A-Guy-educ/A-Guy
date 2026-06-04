@@ -82,6 +82,12 @@ describe('CSP Configuration - Vercel Feedback Script on /admin', () => {
     expect(connectSrc).toContain('vercel.live')
   })
 
+  // Helper to extract worker-src directive from CSP string
+  function extractWorkerSrc(csp: string): string | null {
+    const match = csp.match(/worker-src\s+([^;]+)/)
+    return match ? match[1] : null
+  }
+
   it('should include *.gravatar.com wildcard in img-src for /admin routes', async () => {
     const configContent = fs.readFileSync(nextConfigPath, 'utf8')
 
@@ -99,5 +105,23 @@ describe('CSP Configuration - Vercel Feedback Script on /admin', () => {
     // Admin routes MUST have *.gravatar.com wildcard in img-src for user avatars
     // (gravatar serves images from secure.gravatar.com and www.gravatar.com subdomains)
     expect(imgSrc).toContain('*.gravatar.com')
+  })
+
+  it('should include worker-src with blob: for /admin routes to allow Monaco editor workers', async () => {
+    const configContent = fs.readFileSync(nextConfigPath, 'utf8')
+
+    // Extract the /admin route CSP
+    const adminRouteMatch = configContent.match(
+      /source:\s*'\/admin\/:path\*'[\s\S]*?Content-Security-Policy[\s\S]*?value:\s*"([^"]+)"/,
+    )
+    expect(adminRouteMatch).not.toBeNull()
+
+    const csp = adminRouteMatch![1]
+    const workerSrc = extractWorkerSrc(csp)
+
+    expect(workerSrc).not.toBeNull()
+    // Admin routes MUST have worker-src with blob: to allow Monaco editor web workers
+    // Monaco editor creates workers using blob: URLs, which are blocked without explicit blob: in worker-src
+    expect(workerSrc).toContain('blob:')
   })
 })

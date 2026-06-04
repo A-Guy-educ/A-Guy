@@ -1,0 +1,17 @@
+{
+  "taskId": "2461",
+  "taskType": "issue",
+  "target": "Monaco editor web workers blocked by CSP on admin edit pages",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added worker-src 'self' blob: to admin route CSP in next.config.js; added passing test in csp-vercel-feedback-admin.int.spec.ts",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "next.config.js",
+    "tests/int/csp-vercel-feedback-admin.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2461-2461-p3-monaco-editor-web-workers-blocked-by-csp-on-adm.jsonl",
+  "startedAt": "2026-06-04T23:28:00Z",
+  "finishedAt": "2026-06-04T23:33:30Z"
+}
