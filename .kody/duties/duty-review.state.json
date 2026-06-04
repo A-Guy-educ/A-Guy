@@ -1,119 +1,120 @@
 {
   "version": 1,
-  "rev": 41,
+  "rev": 42,
   "cursor": "reported",
   "data": {
-    "lastRunISO": "2026-06-04T06:00:38Z",
-    "nextEligibleISO": "2026-06-04T12:00:38Z",
     "cycle": 7,
+    "lastFiredAt": "2026-06-04T12:49:19.742Z",
+    "lastOutcome": "completed",
+    "lastRunISO": "2026-06-04T12:48:52Z",
+    "nextEligibleISO": "2026-06-04T18:48:52Z",
     "reviewed": [
-      "ceo-performance-review"
+      "ceo-performance-review",
+      "approval-gate"
     ],
     "verdicts": {
       "approval-gate": {
-        "verdict": "broken",
-        "note": "state.json never created; lastRunISO never persisted"
+        "note": "design sound; state.json never created; never ticked",
+        "verdict": "broken"
       },
       "architecture-audit": {
-        "verdict": "broken",
-        "note": "script never existed; state path deprecated .kody/jobs/; commits violate one-action-max"
+        "note": "script never existed; state path deprecated .kody/jobs/; commits violate one-action-max",
+        "verdict": "broken"
       },
       "ceo-performance-review": {
-        "verdict": "broken",
-        "note": "procedure cannot emit kody-job-next-state (no write step); state never created"
+        "note": "procedure cannot emit kody-job-next-state (no write step); state never created",
+        "verdict": "broken"
       },
       "cleanup-branches": {
-        "verdict": "broken",
-        "note": "no per-tick procedure; policy-only; no gh write method"
+        "note": "no per-tick procedure; policy-only; no gh write method",
+        "verdict": "broken"
       },
       "clear-empty-goals": {
-        "verdict": "broken",
-        "note": "zero steps; no system target; no kody-job-next-state block"
+        "note": "zero steps; no system target; no kody-job-next-state block",
+        "verdict": "broken"
       },
       "coverage-floor": {
-        "verdict": "broken",
-        "note": "script missing; cadence formula inconsistency (every: 1d vs +20h)"
+        "note": "script missing; cadence formula inconsistency (every: 1d vs +20h)",
+        "verdict": "broken"
       },
       "dead-code-sweep": {
-        "verdict": "broken",
-        "note": "script never implemented; state at legacy .kody/jobs/ path"
+        "note": "script never implemented; state at legacy .kody/jobs/ path",
+        "verdict": "broken"
       },
       "dependency-bump": {
-        "verdict": "broken",
-        "note": "script absent; body references deprecated .kody/jobs/ path"
+        "note": "script absent; body references deprecated .kody/jobs/ path",
+        "verdict": "broken"
       },
       "design-review": {
-        "verdict": "broken",
-        "note": "cadence guard (6d) contradicts every: 7d; no kody-job-next-state block"
+        "note": "cadence guard (6d) contradicts every: 7d; no kody-job-next-state block",
+        "verdict": "broken"
       },
       "dev-ci-health": {
-        "verdict": "broken",
-        "note": "kody-job-next-state present but missing lastRunISO/nextEligibleISO fields"
+        "note": "kody-job-next-state present but missing lastRunISO/nextEligibleISO fields",
+        "verdict": "broken"
       },
       "docs-code": {
-        "verdict": "broken",
-        "note": "no kody-job-next-state block; state never created"
+        "note": "no kody-job-next-state block; state never created",
+        "verdict": "broken"
       },
       "docs-readme": {
-        "verdict": "warn",
-        "note": "no kody-job-next-state block; state never created; lastRunISO never persisted"
+        "note": "no kody-job-next-state block; state never created; lastRunISO never persisted",
+        "verdict": "warn"
       },
       "flaky-test-quarantine": {
-        "verdict": "warn",
-        "note": "no kody-job-next-state block; state never created"
+        "note": "no kody-job-next-state block; state never created",
+        "verdict": "warn"
       },
       "health-check": {
-        "verdict": "warn",
-        "note": "no kody-job-next-state block; state never created"
+        "note": "no kody-job-next-state block; state never created",
+        "verdict": "warn"
       },
       "job-gap-scan": {
-        "verdict": "broken",
-        "note": "state at legacy .kody/jobs/ path; script writes to old location; two non-identical state files"
+        "note": "state at legacy .kody/jobs/ path; script writes to old location; two non-identical state files",
+        "verdict": "broken"
       },
       "pr-health-triage": {
-        "verdict": "warn",
-        "note": "no kody-job-next-state block; state never created"
+        "note": "no kody-job-next-state block; state never created",
+        "verdict": "warn"
       },
       "publish-release": {
-        "verdict": "warn",
-        "note": "no kody-job-next-state block; disabled=true design review only"
+        "note": "no kody-job-next-state block; disabled=true design review only",
+        "verdict": "warn"
       },
       "qa-sweep": {
-        "verdict": "broken",
-        "note": "lastRunISO frozen at 2026-05-23; body updated 2026-05-28 but state not"
+        "note": "lastRunISO frozen at 2026-05-23; body updated 2026-05-28 but state not",
+        "verdict": "broken"
       },
       "qa-verify": {
-        "verdict": "broken",
-        "note": "state.json never created; 0 commits to state file ever"
+        "note": "state.json never created; 0 commits to state file ever",
+        "verdict": "broken"
       },
       "qa": {
-        "verdict": "broken",
-        "note": "lastRunISO frozen 2026-05-23; lastFiredAt and nextEligibleISO stale 10+ days"
+        "note": "lastRunISO frozen 2026-05-23; lastFiredAt and nextEligibleISO stale 10+ days",
+        "verdict": "broken"
       },
       "redispatch": {
-        "verdict": "warn",
-        "note": "no kody-job-next-state block; state never created"
+        "note": "no kody-job-next-state block; state never created",
+        "verdict": "warn"
       },
       "security-audit": {
-        "verdict": "warn",
-        "note": "no kody-job-next-state block; disabled=true design review only"
+        "note": "no kody-job-next-state block; disabled=true design review only",
+        "verdict": "warn"
       },
       "system-audit": {
-        "verdict": "warn",
-        "note": "no kody-job-next-state block; state never created"
+        "note": "no kody-job-next-state block; state never created",
+        "verdict": "warn"
       },
       "task-memory-extractor": {
-        "verdict": "warn",
-        "note": "no kody-job-next-state block; state never created"
+        "note": "no kody-job-next-state block; state never created",
+        "verdict": "warn"
       },
       "type-debt": {
-        "verdict": "warn",
-        "note": "no kody-job-next-state block; state never created"
+        "note": "no kody-job-next-state block; state never created",
+        "verdict": "warn"
       }
     },
-    "lastFiredAt": "2026-06-04T06:03:17.446Z",
-    "lastOutcome": "completed",
-    "lastDurationMs": 181844
+    "lastDurationMs": 219256
   },
   "done": false
 }
