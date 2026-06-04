@@ -17,6 +17,8 @@ jobs:
   hygiene:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL || 'mongodb://localhost:27017/test' }}
 
     steps:
       - name: Checkout
