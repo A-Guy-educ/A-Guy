@@ -1,0 +1,17 @@
+{
+  "taskId": "2459",
+  "taskType": "issue",
+  "target": "Issue #2459: Pending purchase shows 'Unknown Product' instead of product name",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed by changing depth: 0 to depth: 1 in [transactionId]/page.tsx to populate the product relationship",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/account/purchases/[transactionId]/page.tsx",
+    "tests/int/transaction-detail-product-name.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/gh-26982834201-1.jsonl",
+  "startedAt": "2026-06-04T22:23:00Z",
+  "finishedAt": "2026-06-04T22:26:45Z"
+}
