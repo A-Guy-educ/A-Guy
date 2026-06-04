@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "rev": 75,
+  "rev": 76,
   "cursor": "idle",
   "data": {
     "failingChecks": [],
     "issueNumber": 2349,
-    "lastFiredAt": "2026-06-04T07:37:49.663Z",
+    "lastFiredAt": "2026-06-04T09:02:53.799Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 19646,
+    "lastDurationMs": 18756,
     "sha": "8c919197249116d73cc3119a8a0363303f5fb65e",
     "note": "CI now green — prior fix via issue 2349 resolved the failure"
   },
