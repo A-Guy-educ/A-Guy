@@ -96,7 +96,7 @@ describe('CSP Configuration - Vercel Feedback Script on /admin', () => {
 
     expect(imgSrcMatch).not.toBeNull()
     const imgSrc = imgSrcMatch![1]
-    // Admin routes MUST have gravatar.com in img-src for user avatars to load
-    expect(imgSrc).toContain('gravatar.com')
+    // Admin routes MUST have *.gravatar.com (wildcard) to cover www.gravatar.com and other subdomains
+    expect(imgSrc).toMatch(/\*\.gravatar\.com/)
   })
 })

@@ -1,0 +1,17 @@
+{
+  "taskId": "2417",
+  "taskType": "issue",
+  "target": "2417",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed CSP img-src directive in next.config.js to use *.gravatar.com wildcard instead of bare gravatar.com, ensuring subdomains like www.gravatar.com and secure.gravatar.com are allowed",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "next.config.js",
+    "tests/int/csp-vercel-feedback-admin.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2417.jsonl",
+  "startedAt": "2026-06-04T11:42:00Z",
+  "finishedAt": "2026-06-04T11:45:30Z"
+}
