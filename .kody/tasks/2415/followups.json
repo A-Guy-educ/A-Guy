@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Check GeometryEditor for same undefined elements pattern",
+    "body": "GeometryEditor.tsx accesses geo.elements.points, geo.elements.graphs, etc. directly (lines 45, 54, 65, 77, etc.). If a stored QuestionGeometryBlock predates the elements field, it would crash the same way. Apply the same fix: provide a default elements object when destructuring block.geometry.",
+    "rationale": "Same root cause as the AxisEditor bug — legacy blocks stored before elements field was added will crash GeometryEditor too.",
+    "priority": "medium"
+  }
+]

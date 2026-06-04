@@ -20,7 +20,9 @@ interface AxisEditorProps {
 }
 
 export const AxisEditor: React.FC<AxisEditorProps> = ({ block, onChange }) => {
-  const spec = block.axis
+  // Provide a default elements object so all accesses are safe even when the stored
+  // axis block predates the elements field (e.g., axis.elements is undefined).
+  const spec = { ...block.axis, elements: block.axis.elements ?? { points: [], graphs: [] } }
 
   const updateAxis = useCallback(
     (updates: Partial<AxisSpecV1>) => {

@@ -1,0 +1,17 @@
+{
+  "taskId": "2415",
+  "taskType": "issue",
+  "target": "issue #2415",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed TypeError in AxisEditor when stored blocks have undefined elements; added regression test",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/ExerciseContentEditor/editors/AxisEditor.tsx",
+    "tests/unit/ui/axis-editor-undefined-elements.test.tsx"
+  ],
+  "sessionLog": ".kody/sessions/2415-p0-lesson-editor-crashes-on-record-6a05819d908d5be.jsonl",
+  "startedAt": "2026-06-04T09:10:00Z",
+  "finishedAt": "2026-06-04T09:22:30Z"
+}

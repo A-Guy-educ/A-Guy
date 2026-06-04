@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "axis-editor-elements-must-default",
+    "hook": "Geometry/axis editors access .elements without guards",
+    "body": "When a stored QuestionAxisBlock or QuestionGeometryBlock predates the elements field, block.axis.elements is undefined at runtime even though TypeScript types require it. Editors that access spec.elements.points, spec.elements.graphs, etc. in render or useCallback deps crash. Always provide a default: `elements: block.axis.elements ?? { points: [], graphs: [] }` when destructuring.\n\nWhy: This bug only manifests on specific legacy records — the editor works fine for new records. The type system doesn't catch it because the stored data doesn't match the TypeScript type.\n\nHow to apply: Search for `geo.elements.` and `spec.elements.` patterns in any editor component that processes geometry/axis blocks.",
+    "why": "The crash in #2415 only hit one specific record whose stored blocks were missing the elements field. New records work fine, so the bug is invisible without the right stored data.",
+    "confidence": 0.9
+  }
+]
