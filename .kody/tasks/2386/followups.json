@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Verify Stripe webhook endpoint configuration in production",
+    "body": "The webhook-events collection is empty because Stripe is not sending webhook events. Verify in the Stripe Dashboard: (1) Webhooks section shows the correct endpoint URL (https://yourdomain.com/api/webhooks/stripe), (2) The signing secret matches STRIPE_WEBHOOK_SECRET env var, (3) Events enabled include: checkout.session.completed, checkout.session.async_payment_succeeded, checkout.session.async_payment_failed, charge.refunded. Network connectivity from Stripe to the webhook endpoint should also be verified.",
+    "rationale": "No code change can fix webhooks that never arrive. This is an infrastructure/DevOps task.",
+    "priority": "high"
+  }
+]

@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "webhook-investigation-no-code-bug",
+    "hook": "Investigation tasks: code may be correct, symptoms may be infrastructure",
+    "body": "Issue #2386: Transactions stuck in Pending — investigated thoroughly and found no code bug. All webhook handlers are correctly implemented (checkout.session.completed, async_payment_succeeded, async_payment_failed, charge.refunded). All tests pass (verify tool: ok). The symptom of 'no webhook events recorded' in production means Stripe is not sending events to the endpoint — this is an infrastructure/DevOps issue (wrong webhook URL in Stripe dashboard, wrong signing secret, or network issue), not a code bug.",
+    "why": "A P2 investigation should end with a clear finding. The webhook code is correct; the issue is in Stripe dashboard configuration or network connectivity.",
+    "confidence": 0.95
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "taskId": "2386",
+  "taskType": "issue",
+  "target": "GitHub Issue #2386",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Investigated thoroughly; no code bug found. Webhook handlers are all correctly implemented. Transactions stuck in Pending is an infrastructure/configuration issue — Stripe webhooks are not being received at the endpoint.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-06-04T02:30:00Z",
+  "finishedAt": "2026-06-04T03:05:00Z"
+}
