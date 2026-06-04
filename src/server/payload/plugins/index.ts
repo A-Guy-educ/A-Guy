@@ -32,9 +32,11 @@ const generateURL: GenerateURL<Page> = ({ doc }) => {
 }
 
 // Vercel Blob storage plugin - required in production, optional in tests
-// During type generation (PAYLOAD_GENERATE_TYPES=true), this is skipped
+// Skip during type/importmap generation (PAYLOAD_GENERATE_TYPES or PAYLOAD_GENERATE_IMPORTMAP)
+const isGeneratingTypesOrImportMap =
+  process.env.PAYLOAD_GENERATE_TYPES === 'true' || process.env.PAYLOAD_GENERATE_IMPORTMAP === 'true'
 let vercelBlobPlugin: Plugin | null = null
-if (process.env.PAYLOAD_GENERATE_TYPES !== 'true') {
+if (!isGeneratingTypesOrImportMap) {
   const blobToken = process.env.BLOB_READ_WRITE_TOKEN
 
   // In test mode, skip the plugin if no valid token is provided

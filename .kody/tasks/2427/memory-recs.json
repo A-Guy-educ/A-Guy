@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "payload-config-throws-at-import-time",
+    "hook": "Payload config guards run at import time, blocking dev/type generation",
+    "body": "payload.config.ts is imported at module load time, so ANY throw statement (DATABASE_URL, PAYLOAD_SECRET, BLOB_READ_WRITE_TOKEN, DEFAULT_TENANT_SLUG) blocks pnpm dev and pnpm generate even when the code path is only used at runtime. The fix is to gate all such guards with `process.env.PAYLOAD_GENERATE_TYPES === 'true' || process.env.PAYLOAD_GENERATE_IMPORTMAP === 'true'`.\n\nWhy: Type generation (payload generate:types / generate:importmap) imports the config but never calls buildConfig() — the guard only needs to fire for actual runtime. PAYLOAD_GENERATE_TYPES and PAYLOAD_GENERATE_IMPORTMAP are the canonical env vars Payload sets for these phases.\n\nHow to apply: When adding env validation to payload.config.ts, always guard it with `if (!process.env.PAYLOAD_GENERATE_TYPES && !process.env.PAYLOAD_GENERATE_IMPORTMAP) { throw ... }` to allow type/importmap generation to proceed.",
+    "why": "Issue #2427 blocked the entire dev server from starting — type generation failed, so pnpm dev could never reach the Next.js boot phase.",
+    "confidence": 0.95
+  }
+]

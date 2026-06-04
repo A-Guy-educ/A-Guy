@@ -16,7 +16,7 @@
     "dev:test": "cross-env NODE_ENV=test pnpm dev",
     "dev:prod": "cross-env NODE_OPTIONS=--no-deprecation rm -rf .next && pnpm build && pnpm start",
     "generate": "pnpm generate:types && pnpm generate:importmap",
-    "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
+    "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation PAYLOAD_GENERATE_IMPORTMAP=true payload generate:importmap",
     "generate:types": "cross-env PAYLOAD_GENERATE_TYPES=true NODE_OPTIONS=--no-deprecation payload generate:types",
     "postinstall": "pnpm generate",
     "ai:generate-docs": "pnpm tsx scripts/generate-doc-chunks.ts",

@@ -88,8 +88,11 @@ function isAdminUser(req: PayloadRequest): boolean {
 
 // Validate DATABASE_URL is set and not empty
 // This prevents accidental fallback to localhost when Atlas connection string is expected
+// Skip validation during type/importmap generation so pnpm dev/generate can run without a live database.
 const databaseUrl = process.env.DATABASE_URL
-if (!databaseUrl || databaseUrl.trim() === '') {
+const isGeneratingTypesOrImportMap =
+  process.env.PAYLOAD_GENERATE_TYPES === 'true' || process.env.PAYLOAD_GENERATE_IMPORTMAP === 'true'
+if (!isGeneratingTypesOrImportMap && (!databaseUrl || databaseUrl.trim() === '')) {
   throw new Error(
     'DATABASE_URL environment variable is required but not set. ' +
       'Please set DATABASE_URL to your MongoDB connection string (e.g., mongodb+srv://... for Atlas).',
@@ -233,6 +236,14 @@ export default buildConfig({
   secret:
     process.env.PAYLOAD_SECRET ||
     (() => {
+      // During type/importmap generation, use a placeholder to avoid import-time failure.
+      // The actual secret is only needed at runtime.
+      const isGeneratingTypesOrImportMap =
+        process.env.PAYLOAD_GENERATE_TYPES === 'true' ||
+        process.env.PAYLOAD_GENERATE_IMPORTMAP === 'true'
+      if (isGeneratingTypesOrImportMap) {
+        return 'placeholder-secret-for-type-generation-only'
+      }
       throw new Error('PAYLOAD_SECRET env var is required')
     })(),
   sharp,

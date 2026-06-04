@@ -19,6 +19,7 @@ import { CouponUsageProgress as CouponUsageProgress_a2b260aa8f6b4290112e6f60e442
 import { CouponStatusCell as CouponStatusCell_7c7747ca63cfce7f1a733bba066e4691 } from '@/ui/admin/Coupons/Cells/StatusCell'
 import { CouponUsageCell as CouponUsageCell_5f0f323a3410f2629a0fb9e3baa22f67 } from '@/ui/admin/Coupons/Cells/UsageCell'
 import { CouponExpiresCell as CouponExpiresCell_77867c52198465ed20e956268b374e85 } from '@/ui/admin/Coupons/Cells/ExpiresCell'
+import { CouponDiscountDisplayCell as CouponDiscountDisplayCell_b9a37e60437ed49cc5c3bcf13cffe01b } from '@/ui/admin/Coupons/Cells/DiscountDisplayCell'
 import { CouponsListView as CouponsListView_4c2bd615af163e22ea57e98b586263d9 } from '@/ui/admin/Coupons/ListView'
 import { CourseLessonsSorter as CourseLessonsSorter_219effcec2d3303f5f77bc687e0138e9 } from '@/ui/admin/CourseLessonsSorter'
 import { TranslateCourseAction as TranslateCourseAction_5e03fe73ee4379dfd96d492849856d43 } from '@/ui/admin/TranslationButton'
@@ -63,7 +64,6 @@ import { default as default_759821dbe781e78024abfaf95f6442c4 } from '@/ui/admin/
 import { default as default_e8db4fbd97550d4d717940b5cf0234f3 } from '@/ui/admin/BeforeLogin'
 import { default as default_7545204935b55fcf02b3be70dde90fc1 } from '@/ui/admin/PdfConversion/SidebarLink'
 import { default as default_1b2cd3c8450eece915504fde397ab5c7 } from '@/ui/admin/LessonDuplicationReview/SidebarLink'
-import { VercelBlobClientUploadHandler as VercelBlobClientUploadHandler_16c82c5e25f430251a3e3ba57219ff4e } from '@payloadcms/storage-vercel-blob/client'
 import { CollectionCards as CollectionCards_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
 
 export const importMap = {
@@ -88,6 +88,7 @@ export const importMap = {
   "@/ui/admin/Coupons/Cells/StatusCell#CouponStatusCell": CouponStatusCell_7c7747ca63cfce7f1a733bba066e4691,
   "@/ui/admin/Coupons/Cells/UsageCell#CouponUsageCell": CouponUsageCell_5f0f323a3410f2629a0fb9e3baa22f67,
   "@/ui/admin/Coupons/Cells/ExpiresCell#CouponExpiresCell": CouponExpiresCell_77867c52198465ed20e956268b374e85,
+  "@/ui/admin/Coupons/Cells/DiscountDisplayCell#CouponDiscountDisplayCell": CouponDiscountDisplayCell_b9a37e60437ed49cc5c3bcf13cffe01b,
   "@/ui/admin/Coupons/ListView#CouponsListView": CouponsListView_4c2bd615af163e22ea57e98b586263d9,
   "@/ui/admin/CourseLessonsSorter#CourseLessonsSorter": CourseLessonsSorter_219effcec2d3303f5f77bc687e0138e9,
   "@/ui/admin/TranslationButton#TranslateCourseAction": TranslateCourseAction_5e03fe73ee4379dfd96d492849856d43,
@@ -132,6 +133,5 @@ export const importMap = {
   "@/ui/admin/BeforeLogin#default": default_e8db4fbd97550d4d717940b5cf0234f3,
   "@/ui/admin/PdfConversion/SidebarLink#default": default_7545204935b55fcf02b3be70dde90fc1,
   "@/ui/admin/LessonDuplicationReview/SidebarLink#default": default_1b2cd3c8450eece915504fde397ab5c7,
-  "@payloadcms/storage-vercel-blob/client#VercelBlobClientUploadHandler": VercelBlobClientUploadHandler_16c82c5e25f430251a3e3ba57219ff4e,
   "@payloadcms/ui/rsc#CollectionCards": CollectionCards_ab83ff7e88da8d3530831f296ec4756a
 }

@@ -1,0 +1,18 @@
+{
+  "taskId": "2427",
+  "taskType": "issue",
+  "target": "issue #2427",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed three import-time guards that prevented pnpm dev from starting without live environment variables: DATABASE_URL, PAYLOAD_SECRET, and BLOB_READ_WRITE_TOKEN now have generation-mode bypasses.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/payload.config.ts",
+    "src/server/payload/plugins/index.ts",
+    "package.json"
+  ],
+  "sessionLog": ".kody/sessions/2427.jsonl",
+  "startedAt": "2026-06-04T11:39:00Z",
+  "finishedAt": "2026-06-04T11:58:00Z"
+}
