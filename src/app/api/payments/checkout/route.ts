@@ -16,6 +16,7 @@ import { getPayload, type Payload } from 'payload'
 import { z } from 'zod'
 
 import config from '@payload-config'
+import { serializePaymentError } from '@/lib/payment/error-log'
 import { cancelPayPalOrder, createPayPalOrder } from '@/lib/payment/paypal'
 import { cancelStripeCheckout, createStripeCheckout } from '@/lib/payment/stripe'
 import { checkAuthenticatedRateLimit } from '@/server/services/rate-limit'
@@ -392,7 +393,7 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     payload.logger.error(
-      { error, productId, userId: user.id, provider },
+      { err: serializePaymentError(error), productId, userId: user.id, provider },
       'Payment provider checkout creation failed',
     )
 
@@ -450,7 +451,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     payload.logger.error(
       {
-        error,
+        err: serializePaymentError(error),
         productId,
         userId: user.id,
         provider,
@@ -472,7 +473,11 @@ export async function POST(request: NextRequest) {
       )
     } catch (cancelError) {
       payload.logger.error(
-        { cancelError, providerTransactionId: providerResult.providerSessionId, provider },
+        {
+          err: serializePaymentError(cancelError),
+          providerTransactionId: providerResult.providerSessionId,
+          provider,
+        },
         'Failed to cancel orphaned provider checkout session — manual intervention may be required',
       )
     }
