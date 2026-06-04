@@ -2,7 +2,6 @@
 
 import type { PayloadAdminBarProps, PayloadMeUser } from '@payloadcms/admin-bar'
 
-import { cn } from '@/infra/utils/ui'
 import { useSelectedLayoutSegments } from 'next/navigation'
 import { PayloadAdminBar } from '@payloadcms/admin-bar'
 import React, { useState } from 'react'
@@ -42,13 +41,12 @@ export const AdminBar: React.FC<{
     setShow(Boolean(user?.id))
   }, [])
 
+  if (!show) {
+    return null
+  }
+
   return (
-    <div
-      className={cn('py-2 bg-foreground text-background hidden sm:block', {
-        block: show,
-        hidden: !show,
-      })}
-    >
+    <div className="py-2 bg-foreground text-background">
       <div className="container">
         <PayloadAdminBar
           {...adminBarProps}
