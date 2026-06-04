@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "paypal-checkout-error-message-matching",
+    "hook": "Error detection must use .includes() not === for multi-variable env errors",
+    "body": "When detecting missing payment credentials from getPaymentEnv(), use .includes() substring matching rather than exact string matching. getPaymentEnv() throws 'Missing required payment environment variables: PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_WEBHOOK_ID' but the checkout route was checking for 'Missing PAYPAL_CLIENT_ID or PAYPAL_CLIENT_SECRET environment variable' (exact match) which never matched.",
+    "why": "The exact-match approach breaks whenever getPaymentEnv() changes its error message format. The PayPal 500 bug in #2408 was caused by this exact string mismatch.",
+    "confidence": 0.95
+  }
+]

@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Add integration test for PayPal missing-credentials checkout path",
+    "body": "Write an integration test that mocks getPaymentEnv to throw missing-credentials error and verifies the checkout route returns 503. Currently only unit-level substring matching is tested in checkout-validation.spec.ts. An integration test would exercise the full error propagation through createPayPalOrder.",
+    "rationale": "The existing tests mock createPayPalOrder to succeed, so the missing-credentials 503 path is not exercised in integration tests. A full integration test would require mocking getPaymentEnv at the module level.",
+    "priority": "low"
+  }
+]

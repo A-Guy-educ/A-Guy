@@ -399,8 +399,8 @@ export async function POST(request: NextRequest) {
     const errorMessage = error instanceof Error ? error.message : 'unknown_error'
 
     if (
-      errorMessage === 'Missing STRIPE_SECRET_KEY environment variable' ||
-      errorMessage === 'Missing PAYPAL_CLIENT_ID or PAYPAL_CLIENT_SECRET environment variable'
+      errorMessage.includes('STRIPE_SECRET_KEY') ||
+      (errorMessage.includes('PAYPAL_CLIENT_ID') && errorMessage.includes('PAYPAL_CLIENT_SECRET'))
     ) {
       return NextResponse.json(
         { success: false, error: 'payment_provider_not_configured' },

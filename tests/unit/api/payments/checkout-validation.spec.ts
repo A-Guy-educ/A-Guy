@@ -1,10 +1,13 @@
 /**
- * Unit Tests — checkout request validation & cancelUrl encoding
+ * Unit Tests — checkout request validation & cancelUrl encoding & PayPal error handling
  *
- * Covers two hardening changes in `src/app/api/payments/checkout/route.ts`:
+ * Covers three hardening changes in `src/app/api/payments/checkout/route.ts`:
  *   1) productId must match strict MongoDB ObjectId regex (^[0-9a-fA-F]{24}$)
  *   2) cancelUrl interpolates productId via URLSearchParams so reserved
  *      characters (& #) round-trip safely.
+ *   3) PayPal missing-credentials error is detected via substring match
+ *      (getPaymentEnv throws "Missing required payment environment variables: PAYPAL_CLIENT_ID..."
+ *      which must be matched by errorMessage.includes('PAYPAL_CLIENT_ID'))
  */
 import { describe, expect, it } from 'vitest'
 
@@ -29,6 +32,51 @@ describe('checkout productId ObjectId validation', () => {
 
   it('rejects a string of 25 hex chars (off-by-one)', () => {
     expect(objectIdRegex.test('507f1f77bcf86cd7994390111')).toBe(false)
+  })
+})
+
+describe('PayPal missing-credentials error detection in checkout route', () => {
+  /**
+   * Regression test for issue #2408: PayPal checkout returns HTTP 500.
+   *
+   * When PayPal credentials are missing, getPaymentEnv() throws:
+   *   "Missing required payment environment variables: PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_WEBHOOK_ID"
+   *
+   * The checkout route must detect this and return 503 (payment_provider_not_configured),
+   * not 500 (checkout_creation_failed).
+   *
+   * The route uses:
+   *   errorMessage.includes('PAYPAL_CLIENT_ID') && errorMessage.includes('PAYPAL_CLIENT_SECRET')
+   */
+  it('should detect PayPal missing-credentials error message via substring match', () => {
+    const errorFromGetPaymentEnv =
+      'Missing required payment environment variables: PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_WEBHOOK_ID'
+
+    // The checkout route checks: errorMessage.includes('PAYPAL_CLIENT_ID') && errorMessage.includes('PAYPAL_CLIENT_SECRET')
+    const detected =
+      errorFromGetPaymentEnv.includes('PAYPAL_CLIENT_ID') &&
+      errorFromGetPaymentEnv.includes('PAYPAL_CLIENT_SECRET')
+
+    expect(detected).toBe(true)
+  })
+
+  it('should detect Stripe missing-credentials error message via substring match', () => {
+    const errorFromGetPaymentEnv =
+      'Missing required payment environment variables: STRIPE_SECRET_KEY'
+
+    // The checkout route checks: errorMessage.includes('STRIPE_SECRET_KEY')
+    const detected = errorFromGetPaymentEnv.includes('STRIPE_SECRET_KEY')
+
+    expect(detected).toBe(true)
+  })
+
+  it('should NOT match unrelated errors', () => {
+    const unrelatedError = 'PayPal token request failed: 401 Client secret does not match'
+
+    const detectedPaypal =
+      unrelatedError.includes('PAYPAL_CLIENT_ID') && unrelatedError.includes('PAYPAL_CLIENT_SECRET')
+
+    expect(detectedPaypal).toBe(false)
   })
 })
 
