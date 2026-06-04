@@ -17,6 +17,7 @@
 import { ObjectId } from 'mongodb'
 
 import { AccountRole } from '@/server/payload/collections/Users/roles'
+import { Coupons } from '@/server/payload/collections/Coupons'
 import config from '@payload-config'
 import type { Payload } from 'payload'
 import { getPayload } from 'payload'
@@ -1244,6 +1245,40 @@ describe.skipIf(!hasDatabaseUrl)('Coupons Collection', () => {
       })
 
       expect((read as any).expiresDisplay).toMatch(/^Expired \d+ days ago$/)
+    })
+  })
+
+  // -------------------------------------------------------------------------
+  // Derived fields — admin readOnly config
+  // -------------------------------------------------------------------------
+
+  describe('Derived fields admin readOnly config', () => {
+    it('should have readOnly: true on status field', () => {
+      const statusField = Coupons.fields.find((f) => 'name' in f && f.name === 'status')
+      expect(statusField).toBeDefined()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((statusField as any).admin?.readOnly).toBe(true)
+    })
+
+    it('should have readOnly: true on usageDisplay field', () => {
+      const field = Coupons.fields.find((f) => 'name' in f && f.name === 'usageDisplay')
+      expect(field).toBeDefined()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((field as any).admin?.readOnly).toBe(true)
+    })
+
+    it('should have readOnly: true on expiresDisplay field', () => {
+      const field = Coupons.fields.find((f) => 'name' in f && f.name === 'expiresDisplay')
+      expect(field).toBeDefined()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((field as any).admin?.readOnly).toBe(true)
+    })
+
+    it('should have readOnly: true on discountDisplay field', () => {
+      const field = Coupons.fields.find((f) => 'name' in f && f.name === 'discountDisplay')
+      expect(field).toBeDefined()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((field as any).admin?.readOnly).toBe(true)
     })
   })
 

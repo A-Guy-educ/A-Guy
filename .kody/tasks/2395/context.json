@@ -1,0 +1,17 @@
+{
+  "taskId": "2395",
+  "taskType": "issue",
+  "target": "2395",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added admin: { readOnly: true } to status, usageDisplay, expiresDisplay, and discountDisplay fields in Coupons collection config",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/collections/Coupons.ts",
+    "tests/int/coupons.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2395-p1-mark-derived-coupon-fields-as-read-only-in-admi.jsonl",
+  "startedAt": "2026-06-04T01:43:00Z",
+  "finishedAt": "2026-06-04T02:00:00Z"
+}
