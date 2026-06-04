@@ -1,0 +1,17 @@
+{
+  "taskId": "2437",
+  "taskType": "issue",
+  "target": "github.com/A-Guy-educ/A-Guy/pull/2437",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed dashboard-metrics route to query PaymentStats for revenue aggregates instead of raw transactions",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/admin/dashboard-metrics/route.ts",
+    "tests/int/admin-dashboard-revenue-payment-stats-disconnect-2437.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2437.jsonl",
+  "startedAt": "2026-06-04T18:30:00.000Z",
+  "finishedAt": "2026-06-04T18:38:00.000Z"
+}
