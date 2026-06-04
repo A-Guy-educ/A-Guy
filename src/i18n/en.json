@@ -781,8 +781,11 @@
       "productNotFound": "This product is no longer available.",
       "productNotActive": "This product is no longer available.",
       "invalidCoupon": "This coupon code is invalid or expired.",
-      "checkoutFailed": "Unable to start checkout. Please try again."
-    }
+      "checkoutFailed": "Unable to start checkout. Please try again.",
+      "providerNotConfigured": "This payment provider is not configured. Please contact support."
+    },
+    "payWithCard": "Pay with Credit Card",
+    "payWithPaypal": "Pay with PayPal"
   },
   "checkout": {
     "success": {
