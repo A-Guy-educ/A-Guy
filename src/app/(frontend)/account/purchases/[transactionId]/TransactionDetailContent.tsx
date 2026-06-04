@@ -63,15 +63,53 @@ function formatAmount(amountAgorot: number, currency: string): string {
   return formatter.format(amountAgorot)
 }
 
+// Deterministic date formatter to avoid hydration mismatches from toLocaleDateString
+// which can produce different output on server vs client due to timezone/ICU differences
+const HEBREW_MONTHS = [
+  'ינואר',
+  'פברואר',
+  'מרץ',
+  'אפריל',
+  'מאי',
+  'יוני',
+  'יולי',
+  'אוגוסט',
+  'ספטמבר',
+  'אוקטובר',
+  'נובמבר',
+  'דצמבר',
+]
+
+const ENGLISH_MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+]
+
 function formatDate(iso: string, locale: string): string {
-  const dateLocale = locale === 'he' ? 'he-IL' : 'en-US'
-  return new Date(iso).toLocaleDateString(dateLocale, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  // Parse ISO string manually to avoid timezone conversion issues that cause
+  // hydration mismatches when server and client have different timezones
+  const match = iso.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/)
+  if (!match) return iso
+
+  const [, year, month, day, hours, minutes] = match
+  const monthIndex = parseInt(month, 10) - 1
+  const dayNum = parseInt(day, 10)
+
+  if (locale === 'he') {
+    return `${dayNum} ב${HEBREW_MONTHS[monthIndex]} ${year}, ${hours}:${minutes}`
+  }
+
+  return `${ENGLISH_MONTHS[monthIndex]} ${dayNum}, ${year}`
 }
 
 const STATUS_CONFIG: Record<

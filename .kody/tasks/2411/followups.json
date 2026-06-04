@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Fix same toLocaleDateString hydration issue in PurchasesPageContent.tsx",
+    "body": "The list page at `src/app/(frontend)/account/purchases/PurchasesPageContent.tsx` has the same `formatDate` function using `toLocaleDateString` which could cause similar hydration mismatches. Apply the same deterministic formatter fix.",
+    "rationale": "Same root cause as #2411. The list page might also exhibit hydration mismatches under certain timezone/ICU configurations.",
+    "priority": "low"
+  }
+]

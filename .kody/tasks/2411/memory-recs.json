@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "toLocaleDateString-causes-hydration-mismatch",
+    "hook": "toLocaleDateString produces different output on server vs client due to timezone/ICU differences",
+    "body": "The `toLocaleDateString` API can produce different output on Node.js (server) vs browser due to timezone and ICU data differences. This causes React hydration error #418 (hydration mismatch). Fix: use a deterministic manual date formatter that parses the ISO string directly without relying on the Date object's locale-sensitive formatting.\n\nExample fix pattern:\n```typescript\nconst MONTHS = ['January', ...]\nfunction formatDate(iso: string) {\n  const match = iso.match(/^(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})/)\n  if (!match) return iso\n  const [, year, month, day, hours, minutes] = match\n  return `${MONTHS[parseInt(month) - 1]} ${parseInt(day)}, ${year}`\n}\n```",
+    "why": "This bug (#2411) manifested as a hydration mismatch on the purchase detail page. The fix required replacing toLocaleDateString with a manual formatter that doesn't depend on system locale/timezone.",
+    "confidence": 0.95
+  }
+]
