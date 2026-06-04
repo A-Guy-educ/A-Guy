@@ -1,17 +1,15 @@
 {
   "version": 1,
-  "rev": 77,
+  "rev": 78,
   "cursor": "idle",
   "data": {
-    "failingChecks": [
-      "hygiene"
-    ],
+    "failingChecks": [],
     "issueNumber": 2349,
-    "lastFiredAt": "2026-06-04T10:31:45.520Z",
+    "lastFiredAt": "2026-06-04T11:38:22.054Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 29971,
-    "sha": "447ee5ce5a6709a248f24bc59d2473cb6d1d21e3",
-    "note": "Fix already in flight via issue 2349 — hygiene check failing on sha 447ee5ce"
+    "lastResolution": "CI now GREEN — previously failing hygiene check on sha 447ee5ce resolved",
+    "sha": "cd98280486e8d13d4d8b6c559dcc7f132e72c1d7",
+    "lastDurationMs": 34822
   },
   "done": false
 }
