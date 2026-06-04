@@ -1,0 +1,14 @@
+{
+  "taskId": "2394",
+  "taskType": "issue",
+  "target": "2394",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fix already in place - gravatar.com was added to admin CSP img-src directive in prior commits. All tests pass.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [],
+  "sessionLog": ".kody/sessions/2394.jsonl",
+  "startedAt": "2026-06-04T02:47:00Z",
+  "finishedAt": "2026-06-04T02:50:00Z"
+}

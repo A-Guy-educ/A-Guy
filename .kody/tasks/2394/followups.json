@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Monitor for CSP reverts on next.config.js changes",
+    "body": "Gravatar has been added/removed from the admin CSP img-src multiple times across different branches (see git log). When modifying next.config.js CSP headers, ensure gravatar.com (or *.gravatar.com) is preserved in the /admin route CSP.",
+    "rationale": "The issue keeps recurring - each time the CSP is modified, gravatar.com risks being dropped. A pattern may exist where devs copy the general route CSP to create the admin route CSP and forget to add gravatar.com.",
+    "priority": "low"
+  }
+]
