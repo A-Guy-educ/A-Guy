@@ -2,32 +2,32 @@
 
 _Rolling 6h cycle — one duty deep-reviewed per tick._
 
-Cycle 6 — 15 healthy, 0 warn, 25 broken of 25 duties.
+## Cycle 7 — 0 healthy, 8 warn, 17 broken of 25 duties.
 
 | Duty | Staff | Cadence | Verdict | Note |
 |------|-------|---------|---------|------|
-| approval-gate | ceo | 6h | broken | state.json never created; lastRunISO never persisted; data.prs persistence impossible across ticks |
-| architecture-audit | cto | 7d (disabled) | broken | script never existed; state path in body points to deprecated .kody/jobs/; procedure commits + pushes violating one-action-max |
-| ceo-performance-review | ceo | 7d | broken | report file present (2039 bytes) but state.json never created; lastRunISO/cycle never persisted |
-| cleanup-branches | ceo | 2h | broken | no per-tick procedure; describes policy only; allowed-commands includes git push but no gh write method |
-| clear-empty-goals | ceo | daily | broken | no procedure whatsoever; zero steps; no system target; no kody-job-next-state block; state never created |
-| coverage-floor | ceo | 1d | broken | referenced script does not exist; cadence formula inconsistency (every: 1d vs +20h); state never persisted |
-| dead-code-sweep | ceo | 7d | broken | script never implemented despite body refactor noting it needed creation; state at legacy .kody/jobs/ path |
-| dependency-bump | ceo | 14d | broken | script does not exist; body still references legacy .kody/jobs/ path for state; disabled=true masks finding |
-| design-review | ceo | 7d | broken | cadence guard (6d) contradicts frontmatter every: 7d; no kody-job-next-state block; state never created |
-| dev-ci-health | ceo | 1h | broken | kody-job-next-state present but missing lastRunISO/nextEligibleISO fields; state file never created |
-| docs-code | ceo | 7d | broken | no kody-job-next-state block; state never created; lastRunISO never persisted |
-| docs-readme | ceo | 7d | warn | no kody-job-next-state block; state never created; lastRunISO never persisted |
-| flaky-test-quarantine | ceo | 1d | warn | no kody-job-next-state block; state never created; lastRunISO never persisted |
-| health-check | ceo | 1h | warn | no kody-job-next-state block; state never created; lastRunISO never persisted |
-| job-gap-scan | ceo | 7d | broken | state persisted to legacy .kody/jobs/ path; script still writes to old location; two non-identical state files exist |
-| pr-health-triage | ceo | 2h | warn | no kody-job-next-state block; state never created; lastRunISO never persisted |
-| publish-release | ceo | - | warn | no kody-job-next-state block; state never created; disabled=true design review only |
-| qa-sweep | qa | 7d | broken | lastRunISO frozen at 2026-05-23; body updated 2026-05-28 but state not; cursor idle with no open issue |
-| qa-verify | qa | 7d | broken | state.json never created; duty body created 2026-05-27, 0 commits to state file ever |
-| qa | qa | 1d | broken | state frozen at 2026-05-23; lastFiredAt and nextEligibleISO both stale (10+ days); no cadence guard to restart |
-| redispatch | ceo | 30m | warn | no kody-job-next-state block; state never created; lastRunISO never persisted |
-| security-audit | ceo | 7d | warn | no kody-job-next-state block; state never created; disabled=true design review only |
-| system-audit | ceo | 1h | warn | no kody-job-next-state block; state never created; lastRunISO never persisted |
-| task-memory-extractor | ceo | 1d | warn | no kody-job-next-state block; state never created; lastRunISO never persisted |
-| type-debt | ceo | 7d | warn | no kody-job-next-state block; state never created; lastRunISO never persisted |
+| approval-gate | cto | 15m | broken | design sound; state.json never created; never ticked |
+| architecture-audit | | 7d (disabled) | broken | script never existed; state path deprecated .kody/jobs/; commits violate one-action-max |
+| ceo-performance-review | ceo | 7d | broken | procedure cannot emit kody-job-next-state (no write step); state never created |
+| cleanup-branches | | 7d | broken | no per-tick procedure; policy-only; no gh write method |
+| clear-empty-goals | | 7d | broken | zero steps; no system target; no kody-job-next-state block |
+| coverage-floor | | 1d (disabled) | broken | script missing; cadence formula inconsistency (every: 1d vs +20h) |
+| dead-code-sweep | | 7d (disabled) | broken | script never implemented; state at legacy .kody/jobs/ path |
+| dependency-bump | | 7d (disabled) | broken | script absent; body references deprecated .kody/jobs/ path |
+| design-review | | 7d | broken | cadence guard (6d) contradicts every: 7d; no kody-job-next-state block |
+| dev-ci-health | | 1h | broken | kody-job-next-state present but missing lastRunISO/nextEligibleISO fields |
+| docs-code | | 7d | broken | no kody-job-next-state block; state never created |
+| docs-readme | | 7d | warn | no kody-job-next-state block; state never created; lastRunISO never persisted |
+| flaky-test-quarantine | | 7d (disabled) | warn | no kody-job-next-state block; state never created |
+| health-check | | 7d | warn | no kody-job-next-state block; state never created |
+| job-gap-scan | | 7d | broken | state at legacy .kody/jobs/ path; script writes to old location; two non-identical state files |
+| pr-health-triage | | 7d | warn | no kody-job-next-state block; state never created |
+| publish-release | | 7d | warn | no kody-job-next-state block; disabled=true design review only |
+| qa-sweep | qa | 7d | broken | lastRunISO frozen at 2026-05-23; body updated 2026-05-28 but state not |
+| qa-verify | qa | 7d | broken | state.json never created; 0 commits to state file ever |
+| qa | qa | 7d | broken | lastRunISO frozen 2026-05-23; lastFiredAt and nextEligibleISO stale 10+ days |
+| redispatch | | 7d | warn | no kody-job-next-state block; state never created |
+| security-audit | | 7d | warn | no kody-job-next-state block; disabled=true design review only |
+| system-audit | | 6h | warn | no kody-job-next-state block; state never created |
+| task-memory-extractor | | 7d | warn | no kody-job-next-state block; state never created |
+| type-debt | | 7d (disabled) | warn | no kody-job-next-state block; state never created |
