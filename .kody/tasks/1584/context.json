@@ -4,7 +4,7 @@
   "target": "1582-bug-get-apiadmindashboard-metrics-returns-500-admi",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "CI failure was in workflow run 26930186620 — CHANGELOGOG.md failed format:check. Fix was already applied in commit 7cef8a205 (format CHANGELOGOG.md with Prettier) which is an ancestor of current HEAD c1378fcb1. All quality gates pass.",
+  "reason": "CI failure was format:check on CHANGELOGOG.md. Fix (commit 7cef8a205: prettier --write CHANGELOGOG.md) was already merged into the branch before current HEAD. All quality gates pass.",
   "prUrl": null,
   "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26930186620",
   "filesTouched": [],
