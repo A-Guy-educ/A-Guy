@@ -1,15 +1,15 @@
 {
   "version": 1,
-  "rev": 86,
+  "rev": 87,
   "cursor": "idle",
   "data": {
     "failingChecks": [],
     "issueNumber": 2349,
-    "lastFiredAt": "2026-06-04T20:16:44.125Z",
+    "lastFiredAt": "2026-06-04T21:04:36.311Z",
     "lastOutcome": "completed",
     "lastResolution": "CI now GREEN — previously failing hygiene check on sha 447ee5ce resolved",
-    "sha": "3bb9421de5335d0f961bb9ce1f51131734ba2927",
-    "lastDurationMs": 18381
+    "sha": "e1ef9a6877b71adac9093c4673568f2e1aaa4342",
+    "lastDurationMs": 19262
   },
   "done": false
 }
