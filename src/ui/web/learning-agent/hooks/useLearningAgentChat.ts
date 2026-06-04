@@ -77,7 +77,7 @@ export function useLearningAgentChat({
           body: JSON.stringify({
             message: userMessage.content,
             acknowledgment: 'Understood',
-            conversationId,
+            ...(conversationId && { conversationId }),
             gradeLevel,
           }),
         })

@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "zod-optional-accepts-undefined-not-null",
+    "hook": "Zod optional() accepts undefined but NOT null",
+    "body": "Zod's `.optional()` on a schema only accepts `undefined` as the missing-value sentinel — it does NOT accept `null`. When a field is sent as `null` in JSON (e.g., `{ conversationId: null }`), JSON.parse produces `null`, and Zod's `.optional()` rejects it with 'Invalid input: expected string, received null'. The fix is either to: (1) use `.nullable()` in the Zod schema, or (2) have the client omit the key entirely when the value is falsy (using spread: `{ ...(value && { field: value }) }`). Sending `undefined` in a plain object also doesn't work because `JSON.stringify({ field: undefined })` drops the key, producing the same JSON as omitting it — which is what you want — but the initial JavaScript object still has the key with value `undefined`, which Zod's `.optional()` accepts.\n\nWhy: This bug caused a silent HTTP 400 on every first learning-chat message from AgentChatWindow because conversationId starts as null and was always sent in the request body.\n\nHow to apply: When a client sends an optional ID field that starts as null, always use spread-omit pattern: `...(id && { id })`.",
+    "why": "Classic Zod gotcha that caused a reproducible 400 on every first learning-chat message. Easy to misdiagnose as a server bug.",
+    "confidence": 0.95
+  }
+]

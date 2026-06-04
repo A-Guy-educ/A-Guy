@@ -1,0 +1,8 @@
+[
+  {
+    "title": "gradeLevel is hardcoded to '7' in AgentChatWindow",
+    "body": "AgentChatWindow line 28: `const [gradeLevel] = useState<string>('7')`. The comment says 'should be fetched from user profile'. The gradeLevel should come from the authenticated user's profile, not be hardcoded.",
+    "rationale": "Hardcoded gradeLevel means the learning agent always thinks the user is in grade 7, which could lead to inappropriate response complexity for actual grade levels.",
+    "priority": "low"
+  }
+]

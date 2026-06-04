@@ -1,0 +1,18 @@
+{
+  "taskId": "2467",
+  "taskType": "issue",
+  "target": "GitHub issue #2467",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed HTTP 400 error on learning-chat send: AgentChatWindow was sending conversationId: null which fails Zod's optional() validation (accepts undefined, not null). Fixed by conditionally omitting the key when conversationId is null.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/learning-agent/AgentChatWindow/index.tsx",
+    "src/ui/web/learning-agent/hooks/useLearningAgentChat.ts",
+    "tests/int/learning-chat-endpoint.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-06-04T23:50:00Z",
+  "finishedAt": "2026-06-04T23:55:00Z"
+}

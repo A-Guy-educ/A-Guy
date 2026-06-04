@@ -78,7 +78,7 @@ export function AgentChatWindow({ isOpen, onClose }: AgentChatWindowProps) {
         body: JSON.stringify({
           message: userMessage.content,
           acknowledgment: 'Understood',
-          conversationId,
+          ...(conversationId && { conversationId }),
           gradeLevel,
         }),
       })
