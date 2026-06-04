@@ -204,7 +204,7 @@
       "amount": "סכום",
       "provider": "ספק",
       "transactionId": "מזהה עסקה",
-      "status": "סטטוס",
+      "statusLabel": "סטטוס",
       "coupon": "קופון",
       "pendingHelpText": "התשלום שלך מעובד. זה עשוי לקחת מספר רגעים.",
       "refreshStatus": "רענן סטטוס",

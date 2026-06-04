@@ -1,0 +1,20 @@
+{
+  "taskId": "2435",
+  "taskType": "issue",
+  "target": "gh-2435",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed Unknown Product (depth:0→depth:1) and raw i18n key (changed t('status.${status}') to t('statuses.${status}')) issues; fixed duplicate status key in en.json/he.json",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/account/purchases/[transactionId]/page.tsx",
+    "src/app/(frontend)/account/purchases/PurchasesPageContent.tsx",
+    "src/app/(frontend)/account/purchases/[transactionId]/TransactionDetailContent.tsx",
+    "src/i18n/en.json",
+    "src/i18n/he.json"
+  ],
+  "sessionLog": ".kody/sessions/2435-p1-purchase-detail-shows-unknown-product-and-raw-i.jsonl",
+  "startedAt": "2026-06-04T16:26:00Z",
+  "finishedAt": "2026-06-04T16:41:00Z"
+}

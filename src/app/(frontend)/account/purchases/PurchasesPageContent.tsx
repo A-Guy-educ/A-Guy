@@ -61,7 +61,7 @@ const STATUS_COLORS: Record<TransactionStatus, { bg: string; text: string; label
 function StatusBadge({ status }: { status: TransactionStatus }) {
   const t = useTranslations('account.purchases')
   const colors = STATUS_COLORS[status]
-  const label = t(`status.${status}`)
+  const label = t(`statuses.${status}`)
 
   return (
     <span
