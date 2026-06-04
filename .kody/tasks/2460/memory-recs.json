@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "csp-subdomain-wildcard-pattern",
+    "hook": "CSP img-src *.gravatar.com instead of gravatar.com",
+    "body": "When adding domains to CSP img-src (or similar) directives, check if the service uses subdomains. Gravatar serves avatars from secure.gravatar.com and www.gravatar.com, NOT just gravatar.com. In CSP, 'domain' only matches exact hostname; '*.domain' is needed to cover subdomains.\n\nWhy: The previous fix added 'gravatar.com' which only matches the exact hostname. Avatar images were still blocked because they load from secure.gravatar.com.\n\nHow to apply: When adding image/avatar sources to CSP, check if the service uses subdomains and use wildcard pattern (*.domain) to cover them.",
+    "why": "Multiple prior attempts to fix gravatar CSP failed because they used 'gravatar.com' instead of '*.gravatar.com'. The wildcard is required because Gravatar serves images from secure.gravatar.com.",
+    "confidence": 0.95
+  }
+]

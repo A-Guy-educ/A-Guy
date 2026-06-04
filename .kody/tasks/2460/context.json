@@ -1,0 +1,17 @@
+{
+  "taskId": "2460",
+  "taskType": "issue",
+  "target": "2460",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed CSP img-src to use *.gravatar.com wildcard for subdomain coverage",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "next.config.js",
+    "tests/int/csp-vercel-feedback-admin.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2460.jsonl",
+  "startedAt": "2026-06-04T22:55:00Z",
+  "finishedAt": "2026-06-04T23:00:45Z"
+}
