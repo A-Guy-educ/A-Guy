@@ -101,6 +101,7 @@ interface ChatInterfaceProps {
   viewMode?: ViewMode
   onModeToggle?: () => void
   onChatInteraction?: () => void
+  fabOpen?: boolean
 }
 
 export function ChatInterface({
@@ -126,6 +127,7 @@ export function ChatInterface({
   viewMode,
   onModeToggle,
   onChatInteraction,
+  fabOpen = false,
 }: ChatInterfaceProps) {
   const t = useTranslations(translationNamespace)
   const tCourses = useTranslations('courses')
@@ -617,7 +619,10 @@ export function ChatInterface({
 
       {/* Input Container */}
       <div
-        className="flex-grow-0 flex-shrink-0 bg-card border-t border-border p-5 pb-8 relative"
+        className={cn(
+          'flex-grow-0 flex-shrink-0 bg-card border-t border-border p-5 pb-8 relative',
+          fabOpen && 'hidden',
+        )}
         data-math-controls
       >
         {/* Formula Composer Popup */}
