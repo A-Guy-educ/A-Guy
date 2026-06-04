@@ -1,0 +1,17 @@
+{
+  "taskId": "2366",
+  "taskType": "issue",
+  "target": "2366",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed white strip in dark mode by returning null early from AdminBar when !show, eliminating the always-visible bg-foreground div on desktop.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/AdminBar/index.tsx",
+    "tests/e2e/admin-bar-dark-mode-auth-state.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2366.jsonl",
+  "startedAt": "2026-06-03T12:00:00.000Z",
+  "finishedAt": "2026-06-03T12:05:00.000Z"
+}
