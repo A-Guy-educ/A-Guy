@@ -1,15 +1,14 @@
 {
   "version": 1,
-  "rev": 90,
+  "rev": 91,
   "cursor": "idle",
   "data": {
     "failingChecks": [],
-    "issueNumber": 2349,
-    "lastFiredAt": "2026-06-04T22:54:02.282Z",
+    "lastFiredAt": "2026-06-04T23:27:18.271Z",
     "lastOutcome": "completed",
-    "lastResolution": "CI still GREEN — no failures on sha 922c42e4d",
-    "sha": "922c42e4d268e134aec6c6fa5e83d2d189fd01f3",
-    "lastDurationMs": 17582
+    "lastResolution": "CI still GREEN — no failures on sha 21b9a23e5",
+    "sha": "21b9a23e5eb77e62a99ff02fa660a5e326f6a12a",
+    "lastDurationMs": 14847
   },
   "done": false
 }
