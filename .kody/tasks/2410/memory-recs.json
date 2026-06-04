@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "paypal-checkout-500-vs-503-error-handling",
+    "hook": "Error message mismatch in checkout route caused 500 instead of 503",
+    "body": "When `getPaymentEnv()` throws 'Missing required payment environment variables: PAYPAL_CLIENT_ID', the checkout route checked for 'Missing PAYPAL_CLIENT_ID or PAYPAL_CLIENT_SECRET environment variable' — these exact strings never matched, causing all credential errors to return 500 instead of the intended 503. Fix: use `includes()` checks for each specific credential variable name.\n\n**Why:** Exact string matching against error messages from `getPaymentEnv()` is fragile because the error format ('Missing required payment environment variables: NAME') differs from what the route expected.\n\n**How to apply:** When checking for missing credentials in error handling, always use `errorMessage.includes('CREDENTIAL_NAME')` rather than exact string equality.",
+    "why": "Prevent future credential error misclassifications from 503 to 500",
+    "confidence": 0.95
+  }
+]

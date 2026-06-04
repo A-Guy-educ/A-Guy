@@ -398,9 +398,17 @@ export async function POST(request: NextRequest) {
 
     const errorMessage = error instanceof Error ? error.message : 'unknown_error'
 
+    // Detect missing credentials by checking for specific env var names in the error.
+    // This handles both the getPaymentEnv() format ("Missing required payment environment
+    // variables: NAME") and the payment provider API format
+    // ("PayPal/Stripe token/c credential request failed").
     if (
-      errorMessage === 'Missing STRIPE_SECRET_KEY environment variable' ||
-      errorMessage === 'Missing PAYPAL_CLIENT_ID or PAYPAL_CLIENT_SECRET environment variable'
+      errorMessage.includes('STRIPE_SECRET_KEY') ||
+      errorMessage.includes('STRIPE_PUBLISHABLE_KEY') ||
+      errorMessage.includes('STRIPE_WEBHOOK_SECRET') ||
+      errorMessage.includes('PAYPAL_CLIENT_ID') ||
+      errorMessage.includes('PAYPAL_CLIENT_SECRET') ||
+      errorMessage.includes('PAYPAL_WEBHOOK_ID')
     ) {
       return NextResponse.json(
         { success: false, error: 'payment_provider_not_configured' },

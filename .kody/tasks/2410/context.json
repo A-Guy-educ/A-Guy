@@ -1,0 +1,17 @@
+{
+  "taskId": "2410",
+  "taskType": "issue",
+  "target": "2410-p1-paypal-checkout-returns-http-500-error",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed checkout route error handling to properly detect missing/invalid payment credentials and return 503 instead of 500",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/payments/checkout/route.ts",
+    "tests/int/checkout-paypal-provider.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/a54d9f60-d165-4475-b9af-7369fac46196.jsonl",
+  "startedAt": "2026-06-04T07:40:00.000Z",
+  "finishedAt": "2026-06-04T08:08:00.000Z"
+}
