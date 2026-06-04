@@ -1,19 +1,12 @@
-## CI MongoDB Docker Hub Timeout Fix
+## CI Docker Buildx Timeout Fix
 
-**Problem:** `docker pull mongo:7` was timing out with `context deadline exceeded` errors reaching Docker Hub registry. This affected the Integration Tests job (and other jobs using MongoDB services).
+**Problem:** CI was failing with `Client.Timeout exceeded while awaiting headers` when `docker/setup-buildx-action@v3` tried to boot a builder by pulling `moby/buildkit:buildx-stable-1` from Docker Hub.
 
-**Root cause:** Docker Hub connectivity issues from GitHub Actions runners, not a code problem.
+**Root cause:** The `docker/setup-buildx-action@v3` step was trying to pull the buildkit image even though none of the CI jobs actually build Docker images - they only use `docker pull` and `docker run` for MongoDB. Buildx is only needed for `docker buildx build` commands.
 
 **Fix applied to `.github/workflows/ci.yml`:**
 
-Replaced all 5 `services: mongodb:` blocks with explicit Docker steps:
-
-1. `docker/setup-buildx-action@v3` — sets up Buildx for better Docker handling
-2. Pre-pull step with 5 retries and 10s backoff between attempts
-3. `docker run -d --name mongodb -p 27017:27017 mongo:7` — starts container explicitly
-4. Wait-for-ready loop using `docker exec mongodb mongosh --eval 'db.runCommand({ ping: 1 })'`
-
-**Jobs updated:**
+Removed the `docker/setup-buildx-action@v3` step from all 6 jobs that had it:
 - `integration-tests`
 - `build`
 - `e2e-gate`
@@ -21,4 +14,4 @@ Replaced all 5 `services: mongodb:` blocks with explicit Docker steps:
 - `qa-scenarios-core`
 - `qa-scenarios-full`
 
-**Why this works:** The pre-pull with retries handles transient Docker Hub network failures. Buildx can use Docker layer caching to speed up subsequent pulls. The explicit `docker run` bypasses GitHub Actions' service container pull mechanism which had no retry logic.
+**Why this works:** The jobs don't need Buildx since they don't build Docker images - they only pull and run MongoDB containers. Removing the unnecessary step eliminates the network call to pull buildkit from Docker Hub.
