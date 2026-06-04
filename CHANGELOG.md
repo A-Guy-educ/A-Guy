@@ -1678,7 +1678,7 @@
 ## [Unreleased]
 
 - #2192: Add mobile chat FAB (button-to-open) on lesson pages — redo of r… ([#2193](https://github.com/A-Guy-educ/A-Guy/pull/2193)) — @kodyade[bot]
-- fix(payments): Surface real error messages in checkout + webhook logs ([#2432](https://github.com/A-Guy-educ/A-Guy/pull/2432)) — @aguyshayb · 🔄 QA (#2454)
+- fix(payments): Surface real error messages in checkout + webhook logs ([#2432](https://github.com/A-Guy-educ/A-Guy/pull/2432)) — @aguyshayb · ⚠️ QA 2026-06-04 (#2454)
 - #2369: Fix login page horizontal overflow on mobile (page scrolls sidew… ([#2426](https://github.com/A-Guy-educ/A-Guy/pull/2426)) — @kodyade[bot] · ✅ QA 2026-06-04
 - #2366: Fix thin white strip at top of page in dark mode (unauthenticate… ([#2367](https://github.com/A-Guy-educ/A-Guy/pull/2367)) — @kodyade[bot] · ⚠️ QA 2026-06-04 (#2422)
 - #2359: Add provider choice (Stripe / PayPal) at checkout ([#2360](https://github.com/A-Guy-educ/A-Guy/pull/2360)) — @kodyade[bot] · ⚠️ QA 2026-06-04 (#2399)
