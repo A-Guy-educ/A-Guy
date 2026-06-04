@@ -2,11 +2,11 @@
 
 _Rolling 6h cycle — one duty deep-reviewed per tick._
 
-## Cycle 7 — 0 healthy, 7 warn, 18 broken of 25 duties.
+## Cycle 7 — 0 healthy, 8 warn, 17 broken of 25 duties.
 
 | Duty | Staff | Cadence | Verdict | Note |
 |------|-------|---------|---------|------|
-| approval-gate | | 7d | broken | state.json never created; lastRunISO never persisted |
+| approval-gate | cto | 15m | broken | design sound; state.json never created; never ticked |
 | architecture-audit | | 7d (disabled) | broken | script never existed; state path deprecated .kody/jobs/; commits violate one-action-max |
 | ceo-performance-review | ceo | 7d | broken | procedure cannot emit kody-job-next-state (no write step); state never created |
 | cleanup-branches | | 7d | broken | no per-tick procedure; policy-only; no gh write method |
@@ -31,4 +31,3 @@ _Rolling 6h cycle — one duty deep-reviewed per tick._
 | system-audit | | 6h | warn | no kody-job-next-state block; state never created |
 | task-memory-extractor | | 7d | warn | no kody-job-next-state block; state never created |
 | type-debt | | 7d (disabled) | warn | no kody-job-next-state block; state never created |
-
