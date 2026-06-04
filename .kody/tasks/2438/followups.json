@@ -1,0 +1,8 @@
+[
+  {
+    "title": "src/server/utils/pagination.ts is unused by route",
+    "body": "The route's findAll is defined inline (parallel). The utility at src/server/utils/pagination.ts contains the same parallel implementation but is not imported by the route. Consider either (a) deleting the utility if no other modules need it, or (b) updating the route to import from the utility to avoid duplication.",
+    "rationale": "The utility file was created as part of the fix but the route keeps its own inline implementation due to TypeScript signature compatibility. Having two copies of findAll is confusing and could drift over time.",
+    "priority": "low"
+  }
+]
