@@ -108,7 +108,7 @@ export interface Config {
     'access-codes': AccessCode;
     transactions: Transaction;
     payment_stats: PaymentStat;
-    'webhook-events': WebhookEvent;
+    'webhook-logs': WebhookLog;
     'mcp-audit-logs': McpAuditLog;
     redirects: Redirect;
     forms: Form;
@@ -163,7 +163,7 @@ export interface Config {
     'access-codes': AccessCodesSelect<false> | AccessCodesSelect<true>;
     transactions: TransactionsSelect<false> | TransactionsSelect<true>;
     payment_stats: PaymentStatsSelect<false> | PaymentStatsSelect<true>;
-    'webhook-events': WebhookEventsSelect<false> | WebhookEventsSelect<true>;
+    'webhook-logs': WebhookLogsSelect<false> | WebhookLogsSelect<true>;
     'mcp-audit-logs': McpAuditLogsSelect<false> | McpAuditLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
@@ -3026,9 +3026,9 @@ export interface PaymentStat {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "webhook-events".
+ * via the `definition` "webhook-logs".
  */
-export interface WebhookEvent {
+export interface WebhookLog {
   id: string;
   /**
    * Payment provider that sent this webhook event
@@ -3522,8 +3522,8 @@ export interface PayloadLockedDocument {
         value: string | PaymentStat;
       } | null)
     | ({
-        relationTo: 'webhook-events';
-        value: string | WebhookEvent;
+        relationTo: 'webhook-logs';
+        value: string | WebhookLog;
       } | null)
     | ({
         relationTo: 'mcp-audit-logs';
@@ -4701,9 +4701,9 @@ export interface PaymentStatsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "webhook-events_select".
+ * via the `definition` "webhook-logs_select".
  */
-export interface WebhookEventsSelect<T extends boolean = true> {
+export interface WebhookLogsSelect<T extends boolean = true> {
   provider?: T;
   eventId?: T;
   eventType?: T;

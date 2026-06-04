@@ -24,7 +24,7 @@ import type { CollectionConfig } from 'payload'
 import { adminOnly } from '../access/adminOnly'
 
 export const WebhookEvents: CollectionConfig = {
-  slug: 'webhook-events',
+  slug: 'webhook-logs',
   access: {
     create: adminOnly,
     read: adminOnly,

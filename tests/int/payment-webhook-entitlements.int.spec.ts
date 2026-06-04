@@ -2568,11 +2568,11 @@ describe('PayPal webhook JSON parse failure', () => {
 // ─── WebhookEvents dedup tests ─────────────────────────────────────────────────
 
 describe('WebhookEvents collection dedup gate', () => {
-  // Clean up webhook-events after each test
+  // Clean up webhook-logs after each test
   afterEach(async () => {
     if (!payload) return
     const events = await payload.find({
-      collection: 'webhook-events',
+      collection: 'webhook-logs',
       where: {
         or: [{ provider: { equals: 'stripe' } }, { provider: { equals: 'paypal' } }],
       },
@@ -2582,7 +2582,7 @@ describe('WebhookEvents collection dedup gate', () => {
     })
     for (const doc of events.docs) {
       await payload
-        .delete({ collection: 'webhook-events', id: doc.id, overrideAccess: true })
+        .delete({ collection: 'webhook-logs', id: doc.id, overrideAccess: true })
         .catch(() => {})
     }
   })
@@ -2623,7 +2623,7 @@ describe('WebhookEvents collection dedup gate', () => {
     expect(body).toEqual({ received: true })
     // processed should be true after success
     const events = await payload.find({
-      collection: 'webhook-events',
+      collection: 'webhook-logs',
       where: { eventId: { equals: eventId } },
       limit: 1,
       depth: 0,
@@ -2731,7 +2731,7 @@ describe('WebhookEvents collection dedup gate', () => {
 
     // processed should be false since processing threw
     const events = await payload.find({
-      collection: 'webhook-events',
+      collection: 'webhook-logs',
       where: { eventId: { equals: eventId } },
       limit: 1,
       depth: 0,
@@ -2791,7 +2791,7 @@ describe('WebhookEvents collection dedup gate', () => {
     expect(body).toEqual({ received: true })
     // processed should be true after success
     const events = await payload.find({
-      collection: 'webhook-events',
+      collection: 'webhook-logs',
       where: { eventId: { equals: eventId } },
       limit: 1,
       depth: 0,
@@ -2879,5 +2879,37 @@ describe('WebhookEvents collection dedup gate', () => {
     await payload
       .delete({ collection: 'transactions', id: tx.id, overrideAccess: true })
       .catch(() => {})
+  })
+
+  it('WebhookEvents collection is accessible via webhook-logs slug', async () => {
+    // The collection slug must be 'webhook-logs' so that /admin/collections/webhook-logs works.
+    // Bug: the collection was created with slug 'webhook-events' instead of 'webhook-logs',
+    // causing 404 in admin panel at /admin/collections/webhook-logs.
+    const testEventId = `webhook_logs_slug_test_${Date.now()}`
+    const doc = await payload.create({
+      collection: 'webhook-logs',
+      data: {
+        provider: 'stripe',
+        eventId: testEventId,
+        eventType: 'test.slug.verify',
+        processed: false,
+        receivedAt: new Date().toISOString(),
+      },
+      overrideAccess: true,
+    })
+    expect(doc.id).toBeDefined()
+
+    // Verify we can retrieve it
+    const found = await payload.find({
+      collection: 'webhook-logs',
+      where: { eventId: { equals: testEventId } },
+      limit: 1,
+      depth: 0,
+      overrideAccess: true,
+    })
+    expect(found.totalDocs).toBe(1)
+
+    // Clean up
+    await payload.delete({ collection: 'webhook-logs', id: doc.id, overrideAccess: true })
   })
 })

@@ -1,0 +1,20 @@
+{
+  "taskId": "2458",
+  "taskType": "issue",
+  "target": "2458",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Renamed WebhookEvents collection slug from 'webhook-events' to 'webhook-logs', updated all references, and verified with a failing-then-passing integration test.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/collections/WebhookEvents.ts",
+    "src/app/api/webhooks/stripe/route.ts",
+    "src/app/api/webhooks/paypal/route.ts",
+    "tests/int/payment-webhook-entitlements.int.spec.ts",
+    "src/payload-types.ts"
+  ],
+  "sessionLog": ".kody/runs/gh-26981300118-1/events.jsonl",
+  "startedAt": "2026-06-04T21:42:59Z",
+  "finishedAt": "2026-06-04T22:02:50Z"
+}

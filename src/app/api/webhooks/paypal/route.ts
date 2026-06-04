@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
   let webhookEventId: string | null = null
   try {
     const doc = await payload.create({
-      collection: 'webhook-events',
+      collection: 'webhook-logs',
       data: {
         provider: 'paypal',
         eventId: event.id,
@@ -175,7 +175,7 @@ export async function POST(request: NextRequest) {
   // 6. Mark event as processed
   if (webhookEventId) {
     await payload.update({
-      collection: 'webhook-events',
+      collection: 'webhook-logs',
       id: webhookEventId,
       data: { processed: true },
       overrideAccess: true,
