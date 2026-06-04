@@ -1,14 +1,18 @@
 {
   "version": 1,
-  "rev": 70,
+  "rev": 71,
   "cursor": "idle",
   "data": {
-    "failingChecks": [],
+    "failingChecks": [
+      "inspect",
+      "Fast Gate"
+    ],
     "issueNumber": 2349,
-    "lastFiredAt": "2026-06-04T00:11:26.925Z",
+    "lastFiredAt": "2026-06-04T01:33:10.486Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 13373,
-    "sha": "bb983e4d2e2b5cb27b5fb7e5857e5c508f875ecb"
+    "lastDurationMs": 28663,
+    "sha": "bb983e4d2e2b5cb27b5fb7e5857e5c508f875ecb",
+    "note": "fix already in flight via issue 2349, did not re-dispatch"
   },
   "done": false
 }
