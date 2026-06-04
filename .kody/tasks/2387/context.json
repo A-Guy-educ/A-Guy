@@ -1,0 +1,14 @@
+{
+  "taskId": "2387",
+  "taskType": "issue",
+  "target": "2387-p2-verify-stripe-webhook-endpoint-is-receiving-eve",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "no code bug found — webhook handlers are correctly implemented, all 46 webhook integration tests pass, prior investigation #2386 confirmed the same. Empty webhook-events collection is an infrastructure issue: Stripe is not sending events to the endpoint (webhook not configured in Stripe Dashboard, signing secret mismatch, or network connectivity issue).",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [],
+  "sessionLog": ".kody/sessions/2387.jsonl",
+  "startedAt": "2026-06-04T06:00:00Z",
+  "finishedAt": "2026-06-04T06:15:00Z"
+}
