@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "csp-wildcard-matches-subdomains-only",
+    "hook": "CSP img-src exact-host vs wildcard for same-origin subdomains",
+    "body": "In CSP img-src (and other directives), an exact-host like `gravatar.com` does NOT match `www.gravatar.com`. Only `*.gravatar.com` matches subdomains. An apex domain and its www subdomain are separate hosts in CSP matching.\n\n**Why:** Issue #2451 - 2 CSP violations per page load because `gravatar.com` was in img-src but the actual URL was `www.gravatar.com`. Changing to `*.gravatar.com` fixed it.\n\n**How to apply:** When adding domains to CSP img-src, always use `*.domain.com` pattern if the URL may have a `www.` prefix, even if the apex domain is listed separately.",
+    "why": "CSP host matching treats `domain.com` and `www.domain.com` as distinct hosts. The wildcard `*.domain.com` matches subdomains but NOT the apex. To cover both, list `*.domain.com`.",
+    "confidence": 0.95
+  }
+]

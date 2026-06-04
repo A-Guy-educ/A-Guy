@@ -99,4 +99,23 @@ describe('CSP Configuration - Vercel Feedback Script on /admin', () => {
     // Admin routes MUST have gravatar.com in img-src for user avatars to load
     expect(imgSrc).toContain('gravatar.com')
   })
+
+  it('should use *.gravatar.com wildcard pattern to match www.gravatar.com URLs', async () => {
+    const configContent = fs.readFileSync(nextConfigPath, 'utf8')
+
+    // Extract the /admin route CSP
+    const adminRouteMatch = configContent.match(
+      /source:\s*'\/admin\/:path\*'[\s\S]*?Content-Security-Policy[\s\S]*?value:\s*"([^"]+)"/,
+    )
+    expect(adminRouteMatch).not.toBeNull()
+
+    const csp = adminRouteMatch![1]
+    const imgSrcMatch = csp.match(/img-src\s+([^;]+)/)
+
+    expect(imgSrcMatch).not.toBeNull()
+    const imgSrc = imgSrcMatch![1]
+    // The wildcard pattern *.gravatar.com is REQUIRED to match www.gravatar.com
+    // Without the wildcard, the exact-host "gravatar.com" does NOT match "www.gravatar.com"
+    expect(imgSrc).toContain('*.gravatar.com')
+  })
 })
