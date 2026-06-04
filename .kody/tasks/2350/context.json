@@ -4,11 +4,11 @@
   "target": "2349-dev-ci-is-red-kody-auto-fix",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Resolved single conflicted file .kody/reports/health-check.md by taking origin/dev version",
+  "reason": "Single symmetric conflict in duty-review.md resolved by taking origin/dev (Cycle 7) over HEAD (Cycle 4)",
   "prUrl": null,
   "runUrl": null,
-  "filesTouched": [".kody/reports/health-check.md"],
-  "sessionLog": ".kody/sessions/global-1780512925723-sei419.jsonl",
+  "filesTouched": [".kody/reports/duty-review.md"],
+  "sessionLog": ".kody/sessions/2350.jsonl",
   "startedAt": "2026-06-04T00:00:00Z",
-  "finishedAt": "2026-06-04T00:05:00Z"
+  "finishedAt": "2026-06-04T00:01:00Z"
 }

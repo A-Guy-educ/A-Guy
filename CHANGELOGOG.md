@@ -3,6 +3,7 @@
 ## v0.25.10 — 2026-05-29
 
 ### Features
+
 - Switch job-gap-scan from issue creation to report writing (d61da9708)
 - Add weekly staff performance-review duty for the ceo (04ecc3970)
 - add codegraph MCP tool to research/review/feature/bug (01383c742)
@@ -13,6 +14,7 @@
 - Add QA fix-verification duty (f1410d198)
 
 ### Fixes
+
 - Drop Next 16 second arg from revalidateTag calls (1d2ab92a6)
 - Create super-admin via two-step pattern in rate-limit spec (e273d1637)
 - Force --webpack flag (Turbopack is default in Next 16) (c2f2136b3)
@@ -27,20 +29,24 @@
 - Gate qa-verify merge on a true PASS, not the ui-verified label (c00905bad)
 
 ### Performance
+
 - Externalize heavy server deps and drop date-fns (ecb40371b)
 - Upgrade Next 16 and Payload 3.85, enable Turbopack production build (bf1c65b45)
 - Keep one MongoDB connection warm to cut cold-start latency (6a54f7456)
 
 ### Refactoring
+
 - Switch remaining disabled duties from issue creation to report writing (dc509d77f)
 - Switch architecture-audit from issue creation to report writing (bdbf473b5)
 - Move performance-review and duty-review output to reports (259e16bf9)
 
 ### Docs
+
 - nudge agents to use codegraph before grep (0c265bf11)
 - Clarify qa-verify duty is live (no disabled flag) (a62ea6171)
 
 ### Chores
+
 - update QA marker for #2142 (CONCERNS) (dbad56298)
 - Refresh job-gap-scan report (propose sentry-digest) (a76055f06)
 - start QA for #2142 (d100699ef)
@@ -156,13 +162,14 @@
 - feat(admin): add computed Status/Usage/Expires columns to Coupons list and usage progress bar on detail view (41cd18b42)
 
 ### Other
+
 - release (2d107d39f)
 - acquire issue-2199 (961ade6b6)
 - release (592ef0895)
 - acquire issue-2199 (37ef55166)
 - release (41a9a4114)
 - acquire issue-2199 (1759fdf30)
-- #2139: Rename "PDF view" to "Scroll view" and align content per locale  · ✅ QA 2026-06-01
+- #2139: Rename "PDF view" to "Scroll view" and align content per locale · ✅ QA 2026-06-01
 - release (8a2034817)
 - acquire issue-2199 (cad7eddea)
 - Revert "#1785: Remove bottom chat input bar from lesson page on mobile (#1790)" (c50bfd9d0)
@@ -190,6 +197,7 @@
 ## v0.25.9 — 2026-05-26
 
 ### Features
+
 - add public product catalog, checkout success and cancel pages (5611cc6c3)
 - add clear-empty-goals (ae27a19d8)
 - add publish (a8e29b381)
@@ -240,6 +248,7 @@
 - Add duplication modal with variation level selector (b7b09633d)
 
 ### Fixes
+
 - mint GitHub App token per run, drop static KODY_TOKEN PAT (375995f49)
 - Persist exercise deletions in lesson blocks UI (0d12ea765)
 - Approval-gate uses valid advisory qa-engineer dispatch (156220ef3)
@@ -332,7 +341,7 @@
 - align pnpm action version with package.json (10 vs 9) (e8dbac43f)
 - Correctly parse multi-event SSE batches in chatStream (#1452) (6053be573)
 - Unwrap InlineRichText objects when extracting exercise body (def47cf54)
-- Extract prompt/hint from question_* blocks in exercise content (515584cab)
+- Extract prompt/hint from question\_\* blocks in exercise content (515584cab)
 - Extract exercise body from content.blocks for the context block (ac0f2a9b2)
 - Inject lesson + exercise context when no admin Prompt is linked (18ca2a527)
 - use counting-semaphore withConcurrencyLimit to gate findSimilarMemoryItem dispatch (#1447) (2850b8fda)
@@ -341,6 +350,7 @@
 - pass structured messages to Genkit to preserve conversation history (99284d229)
 
 ### Refactoring
+
 - Drop redundant qa-guide for dashboard-managed QA context (31eed9768)
 - Move context entries to .kody/context (1885f757d)
 - Move company profile docs to .kody/docs (46ab71745)
@@ -352,6 +362,7 @@
 - Rename vault to memory in memorize job (c24dbc422)
 
 ### Docs
+
 - Note the QA_URL site-address variable in QA access context (2c9333481)
 - Add QA context noting login credentials are available (71f072de6)
 - Add company profile documentation (80db9ffe2)
@@ -360,6 +371,7 @@
 - Audit findings for chat system prompt data correctness (a7518cc2e)
 
 ### Chores
+
 - strip stalled QA marker for #2108 (977e561dc)
 - update qa-access (30534def3)
 - file 4 task lesson(s) (a51ba8f5e)
@@ -1549,6 +1561,7 @@
 - fix(genkit): DRY up generateChatCompletionWithTools message building and add coverage (c56b1fa8d)
 
 ### Other
+
 - #1793: [P2] Posts page shows misleading 'Search produced no results' wi… (#1810) (d93145a18)
 - #1581: Phase 7: Course data scope decision + brand smoke test (#1757) (e495d8110)
 - Add approval-gate CTO duty (187969316)
@@ -1675,6 +1688,7 @@
 - start interactive session live-1778076804887-6xg8w7 (7a4a35dc4)
 - start interactive session live-1778076414935-0dlywn (7b990ec4b)
 - start interactive session interactive-1778075175838-vd0im6 (1b6229b27)
+
 ## [Unreleased]
 
 - #2359: Add provider choice (Stripe / PayPal) at checkout ([#2360](https://github.com/A-Guy-educ/A-Guy/pull/2360)) — @kodyade[bot] · ⚠️ QA 2026-06-03 (#2370)
@@ -1688,10 +1702,11 @@
 - #2111: Improve admin Coupons list and detail views — show usage stats a… ([#2115](https://github.com/A-Guy-educ/A-Guy/pull/2115)) — @aguyaharonyair · ⚠️ QA 2026-06-04 (#2392)
 - #1534: יצירת כפתור צ'אט באדמין לגישה לסוכן AI ([#1591](https://github.com/A-Guy-educ/A-Guy/pull/1591)) — @aguyaharonyair · ✅ QA 2026-06-03
 - #2110: Add WebhookEvents collection and dedup all webhook handlers on (… ([#2118](https://github.com/A-Guy-educ/A-Guy/pull/2118)) — @aguyaharonyair · ✅ QA 2026-06-03
+
 ## [v0.25.9] - 2026-05-26
 
 - chore: release v0.25.9 ([#2121](https://github.com/A-Guy-educ/A-Guy/pull/2121)) — @kodyade[bot]
-- #2113: Add public product catalog page and checkout success/cancel pages ([#2117_(https://github.com/A-Guy-educ/A-Guy/pull/2117)) — @aguyaharonyair · 🔄 QA (#2166)
+- #2113: Add public product catalog page and checkout success/cancel pages ([#2117\_(https://github.com/A-Guy-educ/A-Guy/pull/2117)) — @aguyaharonyair · 🔄 QA (#2166)
 - #2112: Add PayPal sandbox key smoke test script + developer setup doc ([#2114](https://github.com/A-Guy-educ/A-Guy/pull/2114)) — @aguyaharonyair · 🔄 QA (#2166)
 - #2104: [Admin] Lesson page — show all exercises inline with full conten… ([#2108](https://github.com/A-Guy-educ/A-Guy/pull/2108)) — @aguyaharonyair · 🔄 QA (#2166)
 - fix(lesson-blocks): Persist exercise deletions in lesson blocks UI ([#2109](https://github.com/A-Guy-educ/A-Guy/pull/2109)) — @aguyshayb
