@@ -1,14 +1,14 @@
 {
   "taskId": "2350",
   "taskType": "pr",
-  "target": "#2350",
+  "target": "2349-dev-ci-is-red-kody-auto-fix",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Single conflicted file duty-review.md resolved by merging HEAD table (Cycle 4, 25 duties) with dev's missing qa/qa-sweep/qa-verify rows",
+  "reason": "Resolved single conflicted file .kody/reports/health-check.md by taking origin/dev version",
   "prUrl": null,
   "runUrl": null,
-  "filesTouched": [".kody/reports/duty-review.md"],
-  "sessionLog": ".kody/last-run.jsonl",
-  "startedAt": "2026-06-03T16:19:25Z",
-  "finishedAt": "2026-06-03T16:20:00Z"
+  "filesTouched": [".kody/reports/health-check.md"],
+  "sessionLog": ".kody/sessions/global-1780512925723-sei419.jsonl",
+  "startedAt": "2026-06-04T00:00:00Z",
+  "finishedAt": "2026-06-04T00:05:00Z"
 }
