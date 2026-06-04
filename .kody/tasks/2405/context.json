@@ -1,0 +1,18 @@
+{
+  "taskId": "2405",
+  "taskType": "issue",
+  "target": "GitHub issue #2405",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed HTTP 500 error on PayPal checkout by making PAYPAL_WEBHOOK_ID optional in getPaymentEnv(). The webhook ID is only needed for webhook signature verification, not checkout session creation.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/lib/payment/env.ts",
+    "tests/unit/lib/payment/env.spec.ts",
+    "tests/unit/lib/payment/paypal.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-06-04T06:00:00Z",
+  "finishedAt": "2026-06-04T06:15:00Z"
+}

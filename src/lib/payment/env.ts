@@ -46,7 +46,7 @@ export function getPaymentEnv(): PaymentEnv {
     { name: 'STRIPE_CURRENCY', required: false, value: process.env.STRIPE_CURRENCY },
     { name: 'PAYPAL_CLIENT_ID', required: true, value: process.env.PAYPAL_CLIENT_ID },
     { name: 'PAYPAL_CLIENT_SECRET', required: true, value: process.env.PAYPAL_CLIENT_SECRET },
-    { name: 'PAYPAL_WEBHOOK_ID', required: true, value: process.env.PAYPAL_WEBHOOK_ID },
+    { name: 'PAYPAL_WEBHOOK_ID', required: false, value: process.env.PAYPAL_WEBHOOK_ID },
     { name: 'PAYPAL_SANDBOX', required: false, value: process.env.PAYPAL_SANDBOX },
   ]
 

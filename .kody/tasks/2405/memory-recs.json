@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "paypal-webhook-id-not-required-for-checkout",
+    "hook": "PAYPAL_WEBHOOK_ID is only needed for webhook signature verification",
+    "body": "PAYPAL_WEBHOOK_ID should be optional in getPaymentEnv(). It is only used by verifyPayPalWebhook() for verifying incoming webhook signatures, NOT by createPayPalOrder() or any other checkout-related function. Making it required broke checkout in environments where the webhook ID wasn't configured.",
+    "why": "Commit fe4683821 changed PAYPAL_WEBHOOK_ID from optional to required in getPaymentEnv(). Since getPaymentEnv() is called by getPayPalApiBase() which is called during checkout session creation, any missing PAYPAL_WEBHOOK_ID caused a 500 error instead of a proper 503.",
+    "confidence": 0.95
+  }
+]

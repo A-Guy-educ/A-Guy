@@ -295,6 +295,10 @@ describe('PayPal Payment Service', () => {
     }
 
     it('should throw error when PAYPAL_WEBHOOK_ID is missing', async () => {
+      // PAYPAL_WEBHOOK_ID is optional in getPaymentEnv (only needed for webhook verification).
+      // verifyPayPalWebhook itself checks for it and throws a descriptive error.
+      process.env.PAYPAL_CLIENT_ID = 'test_client_id'
+      process.env.PAYPAL_CLIENT_SECRET = 'test_secret'
       delete process.env.PAYPAL_WEBHOOK_ID
       resetPaymentEnvCache()
       vi.resetModules()
@@ -302,7 +306,7 @@ describe('PayPal Payment Service', () => {
       const { verifyPayPalWebhook } = await import('@/lib/payment/paypal')
 
       await expect(verifyPayPalWebhook({ type: 'test' }, mockHeaders)).rejects.toThrow(
-        'Missing required payment environment variables: PAYPAL_WEBHOOK_ID',
+        'Missing PAYPAL_WEBHOOK_ID environment variable',
       )
     })
 

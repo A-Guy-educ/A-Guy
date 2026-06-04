@@ -145,15 +145,18 @@ describe('Payment Environment Helper', () => {
       )
     })
 
-    it('should throw when PAYPAL_WEBHOOK_ID is missing', () => {
+    it('should NOT throw when PAYPAL_WEBHOOK_ID is missing (optional — only needed for webhook verification)', () => {
       process.env.STRIPE_SECRET_KEY = 'sk_test_xxx'
       process.env.STRIPE_WEBHOOK_SECRET = 'whsec_xxx'
+      process.env.PAYPAL_CLIENT_ID = 'client_id_xxx'
       process.env.PAYPAL_CLIENT_SECRET = 'client_secret_xxx'
       delete process.env.PAYPAL_WEBHOOK_ID
 
-      expect(() => getPaymentEnv()).toThrow(
-        'Missing required payment environment variables: PAYPAL_WEBHOOK_ID',
-      )
+      // PAYPAL_WEBHOOK_ID is optional — getPaymentEnv should NOT throw.
+      // It is only required when verifying PayPal webhook signatures.
+      expect(() => getPaymentEnv()).not.toThrow()
+      const env = getPaymentEnv()
+      expect(env.paypalWebhookId).toBe('')
     })
   })
 
