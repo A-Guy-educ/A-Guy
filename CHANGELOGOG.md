@@ -1706,7 +1706,7 @@
 ## [v0.25.9] - 2026-05-26
 
 - chore: release v0.25.9 ([#2121](https://github.com/A-Guy-educ/A-Guy/pull/2121)) — @kodyade[bot]
-- #2113: Add public product catalog page and checkout success/cancel pages ([#2117\_(https://github.com/A-Guy-educ/A-Guy/pull/2117)) — @aguyaharonyair · 🔄 QA (#2166)
+- #2113: Add public product catalog page and checkout success/cancel pages ([#2117](https://github.com/A-Guy-educ/A-Guy/pull/2117)) — @aguyaharonyair · 🔄 QA (#2166)
 - #2112: Add PayPal sandbox key smoke test script + developer setup doc ([#2114](https://github.com/A-Guy-educ/A-Guy/pull/2114)) — @aguyaharonyair · 🔄 QA (#2166)
 - #2104: [Admin] Lesson page — show all exercises inline with full conten… ([#2108](https://github.com/A-Guy-educ/A-Guy/pull/2108)) — @aguyaharonyair · 🔄 QA (#2166)
 - fix(lesson-blocks): Persist exercise deletions in lesson blocks UI ([#2109](https://github.com/A-Guy-educ/A-Guy/pull/2109)) — @aguyshayb

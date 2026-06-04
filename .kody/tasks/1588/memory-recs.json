@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "no-escaped-underscores-in-markdown-links",
+    "hook": "Don't escape underscores inside markdown link brackets",
+    "body": "Markdown links in `[text](url)` format do not need escaped underscores — the brackets already disambiguate the link text from surrounding markdown. An escaped underscore `\\_` inside `[(...)]` is an authoring mistake that causes Prettier to warn and fail the format check.\n\n**Why:** Prettier's markdown parser flags `\_` in link text as an unnecessary escape. In CHANGELOGOG.md line 1709, `([#2117\\_(` was causing CI to fail.\n\n**How to apply:** When writing `([#XXXX](url))` style changelog links, use `([#XXXX](url))` — no backslash before the underscore. Prettier will not flag correctly-formatted markdown links.",
+    "why": "Changelog entries with malformed markdown links cause Prettier format check to fail in CI, blocking merges. This is a common typo when manually writing changelog entries.",
+    "confidence": 0.95
+  }
+]
