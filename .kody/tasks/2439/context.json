@@ -1,0 +1,14 @@
+{
+  "taskId": "2439",
+  "taskType": "issue",
+  "target": "job-model smoke test",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Created single new file docs/jobmodel-smoke.md with the exact content specified",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": ["docs/jobmodel-smoke.md"],
+  "sessionLog": ".kody/sessions/<id>.jsonl",
+  "startedAt": "2026-06-04T16:20:51Z",
+  "finishedAt": "2026-06-04T16:21:00Z"
+}

@@ -1,0 +1,1 @@
+Created `docs/jobmodel-smoke.md` containing exactly the single line `<!-- kody 0.4.208 job-model smoke ok -->` as specified in issue #2439. No other files were modified. Quality gates (typecheck, lint, tests) passed on first attempt.
