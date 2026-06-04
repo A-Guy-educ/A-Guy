@@ -1677,14 +1677,17 @@
 - start interactive session interactive-1778075175838-vd0im6 (1b6229b27)
 ## [Unreleased]
 
+- #2192: Add mobile chat FAB (button-to-open) on lesson pages — redo of r… ([#2193](https://github.com/A-Guy-educ/A-Guy/pull/2193)) — @kodyade[bot] · ⚠️ QA 2026-06-04 (#2464)
+- fix(payments): Surface real error messages in checkout + webhook logs ([#2432](https://github.com/A-Guy-educ/A-Guy/pull/2432)) — @aguyshayb · ⚠️ QA 2026-06-04 (#2454)
+- #2369: Fix login page horizontal overflow on mobile (page scrolls sidew… ([#2426](https://github.com/A-Guy-educ/A-Guy/pull/2426)) — @kodyade[bot] · ✅ QA 2026-06-04
 - #2366: Fix thin white strip at top of page in dark mode (unauthenticate… ([#2367](https://github.com/A-Guy-educ/A-Guy/pull/2367)) — @kodyade[bot] · ⚠️ QA 2026-06-04 (#2422)
 - #2359: Add provider choice (Stripe / PayPal) at checkout ([#2360](https://github.com/A-Guy-educ/A-Guy/pull/2360)) — @kodyade[bot] · ⚠️ QA 2026-06-04 (#2399)
 - fix(courses): Restore lesson titles and study/test page types ([#2173](https://github.com/A-Guy-educ/A-Guy/pull/2173)) — @aguyshayb · ⚠️ QA 2026-06-03 (#2358)
 - #2133: Send purchase confirmation email after webhook payment success ([#2143](https://github.com/A-Guy-educ/A-Guy/pull/2143)) — @kodyade[bot] · ⚠️ QA 2026-06-03 (#2383)
 - #2140: Replace mobile draggable chat with a toggle FAB + expanding input ([#2155](https://github.com/A-Guy-educ/A-Guy/pull/2155)) — @kodyade[bot] · ⚠️ QA 2026-06-03 (#2389)
-- #1823: [P2] Stats page chart area renders empty ([#1860](https://github.com/A-Guy-educ/A-Guy/pull/1860)) — @aguyaharonyair
-- #2135: Fix PaymentStats race condition with atomic $inc upsert and uniq… ([#2142](https://github.com/A-Guy-educ/A-Guy/pull/2142)) — @kodyade[bot]
-- #2134: User can see their purchases and active entitlements at /account… ([#2146](https://github.com/A-Guy-educ/A-Guy/pull/2146)) — @kodyade[bot]
+- #1823: [P2] Stats page chart area renders empty ([#1860](https://github.com/A-Guy-educ/A-Guy/pull/1860)) — @aguyaharonyair · ⚠️ QA 2026-06-04 (#2444)
+- #2135: Fix PaymentStats race condition with atomic $inc upsert and uniq… ([#2142](https://github.com/A-Guy-educ/A-Guy/pull/2142)) — @kodyade[bot] · ⚠️ QA 2026-06-04 (#2433)
+- #2134: User can see their purchases and active entitlements at /account… ([#2146](https://github.com/A-Guy-educ/A-Guy/pull/2146)) — @kodyade[bot] · ⚠️ QA 2026-06-04 (#2441)
 - #1764: [Admin] Block management — add, reorder, delete in lesson worksh… ([#1765](https://github.com/A-Guy-educ/A-Guy/pull/1765)) — @aguyaharonyair · ⚠️ QA 2026-06-04 (#2407)
 - #2111: Improve admin Coupons list and detail views — show usage stats a… ([#2115](https://github.com/A-Guy-educ/A-Guy/pull/2115)) — @aguyaharonyair · ⚠️ QA 2026-06-04 (#2392)
 - #1534: יצירת כפתור צ'אט באדמין לגישה לסוכן AI ([#1591](https://github.com/A-Guy-educ/A-Guy/pull/1591)) — @aguyaharonyair · ✅ QA 2026-06-03
