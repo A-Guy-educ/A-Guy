@@ -1,0 +1,17 @@
+{
+  "taskId": "2403",
+  "taskType": "issue",
+  "target": "PayPal checkout returns HTTP 500 error",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed route handler error message check to use .includes() instead of exact string match, correctly returning 503 payment_provider_not_configured when PayPal credentials are missing",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/payments/checkout/route.ts",
+    "tests/int/checkout-paypal-provider-error.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/-home-runner-work-A-Guy-A-Guy-2403-p1-paypal-checkout-returns-http-500-error.jsonl",
+  "startedAt": "2026-06-04T06:05:00Z",
+  "finishedAt": "2026-06-04T06:08:30Z"
+}
