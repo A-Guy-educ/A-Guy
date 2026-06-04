@@ -346,6 +346,19 @@ export async function GET(req: Request) {
   practicedLessons.sort((a, b) => a.title.localeCompare(b.title))
   practicedExams.sort((a, b) => a.title.localeCompare(b.title))
 
+  // Compute time series: daily time spent from progress records
+  const timeSeriesMap = new Map<string, number>()
+  for (const record of filteredRecords) {
+    if (record.timeSpentSeconds && record.lastAccessedAt) {
+      const date = new Date(record.lastAccessedAt).toISOString().split('T')[0] // YYYY-MM-DD
+      timeSeriesMap.set(date, (timeSeriesMap.get(date) || 0) + record.timeSpentSeconds)
+    }
+  }
+  const timeSeries = Array.from(timeSeriesMap.entries())
+    .map(([date, timeSpentSeconds]) => ({ date, timeSpentSeconds }))
+    .sort((a, b) => b.date.localeCompare(a.date)) // Most recent first
+    .slice(0, 30) // Limit to last 30 days
+
   return Response.json({
     summary: {
       timeSpent,
@@ -372,5 +385,6 @@ export async function GET(req: Request) {
     },
     practicedLessons,
     practicedExams,
+    timeSeries,
   })
 }

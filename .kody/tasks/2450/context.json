@@ -1,0 +1,21 @@
+{
+  "taskId": "2450",
+  "taskType": "issue",
+  "target": "2450",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed missing chart visualizations on the stats page by adding timeSeries data to the API and creating a StudyActivityChart CSS-based bar chart component.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/stats/_components/StatsDashboard.tsx",
+    "src/app/(frontend)/stats/_components/StudyActivityChart.tsx",
+    "src/app/api/stats/dashboard/route.ts",
+    "src/i18n/en.json",
+    "src/i18n/he.json",
+    "tests/int/stats-dashboard-api.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2450.jsonl",
+  "startedAt": "2026-06-04T20:30:00Z",
+  "finishedAt": "2026-06-04T20:35:00Z"
+}

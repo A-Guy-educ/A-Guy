@@ -18,6 +18,7 @@ import { CategoryProgress } from './CategoryProgress'
 import { PracticedItems } from './PracticedItems'
 import { ActivityTimeline } from './ActivityTimeline'
 import { DashboardFilters } from './DashboardFilters'
+import { StudyActivityChart } from './StudyActivityChart'
 
 interface Course {
   id: string
@@ -45,6 +46,7 @@ interface DashboardData {
   }
   practicedLessons: PracticedItem[]
   practicedExams: PracticedItem[]
+  timeSeries: Array<{ date: string; timeSpentSeconds: number }>
 }
 
 interface StatsDashboardProps {
@@ -203,6 +205,11 @@ export function StatsDashboard({
             {/* Category Progress — spans full width */}
             <motion.div variants={staggerItem} className="lg:col-span-2">
               <CategoryProgress data={data.categoryProgress} />
+            </motion.div>
+
+            {/* Study Activity Chart — spans full width */}
+            <motion.div variants={staggerItem} className="lg:col-span-2">
+              <StudyActivityChart data={data.timeSeries} />
             </motion.div>
 
             {/* Practiced Items — side by side */}

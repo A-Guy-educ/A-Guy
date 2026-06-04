@@ -235,6 +235,28 @@ describe.skipIf(!hasDatabaseUrl)(
       expect(body.categoryProgress.learn.count).toBeGreaterThan(0)
       expect(body.categoryProgress.learn.total).toBeGreaterThan(0)
     })
+
+    it('returns timeSeries data for study activity chart', async () => {
+      const req = makeDashboardRequest()
+      const res = await dashboardGET(req)
+
+      expect(res.status).toBe(200)
+      const body = await res.json()
+
+      // Should have timeSeries field for chart visualization
+      expect(body).toHaveProperty('timeSeries')
+      expect(Array.isArray(body.timeSeries)).toBe(true)
+
+      // When user has progress with time spent, timeSeries should not be empty
+      if (body.practicedLessons.length > 0) {
+        expect(body.timeSeries.length).toBeGreaterThan(0)
+        // Each entry should have date and timeSpentSeconds
+        const entry = body.timeSeries[0]
+        expect(entry).toHaveProperty('date')
+        expect(entry).toHaveProperty('timeSpentSeconds')
+        expect(typeof entry.timeSpentSeconds).toBe('number')
+      }
+    })
   },
 )
 

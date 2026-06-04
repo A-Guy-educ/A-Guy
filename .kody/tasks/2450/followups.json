@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Add more chart types to stats page",
+    "body": "Consider adding a line chart for time-series trend or category breakdown pie chart for a richer visualization experience.",
+    "rationale": "The current implementation only has a bar chart for daily time spent. Additional chart types could provide more insights.",
+    "priority": "low"
+  },
+  {
+    "title": "Add skeleton loading state for chart",
+    "body": "The chart skeleton in StatsDashboard loading state should include a placeholder for the StudyActivityChart component.",
+    "rationale": "Currently the loading skeleton doesn't account for the chart component, which could cause layout shift when switching from loading to data state.",
+    "priority": "medium"
+  }
+]
