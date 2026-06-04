@@ -1,9 +1,9 @@
-The CI failure on PR #1584 was a Prettier formatting violation in kody.config.json.
+CI failure on PR #1584 was a Prettier formatting violation in CHANGELOGOG.md.
 
-**Root cause**: pnpm format:check failed on kody.config.json due to non-standard array formatting (single-element arrays were multi-line) and a missing trailing newline.
+**Root cause**: pnpm format:check failed on CHANGELOGOG.md due to formatting differences (Prettier detected style violations).
 
-**Fix**: Ran `prettier --write kody.config.json` — normalized array formatting to Prettier's preferred single-line style for single-element arrays and ensured a trailing newline.
+**Fix**: The fix was already applied in commit 7cef8a205 ("chore: fix(ci): format CHANGELOGOG.md with Prettier"), which ran `prettier --write CHANGELOGOG.md`. This commit is an ancestor of the current HEAD (c1378fcb1), so the issue is already resolved.
 
-**Changes**: Only kody.config.json was modified; no code logic was touched.
+**Current state**: All quality gates pass — typecheck ✅, lint ✅, format:check ✅.
 
-CI steps pass in order: typecheck ✅, lint ✅, format:check ✅.
+**Note**: The failing workflow run (26930186620) was triggered at 04:14 UTC on June 4, 2026, which was before the fix commit at 04:18 UTC. A subsequent merge (c1378fcb1 at 06:08 UTC) brought the fix into the current branch.
