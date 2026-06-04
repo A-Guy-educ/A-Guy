@@ -1,0 +1,16 @@
+{
+  "taskId": "2406",
+  "taskType": "issue",
+  "target": "2406",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed hydration mismatch on purchase detail page by correcting translation key from status.{status} to statuses.{status} and replacing toLocaleDateString with stable UTC-based formatter",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/account/purchases/PurchasesPageContent.tsx",
+    "src/app/(frontend)/account/purchases/[transactionId]/TransactionDetailContent.tsx",
+    "tests/unit/components/StatusBadge.i18n-key.test.tsx"
+  ],
+  "sessionLog": ".kody/sessions/2406-session.jsonl"
+}

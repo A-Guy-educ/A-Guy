@@ -63,15 +63,61 @@ function formatAmount(amountAgorot: number, currency: string): string {
   return formatter.format(amountAgorot)
 }
 
+const EN_MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+]
+
+const HE_MONTHS = [
+  'ינואר',
+  'פברואר',
+  'מרץ',
+  'אפריל',
+  'מאי',
+  'יוני',
+  'יולי',
+  'אוגוסט',
+  'ספטמבר',
+  'אוקטובר',
+  'נובמבר',
+  'דצמבר',
+]
+
+/**
+ * Formats an ISO date string using UTC methods + hardcoded month names.
+ * Using UTC avoids timezone-shifted day/month values between server (Node.js)
+ * and client (browser), which can cause React hydration mismatches.
+ * Using hardcoded month names avoids ICU-data-dependent `toLocaleDateString`
+ * output that varies across Node.js versions.
+ */
 function formatDate(iso: string, locale: string): string {
-  const dateLocale = locale === 'he' ? 'he-IL' : 'en-US'
-  return new Date(iso).toLocaleDateString(dateLocale, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  const d = new Date(iso)
+  const year = d.getUTCFullYear()
+  const monthIndex = d.getUTCMonth()
+  const day = d.getUTCDate()
+  const hours = d.getUTCHours()
+  const minutes = d.getUTCMinutes()
+
+  const months = locale === 'he' ? HE_MONTHS : EN_MONTHS
+  const monthName = months[monthIndex]
+  const hourStr = hours.toString().padStart(2, '0')
+  const minStr = minutes.toString().padStart(2, '0')
+  const timeStr = `${hourStr}:${minStr}`
+
+  if (locale === 'he') {
+    return `${day} ${monthName} ${year}, ${timeStr}`
+  }
+  return `${monthName} ${day}, ${year}, ${timeStr}`
 }
 
 const STATUS_CONFIG: Record<
@@ -88,7 +134,7 @@ function StatusDisplay({ status }: { status: TransactionStatus }) {
   const t = useTranslations('account.purchases')
   const cfg = STATUS_CONFIG[status]
   const Icon = cfg.icon
-  const label = t(`status.${status}`)
+  const label = t(`statuses.${status}`)
 
   return (
     <div className="flex items-center gap-2">

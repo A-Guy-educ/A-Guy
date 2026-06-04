@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Audit all toLocaleDateString usages in server/client components",
+    "body": "Search the codebase for toLocaleDateString and replace with the stable UTC-based formatter. The TransactionDetailContent and PurchasesPageContent fixes cover the purchase pages, but similar hydration issues may exist in other date-formatted components.",
+    "rationale": "toLocaleDateString is non-deterministic across Node.js versions and timezone configurations, causing hydration mismatches wherever it's used in server-rendered components.",
+    "priority": "medium"
+  },
+  {
+    "title": "Audit all t('status.{status}') translation key patterns",
+    "body": "Search for t('status.') calls in the codebase and verify the corresponding translation keys exist in brand messages. The same singular/plural mismatch that was fixed in this bug may exist elsewhere.",
+    "rationale": "The silent fallback to raw key when a translation is missing creates potential for hydration mismatches if the server resolves the fallback differently than the client.",
+    "priority": "low"
+  }
+]

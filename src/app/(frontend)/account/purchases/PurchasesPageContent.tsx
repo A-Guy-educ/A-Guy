@@ -42,13 +42,53 @@ function formatAmount(amountAgorot: number, currency: string): string {
   return formatter.format(amountAgorot)
 }
 
+const EN_MONTHS_SHORT = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+]
+
+const HE_MONTHS = [
+  'ינואר',
+  'פברואר',
+  'מרץ',
+  'אפריל',
+  'מאי',
+  'יוני',
+  'יולי',
+  'אוגוסט',
+  'ספטמבר',
+  'אוקטובר',
+  'נובמבר',
+  'דצמבר',
+]
+
+/**
+ * Formats an ISO date string using UTC methods + hardcoded month names.
+ * Using UTC avoids timezone-shifted day/month values between server (Node.js)
+ * and client (browser), which can cause React hydration mismatches.
+ * Using hardcoded month names avoids ICU-data-dependent `toLocaleDateString`
+ * output that varies across Node.js versions.
+ */
 function formatDate(iso: string, locale: string): string {
-  const dateLocale = locale === 'he' ? 'he-IL' : 'en-US'
-  return new Date(iso).toLocaleDateString(dateLocale, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
+  const d = new Date(iso)
+  const year = d.getUTCFullYear()
+  const monthIndex = d.getUTCMonth()
+  const day = d.getUTCDate()
+
+  if (locale === 'he') {
+    return `${day} ${HE_MONTHS[monthIndex]} ${year}`
+  }
+  return `${EN_MONTHS_SHORT[monthIndex]} ${day}, ${year}`
 }
 
 const STATUS_COLORS: Record<TransactionStatus, { bg: string; text: string; label: string }> = {
@@ -61,7 +101,7 @@ const STATUS_COLORS: Record<TransactionStatus, { bg: string; text: string; label
 function StatusBadge({ status }: { status: TransactionStatus }) {
   const t = useTranslations('account.purchases')
   const colors = STATUS_COLORS[status]
-  const label = t(`status.${status}`)
+  const label = t(`statuses.${status}`)
 
   return (
     <span

@@ -1,0 +1,18 @@
+[
+  {
+    "type": "lesson",
+    "name": "toLocaleDateString-causes-hydration-mismatch",
+    "hook": "toLocaleDateString causes hydration mismatch between Node.js and browser",
+    "body": "toLocaleDateString output can differ between Node.js server and browser due to ICU data version differences or timezone discrepancies, causing React hydration error #418 (server-rendered HTML does not match client). Fix: use UTC-based manual date formatting with hardcoded month names instead of toLocaleDateString.",
+    "why": "This bug manifested as a real production issue on the purchase detail page. The fix is applicable to any date formatting in Next.js server/client components.",
+    "confidence": 0.95
+  },
+  {
+    "type": "lesson",
+    "name": "translation-key-mismatch-status-vs-statuses",
+    "hook": "Brand messages use 'statuses' plural, components used 'status' singular",
+    "body": "StatusBadge and StatusDisplay components used t('status.{status}') but the brand messages define account.purchases.statuses.pending etc. (plural 'statuses'). The t() fallback returns the raw key when a translation is missing, which can cause server/client text divergence and hydration mismatches.",
+    "why": "This is a common pattern: singular key for the field label, plural for enum values. The mismatch silently fell back to raw keys which could differ between server and client i18n resolution.",
+    "confidence": 0.95
+  }
+]
