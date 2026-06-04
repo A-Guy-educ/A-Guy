@@ -1,0 +1,14 @@
+{
+  "taskId": "2430",
+  "taskType": "pr",
+  "target": "PR #2430",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Verified fly.dev preview CSP header contains *.gravatar.com wildcard; all 4 CSP integration tests pass",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [],
+  "sessionLog": null,
+  "startedAt": "2026-06-04T21:50:00Z",
+  "finishedAt": "2026-06-04T21:50:45Z"
+}
