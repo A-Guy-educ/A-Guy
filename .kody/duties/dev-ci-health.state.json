@@ -1,15 +1,15 @@
 {
   "version": 1,
-  "rev": 89,
+  "rev": 90,
   "cursor": "idle",
   "data": {
     "failingChecks": [],
     "issueNumber": 2349,
-    "lastFiredAt": "2026-06-04T22:16:35.613Z",
+    "lastFiredAt": "2026-06-04T22:54:02.282Z",
     "lastOutcome": "completed",
-    "lastResolution": "CI now GREEN — no failures on sha 922c42e4d",
+    "lastResolution": "CI still GREEN — no failures on sha 922c42e4d",
     "sha": "922c42e4d268e134aec6c6fa5e83d2d189fd01f3",
-    "lastDurationMs": 14374
+    "lastDurationMs": 17582
   },
   "done": false
 }
