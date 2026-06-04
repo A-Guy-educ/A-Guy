@@ -1,18 +1,18 @@
 {
   "version": 1,
-  "rev": 250,
+  "rev": 251,
   "cursor": "idle",
   "data": {
-    "current_tick": "2026-06-04T09:25:00.000Z",
-    "current_tick_ran": "2026-06-04T09:25:00.000Z",
+    "current_tick": "2026-06-04T10:55:00.000Z",
+    "current_tick_ran": "2026-06-04T10:55:00.000Z",
     "current_tick_result": "all_done",
-    "current_tick_summary": "61 tasks seen, 59 already extracted, 2 new tasks processed with no high-confidence writes.",
-    "lastFiredAt": "2026-06-04T10:44:28.008Z",
+    "current_tick_summary": "62 tasks seen, 59 already extracted, 3 new tasks processed with no high-confidence writes.",
+    "lastFiredAt": "2026-06-04T11:49:24.840Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 21379,
-    "last_tick": "2026-06-04T08:00:00.000Z",
-    "tasks_seen": 61,
-    "tasks_processed": 61,
+    "lastDurationMs": 30342,
+    "last_tick": "2026-06-04T09:25:00.000Z",
+    "tasks_seen": 62,
+    "tasks_processed": 62,
     "blocked_reason": null,
     "session": {
       "memory_files_written": [
@@ -28,8 +28,8 @@
       ],
       "push_state": "success",
       "started": "2026-05-27T17:44:47.000Z",
-      "tasks_processed_this_session": 61,
-      "tasks_seen_this_session": 61
+      "tasks_processed_this_session": 62,
+      "tasks_seen_this_session": 62
     }
   },
   "done": false
