@@ -1,0 +1,19 @@
+{
+  "taskId": "2359",
+  "taskType": "issue",
+  "target": "2359",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "All acceptance criteria implemented and verified: dual payment buttons render, coupon is shared, independent loading states, 503 toast handling, full en+he localization, login redirect uses slug",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/products/[slug]/BuyButton.tsx",
+    "src/app/(frontend)/products/[slug]/ProductDetailContent.tsx",
+    "src/i18n/en.json",
+    "src/i18n/he.json"
+  ],
+  "sessionLog": ".kody/sessions/f65d7a9f-de64-47cb-9920-8e97556f576d.jsonl",
+  "startedAt": "2026-06-03T07:07:00Z",
+  "finishedAt": "2026-06-03T07:14:00Z"
+}
