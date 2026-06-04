@@ -582,7 +582,8 @@
     "startPracticingExams": "בצע מבחן כדי לעקוב אחר התוצאות שלך",
     "lessonName": "שיעור",
     "examName": "מבחן",
-    "chatQuestions": "שאלות בצ'אט"
+    "chatQuestions": "שאלות בצ'אט",
+    "studyActivity": "פעילות למידה"
   },
   "exerciseConversion": {
     "convertButton": "המר → תרגילים",

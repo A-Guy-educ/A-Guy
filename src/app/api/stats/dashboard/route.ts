@@ -188,6 +188,19 @@ export async function GET(req: Request) {
     })
   }
 
+  // Compute daily activity time-series (group by date, sum timeSpentSeconds)
+  const dailyActivityMap: Record<string, number> = {}
+  for (const r of filteredRecords) {
+    if (!r.lastAccessedAt || !r.timeSpentSeconds) continue
+    const day = r.lastAccessedAt.split('T')[0] // YYYY-MM-DD
+    dailyActivityMap[day] = (dailyActivityMap[day] || 0) + r.timeSpentSeconds
+  }
+
+  // Build sorted daily activity array (newest first)
+  const dailyActivity = Object.entries(dailyActivityMap)
+    .map(([date, timeSpentSeconds]) => ({ date, timeSpentSeconds }))
+    .sort((a, b) => b.date.localeCompare(a.date))
+
   // Calculate summary metrics
   const lessonRecords = filteredRecords.filter((r: ProgressRecord) => r.recordType === 'lesson')
   const exerciseRecords = filteredRecords.filter(
@@ -372,5 +385,6 @@ export async function GET(req: Request) {
     },
     practicedLessons,
     practicedExams,
+    dailyActivity,
   })
 }

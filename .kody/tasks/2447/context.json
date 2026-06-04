@@ -1,0 +1,21 @@
+{
+  "taskId": "2447",
+  "taskType": "issue",
+  "target": "2447",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added StudyActivityChart component (recharts BarChart) to StatsDashboard, enhanced dashboard API to return dailyActivity time-series data, and wrote E2E test to verify chart rendering",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/stats/_components/StatsDashboard.tsx",
+    "src/app/(frontend)/stats/_components/StudyActivityChart.tsx",
+    "src/app/api/stats/dashboard/route.ts",
+    "src/i18n/en.json",
+    "src/i18n/he.json",
+    "tests/e2e/stats-page-chart.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2447.jsonl",
+  "startedAt": "2026-06-04T20:30:00Z",
+  "finishedAt": "2026-06-04T20:35:00Z"
+}
