@@ -4,11 +4,11 @@
   "target": "Dependency Security Report (Daily) workflow failure",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Fixed DATABASE_URL validation in payload.config.ts to skip check during PAYLOAD_GENERATE_TYPES or CI, replacing a prior --ignore-scripts workaround that was insufficient",
+  "reason": "postinstall script ran 'pnpm generate' without PAYLOAD_GENERATE_TYPES set; cross-env in generate:types only sets it for the immediate payload child, not nested processes that load payload.config.ts",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2203",
   "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27002243399",
-  "filesTouched": ["src/payload.config.ts"],
-  "sessionLog": ".kody/sessions/2203.jsonl",
-  "startedAt": "2026-06-05T08:00:00.000Z",
-  "finishedAt": "2026-06-05T08:00:30.000Z"
+  "filesTouched": ["package.json"],
+  "sessionLog": ".kody/sessions/78f14aa9-8348-403a-bcd9-7aa6badef47d.jsonl",
+  "startedAt": "2026-06-05T14:55:00Z",
+  "finishedAt": "2026-06-05T15:00:00Z"
 }
