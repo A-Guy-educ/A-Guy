@@ -1,18 +1,16 @@
 {
   "version": 1,
-  "rev": 99,
+  "rev": 100,
   "cursor": "idle",
   "data": {
-    "failingChecks": [
-      "cleanup"
-    ],
-    "lastFiredAt": "2026-06-05T08:52:58.606Z",
+    "failingChecks": [],
+    "lastFiredAt": "2026-06-05T10:27:32.894Z",
     "lastOutcome": "completed",
-    "lastResolution": "CI still GREEN — no failures on sha 21b9a23e5",
-    "sha": "cfc685dd43e3fb47ca670bbbefed979d65c83e55",
-    "lastDurationMs": 56839,
+    "lastResolution": "CI PENDING — no failures on sha 31994f8db",
+    "sha": "31994f8db9f63a97a75d3160d6a6bd426e4ff43f",
     "trackingIssue": 2349,
-    "note": "Issue #2349 already open — fix in flight, no action taken"
+    "note": "Issue #2349 still open but CI is PENDING — waiting on Integration Tests",
+    "lastDurationMs": 23299
   },
   "done": false
 }
