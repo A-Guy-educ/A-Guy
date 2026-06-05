@@ -1,0 +1,17 @@
+{
+  "taskId": "2462",
+  "taskType": "issue",
+  "target": "GitHub issue #2462",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed crash bug in CourseEnrollmentsWidget and TopProductsWidget where widgets would crash if engagement.courseEnrollments or revenueMetrics.topProducts was undefined despite the parent object being truthy.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/CourseEnrollmentsWidget/index.tsx",
+    "src/ui/admin/TopProductsWidget/index.tsx"
+  ],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-06-04T23:00:00.000Z",
+  "finishedAt": "2026-06-05T00:00:00.000Z"
+}

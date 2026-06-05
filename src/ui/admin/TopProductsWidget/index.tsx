@@ -74,7 +74,7 @@ const TopProductsWidget: React.FC = () => {
     )
   }
 
-  if (error || !data?.revenueMetrics) {
+  if (error || !data?.revenueMetrics || !data.revenueMetrics.topProducts) {
     return (
       <div style={widgetContainerStyle}>
         <h3 style={widgetTitleStyle}>{s.topProducts}</h3>

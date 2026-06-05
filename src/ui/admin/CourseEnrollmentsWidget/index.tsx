@@ -85,7 +85,7 @@ const CourseEnrollmentsWidget: React.FC = () => {
     )
   }
 
-  if (error || !data?.engagement) {
+  if (error || !data?.engagement || !data.engagement.courseEnrollments) {
     return (
       <div style={widgetContainerStyle}>
         <h3 style={widgetTitleStyle}>{s.topCourses}</h3>
