@@ -1,0 +1,14 @@
+{
+  "taskId": "2431",
+  "taskType": "pr",
+  "target": "PR #2431 / #2427",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Single asymmetric conflict in payload.config.ts resolved by taking HEAD (importmap check) over dev (CI check) — aligns with PR goal of allowing dev server to start without live env vars",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": ["src/payload.config.ts"],
+  "sessionLog": null,
+  "startedAt": "2026-06-05T13:50:00Z",
+  "finishedAt": "2026-06-05T13:51:30Z"
+}
