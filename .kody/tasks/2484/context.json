@@ -1,0 +1,17 @@
+{
+  "taskId": "2484",
+  "taskType": "issue",
+  "target": "github.com/anthropics/claude-code/issues/2484",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "CSS media query fix restored mobile hamburger menu access; all 4 E2E tests pass; quality gates pass",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/globals.css",
+    "tests/e2e/mobile-hamburger-menu-auth-state.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2484-session.jsonl",
+  "startedAt": "2026-06-05T00:00:00.000Z",
+  "finishedAt": "2026-06-05T00:00:00.000Z"
+}

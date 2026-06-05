@@ -1,0 +1,18 @@
+[
+  {
+    "type": "lesson",
+    "name": "landing-page-css-media-query",
+    "hook": "Wrap viewport-conditional CSS rules in media queries",
+    "body": "When hiding chrome for a landing/immersive page experience, always wrap the CSS in a min-width media query matching the breakpoint where that chrome is actually hidden. Hiding `body.landing-page header { display: none }` on ALL viewports blocked mobile hamburger menu access. Fix: `@media (min-width: 1024px) { body.landing-page header, body.landing-page footer { display: none !important; } }`\n\n**Why:** The original rule applied unconditionally, so on mobile (375px) the header was invisible and the hamburger button unreachable. The intended design (immersive desktop landing, functional mobile) requires the breakpoint guard.\n\n**How to apply:** When adding CSS that hides nav/chrome for specific routes, always pair it with the corresponding `@media` breakpoint.",
+    "why": "Bug #2484 was caused by a CSS rule that worked fine on desktop but broke mobile UX. The rule was correct in intent (immersive landing page) but missing its viewport guard.",
+    "confidence": 0.95
+  },
+  {
+    "type": "preference",
+    "name": "e2e-text-selectors-for-i18n",
+    "hook": "Use i18n text in E2E locators, not hardcoded English",
+    "body": "When writing E2E tests for a bilingual (Hebrew/English) app that defaults to Hebrew, use the actual rendered text in locators rather than assuming English. The `MobileMenuAuthSection` uses `tCommon('myAccount')`, `tCommon('logout')`, `tCommon('login')` — these resolve to Hebrew by default. Use Hebrew text (`החשבון שלי`, `התנתק`, `התחבר`) or data-testids for reliable locators.\n\n**Why:** Tests that used English text (`My Account`, `Logout`) silently failed — the elements existed but with Hebrew text content.\n\n**How to apply:** Check translation files (`src/i18n/he.json`, `src/i18n/en.json`) for the actual rendered text when writing E2E locators. Prefer data-testids for repeated elements.",
+    "why": "The app defaults to Hebrew (he.json as default locale). Authenticated mobile menu tests looked for English 'My Account'/'Logout' and failed — the elements rendered Hebrew 'החשבון שלי'/'התנתק'.",
+    "confidence": 0.9
+  }
+]

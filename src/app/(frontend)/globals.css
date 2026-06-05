@@ -593,10 +593,13 @@ math-field:focus-within {
   color: hsl(var(--text-highlight-8));
 }
 
-/* Landing page: hide chrome for immersive experience */
-body.landing-page header,
-body.landing-page footer {
-  display: none !important;
+/* Landing page: hide chrome for immersive experience on desktop (lg+).
+   On mobile, keep header visible so hamburger menu remains accessible. */
+@media (min-width: 1024px) {
+  body.landing-page header,
+  body.landing-page footer {
+    display: none !important;
+  }
 }
 
 /* Mobile safe area insets for notch/home indicator */

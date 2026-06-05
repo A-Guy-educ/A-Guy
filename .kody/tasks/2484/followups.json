@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Audit and potentially remove playwright.test.config.ts",
+    "body": "A minimal `playwright.test.config.ts` was created during debugging to run the mobile hamburger E2E tests against the existing dev server at localhost:3000. Check if this is needed long-term or if the tests can be integrated into the existing E2E config. File: `playwright.test.config.ts`",
+    "rationale": "Temporary debug config may not belong in the codebase permanently. The existing E2E test infrastructure should be used if compatible.",
+    "priority": "low"
+  }
+]
