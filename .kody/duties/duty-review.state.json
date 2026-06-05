@@ -1,16 +1,17 @@
 {
   "version": 1,
-  "rev": 44,
+  "rev": 45,
   "cursor": "reported",
   "data": {
-    "lastRunISO": "2026-06-05T01:35:14Z",
-    "nextEligibleISO": "2026-06-05T07:35:14Z",
-    "cycle": 7,
+    "cycle": 8,
+    "lastRunISO": "2026-06-05T08:57:15Z",
+    "nextEligibleISO": "2026-06-05T14:57:15Z",
     "reviewed": [
       "ceo-performance-review",
       "approval-gate",
       "architecture-audit",
-      "clear-empty-goals"
+      "clear-empty-goals",
+      "coverage-floor"
     ],
     "verdicts": {
       "approval-gate": {
@@ -34,7 +35,7 @@
         "verdict": "broken"
       },
       "coverage-floor": {
-        "note": "script missing; cadence formula inconsistency (every: 1d vs +20h)",
+        "note": "script absent (404); cadence formula inconsistency (every: 1d vs +20h); no kody-job-next-state block in procedure; disabled=true so idle by design",
         "verdict": "broken"
       },
       "dead-code-sweep": {
@@ -114,9 +115,9 @@
         "verdict": "warn"
       }
     },
-    "lastFiredAt": "2026-06-05T01:36:13.241Z",
+    "lastFiredAt": "2026-06-05T08:57:56.343Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 157376
+    "lastDurationMs": 285722
   },
   "done": false
 }
