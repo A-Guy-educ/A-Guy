@@ -136,14 +136,24 @@ const nextConfig = {
       type: 'asset/source',
     })
 
-    // Externalize @napi-rs/canvas and undici for browser builds — both are native Node.js
-    // modules that cannot be bundled for the browser. resolve.alias does not prevent
-    // webpack from following the dependency chain into .node binaries or node: scheme
-    // imports. Using webpack.externals (not resolve.alias) ensures webpack skips
-    // these packages entirely and leaves require() calls in the bundle for runtime
-    // resolution (which never happens in browser code since these are server-only).
     if (!isServer) {
+      // Externalize native Node.js modules that cannot be bundled for the browser.
+      // externals prevents webpack from emitting these modules in the output, but
+      // webpack still analyzes them for tree-shaking. The node: scheme imports
+      // within undici (@napi-rs/canvas, etc.) cause webpack to fail during analysis.
+      // Additionally alias node: protocol imports to empty objects so webpack
+      // doesn't try to resolve them (they are never called in browser code anyway).
       webpackConfig.externals = [...(webpackConfig.externals || []), '@napi-rs/canvas', 'undici']
+
+      webpackConfig.resolve.alias = {
+        ...webpackConfig.resolve.alias,
+        // Redirect all node: protocol imports to an empty object for browser builds.
+        // webpack still analyzes these modules for tree-shaking even when external,
+        // and encounters node:console / node:crypto / etc. which it cannot resolve.
+        // Since these are server-only code paths that never execute in the browser,
+        // aliasing to an empty object is safe and allows the build to complete.
+        '^node:(.*)$': require.resolve('./src/server/utils/empty-stub.js'),
+      }
     }
 
     return webpackConfig

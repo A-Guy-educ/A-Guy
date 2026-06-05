@@ -4,13 +4,14 @@
   "target": "2449-p2-frontend-login-form-silently-fails-session-not",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Replaced webpack resolve.alias with externals for browser builds — resolve.alias to false does not prevent webpack from following the dependency chain into .node binaries and node: scheme imports; externals skips analysis entirely",
+  "reason": "Fixed webpack browser build by adding node: protocol alias to empty-stub.js — webpack follows internal dependency chains into undici's node: imports which it cannot resolve; aliasing them to an empty module allows the browser build to complete",
   "prUrl": null,
   "runUrl": null,
   "filesTouched": [
-    "next.config.js"
+    "next.config.js",
+    "src/server/utils/empty-stub.js"
   ],
   "sessionLog": null,
-  "startedAt": "2026-06-05T09:30:00Z",
-  "finishedAt": "2026-06-05T10:45:00Z"
+  "startedAt": "2026-06-05T11:00:00Z",
+  "finishedAt": "2026-06-05T11:05:00Z"
 }

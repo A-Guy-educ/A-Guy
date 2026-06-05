@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "type": "lesson",
+    "name": "webpack-externals-does-not-block-analysis",
+    "hook": "webpack externals doesn't prevent analysis of node: scheme imports",
+    "body": "webpack.externals marks a module as external so it's not emitted in the bundle, but webpack still analyzes the module for tree-shaking. When analyzing undici (marked external), webpack follows internal imports and encounters 'node:console' / 'node:crypto' etc. which fail because no webpack plugin handles the node: protocol. The fix is to ALSO add resolve.alias to redirect node: imports to an empty stub.",
+    "why": "CI failed with 'UnhandledSchemeError: Reading from node:console is not handled by plugins' even after adding undici to webpack.externals. The externals approach alone was insufficient because webpack still analyzes the module internals.",
+    "confidence": 0.95
+  }
+]
