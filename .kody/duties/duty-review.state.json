@@ -1,15 +1,16 @@
 {
   "version": 1,
-  "rev": 43,
+  "rev": 44,
   "cursor": "reported",
   "data": {
+    "lastRunISO": "2026-06-05T01:35:14Z",
+    "nextEligibleISO": "2026-06-05T07:35:14Z",
     "cycle": 7,
-    "lastRunISO": "2026-06-04T19:22:58Z",
-    "nextEligibleISO": "2026-06-05T01:22:58Z",
     "reviewed": [
       "ceo-performance-review",
       "approval-gate",
-      "architecture-audit"
+      "architecture-audit",
+      "clear-empty-goals"
     ],
     "verdicts": {
       "approval-gate": {
@@ -29,7 +30,7 @@
         "verdict": "broken"
       },
       "clear-empty-goals": {
-        "note": "zero steps; no system target; no kody-job-next-state block",
+        "note": "0 steps; no system target; no kody-job-next-state block",
         "verdict": "broken"
       },
       "coverage-floor": {
@@ -77,7 +78,7 @@
         "verdict": "warn"
       },
       "publish-release": {
-        "note": "no kody-job-next-state block; disabled=true design review only",
+        "note": "(disabled) no kody-job-next-state block; disabled=true design review only",
         "verdict": "warn"
       },
       "qa-sweep": {
@@ -97,7 +98,7 @@
         "verdict": "warn"
       },
       "security-audit": {
-        "note": "no kody-job-next-state block; disabled=true design review only",
+        "note": "(disabled) no kody-job-next-state block; disabled=true design review only",
         "verdict": "warn"
       },
       "system-audit": {
@@ -113,9 +114,9 @@
         "verdict": "warn"
       }
     },
-    "lastDurationMs": 113150,
-    "lastFiredAt": "2026-06-04T19:24:40.304Z",
-    "lastOutcome": "completed"
+    "lastFiredAt": "2026-06-05T01:36:13.241Z",
+    "lastOutcome": "completed",
+    "lastDurationMs": 157376
   },
   "done": false
 }
