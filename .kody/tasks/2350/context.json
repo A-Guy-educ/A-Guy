@@ -4,11 +4,11 @@
   "target": "PR #2350 (2349-dev-ci-is-red-kody-auto-fix)",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Single conflicted file (.kody/reports/duty-review.md) resolved — took origin/dev (Cycle 9, more recent) as base, preserved PR's 'This tick' note at end",
+  "reason": "Single asymmetric conflict in .kody/reports/duty-review.md — took origin/dev (Cycle 9, more recent) over HEAD (Cycle 4)",
   "prUrl": null,
   "runUrl": null,
   "filesTouched": [".kody/reports/duty-review.md"],
   "sessionLog": ".kody/sessions/2350.jsonl",
-  "startedAt": "2026-06-05T09:00:00Z",
-  "finishedAt": "2026-06-05T09:03:08Z"
+  "startedAt": "2026-06-05T22:37:12Z",
+  "finishedAt": "2026-06-05T22:37:20Z"
 }
