@@ -1677,7 +1677,7 @@
 - start interactive session interactive-1778075175838-vd0im6 (1b6229b27)
 ## [Unreleased]
 
-- fix(paypal): Drop Stripe-only placeholder from PayPal return_url ([#2446](https://github.com/A-Guy-educ/A-Guy/pull/2446)) — @aguyshayb · 🔄 QA (#2478)
+- fix(paypal): Drop Stripe-only placeholder from PayPal return_url ([#2446](https://github.com/A-Guy-educ/A-Guy/pull/2446)) — @aguyshayb · ⚠️ QA 2026-06-05 (#2478)
 - #2192: Add mobile chat FAB (button-to-open) on lesson pages — redo of r… ([#2193](https://github.com/A-Guy-educ/A-Guy/pull/2193)) — @kodyade[bot] · ⚠️ QA 2026-06-04 (#2464)
 - fix(payments): Surface real error messages in checkout + webhook logs ([#2432](https://github.com/A-Guy-educ/A-Guy/pull/2432)) — @aguyshayb · ⚠️ QA 2026-06-04 (#2454)
 - #2369: Fix login page horizontal overflow on mobile (page scrolls sidew… ([#2426](https://github.com/A-Guy-educ/A-Guy/pull/2426)) — @kodyade[bot] · ✅ QA 2026-06-04
