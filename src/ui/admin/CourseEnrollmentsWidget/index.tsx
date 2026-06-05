@@ -109,7 +109,8 @@ const CourseEnrollmentsWidget: React.FC = () => {
         ) : (
           <>
             {displayCourses.map((course, i) => {
-              const pct = (course.count / maxCount) * 100
+              // Use max(pct, 5) to ensure a minimum visible bar width even when count is 0
+              const pct = Math.max((course.count / maxCount) * 100, 5)
               const color = CHART_PALETTE[i % CHART_PALETTE.length]
               const displayTitle = course.courseTitle.startsWith('__DELETED__:')
                 ? `${s.deletedCourse} (${course.courseTitle.slice(12)})`

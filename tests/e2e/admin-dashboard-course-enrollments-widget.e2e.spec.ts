@@ -59,19 +59,40 @@ test.describe('Admin Dashboard: Course Enrollments Widget', () => {
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(2000)
 
-    // Find the widget container by looking for progress bars within the Top Courses section
-    // The widget should have enrollment rows with progress bar containers
+    // Find the Top Courses widget
     const topCoursesSection = page
       .locator('h3:has-text("Top Courses"), h3:has-text("קורסים מובילים")')
       .first()
-    if (await topCoursesSection.isVisible()) {
-      // Check for the panel style container that holds enrollment rows
-      // Progress bars are divs with height:6px and background colors
-      const progressBars = page.locator('[style*="height: 6px"][style*="border-radius: 3px]')
-      // At least verify the structure exists - actual bars depend on data
-      const widgetExists = await topCoursesSection.isVisible()
-      expect(widgetExists).toBeTruthy()
+    await expect(topCoursesSection).toBeVisible()
+
+    // The widget renders progress bar containers (height:6px, border-radius:3px)
+    // and inner bars (height:100%, border-radius:3px) with width as a percentage
+    const barContainers = page.locator('[style*="height: 6px"][style*="border-radius: 3px"]')
+    await expect(barContainers.first()).toBeVisible()
+
+    // Find inner bars within the widget panel - they have height:100%, border-radius:3px
+    // and a width percentage (e.g. "5%", "100%")
+    const innerBars = page.locator(
+      '[style*="height: 100%"][style*="border-radius: 3px"][style*="width:"]',
+    )
+    const innerBarCount = await innerBars.count()
+    expect(innerBarCount).toBeGreaterThan(0)
+
+    // Verify at least one bar has a non-zero width percentage (fixed to minimum 5% width)
+    let hasNonZeroWidth = false
+    for (let i = 0; i < innerBarCount; i++) {
+      const style = await innerBars.nth(i).getAttribute('style')
+      if (
+        style &&
+        style.includes('width:') &&
+        !style.includes('width: 0%') &&
+        !style.includes('width:0%')
+      ) {
+        hasNonZeroWidth = true
+        break
+      }
     }
+    expect(hasNonZeroWidth).toBeTruthy()
   })
 
   test('view all button expands full list when more than 5 courses', async ({ page }) => {

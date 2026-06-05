@@ -1,0 +1,14 @@
+[
+  {
+    "title": "E2E tests require dev server to run — CI-only E2E needs infrastructure",
+    "body": "The E2E tests in tests/e2e/ require a running dev server and MongoDB to execute. In this session, pnpm dev, pnpm db:start, and playwright test all failed due to missing Docker/database. The test code was updated but could not be executed to confirm the fix works end-to-end.",
+    "rationale": "Cannot fully verify E2E fix without DB and dev server",
+    "priority": "medium"
+  },
+  {
+    "title": "EngagementWidget has identical zero-width bar issue",
+    "body": "The EngagementWidget (src/ui/admin/ConversionTracking/EngagementWidget.tsx) also renders course enrollment progress bars using the same pattern: `(course.count / maxEnrollment) * 100` without a minimum width. If the same test were applied there, it would also show invisible bars when all counts are 0.",
+    "rationale": "Same bug exists in sibling widget with identical pattern",
+    "priority": "low"
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "taskId": "2485",
+  "taskType": "issue",
+  "target": "2485-p3-admin-course-enrollments-widget-shows-counts-on",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed CourseEnrollmentsWidget to show visible progress bars even when all enrollment counts are 0 by using Math.max(pct, 5) for minimum bar width",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/CourseEnrollmentsWidget/index.tsx",
+    "tests/e2e/admin-dashboard-course-enrollments-widget.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2485-1.jsonl",
+  "startedAt": "2026-06-05T21:00:00Z",
+  "finishedAt": "2026-06-05T21:05:00Z"
+}

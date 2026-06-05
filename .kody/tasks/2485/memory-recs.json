@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "progress-bars-need-min-width",
+    "hook": "Zero-value progress bars need minimum width to remain visible",
+    "body": "When rendering progress bars for a ranked list where all values may be zero (e.g. course enrollments with no students), use `Math.max(pct, 5)` instead of raw percentage for the bar width. Without a minimum, width:0% bars are invisible even though DOM elements exist, causing both visual and test failures.",
+    "why": "The CourseEnrollmentsWidget bug: all 8 courses had count=0, so pct=0 for every bar → width:0% → invisible bars. The existing test passed because it never asserted on the bars, only on the section header.",
+    "confidence": 0.95
+  }
+]
