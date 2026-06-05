@@ -1,17 +1,18 @@
 {
   "version": 1,
-  "rev": 97,
+  "rev": 98,
   "cursor": "idle",
   "data": {
     "failingChecks": [
-      "fix-links",
-      "refresh"
+      "cleanup"
     ],
-    "lastFiredAt": "2026-06-05T05:49:27.237Z",
+    "lastFiredAt": "2026-06-05T07:28:56.759Z",
     "lastOutcome": "completed",
     "lastResolution": "CI still GREEN — no failures on sha 21b9a23e5",
-    "sha": "21b9a23e5eb77e62a99ff02fa660a5e326f6a12a",
-    "lastDurationMs": 16216
+    "sha": "cfc685dd43e3fb47ca670bbbefed979d65c83e55",
+    "lastDurationMs": 25096,
+    "trackingIssue": 2349,
+    "note": "Issue #2349 already open — fix in flight, no action taken"
   },
   "done": false
 }
