@@ -1,16 +1,17 @@
 {
   "version": 1,
-  "rev": 95,
+  "rev": 96,
   "cursor": "idle",
   "data": {
     "failingChecks": [
+      "fix-links",
       "refresh"
     ],
-    "lastFiredAt": "2026-06-05T02:45:45.661Z",
+    "lastFiredAt": "2026-06-05T04:09:51.106Z",
     "lastOutcome": "completed",
     "lastResolution": "CI still GREEN — no failures on sha 21b9a23e5",
     "sha": "21b9a23e5eb77e62a99ff02fa660a5e326f6a12a",
-    "lastDurationMs": 26550
+    "lastDurationMs": 31972
   },
   "done": false
 }
