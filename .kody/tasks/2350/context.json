@@ -4,11 +4,11 @@
   "target": "2349-dev-ci-is-red-kody-auto-fix",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Single symmetric conflict in duty-review.md resolved by taking origin/dev (Cycle 7) over HEAD (Cycle 4)",
+  "reason": "Single conflicted file duty-review.md resolved by taking origin/dev (Cycle 7, newer data, schema change removing Staff column)",
   "prUrl": null,
   "runUrl": null,
   "filesTouched": [".kody/reports/duty-review.md"],
-  "sessionLog": ".kody/sessions/2350.jsonl",
-  "startedAt": "2026-06-04T00:00:00Z",
-  "finishedAt": "2026-06-04T00:01:00Z"
+  "sessionLog": null,
+  "startedAt": "2026-06-05T00:00:00Z",
+  "finishedAt": "2026-06-05T00:01:00Z"
 }
