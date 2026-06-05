@@ -173,7 +173,6 @@
     "react-hook-form": "7.70.0",
     "react-markdown": "^10.1.0",
     "react-quill-new": "^3.8.3",
-    "recharts": "^3.8.1",
     "rehype-katex": "^7.0.1",
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
