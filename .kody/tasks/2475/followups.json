@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Re-add StudyActivityChart with proper webpack config",
+    "body": "The chart was removed because recharts@3.x pulls in @napi-rs/canvas (native Node.js binary) through victory-vendor, causing webpack browser build failures. To re-add: (1) Configure webpack in next.config.js to externalize @napi-rs/canvas and victory-vendor for browser builds using browserExternalPackages, OR (2) Find an alternative chart library without native dependencies, OR (3) Make the chart a server component that renders to an image before sending to client.",
+    "rationale": "The stats page chart is a valuable UX feature that was in task 2447. It should be re-implemented properly in a follow-up PR.",
+    "priority": "medium"
+  }
+]

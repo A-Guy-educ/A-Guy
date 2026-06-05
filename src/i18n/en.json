@@ -582,8 +582,7 @@
     "startPracticingExams": "Take an exam to track your results",
     "lessonName": "Lesson",
     "examName": "Exam",
-    "chatQuestions": "Chat Questions",
-    "studyActivity": "Study Activity"
+    "chatQuestions": "Chat Questions"
   },
   "exerciseConversion": {
     "convertButton": "Convert → Exercises",
