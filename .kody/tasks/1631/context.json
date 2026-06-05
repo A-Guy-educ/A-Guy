@@ -6,7 +6,7 @@
   "exitCode": 0,
   "reason": "Fixed Prettier formatting issue in CHANGELOGOG.md",
   "prUrl": null,
-  "runUrl": null,
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26930198959",
   "filesTouched": ["CHANGELOGOG.md"],
   "sessionLog": null,
   "startedAt": "2026-06-04T02:54:00.000Z",
