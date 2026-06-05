@@ -132,8 +132,11 @@ export function StudyContent({
     // Fallback: client-side fetch (no grade cookie available)
     async function loadData() {
       const profile = getUserProfile()
+      // Skip redirect for authenticated users without gradeLevel - they should see
+      // the greeting flow instead of being silently redirected to /start
+      // (unauthenticated users are already redirected by middleware to /login)
       if (!profile?.gradeLevel) {
-        window.location.href = '/'
+        setIsLoading(false)
         return
       }
 

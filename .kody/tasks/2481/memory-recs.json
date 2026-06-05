@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "authenticated-users-gradeLevel-redirect",
+    "hook": "Authenticated users without gradeLevel should see greeting flow not silent redirect",
+    "body": "The RequireCourseSelection guard and StudyContent component were silently redirecting authenticated users (with valid payload-token cookie) to /start when they lacked gradeLevel in localStorage. Since the middleware already redirects unauthenticated users to /login, authenticated users without gradeLevel should see the page with the greeting flow instead of being silently redirected. The fix checks for authenticated users via useAuth() and skips the redirect, allowing the greeting flow to appear.",
+    "why": "Authenticated users who haven't completed onboarding (no gradeLevel set) were being silently redirected to /start with no indication of why or what to do next. This was a poor user experience - they should see the greeting flow where they can set their grade.",
+    "confidence": 0.95
+  }
+]

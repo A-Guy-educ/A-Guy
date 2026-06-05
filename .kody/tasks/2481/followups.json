@@ -1,0 +1,8 @@
+[
+  {
+    "title": "StudyContent shows generic empty state for authenticated users without gradeLevel",
+    "body": "After the fix, authenticated users without gradeLevel on /practice see an empty state with 'Check back later for new content' message. This is not a meaningful message explaining that they need to select a grade. Consider modifying StudyContent to show a message prompting users to complete their profile/grade selection when chapters array is empty and no gradeLevel is set.",
+    "rationale": "The issue asked for 'a meaningful message explaining why it cannot be accessed'. The current empty state doesn't explain anything. Users might think there's no content rather than understanding they need to select a grade.",
+    "priority": "low"
+  }
+]
