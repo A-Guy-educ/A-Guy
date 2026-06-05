@@ -1,8 +1,14 @@
 [
   {
     "title": "Re-add StudyActivityChart with proper webpack config",
-    "body": "The chart was removed because recharts@3.x pulls in @napi-rs/canvas (native Node.js binary) through victory-vendor, causing webpack browser build failures. To re-add: (1) Configure webpack in next.config.js to externalize @napi-rs/canvas and victory-vendor for browser builds using browserExternalPackages, OR (2) Find an alternative chart library without native dependencies, OR (3) Make the chart a server component that renders to an image before sending to client.",
+    "body": "The chart was removed because recharts@3.x pulls in @napi-rs/canvas (native Node.js binary) through victory-vendor, causing webpack browser build failures. To re-add: (1) Add 'recharts' and 'victory-vendor' to the browser externals in next.config.js alongside @napi-rs/canvas and undici, OR (2) Find an alternative chart library without native dependencies, OR (3) Make the chart a server component that renders to an image before sending to client.",
     "rationale": "The stats page chart is a valuable UX feature that was in task 2447. It should be re-implemented properly in a follow-up PR.",
     "priority": "medium"
+  },
+  {
+    "title": "Replace resolve.alias with externals for browser-buildable native modules",
+    "body": "In next.config.js, webpack resolve.alias = { pkg: false } does NOT prevent webpack from following internal dependency chains into .node binaries or node: scheme imports. The correct approach for native/Node.js-only packages is webpack.externals, which skips all analysis. This applies to any package that has node: scheme imports or native binaries.",
+    "rationale": "The resolve.alias approach appeared in the first session's fix but did not actually resolve the CI failure, requiring this second session's correction.",
+    "priority": "high"
   }
 ]

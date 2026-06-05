@@ -136,16 +136,14 @@ const nextConfig = {
       type: 'asset/source',
     })
 
-    // Stub @napi-rs/canvas and undici for browser builds — both are native Node.js
-    // modules that cannot be bundled for the browser. They are transitively imported
-    // via payload.config.ts → job tasks, but webpack still attempts to resolve them
-    // for the browser bundle during the build.
+    // Externalize @napi-rs/canvas and undici for browser builds — both are native Node.js
+    // modules that cannot be bundled for the browser. resolve.alias does not prevent
+    // webpack from following the dependency chain into .node binaries or node: scheme
+    // imports. Using webpack.externals (not resolve.alias) ensures webpack skips
+    // these packages entirely and leaves require() calls in the bundle for runtime
+    // resolution (which never happens in browser code since these are server-only).
     if (!isServer) {
-      webpackConfig.resolve.alias = {
-        ...webpackConfig.resolve.alias,
-        '@napi-rs/canvas': false,
-        undici: false,
-      }
+      webpackConfig.externals = [...(webpackConfig.externals || []), '@napi-rs/canvas', 'undici']
     }
 
     return webpackConfig

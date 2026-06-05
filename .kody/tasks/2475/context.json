@@ -4,18 +4,13 @@
   "target": "2449-p2-frontend-login-form-silently-fails-session-not",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Removed StudyActivityChart component that caused CI build failure due to recharts@3.x pulling in @napi-rs/canvas native module for browser bundling. Kept the core hasAuthToken middleware fix intact.",
+  "reason": "Replaced webpack resolve.alias with externals for browser builds — resolve.alias to false does not prevent webpack from following the dependency chain into .node binaries and node: scheme imports; externals skips analysis entirely",
   "prUrl": null,
   "runUrl": null,
   "filesTouched": [
-    "src/app/(frontend)/stats/_components/StatsDashboard.tsx",
-    "src/app/(frontend)/stats/_components/StudyActivityChart.tsx",
-    "src/app/api/stats/dashboard/route.ts",
-    "src/i18n/en.json",
-    "src/i18n/he.json",
-    "tests/e2e/stats-page-chart.e2e.spec.ts"
+    "next.config.js"
   ],
   "sessionLog": null,
-  "startedAt": "2026-06-05T02:00:00Z",
-  "finishedAt": "2026-06-05T02:05:00Z"
+  "startedAt": "2026-06-05T09:30:00Z",
+  "finishedAt": "2026-06-05T10:45:00Z"
 }
