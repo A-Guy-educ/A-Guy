@@ -82,6 +82,7 @@ export function MobileChatFAB({ isOpen, onOpen, onClose, children }: MobileChatF
         )}
         aria-label={isOpen ? t('closeChat') : t('openChat')}
         aria-expanded={isOpen}
+        tabIndex={0}
       >
         {isOpen ? <X className="w-6 h-6" /> : <MessageSquare className="w-6 h-6" />}
       </button>

@@ -159,6 +159,24 @@ describe('MobileChatFAB Component', () => {
     expect(chatContent).toBeInTheDocument()
   })
 
+  it('should be keyboard accessible with tabIndex attribute', async () => {
+    const { MobileChatFAB } = await import('@/ui/web/chat/MobileChatFAB')
+    const onOpen = vi.fn()
+    const onClose = vi.fn()
+
+    render(
+      <MobileChatFAB isOpen={false} onOpen={onOpen} onClose={onClose}>
+        <div>Chat content</div>
+      </MobileChatFAB>,
+    )
+
+    const fabButton = screen.getByRole('button', { name: /Open chat/i }) as HTMLElement
+    // FAB must have an explicit tabindex attribute so it is reachable via keyboard
+    // navigation (Tab/Shift+Tab) — an unadorned button can be skipped in some browser/
+    // screen-reader configurations when it lacks an explicit tabindex.
+    expect(fabButton).toHaveAttribute('tabindex', '0')
+  })
+
   it('should have correct positioning classes for FAB', async () => {
     const { MobileChatFAB } = await import('@/ui/web/chat/MobileChatFAB')
     const onOpen = vi.fn()
