@@ -4,11 +4,11 @@
   "target": "PR #2350 (2349-dev-ci-is-red-kody-auto-fix)",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Single conflicted file .kody/reports/health-check.md resolved: HEAD header naming preserved, dev timestamps used",
+  "reason": "Single asymmetric conflict in duty-review.md: HEAD had full content, origin/dev was empty. Preserved HEAD.",
   "prUrl": null,
   "runUrl": null,
-  "filesTouched": [".kody/reports/health-check.md"],
-  "sessionLog": ".kody/sessions/",
-  "startedAt": "2026-06-05T00:00:00Z",
-  "finishedAt": "2026-06-05T00:01:00Z"
+  "filesTouched": [".kody/reports/duty-review.md"],
+  "sessionLog": ".kody/sessions/2350.jsonl",
+  "startedAt": "2026-06-05T09:00:00Z",
+  "finishedAt": "2026-06-05T09:03:08Z"
 }
