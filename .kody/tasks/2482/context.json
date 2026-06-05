@@ -1,0 +1,18 @@
+{
+  "taskId": "2482",
+  "taskType": "issue",
+  "target": "/admin/collections/lesson-duplications relationship cells showing Loading...",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Custom LessonRelationshipCell components bypass Payload's default relationship cell behavior which makes extra API calls to /api/lessons/:id — these calls could fail and leave cells stuck on 'Loading...' indefinitely",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/LessonDuplications/Cells/LessonRelationshipCell.tsx",
+    "src/server/payload/collections/LessonDuplications.ts",
+    "tests/int/lesson-duplications-list-relationships.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/vault-verify-1778655729.jsonl",
+  "startedAt": "2026-06-05T17:50:00Z",
+  "finishedAt": "2026-06-05T17:57:00Z"
+}

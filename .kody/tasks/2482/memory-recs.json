@@ -1,0 +1,9 @@
+[
+  {
+    "type": "lesson",
+    "name": "payload-relationship-cell-loading-fix",
+    "hook": "Custom Cell components bypass Payload relationship API calls",
+    "body": "When Payload admin relationship cells show 'Loading...' indefinitely, the fix is to create custom Cell components that display data from `cellData` directly (populated via depth=1) instead of relying on Payload's default relationship cell which makes extra API calls to /api/<collection>/:id that can fail silently.\n\nFix: Add `admin.components.Cell: '@/path/to/Cell#CellName'` to the field config in the collection.\n\n**Why:** Payload's default relationship cell makes a separate API call to fetch the related document for display. If that call fails (network issue, access control, etc.), the cell stays on 'Loading...' forever. Custom cells bypass this by using the already-populated data from the list query (depth=1).",
+    "confidence": 0.9
+  }
+]

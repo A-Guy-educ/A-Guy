@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Audit other admin collection list views for relationship cells stuck on Loading...",
+    "body": "Search all collections in src/server/payload/collections/ for relationship fields used as defaultColumns in the admin UI. Check if any other collections have relationship fields that might exhibit the same 'Loading...' issue. Consider adding custom cell components to any that do.",
+    "rationale": "The same root cause (Payload's default relationship cell making extra API calls) could affect other collections. A systematic audit would catch similar issues before they surface as bugs.",
+    "priority": "low"
+  }
+]
