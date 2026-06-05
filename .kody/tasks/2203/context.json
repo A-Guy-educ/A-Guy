@@ -1,14 +1,14 @@
 {
   "taskId": "2203",
   "taskType": "pr",
-  "target": "PR #2203",
+  "target": "repo-hygiene-report workflow",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "CI format check on kody.config.json was transient - file passes prettier locally after recent reformat commit c8cd6a43d",
+  "reason": "postinstall hook ran generate:types requiring DATABASE_URL; fixed by adding --ignore-scripts to pnpm install",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2203",
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26748671139",
-  "filesTouched": [],
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26943297531",
+  "filesTouched": [".github/workflows/repo-hygiene-report.yml"],
   "sessionLog": ".kody/sessions/2203.jsonl",
-  "startedAt": "2026-06-01T13:30:00.000Z",
-  "finishedAt": "2026-06-01T13:38:00.000Z"
+  "startedAt": "2026-06-04T09:30:00.000Z",
+  "finishedAt": "2026-06-04T10:00:00.000Z"
 }
