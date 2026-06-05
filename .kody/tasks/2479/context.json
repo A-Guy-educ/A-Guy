@@ -1,0 +1,17 @@
+{
+  "taskId": "2479",
+  "taskType": "issue",
+  "target": "GitHub bug #2479",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Bug fixed — PayPal token now used for transaction lookup. page.tsx reads provider=paypal and token params, uses token as providerTransactionId for lookup instead of ignoring it.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/checkout/success/page.tsx",
+    "tests/int/checkout-success-paypal-return.int.spec.ts"
+  ],
+  "sessionLog": null,
+  "startedAt": "2026-06-05T12:49:00Z",
+  "finishedAt": "2026-06-05T12:54:30Z"
+}

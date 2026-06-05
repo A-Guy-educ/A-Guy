@@ -19,7 +19,12 @@ import type { Metadata } from 'next'
 import { CheckoutSuccessContent } from './CheckoutSuccessContent'
 
 type Props = {
-  searchParams: Promise<{ session_id?: string }>
+  searchParams: Promise<{
+    session_id?: string
+    provider?: string
+    token?: string
+    PayerID?: string
+  }>
 }
 
 export async function generateMetadata({
@@ -35,18 +40,23 @@ export async function generateMetadata({
 }
 
 export default async function CheckoutSuccessPage({ searchParams: searchParamsPromise }: Props) {
-  const { session_id } = await searchParamsPromise
+  const { session_id, provider, token } = await searchParamsPromise
   const locale = await getSystemLocale()
 
   let transaction = null
   let productName = ''
 
-  if (session_id) {
+  // Determine the providerTransactionId lookup key:
+  // - Stripe: use session_id from ?session_id= URL param
+  // - PayPal: use token (order ID) from ?provider=paypal&token= URL params
+  const lookupId = provider === 'paypal' && token ? token : session_id
+
+  if (lookupId) {
     try {
       const payload = await getPayload({ config })
       const result = await payload.find({
         collection: 'transactions',
-        where: { providerTransactionId: { equals: session_id } },
+        where: { providerTransactionId: { equals: lookupId } },
         limit: 1,
         depth: 1,
         overrideAccess: true,
@@ -84,7 +94,7 @@ export default async function CheckoutSuccessPage({ searchParams: searchParamsPr
       dir={getDirection(locale)}
     >
       <CheckoutSuccessContent
-        sessionId={session_id}
+        sessionId={lookupId}
         transaction={transaction}
         productName={productName}
       />
