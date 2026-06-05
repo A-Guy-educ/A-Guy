@@ -22,5 +22,13 @@
     "body": "When a metapackage like @napi-rs/canvas resolves to platform-specific packages (@napi-rs/canvas-linux-x64-gnu, @napi-rs/canvas-darwin-x64, etc.), simply adding the metapackage name to webpack externals is insufficient. Webpack resolves the platform-specific name and those packages are not in externals. Use a regex external pattern like /^@napi-rs\\/canvas-/ to catch all platform variants.",
     "why": "CI failed with 'Node.js binary module ...skia.linux-x64-gnu.node is not supported in the browser' because @napi-rs/canvas was externalized but @napi-rs/canvas-linux-x64-gnu was not, even though the former is just a metapackage that resolves to the latter.",
     "confidence": 0.95
+  },
+  {
+    "type": "lesson",
+    "name": "webpack-resolve-alias-does-not-support-regex",
+    "hook": "webpack 5 resolve.alias does not support regex — use resolve.fallback for node: protocol",
+    "body": "webpack 5's resolve.alias does NOT support regex string patterns. A key like '^node:(.*)$' is treated as a literal string, not a regex. The correct webpack 5 API for redirecting Node.js built-in modules (node:console, node:crypto, node:dns, etc.) is resolve.fallback with { node: false }. Setting node: false tells webpack these modules are unavailable (returns empty object), which satisfies the resolver for all node: scheme imports at once.",
+    "why": "CI still failed with 'UnhandledSchemeError: Reading from node:console' after adding the regex alias in resolve.alias — the regex was treated as a literal key and never matched, so node: imports were still unresolved.",
+    "confidence": 0.95
   }
 ]

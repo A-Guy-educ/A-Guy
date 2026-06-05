@@ -162,6 +162,15 @@ const nextConfig = {
         // aliasing to an empty object is safe and allows the build to complete.
         '^node:(.*)$': path.resolve(process.cwd(), 'src/server/utils/empty-stub.js'),
       }
+
+      // Use fallback to handle all node: protocol imports in browser builds.
+      // This is the correct webpack 5 API for redirecting Node.js built-in modules.
+      // Setting node: false tells webpack the module is unavailable (empty object),
+      // which satisfies the resolver for all node:console, node:crypto, node:dns, etc.
+      webpackConfig.resolve.fallback = {
+        ...webpackConfig.resolve.fallback,
+        node: false,
+      }
     }
 
     return webpackConfig
