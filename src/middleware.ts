@@ -36,11 +36,29 @@ function isProtectedLearningPath(pathname: string): boolean {
 
 /**
  * Check if the request has a valid Payload auth token.
- * Checks for the payload-token cookie.
+ * Checks for the cookie using the same prefix logic as getMeUser and loginAction.
+ * Falls back to 'payload-token' for backward compatibility.
+ * Note: We check both the configured prefix and 'payload-token' to handle
+ * cases where the cookie was set with a different prefix.
  */
-function hasAuthToken(request: NextRequest): boolean {
+async function hasAuthToken(request: NextRequest): Promise<boolean> {
   const cookieStore = request.cookies
-  return cookieStore.get('payload-token')?.value !== undefined
+
+  // Get the cookie prefix from Payload config (same logic as getMeUser and loginAction)
+  let cookiePrefix = 'payload'
+  try {
+    const config = (await import('@payload-config')).default as { cookiePrefix?: string }
+    cookiePrefix = config.cookiePrefix || 'payload'
+  } catch {
+    // If config import fails, fall back to 'payload'
+  }
+
+  // Check for cookie with configured prefix first, then fallback 'payload-token'
+  const configuredCookieName = `${cookiePrefix}-token`
+  const hasConfiguredCookie = cookieStore.get(configuredCookieName)?.value !== undefined
+  const hasFallbackCookie = cookieStore.get('payload-token')?.value !== undefined
+
+  return hasConfiguredCookie || hasFallbackCookie
 }
 
 function resolveCookieDomain(host: string): string | undefined {
@@ -63,7 +81,7 @@ function resolveCookieDomain(host: string): string | undefined {
 // Media CDN redirects are handled by next.config.js redirects (baked in at build time).
 // This avoids Edge middleware env var availability issues.
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
   const host = request.headers.get('host') || ''
 
@@ -79,7 +97,7 @@ export function middleware(request: NextRequest) {
   }
 
   // Auth guard: redirect unauthenticated users to login for protected learning routes
-  if (isProtectedLearningPath(pathname) && !hasAuthToken(request)) {
+  if (isProtectedLearningPath(pathname) && !(await hasAuthToken(request))) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('returnTo', pathname)
     return NextResponse.redirect(loginUrl)

@@ -1,0 +1,18 @@
+{
+  "taskId": "2449",
+  "taskType": "issue",
+  "target": "2449-p2-frontend-login-form-silently-fails-session-not",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed hasAuthToken in middleware to dynamically read cookiePrefix from Payload config and check both configured prefix cookie and fallback payload-token. Made middleware/hasAuthToken async. Updated test files to await async middleware.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/middleware.ts",
+    "tests/int/auth-middleware.int.spec.ts",
+    "tests/int/middleware.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2449-p2-frontend-login-form-silently-fails-session-not.jsonl",
+  "startedAt": "2026-06-05T00:30:00.000Z",
+  "finishedAt": "2026-06-05T00:39:00.000Z"
+}

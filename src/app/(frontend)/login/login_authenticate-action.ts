@@ -36,13 +36,22 @@ export async function loginAction(formData: FormData, cookieStore?: CookieStore)
     const config = (await import('@payload-config')).default
     const payload = await getPayload({ config })
     const usersCollection = payload.collections?.users
-    const shouldRestoreToken = usersCollection?.config?.auth?.removeTokenFromResponses === true
+    // Get the current value - may be true, false, or undefined
+    // Use type assertion because Payload types this as literal 'true'
+    const removeTokenValue = (
+      usersCollection?.config?.auth as { removeTokenFromResponses?: boolean }
+    )?.removeTokenFromResponses
+    // Track if we need to restore: we modify config when removeTokenValue is truthy (true or undefined)
+    const needsModification = removeTokenValue !== false
     const cookiePrefix = payload.config.cookiePrefix || 'payload'
     const cookieName = `${cookiePrefix}-token`
 
-    if (shouldRestoreToken && usersCollection?.config?.auth) {
+    // Ensure token is in the response body (not just HTTP-only cookie) so we can
+    // set it as a JavaScript-readable cookie for frontend auth.
+    // Delete the flag if it's truthy (true or undefined, since false means keep token in response).
+    if (needsModification && usersCollection?.config?.auth) {
       const authConfig = usersCollection.config.auth as {
-        removeTokenFromResponses?: true
+        removeTokenFromResponses?: boolean
       }
       delete authConfig.removeTokenFromResponses
     }
@@ -52,8 +61,11 @@ export async function loginAction(formData: FormData, cookieStore?: CookieStore)
       data: { email, password },
     })
 
-    if (shouldRestoreToken && usersCollection?.config?.auth) {
-      usersCollection.config.auth.removeTokenFromResponses = true
+    // Restore original setting
+    if (needsModification && usersCollection?.config?.auth) {
+      ;(
+        usersCollection.config.auth as { removeTokenFromResponses?: boolean }
+      ).removeTokenFromResponses = removeTokenValue
     }
 
     if (result.token) {

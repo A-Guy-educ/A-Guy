@@ -1,0 +1,18 @@
+[
+  {
+    "type": "lesson",
+    "name": "middleware-hasauthtoken-async-config-read",
+    "hook": "middleware hasAuthToken must read cookiePrefix from config dynamically",
+    "body": "The middleware hasAuthToken function claimed in comments to check both configured prefix and payload-token fallback, but the code only checked payload-token. Fixed by making hasAuthToken async so it can import @payload-config and read the actual cookiePrefix, then check both the configured cookie name and the fallback.",
+    "why": "The loginAction and getMeUser read cookiePrefix from Payload config, but middleware hardcoded 'payload-token'. If cookiePrefix ever differs from 'payload', middleware would not recognize the auth cookie.",
+    "confidence": 0.85
+  },
+  {
+    "type": "lesson",
+    "name": "async-middleware-breaks-tests",
+    "hook": "Making Next.js middleware async requires test files to await the call",
+    "body": "When changing middleware functions to async, all test files that call middleware must now await the result. TypeScript will surface these as errors on the Promise<NextResponse> type.",
+    "why": "TypeScript correctly identifies that async middleware returns Promise<NextResponse>, so accessing .status or .headers directly without await is a type error.",
+    "confidence": 0.95
+  }
+]

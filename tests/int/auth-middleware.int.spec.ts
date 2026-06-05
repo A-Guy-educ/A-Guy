@@ -30,20 +30,23 @@ describe('Auth Middleware - Learning Feature Protection', () => {
       '/courses/science/chapters/chapter-1/lessons/lesson-1/exercises/exercise-1',
     ]
 
-    it.each(protectedRoutes)('should redirect unauthenticated request to %s to /login', (route) => {
-      const request = createRequest(route)
-      const response = middleware(request)
+    it.each(protectedRoutes)(
+      'should redirect unauthenticated request to %s to /login',
+      async (route) => {
+        const request = createRequest(route)
+        const response = await middleware(request)
 
-      expect(response.status).toBe(307) // Temporary redirect
-      const location = response.headers.get('location')
-      expect(location).toContain('/login')
-      expect(location).toContain(`returnTo=${encodeURIComponent(route)}`)
-    })
+        expect(response.status).toBe(307) // Temporary redirect
+        const location = response.headers.get('location')
+        expect(location).toContain('/login')
+        expect(location).toContain(`returnTo=${encodeURIComponent(route)}`)
+      },
+    )
 
-    it('should include returnTo query param when redirecting protected route', () => {
+    it('should include returnTo query param when redirecting protected route', async () => {
       const route = '/study'
       const request = createRequest(route)
-      const response = middleware(request)
+      const response = await middleware(request)
 
       const location = response.headers.get('location')
       expect(location).toContain(`/login?returnTo=${encodeURIComponent(route)}`)
@@ -53,9 +56,9 @@ describe('Auth Middleware - Learning Feature Protection', () => {
   describe('Public routes - should pass through without redirect', () => {
     const publicRoutes = ['/', '/courses']
 
-    it.each(publicRoutes)('should allow unauthenticated request to %s', (route) => {
+    it.each(publicRoutes)('should allow unauthenticated request to %s', async (route) => {
       const request = createRequest(route)
-      const response = middleware(request)
+      const response = await middleware(request)
 
       // Should pass through (status 200 for NextResponse.next())
       expect(response.status).toBe(200)
@@ -75,14 +78,14 @@ describe('Auth Middleware - Learning Feature Protection', () => {
       '/courses/math/chapters/intro/lessons/first-lesson',
     ]
 
-    it.each(allRoutes)('should allow authenticated request to %s', (route) => {
+    it.each(allRoutes)('should allow authenticated request to %s', async (route) => {
       // Create request with a payload token cookie (simulating authenticated user)
       const request = createRequest(
         route,
         'example.com',
         'payload-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test',
       )
-      const response = middleware(request)
+      const response = await middleware(request)
 
       // Should pass through without redirect
       expect(response.status).toBe(200)
@@ -92,29 +95,29 @@ describe('Auth Middleware - Learning Feature Protection', () => {
   })
 
   describe('Edge cases', () => {
-    it('should not redirect /courses with query params', () => {
+    it('should not redirect /courses with query params', async () => {
       const request = createRequest('/courses?sort=popular')
-      const response = middleware(request)
+      const response = await middleware(request)
 
       expect(response.status).toBe(200)
       expect(response.headers.get('location')).toBeNull()
     })
 
-    it('should handle course slug routes correctly', () => {
+    it('should handle course slug routes correctly', async () => {
       // /courses/[slug] should be protected (not just /courses)
       const courseRoute = '/courses/advanced-math'
       const request = createRequest(courseRoute)
-      const response = middleware(request)
+      const response = await middleware(request)
 
       // This should redirect because it's a specific course page, not the catalog
       expect(response.status).toBe(307)
       expect(response.headers.get('location')).toContain('/login')
     })
 
-    it('should preserve original path in returnTo for nested routes', () => {
+    it('should preserve original path in returnTo for nested routes', async () => {
       const route = '/courses/math/chapters/intro/lessons/first-lesson/content/page-1'
       const request = createRequest(route)
-      const response = middleware(request)
+      const response = await middleware(request)
 
       const location = response.headers.get('location')
       expect(location).toContain(`/login?returnTo=${encodeURIComponent(route)}`)

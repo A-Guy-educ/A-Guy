@@ -15,27 +15,27 @@ describe('Middleware - Locale Routing', () => {
   }
 
   describe('Subdomain-based locale forcing', () => {
-    it('should set locale to "he" for he.example.com', () => {
+    it('should set locale to "he" for he.example.com', async () => {
       const request = createRequest('he.example.com', '/')
-      const response = middleware(request)
+      const response = await middleware(request)
 
       expect(response).toBeInstanceOf(NextResponse)
       expect(response.cookies.get('NEXT_LOCALE')?.value).toBe('he')
       expect(response.headers.get('x-locale')).toBe('he')
     })
 
-    it('should set locale to "en" for en.example.com', () => {
+    it('should set locale to "en" for en.example.com', async () => {
       const request = createRequest('en.example.com', '/')
-      const response = middleware(request)
+      const response = await middleware(request)
 
       expect(response).toBeInstanceOf(NextResponse)
       expect(response.cookies.get('NEXT_LOCALE')?.value).toBe('en')
       expect(response.headers.get('x-locale')).toBe('en')
     })
 
-    it('should ignore Accept-Language on forced subdomain', () => {
+    it('should ignore Accept-Language on forced subdomain', async () => {
       const request = createRequest('he.example.com', '/', 'en-US,en;q=0.9')
-      const response = middleware(request)
+      const response = await middleware(request)
 
       expect(response.cookies.get('NEXT_LOCALE')?.value).toBe('he')
       expect(response.headers.get('x-locale')).toBe('he')
@@ -43,21 +43,21 @@ describe('Middleware - Locale Routing', () => {
   })
 
   describe('Primary domain locale detection', () => {
-    it('should use Accept-Language header when no cookie exists', () => {
+    it('should use Accept-Language header when no cookie exists', async () => {
       const request = createRequest('example.com', '/', 'he-IL,he;q=0.9,en;q=0.8')
-      const response = middleware(request)
+      const response = await middleware(request)
 
       expect(response.headers.get('x-locale')).toBe('he')
     })
 
-    it('should default to "he" when Accept-Language is not supported', () => {
+    it('should default to "he" when Accept-Language is not supported', async () => {
       const request = createRequest('example.com', '/', 'fr-FR,fr;q=0.9')
-      const response = middleware(request)
+      const response = await middleware(request)
 
       expect(response.headers.get('x-locale')).toBe('he')
     })
 
-    it('should use cookie locale when available', () => {
+    it('should use cookie locale when available', async () => {
       const url = new URL('/', 'http://example.com')
       const headers = new Headers()
       headers.set('host', 'example.com')
@@ -65,47 +65,47 @@ describe('Middleware - Locale Routing', () => {
       headers.set('cookie', 'NEXT_LOCALE=he')
 
       const request = new NextRequest(url, { headers })
-      const response = middleware(request)
+      const response = await middleware(request)
 
       expect(response.headers.get('x-locale')).toBe('he')
     })
 
-    it('should set cookie when using Accept-Language', () => {
+    it('should set cookie when using Accept-Language', async () => {
       const request = createRequest('example.com', '/', 'he-IL,he;q=0.9')
-      const response = middleware(request)
+      const response = await middleware(request)
 
       expect(response.cookies.get('NEXT_LOCALE')?.value).toBe('he')
     })
   })
 
   describe('Path exclusions', () => {
-    it('should exclude /admin paths', () => {
+    it('should exclude /admin paths', async () => {
       const request = createRequest('he.example.com', '/admin')
-      const response = middleware(request)
+      const response = await middleware(request)
 
       expect(response.cookies.get('NEXT_LOCALE')).toBeUndefined()
       expect(response.headers.get('x-locale')).toBeNull()
     })
 
-    it('should exclude /api paths', () => {
+    it('should exclude /api paths', async () => {
       const request = createRequest('he.example.com', '/api/example')
-      const response = middleware(request)
+      const response = await middleware(request)
 
       expect(response.cookies.get('NEXT_LOCALE')).toBeUndefined()
       expect(response.headers.get('x-locale')).toBeNull()
     })
 
-    it('should exclude /_next paths', () => {
+    it('should exclude /_next paths', async () => {
       const request = createRequest('he.example.com', '/_next/static/chunk.js')
-      const response = middleware(request)
+      const response = await middleware(request)
 
       expect(response.cookies.get('NEXT_LOCALE')).toBeUndefined()
       expect(response.headers.get('x-locale')).toBeNull()
     })
 
-    it('should exclude static files with extensions', () => {
+    it('should exclude static files with extensions', async () => {
       const request = createRequest('he.example.com', '/favicon.ico')
-      const response = middleware(request)
+      const response = await middleware(request)
 
       expect(response.cookies.get('NEXT_LOCALE')).toBeUndefined()
       expect(response.headers.get('x-locale')).toBeNull()
@@ -113,9 +113,9 @@ describe('Middleware - Locale Routing', () => {
   })
 
   describe('Cookie configuration', () => {
-    it('should set cookie with correct attributes', () => {
+    it('should set cookie with correct attributes', async () => {
       const request = createRequest('he.example.com', '/')
-      const response = middleware(request)
+      const response = await middleware(request)
 
       const cookie = response.cookies.get('NEXT_LOCALE')
       expect(cookie).toBeDefined()

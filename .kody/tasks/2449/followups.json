@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Pre-existing type error: StudyActivityChart.tsx recharts module",
+    "body": "src/app/(frontend)/stats/_components/StudyActivityChart.tsx may show 'Cannot find module recharts' type errors if node_modules becomes corrupted. Fix: run `pnpm install` to ensure recharts is properly installed.",
+    "rationale": "This is a node_modules issue, not a code issue. Running pnpm install after any clean install resolves it.",
+    "priority": "low"
+  }
+]
