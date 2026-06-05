@@ -123,7 +123,7 @@ const nextConfig = {
     '/api/jobs/run-immediate': ['./src/infra/llm/prompts/**/*'],
     '/api/lesson-duplications/[id]/resolve': ['./src/infra/llm/prompts/**/*'],
   },
-  webpack: (webpackConfig) => {
+  webpack: (webpackConfig, { isServer }) => {
     webpackConfig.resolve.extensionAlias = {
       '.cjs': ['.cts', '.cjs'],
       '.js': ['.ts', '.tsx', '.js', '.jsx'],
@@ -135,6 +135,18 @@ const nextConfig = {
       test: /\.md$/,
       type: 'asset/source',
     })
+
+    // Stub @napi-rs/canvas and undici for browser builds — both are native Node.js
+    // modules that cannot be bundled for the browser. They are transitively imported
+    // via payload.config.ts → job tasks, but webpack still attempts to resolve them
+    // for the browser bundle during the build.
+    if (!isServer) {
+      webpackConfig.resolve.alias = {
+        ...webpackConfig.resolve.alias,
+        '@napi-rs/canvas': false,
+        undici: false,
+      }
+    }
 
     return webpackConfig
   },

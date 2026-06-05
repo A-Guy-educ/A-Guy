@@ -23,11 +23,27 @@ recharts@3.x uses victory-vendor@37.3.6 which pulls in @napi-rs/canvas. StudyAct
 - `next.config.js` - CSP gravatar fix (task 2448)
 - `tests/int/csp-vercel-feedback-admin.int.spec.ts` - CSP test update (task 2448)
 
+### Root cause (corrected)
+The build failure was NOT only from recharts/StudyActivityChart. Even after removing StudyActivityChart, the build still failed because `@napi-rs/canvas` and `undici` are pulled into the webpack browser bundle through the `payload.config.ts` import chain:
+- `payload.config.ts` → `pdf-to-exercises-v2-task.ts` → `pdf-render-service.ts` → `@napi-rs/canvas`
+- `payload.config.ts` → `payload/dist/index.js` → `safeFetch.js` → `undici` → `node:console`
+
+The `serverExternalPackages` setting only externalizes for the server bundle, not the browser bundle. Webpack still resolves these modules for the browser build and fails.
+
+### Fix applied (this session)
+Added webpack `resolve.alias` for browser builds in `next.config.js`:
+```js
+if (!isServer) {
+  webpackConfig.resolve.alias = {
+    '@napi-rs/canvas': false,
+    undici: false,
+  }
+}
+```
+This tells webpack to stub these packages for the browser bundle, preventing the native module and `node:` scheme errors.
+
 ### Follow-up
-The chart should be re-implemented in a separate PR with proper webpack configuration to externalize @napi-rs/canvas for browser builds.
+The chart should be re-implemented in a separate PR. Note that recharts also depends on @napi-rs/canvas, so it would also need to be stubbed in the browser alias if re-added.
 
 ### Verification
-- `mcp__kody-verify__verify` returned ok: true on attempt 1
-- Typecheck passes
-- Lint passes
-- Integration tests pass
+- `mcp__kody-verify__verify` returned ok: true on attempt 2
