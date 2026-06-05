@@ -34,6 +34,7 @@ import { TranslateLessonAction as TranslateLessonAction_5e03fe73ee4379dfd96d4928
 import { LessonCascadeDelete as LessonCascadeDelete_8b707dd02fbf8886630a64bffcae6998 } from '@/ui/admin/CascadeDeleteButton'
 import { LessonExportAction as LessonExportAction_936ab3a262b72776e8d4690482118058 } from '@/ui/admin/LessonExportButton/LessonExportButton'
 import { LessonDuplicateAction as LessonDuplicateAction_0631cedc78513227cbbacea1e7a29e6f } from '@/ui/admin/LessonDuplicateButton/LessonDuplicateButton'
+import { LessonRelationshipCell as LessonRelationshipCell_839f5f8a1932430f238501254539545c } from '@/ui/admin/LessonDuplications/Cells/LessonRelationshipCell'
 import { LessonDuplicationReviewLink as LessonDuplicationReviewLink_87ad8d4e757d2b21433ff9f7082ac534 } from '@/ui/admin/LessonDuplicationReview/ReviewLinkButton'
 import { IntroTableHeadersField as IntroTableHeadersField_7c6162afec623d7dc5ec436565e36ecb } from '@/ui/admin/IntroTableField'
 import { IntroTableRowsField as IntroTableRowsField_7c6162afec623d7dc5ec436565e36ecb } from '@/ui/admin/IntroTableField'
@@ -64,6 +65,7 @@ import { default as default_759821dbe781e78024abfaf95f6442c4 } from '@/ui/admin/
 import { default as default_e8db4fbd97550d4d717940b5cf0234f3 } from '@/ui/admin/BeforeLogin'
 import { default as default_7545204935b55fcf02b3be70dde90fc1 } from '@/ui/admin/PdfConversion/SidebarLink'
 import { default as default_1b2cd3c8450eece915504fde397ab5c7 } from '@/ui/admin/LessonDuplicationReview/SidebarLink'
+import { VercelBlobClientUploadHandler as VercelBlobClientUploadHandler_16c82c5e25f430251a3e3ba57219ff4e } from '@payloadcms/storage-vercel-blob/client'
 import { CollectionCards as CollectionCards_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
 
 export const importMap = {
@@ -103,6 +105,7 @@ export const importMap = {
   "@/ui/admin/CascadeDeleteButton#LessonCascadeDelete": LessonCascadeDelete_8b707dd02fbf8886630a64bffcae6998,
   "@/ui/admin/LessonExportButton/LessonExportButton#LessonExportAction": LessonExportAction_936ab3a262b72776e8d4690482118058,
   "@/ui/admin/LessonDuplicateButton/LessonDuplicateButton#LessonDuplicateAction": LessonDuplicateAction_0631cedc78513227cbbacea1e7a29e6f,
+  "@/ui/admin/LessonDuplications/Cells/LessonRelationshipCell#LessonRelationshipCell": LessonRelationshipCell_839f5f8a1932430f238501254539545c,
   "@/ui/admin/LessonDuplicationReview/ReviewLinkButton#LessonDuplicationReviewLink": LessonDuplicationReviewLink_87ad8d4e757d2b21433ff9f7082ac534,
   "@/ui/admin/IntroTableField#IntroTableHeadersField": IntroTableHeadersField_7c6162afec623d7dc5ec436565e36ecb,
   "@/ui/admin/IntroTableField#IntroTableRowsField": IntroTableRowsField_7c6162afec623d7dc5ec436565e36ecb,
@@ -133,5 +136,6 @@ export const importMap = {
   "@/ui/admin/BeforeLogin#default": default_e8db4fbd97550d4d717940b5cf0234f3,
   "@/ui/admin/PdfConversion/SidebarLink#default": default_7545204935b55fcf02b3be70dde90fc1,
   "@/ui/admin/LessonDuplicationReview/SidebarLink#default": default_1b2cd3c8450eece915504fde397ab5c7,
+  "@payloadcms/storage-vercel-blob/client#VercelBlobClientUploadHandler": VercelBlobClientUploadHandler_16c82c5e25f430251a3e3ba57219ff4e,
   "@payloadcms/ui/rsc#CollectionCards": CollectionCards_ab83ff7e88da8d3530831f296ec4756a
 }
