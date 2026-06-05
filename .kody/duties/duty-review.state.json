@@ -1,21 +1,17 @@
 {
   "version": 1,
-  "rev": 45,
+  "rev": 46,
   "cursor": "reported",
   "data": {
-    "cycle": 8,
-    "lastRunISO": "2026-06-05T08:57:15Z",
-    "nextEligibleISO": "2026-06-05T14:57:15Z",
+    "cycle": 9,
+    "lastRunISO": "2026-06-05T15:51:50Z",
+    "nextEligibleISO": "2026-06-05T21:51:50Z",
     "reviewed": [
-      "ceo-performance-review",
-      "approval-gate",
-      "architecture-audit",
-      "clear-empty-goals",
-      "coverage-floor"
+      "approval-gate"
     ],
     "verdicts": {
       "approval-gate": {
-        "note": "design sound; state.json never created; never ticked",
+        "note": "state.json never created; never ticked",
         "verdict": "broken"
       },
       "architecture-audit": {
@@ -115,9 +111,9 @@
         "verdict": "warn"
       }
     },
-    "lastFiredAt": "2026-06-05T08:57:56.343Z",
+    "lastFiredAt": "2026-06-05T15:52:22.860Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 285722
+    "lastDurationMs": 173261
   },
   "done": false
 }
