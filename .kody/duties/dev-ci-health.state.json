@@ -1,16 +1,16 @@
 {
   "version": 1,
-  "rev": 108,
+  "rev": 109,
   "cursor": "idle",
   "data": {
     "failingChecks": [],
-    "lastFiredAt": "2026-06-05T18:25:38.170Z",
+    "lastFiredAt": "2026-06-05T19:13:55.359Z",
     "lastOutcome": "completed",
     "lastResolution": "CI GREEN — no failures on sha aedd4ee285e0aba622dda88425823dd8550d1062",
     "sha": "aedd4ee285e0aba622dda88425823dd8550d1062",
     "trackingIssue": 2349,
     "note": "CI is GREEN — tracking issue #2349 still open but CI is now passing",
-    "lastDurationMs": 23811
+    "lastDurationMs": 20765
   },
   "done": false
 }
