@@ -4,11 +4,11 @@
   "target": "1569-feat-support-cmdctrlenter-to-send-message-in-admin",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Single asymmetric conflict: dev deleted preview-validation.yml (chore(ci): remove redundant preview workflows), our branch had a modified version. Resolved by accepting deletion since PR feature (Cmd/Ctrl+Enter admin chat) is unrelated to CI workflow files.",
+  "reason": "format:check failed on CHANGELOGOG.md - Prettier formatting issue. Fixed by running pnpm format on the file.",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/1571",
   "runUrl": null,
-  "filesTouched": [".github/workflows/preview-validation.yml"],
+  "filesTouched": ["CHANGELOGOG.md"],
   "sessionLog": null,
-  "startedAt": "2026-06-02T02:40:00.000Z",
-  "finishedAt": "2026-06-02T02:45:00.000Z"
+  "startedAt": "2026-06-05T21:55:00.000Z",
+  "finishedAt": "2026-06-05T21:56:00.000Z"
 }
