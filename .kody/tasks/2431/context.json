@@ -1,14 +1,14 @@
 {
   "taskId": "2431",
   "taskType": "pr",
-  "target": "PR #2431 / #2427",
+  "target": "PR #2431 (merge conflict resolution with origin/dev)",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Single file conflict in .kody/reports/duty-review.md resolved by taking origin/dev (Cycle 9) over HEAD (Cycle 7)",
+  "reason": "Single file conflict in duty-review.md resolved by taking origin/dev (Cycle 9) as the authoritative newer state",
   "prUrl": null,
   "runUrl": null,
   "filesTouched": [".kody/reports/duty-review.md"],
-  "sessionLog": null,
-  "startedAt": "2026-06-05T00:00:00Z",
-  "finishedAt": "2026-06-05T00:01:00Z"
+  "sessionLog": ".kody/runs/gh-27043656094-1",
+  "startedAt": "2026-06-05T22:37:31Z",
+  "finishedAt": "2026-06-05T22:37:31Z"
 }
