@@ -1,13 +1,14 @@
 {
   "version": 1,
-  "rev": 46,
+  "rev": 47,
   "cursor": "reported",
   "data": {
     "cycle": 9,
-    "lastRunISO": "2026-06-05T15:51:50Z",
-    "nextEligibleISO": "2026-06-05T21:51:50Z",
+    "lastRunISO": "2026-06-05T22:30:57Z",
+    "nextEligibleISO": "2026-06-06T04:30:57Z",
     "reviewed": [
-      "approval-gate"
+      "approval-gate",
+      "architecture-audit"
     ],
     "verdicts": {
       "approval-gate": {
@@ -15,7 +16,7 @@
         "verdict": "broken"
       },
       "architecture-audit": {
-        "note": "script never existed; state path deprecated .kody/jobs/; commits violate one-action-max",
+        "note": "script never existed (404); body references deprecated .kody/jobs/ path; no kody-job-next-state block; disabled=true design review only",
         "verdict": "broken"
       },
       "ceo-performance-review": {
@@ -59,7 +60,7 @@
         "verdict": "warn"
       },
       "flaky-test-quarantine": {
-        "note": "no kody-job-next-state block; state never created",
+        "note": "no kody-job-next-state block; state never created; disabled=true so idle by design",
         "verdict": "warn"
       },
       "health-check": {
@@ -107,13 +108,13 @@
         "verdict": "warn"
       },
       "type-debt": {
-        "note": "no kody-job-next-state block; state never created",
+        "note": "no kody-job-next-state block; state never created; disabled=true so idle by design",
         "verdict": "warn"
       }
     },
-    "lastFiredAt": "2026-06-05T15:52:22.860Z",
+    "lastFiredAt": "2026-06-05T22:31:46.669Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 173261
+    "lastDurationMs": 176742
   },
   "done": false
 }
