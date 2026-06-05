@@ -1,5 +1,6 @@
 import { withPayload } from '@payloadcms/next/withPayload'
 import { withSentryConfig } from '@sentry/nextjs'
+import path from 'path'
 
 import redirects from './redirects.js'
 
@@ -152,7 +153,7 @@ const nextConfig = {
         // and encounters node:console / node:crypto / etc. which it cannot resolve.
         // Since these are server-only code paths that never execute in the browser,
         // aliasing to an empty object is safe and allows the build to complete.
-        '^node:(.*)$': require.resolve('./src/server/utils/empty-stub.js'),
+        '^node:(.*)$': path.resolve(process.cwd(), 'src/server/utils/empty-stub.js'),
       }
     }
 
