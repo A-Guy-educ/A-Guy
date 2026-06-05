@@ -1,16 +1,16 @@
 {
   "version": 1,
-  "rev": 98,
+  "rev": 99,
   "cursor": "idle",
   "data": {
     "failingChecks": [
       "cleanup"
     ],
-    "lastFiredAt": "2026-06-05T07:28:56.759Z",
+    "lastFiredAt": "2026-06-05T08:52:58.606Z",
     "lastOutcome": "completed",
     "lastResolution": "CI still GREEN — no failures on sha 21b9a23e5",
     "sha": "cfc685dd43e3fb47ca670bbbefed979d65c83e55",
-    "lastDurationMs": 25096,
+    "lastDurationMs": 56839,
     "trackingIssue": 2349,
     "note": "Issue #2349 already open — fix in flight, no action taken"
   },
