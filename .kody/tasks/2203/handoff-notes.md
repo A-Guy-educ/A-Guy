@@ -1,13 +1,23 @@
-# PR #2203 CI Fix
+# PR #2203 CI Fix (Hygiene Workflow)
 
 ## What happened
-CI workflow failed on `pnpm format:check` step, specifically on `kody.config.json`.
+The "Repo Hygiene Report (Daily)" CI workflow failed during `pnpm install` because the `postinstall` hook runs `pnpm generate`, which loads `payload.config.ts` and validates that `DATABASE_URL` is set.
 
-## Analysis
-The failure was transient. The file was recently reformatted in commit `c8cd6a43d` ("chore(ci): Reformat kody.config.json from dev merge drift"). All checks pass locally:
-- `pnpm typecheck` - passes
-- `pnpm lint` - passes (warning only)  
-- `pnpm format:check` - passes
+## Root cause
+- The hygiene workflow runs `pnpm install --frozen-lockfile`
+- This triggers the `postinstall` hook (`pnpm generate` → `generate:types` → loads `payload.config.ts`)
+- `payload.config.ts` line 93 throws if `DATABASE_URL` is not set or empty
+- Although the workflow has `DATABASE_URL` env with a fallback value, the validation was failing
 
-## Resolution
-No code changes were needed. The CI failure was likely due to a caching issue or the file being in a different state when CI ran vs. when checked locally.
+## Fix
+Added `--ignore-scripts` to skip the postinstall hook in the hygiene workflow:
+
+```yaml
+# Before
+pnpm install --frozen-lockfile
+
+# After
+pnpm install --frozen-lockfile --ignore-scripts
+```
+
+The hygiene report (`repo:hygiene:report`) only runs `knip` and git commands — it has no need for database access or Payload type generation.
