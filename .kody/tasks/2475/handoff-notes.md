@@ -1,26 +1,33 @@
-## CI Build Fix (session 2475-B): require is not defined in ESM next.config.js
+## CI Build Fix (session 2475): webpack browser build failures
 
 ### What was failing
-The Next.js browser build failed with:
-- `ReferenceError: require is not defined` at `next.config.js:155`
+Next.js browser build (`next build`) failed with:
+```
+Error: Node.js binary module ./node_modules/.pnpm/@napi-rs+canvas-linux-x64-gnu@0.1.89/.../skia.linux-x64-gnu.node is not supported in the browser.
+```
 
-### Root cause
-The previous fix (session 2475-A) used `require.resolve('./src/server/utils/empty-stub.js')` in the webpack config alias. However, `next.config.js` uses ESM (top-level `import`), so `require` is not available in that context.
+### Root cause — two compounding issues
 
-### Fix applied
-Replaced `require.resolve(...)` with `path.resolve(process.cwd(), 'src/server/utils/empty-stub.js')`:
-- Added `import path from 'path'` at the top of `next.config.js`
-- Changed the alias target from `require.resolve(...)` to `path.resolve(process.cwd(), 'src/server/utils/empty-stub.js')`
+**Issue 1: ESM `require` unavailable in next.config.js**
+`next.config.js` uses ESM (top-level `import`), so `require` is not available in webpack config callbacks. Using `require.resolve(...)` causes `ReferenceError: require is not defined`.
 
-`process.cwd()` gives the project root at build time, same as what `require.resolve` would have resolved to.
+Fix: Use `path.resolve(process.cwd(), ...)` instead of `require.resolve(...)`.
+
+**Issue 2: `@napi-rs/canvas` externals incomplete**
+The `@napi-rs/canvas` metapackage resolves to platform-specific packages (`@napi-rs/canvas-linux-x64-gnu`, `@napi-rs/canvas-darwin-x64`, etc.), each containing `.node` native binaries. Simply externalizing `'@napi-rs/canvas'` is insufficient because webpack resolves to the platform-specific package name.
+
+Fix: Add regex external `/^@napi-rs\/canvas-/` to catch all platform variants:
+```js
+webpackConfig.externals = [
+  ...(webpackConfig.externals || []),
+  '@napi-rs/canvas',
+  /^@napi-rs\/canvas-/,
+  'undici',
+]
+```
 
 ### Files changed
-- `next.config.js` — added `import path from 'path'`, replaced `require.resolve` with `path.resolve(process.cwd(), ...)`
+- `next.config.js` — `import path from 'path'`, replaced `require.resolve` with `path.resolve`, added regex external for canvas platform packages
 
 ### Verification
-- `mcp__kody-verify__verify` returned ok: true on attempt 1
-
----
-
-## Prior session context (2475-A)
-Added `resolve.alias` to redirect all `node:` protocol imports to an empty stub to fix `UnhandledSchemeError: Reading from "node:console" is not handled by plugins`. The `empty-stub.js` file was also created.
+- `mcp__kody-verify__verify` returned `ok: true` on attempt 2

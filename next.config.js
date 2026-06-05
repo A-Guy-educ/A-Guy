@@ -144,7 +144,14 @@ const nextConfig = {
       // within undici (@napi-rs/canvas, etc.) cause webpack to fail during analysis.
       // Additionally alias node: protocol imports to empty objects so webpack
       // doesn't try to resolve them (they are never called in browser code anyway).
-      webpackConfig.externals = [...(webpackConfig.externals || []), '@napi-rs/canvas', 'undici']
+      webpackConfig.externals = [
+        ...(webpackConfig.externals || []),
+        '@napi-rs/canvas',
+        // Platform-specific @napi-rs/canvas-* packages resolved by the metapackage
+        // These contain .node native binaries that cannot be bundled for the browser
+        /^@napi-rs\/canvas-/,
+        'undici',
+      ]
 
       webpackConfig.resolve.alias = {
         ...webpackConfig.resolve.alias,

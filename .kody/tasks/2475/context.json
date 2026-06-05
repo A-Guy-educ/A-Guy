@@ -4,7 +4,7 @@
   "target": "2449-p2-frontend-login-form-silently-fails-session-not",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Fixed ESM 'require is not defined' in next.config.js webpack config — replaced require.resolve with path.resolve(process.cwd(), ...) so the node: protocol alias works in ESM context",
+  "reason": "Fixed webpack browser build failure — added /^@napi-rs\\/canvas-/ regex to externals so platform-specific canvas packages (canvas-linux-x64-gnu, etc.) are also externalized, preventing webpack from trying to bundle their .node native binaries",
   "prUrl": null,
   "runUrl": null,
   "filesTouched": [
@@ -12,5 +12,5 @@
   ],
   "sessionLog": null,
   "startedAt": "2026-06-05T12:00:00Z",
-  "finishedAt": "2026-06-05T12:05:00Z"
+  "finishedAt": "2026-06-05T16:30:00Z"
 }

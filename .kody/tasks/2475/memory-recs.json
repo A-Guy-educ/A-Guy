@@ -14,5 +14,13 @@
     "body": "next.config.js uses ESM (import at top level), so require is not available. When adding webpack resolve.alias entries that need a file path, use path.resolve(process.cwd(), ...) instead of require.resolve(...). process.cwd() gives the project root at build time, matching what require.resolve would have resolved to.",
     "why": "CI failed with 'ReferenceError: require is not defined' at next.config.js:155 because the file is ESM but used require.resolve in the webpack config callback.",
     "confidence": 0.95
+  },
+  {
+    "type": "lesson",
+    "name": "externalize-metapackage-also-externalize-platform-packages",
+    "hook": "Externalizing a metapackage requires regex pattern to catch resolved platform-specific packages",
+    "body": "When a metapackage like @napi-rs/canvas resolves to platform-specific packages (@napi-rs/canvas-linux-x64-gnu, @napi-rs/canvas-darwin-x64, etc.), simply adding the metapackage name to webpack externals is insufficient. Webpack resolves the platform-specific name and those packages are not in externals. Use a regex external pattern like /^@napi-rs\\/canvas-/ to catch all platform variants.",
+    "why": "CI failed with 'Node.js binary module ...skia.linux-x64-gnu.node is not supported in the browser' because @napi-rs/canvas was externalized but @napi-rs/canvas-linux-x64-gnu was not, even though the former is just a metapackage that resolves to the latter.",
+    "confidence": 0.95
   }
 ]
