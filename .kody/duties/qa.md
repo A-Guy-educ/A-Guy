@@ -56,7 +56,9 @@ the `.kody/context/*.md` entries tagged for `qa-engineer` carry the route list
      untested), comment the stall on the tracking issue, exit. A `🔄` must never
      block QA forever.
 
-   Exit after resolving — the changelog write is your single mutation this tick.
+   Apply the marker swap (✅/⚠️) or strip via the **byte-safe write recipe**
+   below — edit one bullet on disk, never retype the file. Exit after
+   resolving — the changelog write is your single mutation this tick.
 
 3. **Else (nothing in flight)** → pick the **oldest untested** bullet: the
    bottom-most one with a `[#<pr>]` link and no marker. If none, idle. For it:
@@ -68,10 +70,42 @@ the `.kody/context/*.md` entries tagged for `qa-engineer` carry the route list
       `qa-engineer` reads the scope from the tracking issue title via its
       `deriveQaScopeFromIssue` preflight, so no `--scope` flag is needed:
       `gh workflow run kody.yml -f executable=qa-engineer -f issue_number=<tracking>`
-   3. Mark the bullet ` · 🔄 QA (#<tracking>)` via a read-modify-write PUT to the
-      Contents API (re-read the sha, swap the one line, retry ≤ 3 on 409):
-      `gh api -X PUT repos/{owner}/{repo}/contents/CHANGELOG.md -f message="chore(qa): start QA for #<pr>" -f content="<base64>" -f sha="<sha>"`.
-      Never rewrite any line other than that bullet's trailing marker.
+   3. Mark the bullet ` · 🔄 QA (#<tracking>)` using the **byte-safe write
+      recipe** below — `OLD` is the bullet exactly as it appears, `NEW` is the
+      same line with ` · 🔄 QA (#<tracking>)` appended. Never rewrite any other
+      line, and never reconstruct the file yourself.
+
+## Writing a marker (byte-safe — follow exactly)
+
+Starting (🔄), swapping (✅/⚠️), and stripping a marker are the **same**
+read-edit-PUT. **Never retype, paste, or otherwise reproduce the file contents
+yourself** — doing so once collapsed the entire changelog onto a single line.
+Edit a copy on disk and re-encode the file directly:
+
+```bash
+# 1. Fetch current file + sha (base64 -d preserves every byte, newlines included)
+sha=$(gh api repos/{owner}/{repo}/contents/CHANGELOG.md --jq '.sha')
+gh api repos/{owner}/{repo}/contents/CHANGELOG.md --jq '.content' | base64 -d > /tmp/CHANGELOG.md
+
+# 2. Change EXACTLY one bullet's trailing marker on disk — no hand-editing
+python3 - <<'EOF'
+OLD = r"""<the target bullet line, verbatim, as it currently appears>"""
+NEW = r"""<that same line with its trailing  ·  marker added / swapped / removed>"""
+s = open("/tmp/CHANGELOG.md", encoding="utf-8").read()
+assert s.count(OLD) == 1, f"want exactly 1 match, got {s.count(OLD)}"
+open("/tmp/CHANGELOG.md", "w", encoding="utf-8").write(s.replace(OLD, NEW, 1))
+EOF
+
+# 3. PUT the WHOLE file back, encoded straight from disk — never from a shell var
+gh api -X PUT repos/{owner}/{repo}/contents/CHANGELOG.md \
+  -f message="chore(qa): <what changed>" \
+  -f content="$(base64 -w0 /tmp/CHANGELOG.md)" \
+  -f sha="$sha"
+```
+
+On a 409 (the file moved under you), re-run from step 1 with the fresh sha,
+≤ 3 attempts. The `assert ... == 1` guard aborts when the bullet text is not
+unique — fix `OLD` to include more of the line; never loosen the guard.
 
 ## Inbox recommendation format
 
@@ -109,7 +143,8 @@ this duty instead of the shared persona. Copy it verbatim.
 ## Allowed Commands
 
 - `gh api repos/{owner}/{repo}/contents/CHANGELOG.md` (read + `-X PUT` to write
-  **only** a bullet's trailing marker).
+  **only** a bullet's trailing marker — always via the byte-safe recipe above).
+- `python3`, `base64` — the on-disk edit + lossless re-encode of the recipe.
 - `gh issue list`, `gh issue create`, `gh issue view`, `gh issue comment`,
   `gh issue close`.
 - `gh workflow run kody.yml` — typed cross-run dispatch for `qa-engineer`
@@ -126,6 +161,8 @@ this duty instead of the shared persona. Copy it verbatim.
 - **Changelog: markers only.** Edit solely the trailing ` · 🔄/✅/⚠️ …` segment.
   Never change entry text, reorder bullets, promote versions, or touch a
   versioned section.
+  **Apply edits only via the byte-safe recipe (edit on disk, `base64 -w0` the
+  file); never emit the file's contents yourself — that is what flattened it.**
 - **One inbox recommendation per result**, only when a run resolves (step 2).
   The marker swap to ✅/⚠️ is what stops the same entry being re-processed.
 - All writes go through `gh` — never `git commit`/`git push`, never open a PR.
