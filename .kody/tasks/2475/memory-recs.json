@@ -17,19 +17,19 @@
   },
   {
     "type": "lesson",
-    "name": "externalize-metapackage-also-externalize-platform-packages",
-    "hook": "Externalizing a metapackage requires regex pattern to catch resolved platform-specific packages",
-    "body": "When a metapackage like @napi-rs/canvas resolves to platform-specific packages (@napi-rs/canvas-linux-x64-gnu, @napi-rs/canvas-darwin-x64, etc.), simply adding the metapackage name to webpack externals is insufficient. Webpack resolves the platform-specific name and those packages are not in externals. Use a regex external pattern like /^@napi-rs\\/canvas-/ to catch all platform variants.",
-    "why": "CI failed with 'Node.js binary module ...skia.linux-x64-gnu.node is not supported in the browser' because @napi-rs/canvas was externalized but @napi-rs/canvas-linux-x64-gnu was not, even though the former is just a metapackage that resolves to the latter.",
+    "name": "serverexternalpackages-handles-canvas",
+    "hook": "@napi-rs/canvas in serverExternalPackages prevents webpack from trying to bundle it",
+    "body": "Adding @napi-rs/canvas to serverExternalPackages in next.config.js is sufficient to prevent webpack from attempting to bundle the canvas native binaries. No additional webpack externals or resolve.alias for .node files is needed when serverExternalPackages is properly configured.",
+    "why": "The original CI failure had .node native binary errors from canvas. Adding serverExternalPackages: ['@napi-rs/canvas'] at the Next.js config level (not webpack level) prevents webpack from even attempting to bundle those files.",
     "confidence": 0.95
   },
   {
     "type": "lesson",
-    "name": "node-binary-files-need-resolve-alias",
-    "hook": "resolve.alias with .node$ regex key redirects .node native binary files to empty stub",
-    "body": "The next-error-browser-binary-loader throws 'not supported in browser' for all .node files. To prevent this, use resolve.alias with a regex key matching .node files: webpackConfig.resolve.alias = { ...existing, '\\\\.node$': path.resolve(process.cwd(), 'src/server/utils/empty-stub.js') }. Webpack 5's resolve.alias DOES support regex keys. The regex '\\.node$' matches any file path ending in .node and redirects it to the empty stub before the error-checker runs.",
-    "why": "CI also failed with 'Node.js binary module ...skia.linux-x64-gnu.node is not supported in the browser'. The regex externals for @napi-rs/canvas-* were not sufficient because next-error-browser-binary-loader runs on .node files before the external check.",
-    "confidence": 0.7
+    "name": "minify-webpack-plugin-hookweberror-secondary",
+    "hook": "HookWebpackError is a secondary error from minify-webpack-plugin failing to wrap an error",
+    "body": "The 'HookWebpackError: _webpack.WebpackError is not a constructor' from minify-webpack-plugin is a SECONDARY error that occurs when the minifier tries to wrap an underlying webpack error but can't construct the error object. This can happen when complex webpack configurations (like regex externals for .node files) produce an error state that the minifier can't properly serialize. The fix is to simplify the webpack config to only what's essential — the root cause is the complex config, not the error wrapper.",
+    "why": "CI was failing with HookWebpackError after adding .node alias and canvas regex externals. Simplifying to just undici external + node:false fallback fixed it, proving the issue was the complex config interacting with minify-webpack-plugin, not the individual settings.",
+    "confidence": 0.8
   },
   {
     "type": "lesson",

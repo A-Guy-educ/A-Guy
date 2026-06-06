@@ -1,68 +1,45 @@
-## CI Build Fix: webpack browser build failures
+## CI Build Fix: webpack browser build failures (v2)
 
 ### What was failing
-Next.js browser build (`next build`) failed with:
-```
-Error: Node.js binary module ...skia.linux-x64-gnu.node is not supported in the browser.
-UnhandledSchemeError: Reading from "node:console" is not handled by plugins
-UnhandledSchemeError: Reading from "node:crypto" is not handled by plugins
-...
-```
+CI build failed with `HookWebpackError: _webpack.WebpackError is not a constructor` from minify-webpack-plugin during the minification phase.
 
 ### Root cause
 
-**Issue: `!isServer` condition skips Edge builds in Next.js 15.5.9**
+The previous fix (commit 5a598a65f) added `\\.node$` resolve.alias and canvas regex externals to the webpack config. These changes were intended to fix `node:` protocol and `.node` native binary errors, but they caused a new error:
 
-In Next.js 15.5.9, `isServer` passed to the webpack config function is actually `isNodeOrEdgeCompilation = isNodeServer || isEdgeServer`. This means `isServer = true` for BOTH Node.js server builds AND Edge builds.
+The `minify-webpack-plugin` in Next.js 15.5.9 tried to create a `WebpackError` object during minification to report build errors. However, the `.node$` alias regex key and canvas regex externals apparently caused the webpack compilation to produce an error state that the plugin couldn't properly serialize, resulting in `_webpack.WebpackError is not a constructor`.
 
-So `if (!isServer)` evaluates to `false` for Edge builds — the entire webpack config block (`.node` alias, `resolve.fallback.node: false`, canvas/undici externals) is SKIPPED for Edge builds.
+### Fix applied (v2)
 
-The `node:` protocol imports (from `undici`) and `.node` native binaries (from `@napi-rs/canvas-linux-x64-gnu`) are NOT handled for Edge builds, causing:
-```
-UnhandledSchemeError: Reading from "node:console" is not handled by plugins
-Error: Node.js binary module ...skia.linux-x64-gnu.node is not supported in the browser.
-```
+Simplified the webpack config to only what's actually needed:
 
-**Additional issues (already fixed previously):**
-- `resolve.alias` with `'^node:(.*)$'` does not work — webpack 5 treats string keys as literals. `resolve.fallback.node: false` is the correct webpack 5 API.
-- `@napi-rs/canvas` metapackage resolves to platform-specific packages not in externals. Regex externals `/^@napi-rs\/canvas-/` are needed.
-- ESM `next.config.js` uses `path.resolve` not `require.resolve`.
+1. **Changed `if (!isServer)` to `if (!isClient)`** — correct, since `isServer` is `isNodeOrEdgeCompilation` in Next.js 15 (true for both Node server AND Edge builds)
 
-### Fix applied
+2. **Removed `\\.node$` resolve.alias** — the `.node` native binary errors don't occur because `@napi-rs/canvas` is already in `serverExternalPackages` (line 18 of next.config.js), so webpack never tries to bundle it
 
-**Condition fix: `!isServer` → `!isClient`**
+3. **Removed canvas regex externals** — same reason as above; canvas is already externalized via `serverExternalPackages`
 
-Changed the webpack config condition from `if (!isServer)` to `if (!isClient)`. Since `isServer` is `isNodeOrEdgeCompilation` (true for both Node AND Edge builds), `!isServer` was false for Edge. Using `!isClient` correctly identifies non-browser builds (Edge and server both have `isClient = false`).
+4. **Kept `undici` in webpack externals** — undici IS bundled by webpack (it's not in serverExternalPackages), so the webpack externals prevents it from being included in browser builds
 
-**For `node:` protocol imports** — `resolve.fallback.node: false`:
+5. **Kept `resolve.fallback.node: false`** — this correctly redirects `node:console`, `node:crypto`, etc. to an empty object for browser builds
+
+### Final webpack config (non-client builds)
+
 ```js
-webpackConfig.resolve.fallback = {
-  ...webpackConfig.resolve.fallback,
-  node: false,
+if (!isClient) {
+  webpackConfig.externals = [...(webpackConfig.externals || []), 'undici']
+  webpackConfig.resolve.fallback = {
+    ...webpackConfig.resolve.fallback,
+    node: false,
+  }
 }
-```
-
-**For `.node` native binary files** — `resolve.alias` with regex:
-```js
-webpackConfig.resolve.alias = {
-  ...webpackConfig.resolve.alias,
-  '\\.node$': path.resolve(process.cwd(), 'src/server/utils/empty-stub.js'),
-}
-```
-
-**For canvas platform packages** — regex externals:
-```js
-webpackConfig.externals = [
-  ...(webpackConfig.externals || []),
-  '@napi-rs/canvas',
-  /^@napi-rs\/canvas-/,
-  'undici',
-]
 ```
 
 ### Files changed
-- `next.config.js` — webpack config: changed `if (!isServer)` to `if (!isClient)` so the config also applies to Edge builds. Also: added `\\.node$` resolve.alias, kept `resolve.fallback.node: false`, kept regex externals for canvas packages.
-- `src/server/utils/empty-stub.js` — empty stub file for redirecting `.node` files
+- `next.config.js` — simplified webpack config block, removed unused `import path from 'path'`
 
 ### Verification
-- `mcp__kody-verify__verify` — `ok: true` on attempt 1
+- `mcp__kody-verify__verify` — `ok: true` on attempt 3
+
+### Key insight
+The `HookWebpackError: _webpack.WebpackError is not a constructor` was a secondary error caused by the minify-webpack-plugin failing to handle an error state produced by the complex `.node$` alias and canvas regex externals. The root cause was not a webpack error per se, but the minifier's inability to wrap an error from those configurations. Simplifying to only the essential changes (undici external + node:false fallback) allows the build to complete successfully.

@@ -4,7 +4,7 @@
   "target": "2449-p2-frontend-login-form-silently-fails-session-not",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Fixed webpack browser/Edge build — changed condition from !isServer to !isClient in next.config.js webpack config, since isServer is isNodeOrEdgeCompilation (true for BOTH Node server AND Edge builds) in Next.js 15.5.9, so !isServer was false for Edge builds causing the node: protocol and .node native binary errors.",
+  "reason": "Simplified webpack config — removed .node alias and canvas externals that caused minify-webpack-plugin HookWebpackError. Kept undici external and node:false fallback which fix the actual undici/node: errors.",
   "prUrl": null,
   "runUrl": null,
   "filesTouched": [
@@ -12,5 +12,5 @@
   ],
   "sessionLog": null,
   "startedAt": "2026-06-06T00:00:00Z",
-  "finishedAt": "2026-06-06T03:15:00Z"
+  "finishedAt": "2026-06-06T07:00:00Z"
 }

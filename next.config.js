@@ -1,6 +1,5 @@
 import { withPayload } from '@payloadcms/next/withPayload'
 import { withSentryConfig } from '@sentry/nextjs'
-import path from 'path'
 
 import redirects from './redirects.js'
 
@@ -137,30 +136,13 @@ const nextConfig = {
       type: 'asset/source',
     })
 
-    // In Next.js 15, isServer is isNodeOrEdgeCompilation (true for both Node server AND Edge builds).
-    // So !isServer is false for Edge builds, skipping the config. We need isClient to correctly
-    // identify browser-only builds, allowing this config to also apply to Edge builds.
+    // Apply config to non-client (server + Edge) builds to handle node: protocol imports.
     if (!isClient) {
-      // Redirect all .node native binary file paths to an empty stub for browser/Edge builds.
-      // The .node files (e.g., skia.linux-x64-gnu.node) are native binaries that cannot
-      // be bundled. next-error-browser-binary-loader throws "not supported in browser"
-      // when it encounters them, but resolve.alias redirects them before that runs.
-      webpackConfig.resolve.alias = {
-        ...webpackConfig.resolve.alias,
-        '\\.node$': path.resolve(process.cwd(), 'src/server/utils/empty-stub.js'),
-      }
+      webpackConfig.externals = [...(webpackConfig.externals || []), 'undici']
 
-      // Externalize native Node.js modules that cannot be bundled for the browser.
-      webpackConfig.externals = [
-        ...(webpackConfig.externals || []),
-        '@napi-rs/canvas',
-        /^@napi-rs\/canvas-/,
-        'undici',
-      ]
-
-      // Use fallback to handle all node: protocol imports in browser/Edge builds.
-      // This is the correct webpack 5 API for redirecting Node.js built-in modules
-      // (node:console, node:crypto, node:dns, etc.) to an empty object.
+      // Handle node: protocol imports for browser/Edge builds.
+      // This redirects Node.js built-in module requests (node:console, node:crypto, etc.)
+      // to an empty object so webpack can proceed without error.
       webpackConfig.resolve.fallback = {
         ...webpackConfig.resolve.fallback,
         node: false,
