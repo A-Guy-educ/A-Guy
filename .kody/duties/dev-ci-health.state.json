@@ -1,19 +1,16 @@
 {
   "version": 1,
-  "rev": 129,
+  "rev": 130,
   "cursor": "idle",
   "data": {
-    "failingChecks": [
-      "audit",
-      "cleanup"
-    ],
-    "lastFiredAt": "2026-06-06T11:47:40.136Z",
+    "failingChecks": [],
+    "lastFiredAt": "2026-06-06T12:18:30.532Z",
     "lastOutcome": "completed",
-    "lastResolution": "CI RED — fix already in flight (issue #2349)",
-    "sha": "158e095149c2a768249c11645013fbd95fd91b6c",
+    "lastResolution": "CI GREEN",
+    "sha": "a48a832da21720bcaea32dea0190cf5a83db97af",
     "trackingIssue": 2349,
-    "note": "CI is RED but tracking issue #2349 still open — fix in flight, no dispatch needed",
-    "lastDurationMs": 32952
+    "note": "CI is now GREEN — fix PR merged",
+    "lastDurationMs": 20577
   },
   "done": false
 }
