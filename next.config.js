@@ -124,7 +124,7 @@ const nextConfig = {
     '/api/jobs/run-immediate': ['./src/infra/llm/prompts/**/*'],
     '/api/lesson-duplications/[id]/resolve': ['./src/infra/llm/prompts/**/*'],
   },
-  webpack: (webpackConfig) => {
+  webpack: (webpackConfig, { isClient }) => {
     webpackConfig.resolve.extensionAlias = {
       '.cjs': ['.cts', '.cjs'],
       '.js': ['.ts', '.tsx', '.js', '.jsx'],
@@ -137,27 +137,23 @@ const nextConfig = {
       type: 'asset/source',
     })
 
-    // For client builds, redirect .node native binaries and node: protocol imports
-    // to an empty stub. These are server-only and must never execute in the browser.
-    // The empty-stub.js file is never invoked at runtime for server-side code since
-    // serverExternalPackages causes undici/@napi-rs/canvas to be loaded from node_modules.
-    if (webpackConfig.name === 'client') {
-      const stubPath = path.resolve(process.cwd(), 'src/server/utils/empty-stub.js')
-      webpackConfig.resolve.alias = {
-        ...webpackConfig.resolve.alias,
-        '\\.node$': stubPath,
-        // Intercept node: URL scheme imports from undici's mock utilities.
-        // These are server-only modules that must never execute in the browser.
-        // resolve.fallback.node: false only handles 'node' (no colon), not 'node:console' etc.
-        'node:console': stubPath,
-        'node:crypto': stubPath,
-        'node:dns': stubPath,
-        'node:diagnostics_channel': stubPath,
-      }
-      webpackConfig.resolve.fallback = {
-        ...webpackConfig.resolve.fallback,
-        node: false,
-      }
+    // For non-client (server + Edge) builds: mark server-only packages as externals
+    // so webpack never analyzes their internal code. This prevents UnhandledSchemeError
+    // for node: protocol imports inside undici (node:dns, node:diagnostics_channel, etc.).
+    if (!isClient) {
+      webpackConfig.externals = [...(webpackConfig.externals || []), 'undici', '@napi-rs/canvas']
+    }
+
+    // Redirect .node native binaries to an empty stub. These are server-only and must
+    // never execute in the browser. Applied to all build targets.
+    const stubPath = path.resolve(process.cwd(), 'src/server/utils/empty-stub.js')
+    webpackConfig.resolve.alias = {
+      ...webpackConfig.resolve.alias,
+      '\\.node$': stubPath,
+    }
+    webpackConfig.resolve.fallback = {
+      ...webpackConfig.resolve.fallback,
+      node: false,
     }
 
     return webpackConfig

@@ -1,0 +1,18 @@
+[
+  {
+    "type": "lesson",
+    "name": "webpack-resolve-alias-cannot-intercept-node-protocol",
+    "hook": "resolve.alias cannot intercept node: URL scheme imports — use externals instead",
+    "body": "webpack resolve.alias operates on module names, not URL schemes. The node: protocol is handled by webpack's resolveForScheme mechanism, which is separate from resolve.alias. To prevent webpack from analyzing a package's internal node: imports, mark the package as external in webpackConfig.externals — webpack then never analyzes its internals. The previous fix added resolve.alias entries for node:console, node:crypto, node:dns, node:diagnostics_channel but these were never applied because webpack's scheme handler runs before alias resolution.",
+    "why": "The node: URL scheme is resolved via resolveForScheme.for('node') in webpack 5, not via resolve.alias. When a module is not external, webpack analyzes its source and encounters node: imports which trigger UnhandledSchemeError because no plugin handles the scheme in the client build.",
+    "confidence": 0.95
+  },
+  {
+    "type": "lesson",
+    "name": "externals-prevents-webpack-from-analyzing-internal-imports",
+    "hook": "Marking a package as external prevents webpack from analyzing its internal node: imports",
+    "body": "When a package is listed in webpackConfig.externals, webpack treats it as a Node.js native module and loads it via require() at runtime. Webpack never analyzes the package's internal source code, so node: imports inside that package are never encountered. This is the correct approach for server-only packages like undici that contain node: imports in their internal mock utilities.",
+    "why": "serverExternalPackages in next.config.js prevents Next.js from bundling a package into the serverless function — but webpack still analyzes the package's source when it's imported by the app code being bundled. For the client build, we need webpackConfig.externals to prevent analysis of undici internals.",
+    "confidence": 0.95
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "taskId": "2476",
+  "taskType": "pr",
+  "target": "2449-p2-frontend-login-form-silently-fails-session-not",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Restored undici and @napi-rs/canvas to webpack externals for non-client builds. The previous refactoring removed externals but kept ineffective node: URL scheme aliases. With externals removed, webpack analyzes undici internals and encounters node:dns/node:diagnostics_channel which bypass resolve.alias (UnhandledSchemeError). verify passes (ok: true, attempt 1).",
+  "prUrl": null,
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27072563608",
+  "filesTouched": ["next.config.js"],
+  "sessionLog": ".kody/runs/gh-27075596523-1/events.jsonl",
+  "startedAt": "2026-06-06T21:00:00Z",
+  "finishedAt": "2026-06-06T21:05:00Z"
+}
