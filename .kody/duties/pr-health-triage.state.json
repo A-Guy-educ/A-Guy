@@ -1,38 +1,38 @@
 {
   "version": 1,
-  "rev": 374,
+  "rev": 375,
   "cursor": "idle",
   "data": {
     "prs": {
       "1871": {
         "fp": "fix-ci|7d2297344731a2b9c3398f42a7bce57f5e2e4fbc",
         "stage": "fix-ci-auto",
-        "lastActAt": "2026-06-06T15:03:42Z"
+        "lastActAt": "2026-06-06T15:39:28Z"
       },
-      "2320": {
-        "fp": "sync|3e05ab80232ec61fc40ee71a3346905960108ad2",
+      "2322": {
+        "fp": "sync|d642880a5e889f1c50403d1b40bb898730daf647",
         "stage": "sync-auto",
-        "lastActAt": "2026-06-06T15:03:48Z"
+        "lastActAt": "2026-06-06T15:39:35Z"
       },
-      "2321": {
-        "fp": "sync|410360d37553678f83d448290a906a248ec8dab5",
+      "2326": {
+        "fp": "sync|edc0835808a300282e25e6502b1469d154af32d9",
         "stage": "sync-auto",
-        "lastActAt": "2026-06-06T15:03:50Z"
+        "lastActAt": "2026-06-06T15:39:38Z"
       },
       "2431": {
         "fp": "fix-ci|1898971b6ace1bbdc4539d9ca1d8ab803605cc38",
         "stage": "fix-ci-auto",
-        "lastActAt": "2026-06-06T15:03:44Z"
+        "lastActAt": "2026-06-06T15:39:30Z"
       },
       "2475": {
-        "fp": "fix-ci|089237981f31689e91fb09768e1162b65d5526b2",
+        "fp": "fix-ci|6978a0d442537fae79f12dc6d9f36a4fa55214e0",
         "stage": "fix-ci-auto",
-        "lastActAt": "2026-06-06T15:03:46Z"
+        "lastActAt": "2026-06-06T15:39:33Z"
       }
     },
-    "lastFiredAt": "2026-06-06T15:04:03.363Z",
+    "lastFiredAt": "2026-06-06T15:40:12.275Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 67991
+    "lastDurationMs": 104699
   },
   "done": false
 }
