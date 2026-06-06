@@ -1,5 +1,6 @@
 import { withPayload } from '@payloadcms/next/withPayload'
 import { withSentryConfig } from '@sentry/nextjs'
+import path from 'path'
 
 import redirects from './redirects.js'
 
@@ -135,6 +136,22 @@ const nextConfig = {
       test: /\.md$/,
       type: 'asset/source',
     })
+
+    // For client builds, redirect .node native binaries and node: protocol imports
+    // to an empty stub. These are server-only and must never execute in the browser.
+    // The empty-stub.js file is never invoked at runtime for server-side code since
+    // serverExternalPackages causes undici/@napi-rs/canvas to be loaded from node_modules.
+    if (webpackConfig.name === 'client') {
+      const stubPath = path.resolve(process.cwd(), 'src/server/utils/empty-stub.js')
+      webpackConfig.resolve.alias = {
+        ...webpackConfig.resolve.alias,
+        '\\.node$': stubPath,
+      }
+      webpackConfig.resolve.fallback = {
+        ...webpackConfig.resolve.fallback,
+        node: false,
+      }
+    }
 
     return webpackConfig
   },

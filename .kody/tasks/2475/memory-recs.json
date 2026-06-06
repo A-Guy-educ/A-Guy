@@ -30,5 +30,13 @@
     "body": "When a package is listed in serverExternalPackages, webpack treats it as external and never analyzes its internal modules for browser builds. This means undici's internal node: imports are never encountered in the browser bundle, making any explicit node: protocol handling unnecessary.",
     "why": "The dev branch builds without any node: protocol handling because undici is already in serverExternalPackages. The previous attempts to handle node: imports were solving a problem that doesn't exist when the root cause (webpack analyzing undici internals) is prevented by serverExternalPackages.",
     "confidence": 0.95
+  },
+  {
+    "type": "lesson",
+    "name": "node-alias-survived-after-nodeprotocol-plugin-removal",
+    "hook": "The \\.node$ alias and resolve.fallback.node must be kept separate from NodeSchemePlugin removal",
+    "body": "When removing NodeSchemePlugin, the \\.node$ resolve.alias and resolve.fallback.node: false must be kept — they are independent of the plugin. Removing them causes the .node native binary to be processed by the browser webpack, producing 'Node.js binary module is not supported in the browser'. Use webpackConfig.name === 'client' as the condition for client-only webpack config changes.",
+    "why": "The previous fix removed the entire block including the .node$ alias, not understanding that the alias and the plugin serve different purposes. The plugin was for node: scheme handling; the alias is for .node file paths. Both are needed for the browser build to succeed.",
+    "confidence": 0.95
   }
 ]
