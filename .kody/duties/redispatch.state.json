@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "rev": 340,
+  "rev": 341,
   "cursor": "redispatch-2026-06-06T11:56:11Z",
   "data": {
     "dryRunLog": [
@@ -90,9 +90,9 @@
       }
     ],
     "perIssue": {},
-    "lastFiredAt": "2026-06-06T13:16:53.863Z",
+    "lastFiredAt": "2026-06-06T14:50:01.424Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 248330
+    "lastDurationMs": 253484
   },
   "done": false
 }
