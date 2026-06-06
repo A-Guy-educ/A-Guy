@@ -137,22 +137,31 @@ const nextConfig = {
       type: 'asset/source',
     })
 
-    // Apply config to non-client (server + Edge) builds to handle node: protocol imports.
+    // Handle .node native binaries — redirect to empty stub since these are server-only.
+    webpackConfig.resolve.alias = {
+      ...webpackConfig.resolve.alias,
+      '\\.node$': path.resolve(process.cwd(), 'src/server/utils/empty-stub.js'),
+    }
+
+    // For server/Edge builds (not browser client), handle node: protocol imports
+    // and mark server-only packages as externals.
     if (!isClient) {
-      webpackConfig.externals = [...(webpackConfig.externals || []), 'undici', '@napi-rs/canvas']
+      // Use NormalModuleReplacementPlugin (from Next.js's bundled webpack) to redirect
+      // all node: protocol imports to an empty stub. This prevents UnhandledSchemeError
+      // when webpack encounters node:crypto, node:fs, etc. in shared code.
+      const webpackBundled = require('next/dist/compiled/webpack/webpack.js')
+      webpackBundled.init()
+      const NMRP = webpackBundled.webpack.NormalModuleReplacementPlugin
 
-      // Handle node: protocol imports for browser/Edge builds.
-      // resolve.fallback.node: false doesn't handle node: scheme (node:crypto, node:fs, etc.)
-      // since webpack 5 doesn't treat node: as a package name. Use resolve.alias with a
-      // pattern to redirect all node: imports to an empty stub — the actual server-only code
-      // never runs in the browser, so the stub is never invoked.
-      webpackConfig.resolve.alias = {
-        ...webpackConfig.resolve.alias,
-        '\\.node$': path.resolve(process.cwd(), 'src/server/utils/empty-stub.js'),
-        '^node:(.*)$': path.resolve(process.cwd(), 'src/server/utils/empty-stub.js'),
-      }
+      webpackConfig.resolve.plugins = [
+        ...(webpackConfig.resolve.plugins || []),
+        new NMRP(/^node:(.*)$/, (data) => {
+          data.request = path.resolve(process.cwd(), 'src/server/utils/empty-stub.js')
+          return data
+        }),
+      ]
 
-      // Fallback for bare 'node' specifiers (needed as a supplement to the alias above).
+      webpackConfig.externals = [...(webpackConfig.externals || []), 'undici']
       webpackConfig.resolve.fallback = {
         ...webpackConfig.resolve.fallback,
         node: false,

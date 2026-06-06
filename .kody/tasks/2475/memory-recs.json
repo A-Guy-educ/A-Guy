@@ -1,42 +1,26 @@
 [
   {
     "type": "lesson",
-    "name": "webpack-resolve-fallback-node-false-does-not-handle-node-protocol",
-    "hook": "resolve.fallback node:false does NOT handle node: protocol imports — need resolve.alias",
-    "body": "webpack 5's resolve.fallback with { node: false } only handles BARE 'node' specifiers (e.g., require('node:console') is NOT bare, it uses the node: URI scheme). The node: protocol scheme requires resolve.alias to redirect — use '\\.node$' for native binary files and '^node:(.*)$' for all node: protocol imports to an empty stub. resolve.fallback.node: false is a necessary supplement but not sufficient alone.",
-    "why": "CI was failing with 'UnhandledSchemeError: Reading from node:crypto is not handled by plugins' even with resolve.fallback.node: false set. Adding resolve.alias with '^node:(.*)$' pattern fixed it.",
+    "name": "webpack-config-require-in-callback",
+    "hook": "require works inside webpack config callbacks even when next.config.js is ESM",
+    "body": "Webpack config callbacks (the function passed to webpack:) run in Node.js at build time, not at config-file-load time. This means `require` is available inside the callback even when next.config.js uses ESM imports at the top level. This allows accessing Next.js's bundled webpack modules via `require('next/dist/compiled/webpack/webpack.js')` from inside the callback.",
+    "why": "Next.js 15's next.config.js is ESM at the top level, but webpack bundling happens at runtime in Node.js. The callback is evaluated by Node.js directly, not by an ESM module loader. This is the bridge between the ESM config file and CommonJS webpack internals.",
     "confidence": 0.95
   },
   {
     "type": "lesson",
-    "name": "next-config-js-uses-esm-require-unavailable",
-    "hook": "next.config.js is ESM — use path.resolve not require.resolve",
-    "body": "next.config.js uses ESM (import at top level), so require is not available. When adding webpack resolve.alias entries that need a file path, use path.resolve(process.cwd(), ...) instead of require.resolve(...). process.cwd() gives the project root at build time.",
-    "why": "CI failed with 'ReferenceError: require is not defined' at next.config.js because the file is ESM but require was used in the webpack config callback.",
-    "confidence": 0.95
-  },
-  {
-    "type": "lesson",
-    "name": "serverexternalpackages-not-sufficient-for-canvas",
-    "hook": "serverExternalPackages alone does not prevent webpack from analyzing @napi-rs/canvas",
-    "body": "@napi-rs/canvas in serverExternalPackages (Next.js config level) is not sufficient to prevent webpack from analyzing the package at build time. Webpack still resolves the package's internal imports (including .node binaries and node: protocol imports). Must ALSO add '@napi-rs/canvas' to webpack externals (inside webpack config callback) to prevent webpack from processing it.",
-    "why": "Even with @napi-rs/canvas in serverExternalPackages, CI still showed '@napi-rs/canvas-linux-x64-gnu/skia.linux-x64-gnu.node is not supported in the browser' errors. Adding it as a webpack external (string, not regex) fixed it.",
-    "confidence": 0.95
-  },
-  {
-    "type": "lesson",
-    "name": "minify-webpack-plugin-canvas-regex-externals-conflict",
-    "hook": "Canvas regex externals (but not string externals) conflict with minify-webpack-plugin",
-    "body": "Using '/^@napi-rs\\/canvas-/' as a webpack external regex (with other regex externals) caused minify-webpack-plugin to fail with 'HookWebpackError: _webpack.WebpackError is not a constructor'. Using '@napi-rs/canvas' as a STRING external (not regex) avoids this conflict while still preventing webpack from bundling canvas.",
-    "why": "The complex combination of regex externals (canvas + other patterns) produced an error state in webpack that minify-webpack-plugin couldn't serialize. Simplifying to string externals avoided the issue.",
+    "name": "napi-rs-canvas-webpack-external-conflict",
+    "hook": "@napi-rs/canvas as webpack external string conflicts with minify-webpack-plugin",
+    "body": "Adding '@napi-rs/canvas' (as a string) to webpackConfig.externals causes minify-webpack-plugin to throw `_webpack.WebpackError is not a constructor` during the minification phase. This is a conflict between how the externalized package is handled and how minify-webpack-plugin constructs errors internally in Next.js's bundled webpack. The fix is to NOT add it to webpack externals — serverExternalPackages in Next.js config handles externalization at a different level that does not trigger this conflict.",
+    "why": "The minify-webpack-plugin built into Next.js's webpack bundle calls `new WebpackError()` internally. When @napi-rs/canvas is marked as an external, the plugin's error construction logic appears to receive something it doesn't expect, causing the constructor error. Using serverExternalPackages instead avoids this because webpack doesn't process those packages at all during bundling.",
     "confidence": 0.9
   },
   {
     "type": "lesson",
-    "name": "nextjs15-isServer-isNodeOrEdgeCompilation",
-    "hook": "Next.js 15 webpack config: isServer is isNodeOrEdgeCompilation — use !isClient for non-server-only configs",
-    "body": "In Next.js 15.5.9, the isServer parameter passed to the webpack config function is actually set to isNodeOrEdgeCompilation (isNodeServer || isEdgeServer), meaning isServer=true for BOTH Node server builds AND Edge builds. So 'if (!isServer)' is false for Edge builds, skipping the config. Use 'if (!isClient)' instead to correctly identify browser-only builds, allowing the config to also apply to Edge builds. isClient=true only for browser builds; false for both server and Edge.",
-    "why": "CI was still failing with node:protocol and .node native binary errors. Using !isClient instead of !isServer ensures the webpack config applies to Edge builds as well as browser builds.",
+    "name": "resolve-alias-cannot-intercept-node-protocol",
+    "hook": "resolve.alias cannot intercept node: URL scheme imports — use NormalModuleReplacementPlugin",
+    "body": "webpack resolve.alias uses exact string matching (or $ suffix for exact match), but it does NOT interpret regex patterns. A key like '^node:' or '\\.node$' in resolve.alias will match literal module names, not node: URL scheme imports. To intercept `node:crypto`, `node:fs`, etc., you must use `NormalModuleReplacementPlugin` (a ResolvePlugin) which webpack calls for every module resolution. The plugin class is accessible via `require('next/dist/compiled/webpack/webpack.js')` → init() → webpack.webpack.NormalModuleReplacementPlugin.",
+    "why": "The `node:` protocol is a separate resolution path in webpack 5 from module name resolution. resolve.alias operates on module names (the string after 'node:' in 'node:crypto'), not on the 'node:' prefix itself. Only a ResolvePlugin can intercept the full request string including the protocol.",
     "confidence": 0.95
   }
 ]
