@@ -1,1 +1,3 @@
-Resolved one conflicted file: .kody/reports/duty-review.md. Both sides were different cycles of the same duty-review report (HEAD=Cycle 4, origin/dev=Cycle 9). Took origin/dev entirely since it represents the more recent duty-review cycle. No other conflicts existed.
+Resolved merge conflicts in two .kody/reports/ files from `git merge origin/dev` into PR #2350.
+
+Both files are auto-generated duty/health report snapshots. Conflict was symmetric (same structure, different cycle numbers/hours-since values) — resolved by taking origin/dev's more current data (Cycle 10 vs Cycle 4; higher hour counts in health-check). No conflict markers remain. No quality issues introduced (reports are purely informational).
