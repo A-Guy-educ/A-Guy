@@ -1,25 +1,25 @@
-## Fix: CI Build Failure on PR #2475 (tap undefined error)
+## Fix: CI Build Failure on PR #2475 (node: UnhandledSchemeError)
 
 ### Root Cause
-The webpack config on the PR branch used `NormalModuleReplacementPlugin` (via `require('next/dist/compiled/webpack/webpack.js')` + `init()`) to intercept `node:` protocol imports. This caused `TypeError: Cannot read properties of undefined (reading 'tap')` during the webpack build phase in Next.js 15.5.9.
+The build was failing with `UnhandledSchemeError: Reading from "node:console" is not handled by plugins`. The webpack config had a `.node$` alias that only handles `.node` binary files, NOT `node:` URL scheme imports. Webpack 5.98.0 doesn't have a built-in handler for the `node:` scheme (only `file:` and `data:`).
 
-The previous session's fix (task 2475 first attempt) added NMRP to handle `node:` protocol imports, but this approach causes a `tap` error in the webpack compilation phase. The `init()` approach works for getting the webpack module, but the NMRP itself triggers an error during webpack's build.
+The `node:` imports came from undici's internal files (`lib/mock/*.js`) which are pulled into the browser bundle via Payload's `safeFetch.js`. Even though undici is in `serverExternalPackages`, webpack still analyzes undici's internal modules during tree-shaking.
 
 ### Fix Applied (next.config.js)
-1. **Removed `NormalModuleReplacementPlugin` and `createRequire`** — these caused the tap error during build. The webpack callback is now simplified back to `(webpackConfig) => {...}` without the `{ isServer, isClient }` parameter.
+1. **Restored `{ isServer, isClient }` callback parameters** — needed to apply node handling only to server/Edge builds
 
-2. **Kept `.node$` alias** — redirects `.node` binary file requests to `src/server/utils/empty-stub.js`. This handles actual binary file imports, not `node:` protocol.
+2. **Added `NodeSchemePlugin`** — taps `resolver.hooks.resolveForScheme.for('node')` to intercept `node:` scheme requests and redirect them to `src/server/utils/empty-stub.js`. The `resolveForScheme` hook fires BEFORE the scheme check throws `UnhandledSchemeError`, allowing us to redirect.
 
-3. **Removed `undici` from webpack externals** — it is already in `serverExternalPackages`, so webpack external handling is redundant.
+3. **Added `resolve.fallback.node = false`** — handles bare `node` specifiers (not `node:` scheme)
 
-4. **Kept gravatar CSP fix** — `gravatar.com` → `*.gravatar.com` for admin routes.
+4. **Kept `\\.node$` alias** — handles `.node` binary file paths
 
-### Why NMRP caused the error
-The `NormalModuleReplacementPlugin` creates successfully (verified in Node REPL), but during webpack's actual compilation when it tries to `tap` into webpack's resolver hooks, something is undefined. This is a Next.js 15.5.9 + webpack 5.98.0 incompatibility with how NMRP interacts with the resolver plugin system during the build.
+5. **Added undici and @napi-rs/canvas to webpack externals** — explicit externalization supplement to serverExternalPackages
 
-Since all native packages (`@napi-rs/canvas`, etc.) are in `serverExternalPackages`, webpack never processes their `node:` imports in the browser bundle, so no NMRP interception is needed.
+### Key insight: why resolve.alias can't handle node: imports
+`resolve.alias` patterns like `^node:(.*)$` don't work because webpack alias only supports exact matches (`$`) and directory prefixes (`/`). The `node:` protocol is a URL scheme handled separately from module name resolution.
+
+The correct approach is `resolveForScheme.for('node')` which is called before the scheme check. Tapping it and calling `doResolve` redirects the request to an empty stub before webpack throws the error.
 
 ### Verification
-- `pnpm verify` passes (typecheck, lint)
-- `npx tsc --noEmit` passes
-- `pnpm lint` passes (one pre-existing warning in LatexDocumentViewer)
+- `pnpm verify` passes (typecheck, lint) — attempt 1

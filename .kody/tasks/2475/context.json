@@ -2,13 +2,13 @@
   "taskId": "2475",
   "taskType": "pr",
   "target": "2449-p2-frontend-login-form-silently-fails-session-not",
-  "outcome": "success",
+  "outcome": "partial",
   "exitCode": 0,
-  "reason": "Build job failed with TypeError: Cannot read properties of undefined (reading tap) during webpack build. The NormalModuleReplacementPlugin approach (added in prior session) caused the error. Fixed by simplifying next.config.js: removed NormalModuleReplacementPlugin and createRequire, kept only .node$ alias to empty stub and gravatar CSP fix.",
+  "reason": "Build failed with UnhandledSchemeError for node: protocol imports (node:console, node:crypto, etc.) from undici internals. Root cause: previous .node$ alias fix didn't handle node: URL scheme - only .node file extensions. Added NodeSchemePlugin (taps resolveForScheme.for('node')) to intercept node: requests and redirect to empty stub, plus resolve.fallback.node=false and { isServer, isClient } callback parameters restored.",
   "prUrl": null,
   "runUrl": null,
   "filesTouched": ["next.config.js"],
-  "sessionLog": ".kody/sessions/2475-2.jsonl",
-  "startedAt": "2026-06-06T15:30:00Z",
-  "finishedAt": "2026-06-06T16:50:00Z"
+  "sessionLog": ".kody/sessions/2475-3.jsonl",
+  "startedAt": "2026-06-06T17:30:00Z",
+  "finishedAt": "2026-06-06T17:50:00Z"
 }

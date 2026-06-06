@@ -124,7 +124,7 @@ const nextConfig = {
     '/api/jobs/run-immediate': ['./src/infra/llm/prompts/**/*'],
     '/api/lesson-duplications/[id]/resolve': ['./src/infra/llm/prompts/**/*'],
   },
-  webpack: (webpackConfig) => {
+  webpack: (webpackConfig, { isServer, isClient }) => {
     webpackConfig.resolve.extensionAlias = {
       '.cjs': ['.cts', '.cjs'],
       '.js': ['.ts', '.tsx', '.js', '.jsx'],
@@ -137,11 +137,52 @@ const nextConfig = {
       type: 'asset/source',
     })
 
-    // Handle .node native binaries — redirect to empty stub since these are server-only.
-    // Also disable node: protocol resolution to prevent UnhandledSchemeError.
-    webpackConfig.resolve.alias = {
-      ...webpackConfig.resolve.alias,
-      '\\.node$': path.resolve(process.cwd(), 'src/server/utils/empty-stub.js'),
+    // Handle node: protocol imports and .node native binaries for non-client builds.
+    // These are server-only concerns; browser builds must not attempt to resolve them.
+    if (!isClient) {
+      // Explicitly externalize server-only packages that webpack might still analyze.
+      webpackConfig.externals = [...(webpackConfig.externals || []), 'undici', '@napi-rs/canvas']
+
+      // Redirect .node native binary file paths to an empty stub.
+      webpackConfig.resolve.alias = {
+        ...webpackConfig.resolve.alias,
+        '\\.node$': path.resolve(process.cwd(), 'src/server/utils/empty-stub.js'),
+      }
+
+      // Fallback for bare 'node' specifiers.
+      webpackConfig.resolve.fallback = {
+        ...webpackConfig.resolve.fallback,
+        node: false,
+      }
+
+      // Provide a scheme handler for node: protocol so webpack doesn't throw UnhandledSchemeError.
+      // webpack 5.98.0 has built-in handlers only for 'data' and 'file' schemes via resolveForScheme.
+      // Tapping resolveForScheme.for('node') lets us intercept node: requests before the
+      // scheme check throws UnhandledSchemeError and redirect them to an empty stub.
+      webpackConfig.plugins.push(
+        new (class NodeSchemePlugin {
+          apply(compiler) {
+            compiler.resolverFactory.hooks.resolve.tap('NodeSchemePlugin', (resolver) => {
+              resolver.hooks.resolveForScheme
+                .for('node')
+                .tap('NodeSchemePlugin', (resourceData, resolveContext) => {
+                  const stubPath = path.resolve(process.cwd(), 'src/server/utils/empty-stub.js')
+                  return resolver.doResolve(
+                    resolver.hooks.resolve,
+                    {
+                      ...resourceData,
+                      path: stubPath,
+                      query: resourceData.query,
+                      fragment: resourceData.fragment,
+                    },
+                    null,
+                    resolveContext,
+                  )
+                })
+            })
+          }
+        })(),
+      )
     }
 
     return webpackConfig
