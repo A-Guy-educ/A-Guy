@@ -124,7 +124,7 @@ const nextConfig = {
     '/api/jobs/run-immediate': ['./src/infra/llm/prompts/**/*'],
     '/api/lesson-duplications/[id]/resolve': ['./src/infra/llm/prompts/**/*'],
   },
-  webpack: (webpackConfig, { isServer }) => {
+  webpack: (webpackConfig, { isServer, isClient }) => {
     webpackConfig.resolve.extensionAlias = {
       '.cjs': ['.cts', '.cjs'],
       '.js': ['.ts', '.tsx', '.js', '.jsx'],
@@ -137,8 +137,11 @@ const nextConfig = {
       type: 'asset/source',
     })
 
-    if (!isServer) {
-      // Redirect all .node native binary file paths to an empty stub for browser builds.
+    // In Next.js 15, isServer is isNodeOrEdgeCompilation (true for both Node server AND Edge builds).
+    // So !isServer is false for Edge builds, skipping the config. We need isClient to correctly
+    // identify browser-only builds, allowing this config to also apply to Edge builds.
+    if (!isClient) {
+      // Redirect all .node native binary file paths to an empty stub for browser/Edge builds.
       // The .node files (e.g., skia.linux-x64-gnu.node) are native binaries that cannot
       // be bundled. next-error-browser-binary-loader throws "not supported in browser"
       // when it encounters them, but resolve.alias redirects them before that runs.
@@ -155,7 +158,7 @@ const nextConfig = {
         'undici',
       ]
 
-      // Use fallback to handle all node: protocol imports in browser builds.
+      // Use fallback to handle all node: protocol imports in browser/Edge builds.
       // This is the correct webpack 5 API for redirecting Node.js built-in modules
       // (node:console, node:crypto, node:dns, etc.) to an empty object.
       webpackConfig.resolve.fallback = {

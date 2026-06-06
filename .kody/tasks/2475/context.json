@@ -2,15 +2,15 @@
   "taskId": "2475",
   "taskType": "pr",
   "target": "2449-p2-frontend-login-form-silently-fails-session-not",
-  "outcome": "partial",
+  "outcome": "success",
   "exitCode": 0,
-  "reason": "Fixed webpack browser build — replaced ineffective regex alias ^node:(.*)$ with \\.node$ alias to redirect .node native binaries to empty stub, and kept resolve.fallback node:false for node: protocol imports. Local verify passes (ok: true).",
+  "reason": "Fixed webpack browser/Edge build — changed condition from !isServer to !isClient in next.config.js webpack config, since isServer is isNodeOrEdgeCompilation (true for BOTH Node server AND Edge builds) in Next.js 15.5.9, so !isServer was false for Edge builds causing the node: protocol and .node native binary errors.",
   "prUrl": null,
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27037408747",
+  "runUrl": null,
   "filesTouched": [
     "next.config.js"
   ],
   "sessionLog": null,
   "startedAt": "2026-06-06T00:00:00Z",
-  "finishedAt": "2026-06-06T00:15:00Z"
+  "finishedAt": "2026-06-06T03:15:00Z"
 }

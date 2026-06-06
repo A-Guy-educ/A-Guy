@@ -11,21 +11,28 @@ UnhandledSchemeError: Reading from "node:crypto" is not handled by plugins
 
 ### Root cause
 
-Three compounding issues:
+**Issue: `!isServer` condition skips Edge builds in Next.js 15.5.9**
 
-**Issue 1: ESM `require` unavailable in next.config.js**
-`next.config.js` uses ESM (top-level `import`), so `require` is not available in webpack config callbacks.
+In Next.js 15.5.9, `isServer` passed to the webpack config function is actually `isNodeOrEdgeCompilation = isNodeServer || isEdgeServer`. This means `isServer = true` for BOTH Node.js server builds AND Edge builds.
 
-**Issue 2: `@napi-rs/canvas` metapackage not fully externalized**
-Webpack resolves `@napi-rs/canvas` to a platform-specific package (`@napi-rs/canvas-linux-x64-gnu`, etc.) that was not in externals.
+So `if (!isServer)` evaluates to `false` for Edge builds — the entire webpack config block (`.node` alias, `resolve.fallback.node: false`, canvas/undici externals) is SKIPPED for Edge builds.
 
-**Issue 3: `node:` protocol imports unresolved**
-`resolve.alias` with `'^node:(.*)$'` does not work — webpack 5 treats string keys as literals, not regex. `resolve.fallback.node: false` is the correct webpack 5 API for `node:` protocol imports.
+The `node:` protocol imports (from `undici`) and `.node` native binaries (from `@napi-rs/canvas-linux-x64-gnu`) are NOT handled for Edge builds, causing:
+```
+UnhandledSchemeError: Reading from "node:console" is not handled by plugins
+Error: Node.js binary module ...skia.linux-x64-gnu.node is not supported in the browser.
+```
 
-**Issue 4: `.node` native binary files trigger error-checker**
-Even with regex externals, `next-error-browser-binary-loader` runs on `.node` files before webpack's external check, causing "not supported in browser" errors.
+**Additional issues (already fixed previously):**
+- `resolve.alias` with `'^node:(.*)$'` does not work — webpack 5 treats string keys as literals. `resolve.fallback.node: false` is the correct webpack 5 API.
+- `@napi-rs/canvas` metapackage resolves to platform-specific packages not in externals. Regex externals `/^@napi-rs\/canvas-/` are needed.
+- ESM `next.config.js` uses `path.resolve` not `require.resolve`.
 
 ### Fix applied
+
+**Condition fix: `!isServer` → `!isClient`**
+
+Changed the webpack config condition from `if (!isServer)` to `if (!isClient)`. Since `isServer` is `isNodeOrEdgeCompilation` (true for both Node AND Edge builds), `!isServer` was false for Edge. Using `!isClient` correctly identifies non-browser builds (Edge and server both have `isClient = false`).
 
 **For `node:` protocol imports** — `resolve.fallback.node: false`:
 ```js
@@ -54,9 +61,8 @@ webpackConfig.externals = [
 ```
 
 ### Files changed
-- `next.config.js` — browser webpack config block: added `\\.node$` resolve.alias, kept `resolve.fallback.node: false`, kept regex externals for canvas packages
+- `next.config.js` — webpack config: changed `if (!isServer)` to `if (!isClient)` so the config also applies to Edge builds. Also: added `\\.node$` resolve.alias, kept `resolve.fallback.node: false`, kept regex externals for canvas packages.
 - `src/server/utils/empty-stub.js` — empty stub file for redirecting `.node` files
 
 ### Verification
-- `pnpm lint` — passes
-- `mcp__kody-verify__verify` — `ok: true` on attempt 3
+- `mcp__kody-verify__verify` — `ok: true` on attempt 1

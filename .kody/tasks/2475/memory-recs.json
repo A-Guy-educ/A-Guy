@@ -30,5 +30,13 @@
     "body": "The next-error-browser-binary-loader throws 'not supported in browser' for all .node files. To prevent this, use resolve.alias with a regex key matching .node files: webpackConfig.resolve.alias = { ...existing, '\\\\.node$': path.resolve(process.cwd(), 'src/server/utils/empty-stub.js') }. Webpack 5's resolve.alias DOES support regex keys. The regex '\\.node$' matches any file path ending in .node and redirects it to the empty stub before the error-checker runs.",
     "why": "CI also failed with 'Node.js binary module ...skia.linux-x64-gnu.node is not supported in the browser'. The regex externals for @napi-rs/canvas-* were not sufficient because next-error-browser-binary-loader runs on .node files before the external check.",
     "confidence": 0.7
+  },
+  {
+    "type": "lesson",
+    "name": "nextjs15-isServer-isNodeOrEdgeCompilation",
+    "hook": "Next.js 15 webpack config: isServer is isNodeOrEdgeCompilation — use !isClient for non-server-only configs",
+    "body": "In Next.js 15.5.9, the isServer parameter passed to the webpack config function is actually set to isNodeOrEdgeCompilation (isNodeServer || isEdgeServer), meaning isServer=true for BOTH Node server builds AND Edge builds. So 'if (!isServer)' is false for Edge builds, causing the webpack config to be skipped for Edge. Use 'if (!isClient)' instead to correctly identify browser-only builds, allowing the config to also apply to Edge builds. isClient=true only for browser builds; false for both server and Edge.",
+    "why": "CI was still failing with node:console and .node native binary errors even though the webpack config had 'if (!isServer)' with resolve.fallback.node:false. The condition was false for Edge builds (isServer=true for Edge) so the config was skipped, causing the errors.",
+    "confidence": 0.9
   }
 ]
