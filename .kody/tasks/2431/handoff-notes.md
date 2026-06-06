@@ -1,10 +1,18 @@
 # Handoff Notes — Task 2431 Merge Conflict Resolution
 
 ## What was done
-Resolved a single conflicted file `.kody/reports/duty-review.md` from the `git merge origin/dev` into PR #2431.
+Resolved two conflicted files from `git merge origin/dev` into PR #2431:
+
+- `.kody/reports/duty-review.md`
+- `.kody/reports/health-check.md`
 
 ## Conflict resolution
-The file is a rolling duty review report. HEAD had Cycle 7; origin/dev had Cycle 9 — a newer cycle with updated cadence values (e.g., 15m, 30m, 1d instead of 7d) and populated staff assignments (cto, coo, kody, etc.). Took the origin/dev version as it represents the authoritative current state of the duties.
+
+Both files are auto-generated rolling reports. For each, took the `origin/dev` version as it represents the authoritative fresher state:
+
+- **duty-review.md**: HEAD had Cycle 7, origin/dev had Cycle 10 — newer cycle with updated verdicts and staff assignments
+- **health-check.md**: HEAD had Running/Failed sections with older hour counts, origin/dev had kody:running/kody:failed sections with updated hour counts
 
 ## Files touched
-- `.kody/reports/duty-review.md` — removed all conflict markers, kept Cycle 9 content from origin/dev
+- `.kody/reports/duty-review.md` — removed all conflict markers, kept Cycle 10 content from origin/dev
+- `.kody/reports/health-check.md` — removed all conflict markers, kept kody:running/kody:failed content from origin/dev
