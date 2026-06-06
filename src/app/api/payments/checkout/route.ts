@@ -16,6 +16,7 @@ import { getPayload, type Payload } from 'payload'
 import { z } from 'zod'
 
 import config from '@payload-config'
+import { serializePaymentError } from '@/lib/payment/error-log'
 import { cancelPayPalOrder, createPayPalOrder } from '@/lib/payment/paypal'
 import { cancelStripeCheckout, createStripeCheckout } from '@/lib/payment/stripe'
 import { checkAuthenticatedRateLimit } from '@/server/services/rate-limit'
@@ -359,9 +360,15 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // 9. Build URLs for payment provider redirect
+  // 9. Build URLs for payment provider redirect.
+  // Stripe expands {CHECKOUT_SESSION_ID} at redirect time. PayPal rejects curly
+  // braces as INVALID_PARAMETER_SYNTAX per RFC 3986 and appends its own
+  // ?token=ORDER_ID&PayerID=... params automatically, so we hand it a clean URL.
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-  const successUrl = `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`
+  const successUrl =
+    provider === 'stripe'
+      ? `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`
+      : `${baseUrl}/checkout/success?provider=paypal`
   const cancelParams = new URLSearchParams({ product_id: productId })
   const cancelUrl = `${baseUrl}/checkout/cancel?${cancelParams.toString()}`
 
@@ -392,7 +399,7 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     payload.logger.error(
-      { error, productId, userId: user.id, provider },
+      { err: serializePaymentError(error), productId, userId: user.id, provider },
       'Payment provider checkout creation failed',
     )
 
@@ -450,7 +457,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     payload.logger.error(
       {
-        error,
+        err: serializePaymentError(error),
         productId,
         userId: user.id,
         provider,
@@ -472,7 +479,11 @@ export async function POST(request: NextRequest) {
       )
     } catch (cancelError) {
       payload.logger.error(
-        { cancelError, providerTransactionId: providerResult.providerSessionId, provider },
+        {
+          err: serializePaymentError(cancelError),
+          providerTransactionId: providerResult.providerSessionId,
+          provider,
+        },
         'Failed to cancel orphaned provider checkout session — manual intervention may be required',
       )
     }
