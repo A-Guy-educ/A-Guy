@@ -1,12 +1,8 @@
 import { withPayload } from '@payloadcms/next/withPayload'
 import { withSentryConfig } from '@sentry/nextjs'
-import { createRequire } from 'module'
 import path from 'path'
 
 import redirects from './redirects.js'
-
-// createRequire lets us use require() inside an ESM module (next.config.js uses ESM)
-const require = createRequire(import.meta.url)
 
 const NEXT_PUBLIC_SERVER_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
   ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
@@ -128,7 +124,7 @@ const nextConfig = {
     '/api/jobs/run-immediate': ['./src/infra/llm/prompts/**/*'],
     '/api/lesson-duplications/[id]/resolve': ['./src/infra/llm/prompts/**/*'],
   },
-  webpack: (webpackConfig, { isServer, isClient }) => {
+  webpack: (webpackConfig) => {
     webpackConfig.resolve.extensionAlias = {
       '.cjs': ['.cts', '.cjs'],
       '.js': ['.ts', '.tsx', '.js', '.jsx'],
@@ -142,34 +138,10 @@ const nextConfig = {
     })
 
     // Handle .node native binaries — redirect to empty stub since these are server-only.
+    // Also disable node: protocol resolution to prevent UnhandledSchemeError.
     webpackConfig.resolve.alias = {
       ...webpackConfig.resolve.alias,
       '\\.node$': path.resolve(process.cwd(), 'src/server/utils/empty-stub.js'),
-    }
-
-    // For server/Edge builds (not browser client), handle node: protocol imports
-    // and mark server-only packages as externals.
-    if (!isClient) {
-      // Use NormalModuleReplacementPlugin (from Next.js's bundled webpack) to redirect
-      // all node: protocol imports to an empty stub. This prevents UnhandledSchemeError
-      // when webpack encounters node:crypto, node:fs, etc. in shared code.
-      const webpackBundled = require('next/dist/compiled/webpack/webpack.js')
-      webpackBundled.init()
-      const NMRP = webpackBundled.webpack.NormalModuleReplacementPlugin
-
-      webpackConfig.resolve.plugins = [
-        ...(webpackConfig.resolve.plugins || []),
-        new NMRP(/^node:(.*)$/, (data) => {
-          data.request = path.resolve(process.cwd(), 'src/server/utils/empty-stub.js')
-          return data
-        }),
-      ]
-
-      webpackConfig.externals = [...(webpackConfig.externals || []), 'undici']
-      webpackConfig.resolve.fallback = {
-        ...webpackConfig.resolve.fallback,
-        node: false,
-      }
     }
 
     return webpackConfig

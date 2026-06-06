@@ -9,18 +9,18 @@
   },
   {
     "type": "lesson",
-    "name": "napi-rs-canvas-webpack-external-conflict",
-    "hook": "@napi-rs/canvas as webpack external string conflicts with minify-webpack-plugin",
-    "body": "Adding '@napi-rs/canvas' (as a string) to webpackConfig.externals causes minify-webpack-plugin to throw `_webpack.WebpackError is not a constructor` during the minification phase. This is a conflict between how the externalized package is handled and how minify-webpack-plugin constructs errors internally in Next.js's bundled webpack. The fix is to NOT add it to webpack externals — serverExternalPackages in Next.js config handles externalization at a different level that does not trigger this conflict.",
-    "why": "The minify-webpack-plugin built into Next.js's webpack bundle calls `new WebpackError()` internally. When @napi-rs/canvas is marked as an external, the plugin's error construction logic appears to receive something it doesn't expect, causing the constructor error. Using serverExternalPackages instead avoids this because webpack doesn't process those packages at all during bundling.",
-    "confidence": 0.9
+    "name": "normalmodulereplacementplugin-tap-error",
+    "hook": "NormalModuleReplacementPlugin from Next.js bundled webpack causes tap undefined error in Next.js 15.5.9",
+    "body": "Using `require('next/dist/compiled/webpack/webpack.js')` + `init()` + `NormalModuleReplacementPlugin` inside the webpack config callback causes `TypeError: Cannot read properties of undefined (reading 'tap')` during the webpack build in Next.js 15.5.9. The plugin creates successfully but triggers a tap error during compilation. The fix is to NOT use NormalModuleReplacementPlugin — webpack 5 handles node: protocol imports natively when packages are in serverExternalPackages.",
+    "why": "The NormalModuleReplacementPlugin approach was tried to handle node: protocol imports (node:crypto, node:fs) but caused a webpack plugin error during the build minification phase. Since all problematic packages (like @napi-rs/canvas) are already in serverExternalPackages, webpack never processes their node: imports in the browser bundle. The dev branch has no node: protocol handling and builds fine.",
+    "confidence": 0.85
   },
   {
     "type": "lesson",
     "name": "resolve-alias-cannot-intercept-node-protocol",
-    "hook": "resolve.alias cannot intercept node: URL scheme imports — use NormalModuleReplacementPlugin",
-    "body": "webpack resolve.alias uses exact string matching (or $ suffix for exact match), but it does NOT interpret regex patterns. A key like '^node:' or '\\.node$' in resolve.alias will match literal module names, not node: URL scheme imports. To intercept `node:crypto`, `node:fs`, etc., you must use `NormalModuleReplacementPlugin` (a ResolvePlugin) which webpack calls for every module resolution. The plugin class is accessible via `require('next/dist/compiled/webpack/webpack.js')` → init() → webpack.webpack.NormalModuleReplacementPlugin.",
-    "why": "The `node:` protocol is a separate resolution path in webpack 5 from module name resolution. resolve.alias operates on module names (the string after 'node:' in 'node:crypto'), not on the 'node:' prefix itself. Only a ResolvePlugin can intercept the full request string including the protocol.",
+    "hook": "resolve.alias cannot intercept node: URL scheme imports",
+    "body": "webpack resolve.alias uses exact string matching (or $ suffix for exact match), but it does NOT interpret regex patterns. A key like '^node:' or '\\.node$' in resolve.alias will match literal module names, not node: URL scheme imports. The '\\.node$' pattern only matches file paths ending in .node, not the node: protocol.",
+    "why": "The `node:` protocol is a separate resolution path in webpack 5 from module name resolution. resolve.alias operates on module names, not URL schemes. Only a ResolvePlugin can intercept the full request string including the protocol, but NormalModuleReplacementPlugin causes the tap error.",
     "confidence": 0.95
   }
 ]
