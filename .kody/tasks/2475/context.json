@@ -4,11 +4,11 @@
   "target": "2449-p2-frontend-login-form-silently-fails-session-not",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Added node: URL scheme aliases (node:console, node:crypto, node:dns, node:diagnostics_channel) to resolve.alias in client webpack config. resolve.fallback.node: false only handles 'node' (no colon), not 'node:console' etc. URL scheme imports from undici's mock utilities. verify passes (ok: true, attempt 1).",
+  "reason": "Fixed webpack callback: replaced undefined `isClient` parameter with `webpackConfig.name !== 'client'`. The `isClient` flag is not passed by Next.js 15.5.9 (only `isServer` is), so `!isClient` was always true, making undici/@napi-rs/canvas external for all builds including client. This caused the _webpack.WebpackError is not a constructor error during minification. verify passes (ok: true, attempt 1).",
   "prUrl": null,
   "runUrl": null,
   "filesTouched": ["next.config.js"],
   "sessionLog": ".kody/sessions/2475-6.jsonl",
   "startedAt": "2026-06-06T19:40:00Z",
-  "finishedAt": "2026-06-06T19:42:00Z"
+  "finishedAt": "2026-06-06T22:55:00Z"
 }

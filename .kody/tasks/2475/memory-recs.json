@@ -1,6 +1,14 @@
 [
   {
     "type": "lesson",
+    "name": "nextjs-webpack-callback-isclient-undefined",
+    "hook": "Next.js 15.5.9 webpack callback only passes isServer, not isClient",
+    "body": "The second argument to the next.config.js webpack function receives { dir, dev, isServer, buildId, config, defaultLoaders, totalPages, webpack, nextRuntime } — isClient is NOT included. Destructuring { isClient } gives undefined, and !undefined === true, so any !isClient conditional runs for ALL builds (client, server, edge). Use webpackConfig.name === 'client' or webpackConfig.name === 'server' to identify the build target.",
+    "why": "Task 2476 changed webpack: (webpackConfig) to webpack: (webpackConfig, { isClient }) intending to differentiate client from server builds, but isClient is not a valid parameter in Next.js 15.5.9. This caused undici/@napi-rs/canvas to be added to externals for client builds too, breaking the browser build with _webpack.WebpackError is not a constructor during minification.",
+    "confidence": 0.95
+  },
+  {
+    "type": "lesson",
     "name": "webpack-config-require-in-callback",
     "hook": "require works inside webpack config callbacks even when next.config.js is ESM",
     "body": "Webpack config callbacks (the function passed to webpack:) run in Node.js at build time, not at config-file-load time. This means `require` is available inside the callback even when next.config.js uses ESM imports at the top level. This allows accessing Next.js's bundled webpack modules via `require('next/dist/compiled/webpack/webpack.js')` from inside the callback.",
@@ -35,15 +43,15 @@
     "type": "lesson",
     "name": "node-alias-survived-after-nodeprotocol-plugin-removal",
     "hook": "The \\.node$ alias and resolve.fallback.node must be kept separate from NodeSchemePlugin removal",
-    "body": "When removing NodeSchemePlugin, the \\.node$ resolve.alias and resolve.fallback.node: false must be kept — they are independent of the plugin. Removing them causes the .node native binary to be processed by the browser webpack, producing 'Node.js binary module is not supported in the browser'. Use webpackConfig.name === 'client' as the condition for client-only webpack config changes.",
-    "why": "The previous fix removed the entire block including the .node$ alias, not understanding that the alias and the plugin serve different purposes. The plugin was for node: scheme handling; the alias is for .node file paths. Both are needed for the browser build to succeed.",
+    "body": "When removing NodeSchemePlugin, the \\.node$ resolve.alias and resolve.fallback.node: false must be kept — they are independent of the plugin. The plugin was for node: scheme handling; the alias is for .node file paths. Both are needed for the browser build to succeed. Use webpackConfig.name === 'client' as the condition for client-only webpack config changes.",
+    "why": "The previous fix removed the entire block including the .node$ alias, not understanding that the alias and the plugin serve different purposes.",
     "confidence": 0.95
   },
   {
     "type": "lesson",
     "name": "resolve-fallback-vs-resolve-alias-for-node-url-scheme",
     "hook": "resolve.fallback.node: false does NOT intercept node: URL scheme imports",
-    "body": "webpack resolve.fallback.node handles 'node' bare module requests (require('node')), NOT 'node:console' URL scheme requests. The node: URL scheme is resolved via a separate webpack mechanism (resolveForScheme). To intercept node: URL scheme imports, you must use resolve.alias entries for each specific module ('node:console', 'node:crypto', etc.).",
+    "body": "webpack resolve.fallback.node handles 'node' bare module requests (require('node')), NOT 'node:console' URL scheme requests. The node: URL scheme is resolved via a separate webpack mechanism (resolveForScheme). To intercept node: URL scheme imports, you must use resolve.alias entries for each specific module ('node:console', 'node:crypto', etc.) or mark the package as external.",
     "why": "The previous fix added resolve.fallback.node: false thinking it would handle all node: imports, but it only handles the bare 'node' module name. The node: URL scheme is a separate resolution path in webpack 5.",
     "confidence": 0.95
   }

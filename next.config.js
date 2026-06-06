@@ -124,7 +124,7 @@ const nextConfig = {
     '/api/jobs/run-immediate': ['./src/infra/llm/prompts/**/*'],
     '/api/lesson-duplications/[id]/resolve': ['./src/infra/llm/prompts/**/*'],
   },
-  webpack: (webpackConfig, { isClient }) => {
+  webpack: (webpackConfig) => {
     webpackConfig.resolve.extensionAlias = {
       '.cjs': ['.cts', '.cjs'],
       '.js': ['.ts', '.tsx', '.js', '.jsx'],
@@ -140,7 +140,7 @@ const nextConfig = {
     // For non-client (server + Edge) builds: mark server-only packages as externals
     // so webpack never analyzes their internal code. This prevents UnhandledSchemeError
     // for node: protocol imports inside undici (node:dns, node:diagnostics_channel, etc.).
-    if (!isClient) {
+    if (webpackConfig.name !== 'client') {
       webpackConfig.externals = [...(webpackConfig.externals || []), 'undici', '@napi-rs/canvas']
     }
 

@@ -1,31 +1,24 @@
-## Fix: CI Build Failure on PR #2475 — node: URL scheme not intercepted
+## Fix: CI Build Failure on PR #2475 — `_webpack.WebpackError is not a constructor`
 
 ### Root Cause
-The previous fix re-added the `\.node$` alias and `resolve.fallback.node: false` to the client webpack config, but this only handles:
-- `\.node$` → file paths ending in `.node` (native binaries)
-- `resolve.fallback.node: false` → bare `require('node')` module requests
+The webpack callback in `next.config.js` was changed from `webpack: (webpackConfig) =>` to `webpack: (webpackConfig, { isClient }) =>`. However, Next.js 15.5.9 does NOT pass `isClient` to the webpack callback — it only passes `isServer`. Destructuring `{ isClient }` from the second argument gives `undefined`, and `!undefined === true`.
 
-It does NOT handle `node:console`, `node:crypto`, `node:dns`, `node:diagnostics_channel` which are URL scheme imports (`require('node:console')`).
-
-These imports come from undici's mock utility files (`pending-interceptors-formatter.js`, `snapshot-utils.js`, `dns.js`, etc.) which are pulled into the browser webpack via Payload's `safeFetch.js`.
+This meant `if (!isClient)` was `true` for ALL webpack builds (client, server, and edge), so `undici` and `@napi-rs/canvas` were incorrectly added to `webpackConfig.externals` for the client build. When webpack tried to process the client bundle, it encountered the error (likely an unhandled resolution issue) and then failed to report it properly via `new _webpack.WebpackError(...)` in the minify-webpack-plugin.
 
 ### Fix Applied
-Added `resolve.alias` entries for each `node:` URL scheme import:
-- `'node:console': stubPath`
-- `'node:crypto': stubPath`
-- `'node:dns': stubPath`
-- `'node:diagnostics_channel': stubPath`
+Reverted to `webpack: (webpackConfig) =>` and changed the condition from `!isClient` to `webpackConfig.name !== 'client'`.
 
-This redirects all `node:` URL scheme imports in browser builds to the empty stub, preventing webpack from failing to resolve them.
+- `webpackConfig.name === 'client'` for browser bundle
+- `webpackConfig.name === 'server'` for server bundle
+- `webpackConfig.name === 'edge-server'` for Edge bundle
+
+This correctly applies the `externals` entry only for server + Edge builds, while the `.node$` alias and `node: false` fallback are applied to all builds as intended.
 
 ### Files Changed
-- `next.config.js` — added 4 `node:` URL scheme aliases to client webpack resolve.alias
+- `next.config.js` — removed `{ isClient }` parameter, restored `(webpackConfig)`, changed condition to `webpackConfig.name !== 'client'`
 
 ### Key Insight
-`resolve.fallback` and `resolve.alias` are separate webpack mechanisms:
-- `resolve.fallback` maps bare module names to fallback paths
-- `resolve.alias` maps exact module names/patterns to alternative paths
-- The `node:` URL scheme is NOT handled by `resolve.fallback.node: false`
+Next.js 15.5.9 webpack callback second argument: `{ dir, dev, isServer, buildId, config, defaultLoaders, totalPages, webpack, nextRuntime }`. `isClient` does NOT exist — use `webpackConfig.name === 'client'` to identify the browser build.
 
 ### Verification
 - `mcp__kody-verify__verify` — ok: true, attempt 1
