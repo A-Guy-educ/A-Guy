@@ -1,16 +1,16 @@
 {
   "version": 1,
-  "rev": 136,
+  "rev": 137,
   "cursor": "idle",
   "data": {
     "failingChecks": [],
-    "lastFiredAt": "2026-06-06T16:12:40.880Z",
+    "lastFiredAt": "2026-06-06T16:41:12.733Z",
     "lastOutcome": "completed",
     "lastResolution": "CI GREEN",
     "sha": "a48a832da21720bcaea32dea0190cf5a83db97af",
     "trackingIssue": 2349,
     "note": "CI is now GREEN — fix PR merged",
-    "lastDurationMs": 17867
+    "lastDurationMs": 17429
   },
   "done": false
 }
