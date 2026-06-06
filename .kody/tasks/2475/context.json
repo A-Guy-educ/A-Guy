@@ -2,13 +2,13 @@
   "taskId": "2475",
   "taskType": "pr",
   "target": "2449-p2-frontend-login-form-silently-fails-session-not",
-  "outcome": "partial",
+  "outcome": "success",
   "exitCode": 0,
-  "reason": "Build failed with UnhandledSchemeError for node: protocol imports (node:console, node:crypto, etc.) from undici internals. Root cause: previous .node$ alias fix didn't handle node: URL scheme - only .node file extensions. Added NodeSchemePlugin (taps resolveForScheme.for('node')) to intercept node: requests and redirect to empty stub, plus resolve.fallback.node=false and { isServer, isClient } callback parameters restored.",
+  "reason": "Build failed with TypeError: Cannot read properties of undefined (reading tap) from NodeSchemePlugin at next.config.js:165. NodeSchemePlugin was trying to tap resolverFactory.hooks.resolve which is undefined in Next.js 15.5.9s webpack. Fix: removed the NodeSchemePlugin entirely along with the node: protocol handling code. Since undici and @napi-rs/canvas are already in serverExternalPackages, webpack never processes their node: imports in browser builds.",
   "prUrl": null,
   "runUrl": null,
   "filesTouched": ["next.config.js"],
-  "sessionLog": ".kody/sessions/2475-3.jsonl",
-  "startedAt": "2026-06-06T17:30:00Z",
-  "finishedAt": "2026-06-06T17:50:00Z"
+  "sessionLog": ".kody/sessions/2475-4.jsonl",
+  "startedAt": "2026-06-06T18:20:00Z",
+  "finishedAt": "2026-06-06T18:25:00Z"
 }
