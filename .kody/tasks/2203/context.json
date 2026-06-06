@@ -1,14 +1,14 @@
 {
   "taskId": "2203",
   "taskType": "pr",
-  "target": "repo-hygiene-report workflow",
+  "target": "Dependency Security Report (Daily) workflow failure",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "postinstall hook ran generate:types requiring DATABASE_URL; fixed by adding --ignore-scripts to pnpm install",
+  "reason": "postinstall script ran 'pnpm generate' without PAYLOAD_GENERATE_TYPES set; cross-env in generate:types only sets it for the immediate payload child, not nested processes that load payload.config.ts",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2203",
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26943297531",
-  "filesTouched": [".github/workflows/repo-hygiene-report.yml"],
-  "sessionLog": ".kody/sessions/2203.jsonl",
-  "startedAt": "2026-06-04T09:30:00.000Z",
-  "finishedAt": "2026-06-04T10:00:00.000Z"
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27002243399",
+  "filesTouched": ["package.json"],
+  "sessionLog": ".kody/sessions/78f14aa9-8348-403a-bcd9-7aa6badef47d.jsonl",
+  "startedAt": "2026-06-05T14:55:00Z",
+  "finishedAt": "2026-06-05T15:00:00Z"
 }
