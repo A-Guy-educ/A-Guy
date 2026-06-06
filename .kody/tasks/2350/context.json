@@ -1,16 +1,13 @@
 {
   "taskId": "2350",
   "taskType": "pr",
-  "target": "2349-dev-ci-is-red-kody-auto-fix",
+  "target": "PR #2350 (2349-dev-ci-is-red-kody-auto-fix)",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Both conflicted report files resolved by taking origin/dev (more current cycle/time data)",
+  "reason": "Single conflicted file .kody/reports/duty-review.md resolved by taking origin/dev (Cycle 11 is more recent than Cycle 4 in HEAD)",
   "prUrl": null,
   "runUrl": null,
-  "filesTouched": [
-    ".kody/reports/duty-review.md",
-    ".kody/reports/health-check.md"
-  ],
+  "filesTouched": [".kody/reports/duty-review.md"],
   "sessionLog": null,
   "startedAt": "2026-06-06T00:00:00Z",
   "finishedAt": "2026-06-06T00:01:00Z"
