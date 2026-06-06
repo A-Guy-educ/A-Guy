@@ -1,16 +1,16 @@
 {
   "version": 1,
-  "rev": 139,
+  "rev": 140,
   "cursor": "idle",
   "data": {
     "failingChecks": [],
-    "lastFiredAt": "2026-06-06T17:45:37.922Z",
+    "lastFiredAt": "2026-06-06T18:10:21.292Z",
     "lastOutcome": "completed",
     "lastResolution": "CI GREEN",
     "sha": "a48a832da21720bcaea32dea0190cf5a83db97af",
     "trackingIssue": 2349,
     "note": "CI is GREEN — no action needed",
-    "lastDurationMs": 21661
+    "lastDurationMs": 19900
   },
   "done": false
 }
