@@ -1,16 +1,18 @@
 {
   "version": 1,
-  "rev": 118,
+  "rev": 119,
   "cursor": "idle",
   "data": {
-    "failingChecks": [],
-    "lastFiredAt": "2026-06-06T00:36:58.235Z",
+    "failingChecks": [
+      "inspect"
+    ],
+    "lastFiredAt": "2026-06-06T01:28:57.338Z",
     "lastOutcome": "completed",
-    "lastResolution": "CI GREEN — no failures on sha 660468f13e9221d49da0517bb475539258e68f5d",
+    "lastResolution": "CI RED — fix already in flight (issue #2349)",
     "sha": "660468f13e9221d49da0517bb475539258e68f5d",
     "trackingIssue": 2349,
-    "note": "CI is GREEN — tracking issue #2349 still open but CI is now passing",
-    "lastDurationMs": 16693
+    "note": "CI is RED but tracking issue #2349 already open — fix in flight, no dispatch needed",
+    "lastDurationMs": 28541
   },
   "done": false
 }
