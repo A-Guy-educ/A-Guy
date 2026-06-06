@@ -6,7 +6,7 @@
   "exitCode": 0,
   "reason": "Format check failed due to improper markdown escape in CHANGELOGOG.md line 1709 — fixed by replacing \\_( with _( in a GitHub PR link",
   "prUrl": null,
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26930191668",
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27044521284",
   "filesTouched": ["CHANGELOGOG.md"],
   "sessionLog": ".kody/sessions/vibe-1587-1778744760133-fqhjxq.jsonl",
   "startedAt": "2026-06-04T04:20:00Z",
