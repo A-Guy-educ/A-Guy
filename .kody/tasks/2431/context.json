@@ -4,11 +4,11 @@
   "target": "2431",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Resolved single conflicted file duty-review.md by taking origin/dev (Cycle 11) over HEAD (Cycle 7)",
+  "reason": "Resolved single asymmetric conflict in duty-review.md — origin/dev (Cycle 12) newer than HEAD (Cycle 7), dev version taken",
   "prUrl": null,
-  "runUrl": null,
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27070149357",
   "filesTouched": [".kody/reports/duty-review.md"],
-  "sessionLog": null,
-  "startedAt": "2026-06-06T00:00:00Z",
-  "finishedAt": "2026-06-06T00:01:00Z"
+  "sessionLog": ".kody/runs/gh-27070149357-1/events.jsonl",
+  "startedAt": "2026-06-06T18:19:23Z",
+  "finishedAt": "2026-06-06T18:19:45Z"
 }
