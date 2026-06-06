@@ -1,14 +1,14 @@
 {
   "taskId": "2431",
   "taskType": "pr",
-  "target": "PR #2431 (merge conflict resolution with origin/dev)",
+  "target": "2431",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Resolved merge conflicts in duty-review.md and health-check.md by taking origin/dev (Cycle 10, updated health-check) as authoritative newer state",
+  "reason": "Resolved single conflicted file duty-review.md by taking origin/dev (Cycle 11) over HEAD (Cycle 7)",
   "prUrl": null,
   "runUrl": null,
-  "filesTouched": [".kody/reports/duty-review.md", ".kody/reports/health-check.md"],
-  "sessionLog": ".kody/runs/gh-27053571792-1",
-  "startedAt": "2026-06-05T22:37:31Z",
-  "finishedAt": "2026-06-06T00:00:00Z"
+  "filesTouched": [".kody/reports/duty-review.md"],
+  "sessionLog": null,
+  "startedAt": "2026-06-06T00:00:00Z",
+  "finishedAt": "2026-06-06T00:01:00Z"
 }
