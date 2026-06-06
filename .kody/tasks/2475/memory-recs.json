@@ -1,10 +1,10 @@
 [
   {
     "type": "lesson",
-    "name": "webpack-resolve-fallback-node-false-for-node-protocol",
-    "hook": "resolve.fallback node:false is the correct webpack 5 API for node: protocol imports",
-    "body": "webpack 5's resolve.fallback with { node: false } is the correct mechanism for handling Node.js built-in module requests via the node: protocol (node:console, node:crypto, node:dns, etc.). It returns an empty object, satisfying the resolver without actually polyfilling. Do NOT use resolve.alias with a regex pattern like '^node:(.*)$' — this is treated as a literal key in webpack 5 and never matches.",
-    "why": "CI failed with 'UnhandledSchemeError: Reading from node:console is not handled by plugins'. The previous approach used resolve.alias with '^node:(.*)$' which does not work because webpack 5 resolve.alias treats string keys literally, not as regex.",
+    "name": "webpack-resolve-fallback-node-false-does-not-handle-node-protocol",
+    "hook": "resolve.fallback node:false does NOT handle node: protocol imports — need resolve.alias",
+    "body": "webpack 5's resolve.fallback with { node: false } only handles BARE 'node' specifiers (e.g., require('node:console') is NOT bare, it uses the node: URI scheme). The node: protocol scheme requires resolve.alias to redirect — use '\\.node$' for native binary files and '^node:(.*)$' for all node: protocol imports to an empty stub. resolve.fallback.node: false is a necessary supplement but not sufficient alone.",
+    "why": "CI was failing with 'UnhandledSchemeError: Reading from node:crypto is not handled by plugins' even with resolve.fallback.node: false set. Adding resolve.alias with '^node:(.*)$' pattern fixed it.",
     "confidence": 0.95
   },
   {
@@ -12,31 +12,31 @@
     "name": "next-config-js-uses-esm-require-unavailable",
     "hook": "next.config.js is ESM — use path.resolve not require.resolve",
     "body": "next.config.js uses ESM (import at top level), so require is not available. When adding webpack resolve.alias entries that need a file path, use path.resolve(process.cwd(), ...) instead of require.resolve(...). process.cwd() gives the project root at build time.",
-    "why": "CI failed with 'ReferenceError: require is not defined' at next.config.js because the file is ESM but required was used in the webpack config callback.",
+    "why": "CI failed with 'ReferenceError: require is not defined' at next.config.js because the file is ESM but require was used in the webpack config callback.",
     "confidence": 0.95
   },
   {
     "type": "lesson",
-    "name": "serverexternalpackages-handles-canvas",
-    "hook": "@napi-rs/canvas in serverExternalPackages prevents webpack from trying to bundle it",
-    "body": "Adding @napi-rs/canvas to serverExternalPackages in next.config.js is sufficient to prevent webpack from attempting to bundle the canvas native binaries. No additional webpack externals or resolve.alias for .node files is needed when serverExternalPackages is properly configured.",
-    "why": "The original CI failure had .node native binary errors from canvas. Adding serverExternalPackages: ['@napi-rs/canvas'] at the Next.js config level (not webpack level) prevents webpack from even attempting to bundle those files.",
+    "name": "serverexternalpackages-not-sufficient-for-canvas",
+    "hook": "serverExternalPackages alone does not prevent webpack from analyzing @napi-rs/canvas",
+    "body": "@napi-rs/canvas in serverExternalPackages (Next.js config level) is not sufficient to prevent webpack from analyzing the package at build time. Webpack still resolves the package's internal imports (including .node binaries and node: protocol imports). Must ALSO add '@napi-rs/canvas' to webpack externals (inside webpack config callback) to prevent webpack from processing it.",
+    "why": "Even with @napi-rs/canvas in serverExternalPackages, CI still showed '@napi-rs/canvas-linux-x64-gnu/skia.linux-x64-gnu.node is not supported in the browser' errors. Adding it as a webpack external (string, not regex) fixed it.",
     "confidence": 0.95
   },
   {
     "type": "lesson",
-    "name": "minify-webpack-plugin-hookweberror-secondary",
-    "hook": "HookWebpackError is a secondary error from minify-webpack-plugin failing to wrap an error",
-    "body": "The 'HookWebpackError: _webpack.WebpackError is not a constructor' from minify-webpack-plugin is a SECONDARY error that occurs when the minifier tries to wrap an underlying webpack error but can't construct the error object. This can happen when complex webpack configurations (like regex externals for .node files) produce an error state that the minifier can't properly serialize. The fix is to simplify the webpack config to only what's essential — the root cause is the complex config, not the error wrapper.",
-    "why": "CI was failing with HookWebpackError after adding .node alias and canvas regex externals. Simplifying to just undici external + node:false fallback fixed it, proving the issue was the complex config interacting with minify-webpack-plugin, not the individual settings.",
-    "confidence": 0.8
+    "name": "minify-webpack-plugin-canvas-regex-externals-conflict",
+    "hook": "Canvas regex externals (but not string externals) conflict with minify-webpack-plugin",
+    "body": "Using '/^@napi-rs\\/canvas-/' as a webpack external regex (with other regex externals) caused minify-webpack-plugin to fail with 'HookWebpackError: _webpack.WebpackError is not a constructor'. Using '@napi-rs/canvas' as a STRING external (not regex) avoids this conflict while still preventing webpack from bundling canvas.",
+    "why": "The complex combination of regex externals (canvas + other patterns) produced an error state in webpack that minify-webpack-plugin couldn't serialize. Simplifying to string externals avoided the issue.",
+    "confidence": 0.9
   },
   {
     "type": "lesson",
     "name": "nextjs15-isServer-isNodeOrEdgeCompilation",
     "hook": "Next.js 15 webpack config: isServer is isNodeOrEdgeCompilation — use !isClient for non-server-only configs",
-    "body": "In Next.js 15.5.9, the isServer parameter passed to the webpack config function is actually set to isNodeOrEdgeCompilation (isNodeServer || isEdgeServer), meaning isServer=true for BOTH Node server builds AND Edge builds. So 'if (!isServer)' is false for Edge builds, causing the webpack config to be skipped for Edge. Use 'if (!isClient)' instead to correctly identify browser-only builds, allowing the config to also apply to Edge builds. isClient=true only for browser builds; false for both server and Edge.",
-    "why": "CI was still failing with node:console and .node native binary errors even though the webpack config had 'if (!isServer)' with resolve.fallback.node:false. The condition was false for Edge builds (isServer=true for Edge) so the config was skipped, causing the errors.",
-    "confidence": 0.9
+    "body": "In Next.js 15.5.9, the isServer parameter passed to the webpack config function is actually set to isNodeOrEdgeCompilation (isNodeServer || isEdgeServer), meaning isServer=true for BOTH Node server builds AND Edge builds. So 'if (!isServer)' is false for Edge builds, skipping the config. Use 'if (!isClient)' instead to correctly identify browser-only builds, allowing the config to also apply to Edge builds. isClient=true only for browser builds; false for both server and Edge.",
+    "why": "CI was still failing with node:protocol and .node native binary errors. Using !isClient instead of !isServer ensures the webpack config applies to Edge builds as well as browser builds.",
+    "confidence": 0.95
   }
 ]

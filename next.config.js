@@ -1,5 +1,6 @@
 import { withPayload } from '@payloadcms/next/withPayload'
 import { withSentryConfig } from '@sentry/nextjs'
+import path from 'path'
 
 import redirects from './redirects.js'
 
@@ -138,11 +139,20 @@ const nextConfig = {
 
     // Apply config to non-client (server + Edge) builds to handle node: protocol imports.
     if (!isClient) {
-      webpackConfig.externals = [...(webpackConfig.externals || []), 'undici']
+      webpackConfig.externals = [...(webpackConfig.externals || []), 'undici', '@napi-rs/canvas']
 
       // Handle node: protocol imports for browser/Edge builds.
-      // This redirects Node.js built-in module requests (node:console, node:crypto, etc.)
-      // to an empty object so webpack can proceed without error.
+      // resolve.fallback.node: false doesn't handle node: scheme (node:crypto, node:fs, etc.)
+      // since webpack 5 doesn't treat node: as a package name. Use resolve.alias with a
+      // pattern to redirect all node: imports to an empty stub — the actual server-only code
+      // never runs in the browser, so the stub is never invoked.
+      webpackConfig.resolve.alias = {
+        ...webpackConfig.resolve.alias,
+        '\\.node$': path.resolve(process.cwd(), 'src/server/utils/empty-stub.js'),
+        '^node:(.*)$': path.resolve(process.cwd(), 'src/server/utils/empty-stub.js'),
+      }
+
+      // Fallback for bare 'node' specifiers (needed as a supplement to the alias above).
       webpackConfig.resolve.fallback = {
         ...webpackConfig.resolve.fallback,
         node: false,

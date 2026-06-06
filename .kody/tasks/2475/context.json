@@ -4,7 +4,7 @@
   "target": "2449-p2-frontend-login-form-silently-fails-session-not",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Simplified webpack config — removed .node alias and canvas externals that caused minify-webpack-plugin HookWebpackError. Kept undici external and node:false fallback which fix the actual undici/node: errors.",
+  "reason": "Fixed webpack config: re-added path import, added node: protocol alias (^node:(.*)$) alongside .node$ alias, added @napi-rs/canvas as string external. resolve.fallback.node:false alone does not handle node: scheme imports.",
   "prUrl": null,
   "runUrl": null,
   "filesTouched": [
@@ -12,5 +12,5 @@
   ],
   "sessionLog": null,
   "startedAt": "2026-06-06T00:00:00Z",
-  "finishedAt": "2026-06-06T07:00:00Z"
+  "finishedAt": "2026-06-06T09:45:00Z"
 }

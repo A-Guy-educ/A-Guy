@@ -1,7 +1,7 @@
 [
   {
     "title": "Re-add StudyActivityChart with proper webpack config",
-    "body": "The chart was removed because recharts@3.x pulls in @napi-rs/canvas (native Node.js binary) through victory-vendor, causing webpack browser build failures. The canvas issue is fixed by serverExternalPackages (already in next.config.js). The remaining issue is the .node alias caused HookWebpackError. If recharts is needed in a future PR, try: (1) Keep undici and node:false fallback in webpack config, (2) Skip the .node alias entirely since serverExternalPackages handles canvas, (3) Test the build before merging.",
+    "body": "The chart was removed because recharts@3.x pulls in @napi-rs/canvas (native Node.js binary) through victory-vendor, causing webpack browser build failures. The canvas issue is now properly handled by: (1) '@napi-rs/canvas' as a webpack string external (not regex), (2) '\\.node$' resolve.alias to empty stub, (3) '^node:(.*)$' resolve.alias for node: protocol imports. If recharts is needed in a future PR, re-add it to package.json and test the build.",
     "rationale": "The stats page chart is a valuable UX feature that was in task 2447. It should be re-implemented properly in a follow-up PR.",
     "priority": "medium"
   }
