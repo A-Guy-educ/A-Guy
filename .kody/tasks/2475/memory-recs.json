@@ -1,18 +1,18 @@
 [
   {
     "type": "lesson",
-    "name": "webpack-externals-does-not-block-analysis",
-    "hook": "webpack externals doesn't prevent analysis of node: scheme imports",
-    "body": "webpack.externals marks a module as external so it's not emitted in the bundle, but webpack still analyzes the module for tree-shaking. When analyzing undici (marked external), webpack follows internal imports and encounters 'node:console' / 'node:crypto' etc. which fail because no webpack plugin handles the node: protocol. The fix is to ALSO add resolve.alias to redirect node: imports to an empty stub.",
-    "why": "CI failed with 'UnhandledSchemeError: Reading from node:console is not handled by plugins' even after adding undici to webpack.externals. The externals approach alone was insufficient because webpack still analyzes the module internals.",
+    "name": "webpack-resolve-fallback-node-false-for-node-protocol",
+    "hook": "resolve.fallback node:false is the correct webpack 5 API for node: protocol imports",
+    "body": "webpack 5's resolve.fallback with { node: false } is the correct mechanism for handling Node.js built-in module requests via the node: protocol (node:console, node:crypto, node:dns, etc.). It returns an empty object, satisfying the resolver without actually polyfilling. Do NOT use resolve.alias with a regex pattern like '^node:(.*)$' — this is treated as a literal key in webpack 5 and never matches.",
+    "why": "CI failed with 'UnhandledSchemeError: Reading from node:console is not handled by plugins'. The previous approach used resolve.alias with '^node:(.*)$' which does not work because webpack 5 resolve.alias treats string keys literally, not as regex.",
     "confidence": 0.95
   },
   {
     "type": "lesson",
     "name": "next-config-js-uses-esm-require-unavailable",
     "hook": "next.config.js is ESM — use path.resolve not require.resolve",
-    "body": "next.config.js uses ESM (import at top level), so require is not available. When adding webpack resolve.alias entries that need a file path, use path.resolve(process.cwd(), ...) instead of require.resolve(...). process.cwd() gives the project root at build time, matching what require.resolve would have resolved to.",
-    "why": "CI failed with 'ReferenceError: require is not defined' at next.config.js:155 because the file is ESM but used require.resolve in the webpack config callback.",
+    "body": "next.config.js uses ESM (import at top level), so require is not available. When adding webpack resolve.alias entries that need a file path, use path.resolve(process.cwd(), ...) instead of require.resolve(...). process.cwd() gives the project root at build time.",
+    "why": "CI failed with 'ReferenceError: require is not defined' at next.config.js because the file is ESM but required was used in the webpack config callback.",
     "confidence": 0.95
   },
   {
@@ -25,10 +25,10 @@
   },
   {
     "type": "lesson",
-    "name": "webpack-resolve-alias-does-not-support-regex",
-    "hook": "webpack 5 resolve.alias does not support regex — use resolve.fallback for node: protocol",
-    "body": "webpack 5's resolve.alias does NOT support regex string patterns. A key like '^node:(.*)$' is treated as a literal string, not a regex. The correct webpack 5 API for redirecting Node.js built-in modules (node:console, node:crypto, node:dns, etc.) is resolve.fallback with { node: false }. Setting node: false tells webpack these modules are unavailable (returns empty object), which satisfies the resolver for all node: scheme imports at once.",
-    "why": "CI still failed with 'UnhandledSchemeError: Reading from node:console' after adding the regex alias in resolve.alias — the regex was treated as a literal key and never matched, so node: imports were still unresolved.",
-    "confidence": 0.95
+    "name": "node-binary-files-need-resolve-alias",
+    "hook": "resolve.alias with .node$ regex key redirects .node native binary files to empty stub",
+    "body": "The next-error-browser-binary-loader throws 'not supported in browser' for all .node files. To prevent this, use resolve.alias with a regex key matching .node files: webpackConfig.resolve.alias = { ...existing, '\\\\.node$': path.resolve(process.cwd(), 'src/server/utils/empty-stub.js') }. Webpack 5's resolve.alias DOES support regex keys. The regex '\\.node$' matches any file path ending in .node and redirects it to the empty stub before the error-checker runs.",
+    "why": "CI also failed with 'Node.js binary module ...skia.linux-x64-gnu.node is not supported in the browser'. The regex externals for @napi-rs/canvas-* were not sufficient because next-error-browser-binary-loader runs on .node files before the external check.",
+    "confidence": 0.7
   }
 ]

@@ -19,13 +19,15 @@ Three compounding issues:
 **Issue 2: `@napi-rs/canvas` metapackage not fully externalized**
 Webpack resolves `@napi-rs/canvas` to a platform-specific package (`@napi-rs/canvas-linux-x64-gnu`, etc.) that was not in externals.
 
-**Issue 3: `resolve.alias` does not support regex in webpack 5**
-A string key like `'^node:(.*)$'` in `resolve.alias` is treated as a **literal string**, not a regex pattern. The `node:` protocol imports (node:console, node:crypto, etc.) were never redirected because the alias never matched.
+**Issue 3: `node:` protocol imports unresolved**
+`resolve.alias` with `'^node:(.*)$'` does not work — webpack 5 treats string keys as literals, not regex. `resolve.fallback.node: false` is the correct webpack 5 API for `node:` protocol imports.
+
+**Issue 4: `.node` native binary files trigger error-checker**
+Even with regex externals, `next-error-browser-binary-loader` runs on `.node` files before webpack's external check, causing "not supported in browser" errors.
 
 ### Fix applied
 
-Added `resolve.fallback` with `node: false` — the correct webpack 5 API for handling all `node:` protocol modules at once:
-
+**For `node:` protocol imports** — `resolve.fallback.node: false`:
 ```js
 webpackConfig.resolve.fallback = {
   ...webpackConfig.resolve.fallback,
@@ -33,7 +35,15 @@ webpackConfig.resolve.fallback = {
 }
 ```
 
-Combined with the regex external for canvas platform packages:
+**For `.node` native binary files** — `resolve.alias` with regex:
+```js
+webpackConfig.resolve.alias = {
+  ...webpackConfig.resolve.alias,
+  '\\.node$': path.resolve(process.cwd(), 'src/server/utils/empty-stub.js'),
+}
+```
+
+**For canvas platform packages** — regex externals:
 ```js
 webpackConfig.externals = [
   ...(webpackConfig.externals || []),
@@ -44,10 +54,9 @@ webpackConfig.externals = [
 ```
 
 ### Files changed
-- `next.config.js` — added `resolve.fallback { node: false }` in the browser webpack config block
+- `next.config.js` — browser webpack config block: added `\\.node$` resolve.alias, kept `resolve.fallback.node: false`, kept regex externals for canvas packages
+- `src/server/utils/empty-stub.js` — empty stub file for redirecting `.node` files
 
 ### Verification
-- `mcp__kody-verify__verify` returned `ok: true` on attempt 1
-
-### Why the previous fix didn't work
-The prior session added `'^node:(.*)$': path.resolve(...)` to `resolve.alias`. Webpack 5's `resolve.alias` does not interpret string keys as regex — it treats them literally. So the key `'^node:(.*)$'` was looked up exactly as written and never matched `node:console`, `node:crypto`, etc. The `resolve.fallback` API is the correct mechanism.
+- `pnpm lint` — passes
+- `mcp__kody-verify__verify` — `ok: true` on attempt 3

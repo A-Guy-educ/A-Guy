@@ -138,35 +138,26 @@ const nextConfig = {
     })
 
     if (!isServer) {
+      // Redirect all .node native binary file paths to an empty stub for browser builds.
+      // The .node files (e.g., skia.linux-x64-gnu.node) are native binaries that cannot
+      // be bundled. next-error-browser-binary-loader throws "not supported in browser"
+      // when it encounters them, but resolve.alias redirects them before that runs.
+      webpackConfig.resolve.alias = {
+        ...webpackConfig.resolve.alias,
+        '\\.node$': path.resolve(process.cwd(), 'src/server/utils/empty-stub.js'),
+      }
+
       // Externalize native Node.js modules that cannot be bundled for the browser.
-      // externals prevents webpack from emitting these modules in the output, but
-      // webpack still analyzes them for tree-shaking. The node: scheme imports
-      // within undici (@napi-rs/canvas, etc.) cause webpack to fail during analysis.
-      // Additionally alias node: protocol imports to empty objects so webpack
-      // doesn't try to resolve them (they are never called in browser code anyway).
       webpackConfig.externals = [
         ...(webpackConfig.externals || []),
         '@napi-rs/canvas',
-        // Platform-specific @napi-rs/canvas-* packages resolved by the metapackage
-        // These contain .node native binaries that cannot be bundled for the browser
         /^@napi-rs\/canvas-/,
         'undici',
       ]
 
-      webpackConfig.resolve.alias = {
-        ...webpackConfig.resolve.alias,
-        // Redirect all node: protocol imports to an empty object for browser builds.
-        // webpack still analyzes these modules for tree-shaking even when external,
-        // and encounters node:console / node:crypto / etc. which it cannot resolve.
-        // Since these are server-only code paths that never execute in the browser,
-        // aliasing to an empty object is safe and allows the build to complete.
-        '^node:(.*)$': path.resolve(process.cwd(), 'src/server/utils/empty-stub.js'),
-      }
-
       // Use fallback to handle all node: protocol imports in browser builds.
-      // This is the correct webpack 5 API for redirecting Node.js built-in modules.
-      // Setting node: false tells webpack the module is unavailable (empty object),
-      // which satisfies the resolver for all node:console, node:crypto, node:dns, etc.
+      // This is the correct webpack 5 API for redirecting Node.js built-in modules
+      // (node:console, node:crypto, node:dns, etc.) to an empty object.
       webpackConfig.resolve.fallback = {
         ...webpackConfig.resolve.fallback,
         node: false,

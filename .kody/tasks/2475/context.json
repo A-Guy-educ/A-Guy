@@ -2,15 +2,15 @@
   "taskId": "2475",
   "taskType": "pr",
   "target": "2449-p2-frontend-login-form-silently-fails-session-not",
-  "outcome": "success",
+  "outcome": "partial",
   "exitCode": 0,
-  "reason": "Fixed webpack browser build failure — added resolve.fallback { node: false } so webpack 5 correctly redirects all node: protocol imports (node:console, node:crypto, node:dns, etc.) instead of treating the regex alias string as a literal key",
+  "reason": "Fixed webpack browser build — replaced ineffective regex alias ^node:(.*)$ with \\.node$ alias to redirect .node native binaries to empty stub, and kept resolve.fallback node:false for node: protocol imports. Local verify passes (ok: true).",
   "prUrl": null,
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27033310125",
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27037408747",
   "filesTouched": [
     "next.config.js"
   ],
   "sessionLog": null,
-  "startedAt": "2026-06-05T18:00:00Z",
-  "finishedAt": "2026-06-05T18:55:00Z"
+  "startedAt": "2026-06-06T00:00:00Z",
+  "finishedAt": "2026-06-06T00:15:00Z"
 }
