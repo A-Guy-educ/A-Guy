@@ -1,19 +1,19 @@
 {
   "version": 1,
-  "rev": 126,
+  "rev": 127,
   "cursor": "idle",
   "data": {
     "failingChecks": [
       "audit",
       "cleanup"
     ],
-    "lastFiredAt": "2026-06-06T09:33:06.555Z",
+    "lastFiredAt": "2026-06-06T10:32:37.303Z",
     "lastOutcome": "completed",
     "lastResolution": "CI RED — fix already in flight (issue #2349)",
     "sha": "158e095149c2a768249c11645013fbd95fd91b6c",
     "trackingIssue": 2349,
     "note": "CI is RED but tracking issue #2349 still open — fix in flight, no dispatch needed",
-    "lastDurationMs": 25274
+    "lastDurationMs": 35132
   },
   "done": false
 }
