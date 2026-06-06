@@ -1,8 +1,12 @@
 import { withPayload } from '@payloadcms/next/withPayload'
 import { withSentryConfig } from '@sentry/nextjs'
+import { createRequire } from 'module'
 import path from 'path'
 
 import redirects from './redirects.js'
+
+// createRequire lets us use require() inside an ESM module (next.config.js uses ESM)
+const require = createRequire(import.meta.url)
 
 const NEXT_PUBLIC_SERVER_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
   ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
