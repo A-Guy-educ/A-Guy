@@ -1,15 +1,13 @@
 {
   "version": 1,
-  "rev": 48,
+  "rev": 49,
   "cursor": "reported",
   "data": {
-    "cycle": 10,
-    "lastRunISO": "2026-06-06T05:12:14Z",
-    "nextEligibleISO": "2026-06-06T11:12:14Z",
+    "lastRunISO": "2026-06-06T11:49:22Z",
+    "nextEligibleISO": "2026-06-06T17:49:22Z",
+    "cycle": 11,
     "reviewed": [
-      "approval-gate",
-      "architecture-audit",
-      "ceo-performance-review"
+      "cleanup-branches"
     ],
     "verdicts": {
       "approval-gate": {
@@ -25,7 +23,7 @@
         "verdict": "broken"
       },
       "cleanup-branches": {
-        "note": "no per-tick procedure; policy-only; no gh write method",
+        "note": "no per-tick procedure; policy-only; no gh write method to persist state",
         "verdict": "broken"
       },
       "clear-empty-goals": {
@@ -113,9 +111,9 @@
         "verdict": "warn"
       }
     },
-    "lastFiredAt": "2026-06-06T05:13:35.821Z",
+    "lastFiredAt": "2026-06-06T11:49:45.811Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 97699
+    "lastDurationMs": 120869
   },
   "done": false
 }
