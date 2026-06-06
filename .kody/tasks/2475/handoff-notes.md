@@ -1,19 +1,31 @@
-## Fix: CI Build Failure on PR #2475 (native .node binary not supported in browser)
+## Fix: CI Build Failure on PR #2475 — node: URL scheme not intercepted
 
 ### Root Cause
-The previous fix attempt (commit 170318bf5) removed the `NodeSchemePlugin` block but inadvertently also removed the `\\.node$` alias and `resolve.fallback.node: false` that were part of the same webpack block. Without the `\\.node$` alias, webpack tries to load `@napi-rs/canvas`'s native `.node` binary (skia.linux-x64-gnu.node) in the browser build, causing: "Error: Node.js binary module ... is not supported in the browser."
+The previous fix re-added the `\.node$` alias and `resolve.fallback.node: false` to the client webpack config, but this only handles:
+- `\.node$` → file paths ending in `.node` (native binaries)
+- `resolve.fallback.node: false` → bare `require('node')` module requests
+
+It does NOT handle `node:console`, `node:crypto`, `node:dns`, `node:diagnostics_channel` which are URL scheme imports (`require('node:console')`).
+
+These imports come from undici's mock utility files (`pending-interceptors-formatter.js`, `snapshot-utils.js`, `dns.js`, etc.) which are pulled into the browser webpack via Payload's `safeFetch.js`.
 
 ### Fix Applied
-Re-added only the `\\.node$` alias and `resolve.fallback.node: false` (not `NodeSchemePlugin`) to the client webpack config. The condition uses `webpackConfig.name === 'client'` to target client builds only. Also restored the `import path from 'path'` that was removed in commit 170318bf5.
+Added `resolve.alias` entries for each `node:` URL scheme import:
+- `'node:console': stubPath`
+- `'node:crypto': stubPath`
+- `'node:dns': stubPath`
+- `'node:diagnostics_channel': stubPath`
+
+This redirects all `node:` URL scheme imports in browser builds to the empty stub, preventing webpack from failing to resolve them.
 
 ### Files Changed
-- `next.config.js` — added `path` import and client-build-only `\\.node$` alias + `resolve.fallback.node: false`
+- `next.config.js` — added 4 `node:` URL scheme aliases to client webpack resolve.alias
 
 ### Key Insight
-- `NodeSchemePlugin` was correctly removed (it caused `tap` errors on `resolverFactory.hooks.resolve`)
-- The `\\.node$` alias and `resolve.fallback.node` were NOT part of `NodeSchemePlugin` and should NOT have been removed
-- They are still needed to prevent webpack from trying to load native addon binaries in browser builds
-- `webpackConfig.name === 'client'` is the correct way to target only the client webpack compilation
+`resolve.fallback` and `resolve.alias` are separate webpack mechanisms:
+- `resolve.fallback` maps bare module names to fallback paths
+- `resolve.alias` maps exact module names/patterns to alternative paths
+- The `node:` URL scheme is NOT handled by `resolve.fallback.node: false`
 
 ### Verification
 - `mcp__kody-verify__verify` — ok: true, attempt 1

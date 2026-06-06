@@ -4,11 +4,11 @@
   "target": "2449-p2-frontend-login-form-silently-fails-session-not",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Build failed because the \\.node$ alias (redirecting native addon binaries to empty-stub.js) was removed along with NodeSchemePlugin in the previous fix attempt. Re-added the alias targeting client builds only (webpackConfig.name === 'client'), along with resolve.fallback.node: false. The empty-stub.js file already existed from the prior branch state.",
+  "reason": "Added node: URL scheme aliases (node:console, node:crypto, node:dns, node:diagnostics_channel) to resolve.alias in client webpack config. resolve.fallback.node: false only handles 'node' (no colon), not 'node:console' etc. URL scheme imports from undici's mock utilities. verify passes (ok: true, attempt 1).",
   "prUrl": null,
   "runUrl": null,
   "filesTouched": ["next.config.js"],
-  "sessionLog": ".kody/sessions/2475-5.jsonl",
-  "startedAt": "2026-06-06T19:10:00Z",
-  "finishedAt": "2026-06-06T19:15:00Z"
+  "sessionLog": ".kody/sessions/2475-6.jsonl",
+  "startedAt": "2026-06-06T19:40:00Z",
+  "finishedAt": "2026-06-06T19:42:00Z"
 }

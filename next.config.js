@@ -146,6 +146,13 @@ const nextConfig = {
       webpackConfig.resolve.alias = {
         ...webpackConfig.resolve.alias,
         '\\.node$': stubPath,
+        // Intercept node: URL scheme imports from undici's mock utilities.
+        // These are server-only modules that must never execute in the browser.
+        // resolve.fallback.node: false only handles 'node' (no colon), not 'node:console' etc.
+        'node:console': stubPath,
+        'node:crypto': stubPath,
+        'node:dns': stubPath,
+        'node:diagnostics_channel': stubPath,
       }
       webpackConfig.resolve.fallback = {
         ...webpackConfig.resolve.fallback,

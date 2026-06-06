@@ -38,5 +38,13 @@
     "body": "When removing NodeSchemePlugin, the \\.node$ resolve.alias and resolve.fallback.node: false must be kept — they are independent of the plugin. Removing them causes the .node native binary to be processed by the browser webpack, producing 'Node.js binary module is not supported in the browser'. Use webpackConfig.name === 'client' as the condition for client-only webpack config changes.",
     "why": "The previous fix removed the entire block including the .node$ alias, not understanding that the alias and the plugin serve different purposes. The plugin was for node: scheme handling; the alias is for .node file paths. Both are needed for the browser build to succeed.",
     "confidence": 0.95
+  },
+  {
+    "type": "lesson",
+    "name": "resolve-fallback-vs-resolve-alias-for-node-url-scheme",
+    "hook": "resolve.fallback.node: false does NOT intercept node: URL scheme imports",
+    "body": "webpack resolve.fallback.node handles 'node' bare module requests (require('node')), NOT 'node:console' URL scheme requests. The node: URL scheme is resolved via a separate webpack mechanism (resolveForScheme). To intercept node: URL scheme imports, you must use resolve.alias entries for each specific module ('node:console', 'node:crypto', etc.).",
+    "why": "The previous fix added resolve.fallback.node: false thinking it would handle all node: imports, but it only handles the bare 'node' module name. The node: URL scheme is a separate resolution path in webpack 5.",
+    "confidence": 0.95
   }
 ]
