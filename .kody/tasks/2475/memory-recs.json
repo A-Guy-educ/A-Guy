@@ -1,58 +1,42 @@
 [
   {
     "type": "lesson",
-    "name": "nextjs-webpack-callback-isclient-undefined",
-    "hook": "Next.js 15.5.9 webpack callback only passes isServer, not isClient",
-    "body": "The second argument to the next.config.js webpack function receives { dir, dev, isServer, buildId, config, defaultLoaders, totalPages, webpack, nextRuntime } — isClient is NOT included. Destructuring { isClient } gives undefined, and !undefined === true, so any !isClient conditional runs for ALL builds (client, server, edge). Use webpackConfig.name === 'client' or webpackConfig.name === 'server' to identify the build target.",
-    "why": "Task 2476 changed webpack: (webpackConfig) to webpack: (webpackConfig, { isClient }) intending to differentiate client from server builds, but isClient is not a valid parameter in Next.js 15.5.9. This caused undici/@napi-rs/canvas to be added to externals for client builds too, breaking the browser build with _webpack.WebpackError is not a constructor during minification.",
+    "name": "resolve-fallback-node-false-breaks-minify-webpack-plugin",
+    "hook": "resolve.fallback.node: false causes _webpack.WebpackError is not a constructor in Next.js 15.5.9",
+    "body": "Setting resolve.fallback.node: false in the webpack callback causes the minify-webpack-plugin to fail with '_webpack.WebpackError is not a constructor' during minification. This happens because when node: imports resolve to false (due to fallback), and the bundle code tries to use those false values, it causes JavaScript errors that webpack tries to wrap in WebpackError. But WebpackError is not exported from Next.js 15.5.9's bundled webpack (bundle5.js). The fix is to NOT set resolve.fallback.node: false at all — if packages containing node: imports are in serverExternalPackages, they are excluded from the client bundle entirely.",
+    "why": "The minify-webpack-plugin tries to construct new _webpack.WebpackError(...) to report errors during minification, but _webpack.WebpackError is undefined in Next.js 15.5.9's webpack bundle. The error being reported is a side effect of resolve.fallback.node: false returning false for node: imports.",
+    "confidence": 0.9
+  },
+  {
+    "type": "lesson",
+    "name": "node-protocol-bypasses-resolve-fallback",
+    "hook": "resolve.fallback.node does NOT intercept node: URL scheme imports — use externals instead",
+    "body": "webpack resolve.fallback.node handles bare 'node' module requests (require('node')), NOT 'node:console' URL scheme requests. The node: URL scheme is resolved via webpack's resolveForScheme mechanism, which is separate from resolve.fallback. Setting resolve.fallback.node: false only returns false for require('node'), not for require('node:console'). To prevent webpack from analyzing a package's node: imports, mark the package as external in webpackConfig.externals (so webpack never analyzes its code) and ensure it is in Next.js serverExternalPackages (so Next.js doesn't bundle it for client).",
+    "why": "resolve.fallback.node: false was added thinking it would handle all node: imports, but it only handles the bare 'node' module name. node:console, node:crypto, etc. bypass resolve.fallback entirely.",
     "confidence": 0.95
   },
   {
     "type": "lesson",
-    "name": "webpack-config-require-in-callback",
-    "hook": "require works inside webpack config callbacks even when next.config.js is ESM",
-    "body": "Webpack config callbacks (the function passed to webpack:) run in Node.js at build time, not at config-file-load time. This means `require` is available inside the callback even when next.config.js uses ESM imports at the top level. This allows accessing Next.js's bundled webpack modules via `require('next/dist/compiled/webpack/webpack.js')` from inside the callback.",
-    "why": "Next.js 15's next.config.js is ESM at the top level, but webpack bundling happens at runtime in Node.js. The callback is evaluated by Node.js directly, not by an ESM module loader. This is the bridge between the ESM config file and CommonJS webpack internals.",
+    "name": "serverexternalpackages-prevents-client-bundling",
+    "hook": "packages in serverExternalPackages are excluded from client bundles by Next.js",
+    "body": "When a package is listed in Next.js serverExternalPackages (next.config.js), Next.js prevents it from being bundled into client-side JavaScript bundles. This means webpack never sees the package's internal code in the client build context. Both undici and @napi-rs/canvas are already in serverExternalPackages, so any .node$ alias or resolve.fallback configuration is redundant for the client build.",
+    "why": "serverExternalPackages is Next.js's declarative way of marking packages as server-only. WebpackConfig.externals is webpack's mechanism. Both work together: serverExternalPackages prevents Next.js from bundling, webpackConfig.externals prevents webpack from analyzing.",
     "confidence": 0.95
   },
   {
     "type": "lesson",
-    "name": "nodeprotocol-webpack-plugin-alternative-fails",
-    "hook": "NodeSchemePlugin using resolverFactory.hooks.resolve causes tap undefined error in Next.js 15.5.9",
-    "body": "Trying to handle node: protocol imports via a custom webpack plugin that taps resolverFactory.hooks.resolve fails with 'Cannot read properties of undefined (reading tap)'. In Next.js 15.5.9, resolverFactory.hooks.resolve does not exist — the approach of tapping resolveForScheme.for('node') via a plugin fails because the underlying resolver hook structure is different from expected.",
-    "why": "The NodeSchemePlugin approach was technically sound in concept but failed because resolverFactory.hooks.resolve is undefined in Next.js 15.5.9s bundled webpack. The actual fix is to NOT handle node: imports at all — since undici and @napi-rs/canvas are in serverExternalPackages, webpack never processes their node: imports in browser builds.",
+    "name": "isclient-always-undefined-nextjs-15-webpack-callback",
+    "hook": "isClient is always undefined in Next.js 15.5.9 webpack callback — !isClient is always true",
+    "body": "In Next.js 15.5.9, the webpack callback second argument only contains { dir, dev, isServer, buildId, config, defaultLoaders, totalPages, webpack, nextRuntime }. isClient is NOT a parameter. Destructuring { isClient } gives undefined, and !undefined === true. This means any conditional like if (!isClient) { /* runs for all builds */ } behaves the same as if (true). The correct way to identify the client build is webpackConfig.name === 'client'.",
+    "why": "The webpack callback was refactored to use webpackConfig.name !== 'client' instead of !isClient to differentiate client from server builds. But !isClient being always true is actually correct behavior for the externals use case (preventing webpack from analyzing undici in ALL builds).",
     "confidence": 0.95
   },
   {
     "type": "lesson",
-    "name": "resolve-alias-cannot-intercept-node-protocol",
-    "hook": "resolve.alias cannot intercept node: URL scheme imports",
-    "body": "webpack resolve.alias uses exact string matching (or $ suffix for exact match), but it does NOT interpret regex patterns. A key like '^node:' or '\\.node$' in resolve.alias will match literal module names, not node: URL scheme imports. The '\\.node$' pattern only matches file paths ending in .node, not the node: protocol.",
-    "why": "The `node:` protocol is a separate resolution path in webpack 5 from module name resolution. resolve.alias operates on module names, not URL schemes.",
-    "confidence": 0.95
-  },
-  {
-    "type": "lesson",
-    "name": "serverexternalpackages-sufficient-for-node-imports",
-    "hook": "packages in serverExternalPackages never have their node: imports processed by webpack browser build",
-    "body": "When a package is listed in serverExternalPackages, webpack treats it as external and never analyzes its internal modules for browser builds. This means undici's internal node: imports are never encountered in the browser bundle, making any explicit node: protocol handling unnecessary.",
-    "why": "The dev branch builds without any node: protocol handling because undici is already in serverExternalPackages. The previous attempts to handle node: imports were solving a problem that doesn't exist when the root cause (webpack analyzing undici internals) is prevented by serverExternalPackages.",
-    "confidence": 0.95
-  },
-  {
-    "type": "lesson",
-    "name": "node-alias-survived-after-nodeprotocol-plugin-removal",
-    "hook": "The \\.node$ alias and resolve.fallback.node must be kept separate from NodeSchemePlugin removal",
-    "body": "When removing NodeSchemePlugin, the \\.node$ resolve.alias and resolve.fallback.node: false must be kept — they are independent of the plugin. The plugin was for node: scheme handling; the alias is for .node file paths. Both are needed for the browser build to succeed. Use webpackConfig.name === 'client' as the condition for client-only webpack config changes.",
-    "why": "The previous fix removed the entire block including the .node$ alias, not understanding that the alias and the plugin serve different purposes.",
-    "confidence": 0.95
-  },
-  {
-    "type": "lesson",
-    "name": "resolve-fallback-vs-resolve-alias-for-node-url-scheme",
-    "hook": "resolve.fallback.node: false does NOT intercept node: URL scheme imports",
-    "body": "webpack resolve.fallback.node handles 'node' bare module requests (require('node')), NOT 'node:console' URL scheme requests. The node: URL scheme is resolved via a separate webpack mechanism (resolveForScheme). To intercept node: URL scheme imports, you must use resolve.alias entries for each specific module ('node:console', 'node:crypto', etc.) or mark the package as external.",
-    "why": "The previous fix added resolve.fallback.node: false thinking it would handle all node: imports, but it only handles the bare 'node' module name. The node: URL scheme is a separate resolution path in webpack 5.",
+    "name": "empty-stub-file-not-needed",
+    "hook": "The empty-stub.js file is unnecessary when packages are in serverExternalPackages",
+    "body": "The empty-stub.js was created to serve as a webpack resolve.alias target for .node$ patterns, in case any native binary paths needed stubbing. But since undici and @napi-rs/canvas are in serverExternalPackages, they never enter the client bundle, making the stub file unnecessary. The .node$ alias was also causing the minify-webpack-plugin error.",
+    "why": "If packages are properly excluded from the client bundle via serverExternalPackages, there is no need for .node$ alias or empty-stub files.",
     "confidence": 0.95
   }
 ]

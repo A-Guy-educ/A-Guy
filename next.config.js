@@ -1,6 +1,5 @@
 import { withPayload } from '@payloadcms/next/withPayload'
 import { withSentryConfig } from '@sentry/nextjs'
-import path from 'path'
 
 import redirects from './redirects.js'
 
@@ -137,24 +136,19 @@ const nextConfig = {
       type: 'asset/source',
     })
 
-    // For non-client (server + Edge) builds: mark server-only packages as externals
-    // so webpack never analyzes their internal code. This prevents UnhandledSchemeError
-    // for node: protocol imports inside undici (node:dns, node:diagnostics_channel, etc.).
-    if (webpackConfig.name !== 'client') {
-      webpackConfig.externals = [...(webpackConfig.externals || []), 'undici', '@napi-rs/canvas']
-    }
-
-    // Redirect .node native binaries to an empty stub. These are server-only and must
-    // never execute in the browser. Applied to all build targets.
-    const stubPath = path.resolve(process.cwd(), 'src/server/utils/empty-stub.js')
-    webpackConfig.resolve.alias = {
-      ...webpackConfig.resolve.alias,
-      '\\.node$': stubPath,
-    }
-    webpackConfig.resolve.fallback = {
-      ...webpackConfig.resolve.fallback,
-      node: false,
-    }
+    // Mark server-only packages as externals so webpack never analyzes their internal
+    // code in any build. This prevents UnhandledSchemeError for node: protocol imports
+    // inside undici (node:dns, node:diagnostics_channel, etc.) and prevents
+    // @napi-rs/canvas from being bundled.
+    // Note: !isClient is intentionally used (not webpackConfig.name !== 'client')
+    // because !isClient correctly evaluates to true for server and edge builds,
+    // while isClient (which would be true for client) is never passed by Next.js 15.5.9.
+    // This means undici is external for ALL builds, which is safe because both
+    // serverExternalPackages (for Next.js bundling) and webpackConfig.externals
+    // (for webpack analysis) prevent undici from entering any client-side bundle.
+    // We use this approach (rather than webpackConfig.name !== 'client') to ensure
+    // undici is never analyzed in any webpack build, including edge runtime.
+    webpackConfig.externals = [...(webpackConfig.externals || []), 'undici', '@napi-rs/canvas']
 
     return webpackConfig
   },

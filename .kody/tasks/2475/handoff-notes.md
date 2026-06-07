@@ -1,24 +1,21 @@
 ## Fix: CI Build Failure on PR #2475 — `_webpack.WebpackError is not a constructor`
 
 ### Root Cause
-The webpack callback in `next.config.js` was changed from `webpack: (webpackConfig) =>` to `webpack: (webpackConfig, { isClient }) =>`. However, Next.js 15.5.9 does NOT pass `isClient` to the webpack callback — it only passes `isServer`. Destructuring `{ isClient }` from the second argument gives `undefined`, and `!undefined === true`.
-
-This meant `if (!isClient)` was `true` for ALL webpack builds (client, server, and edge), so `undici` and `@napi-rs/canvas` were incorrectly added to `webpackConfig.externals` for the client build. When webpack tried to process the client bundle, it encountered the error (likely an unhandled resolution issue) and then failed to report it properly via `new _webpack.WebpackError(...)` in the minify-webpack-plugin.
+The previous task 2475 attempt changed the webpack callback from `!isClient` to `webpackConfig.name !== 'client'`. However, `isClient` is always `undefined` in Next.js 15.5.9's webpack callback (only `isServer` is passed). The `.node$` alias (pointing to `empty-stub.js`) and `resolve.fallback.node: false` were being applied to ALL builds including the client build. These settings caused the minify-webpack-plugin to fail when it tried to report an error during minification — `_webpack.WebpackError` is not exported from Next.js 15.5.9's bundled webpack.
 
 ### Fix Applied
-Reverted to `webpack: (webpackConfig) =>` and changed the condition from `!isClient` to `webpackConfig.name !== 'client'`.
+1. **Removed** the `\\.node$` resolve.alias and `resolve.fallback.node: false` settings — these were unnecessary (undici and @napi-rs/canvas are in `serverExternalPackages`) and were causing the minify-webpack-plugin error.
 
-- `webpackConfig.name === 'client'` for browser bundle
-- `webpackConfig.name === 'server'` for server bundle
-- `webpackConfig.name === 'edge-server'` for Edge bundle
+2. **Removed** the unused `path` import and `src/server/utils/empty-stub.js` file.
 
-This correctly applies the `externals` entry only for server + Edge builds, while the `.node$` alias and `node: false` fallback are applied to all builds as intended.
+3. **Kept** undici and @napi-rs/canvas in `webpackConfig.externals` using `!isClient` (always `true` since `isClient` is `undefined`). This ensures webpack never analyzes undici's code in any build. Safe because `serverExternalPackages` prevents them from entering the client bundle in the first place.
 
 ### Files Changed
-- `next.config.js` — removed `{ isClient }` parameter, restored `(webpackConfig)`, changed condition to `webpackConfig.name !== 'client'`
+- `next.config.js` — removed `.node$` alias, `resolve.fallback.node: false`, `path` import; simplified externals
+- `src/server/utils/empty-stub.js` — deleted (no longer needed)
 
 ### Key Insight
-Next.js 15.5.9 webpack callback second argument: `{ dir, dev, isServer, buildId, config, defaultLoaders, totalPages, webpack, nextRuntime }`. `isClient` does NOT exist — use `webpackConfig.name === 'client'` to identify the browser build.
+In Next.js 15.5.9 webpack callback, `isClient` is always `undefined`. The `.node$` alias and `resolve.fallback.node: false` were the actual cause of the CI failure — not the `!isClient` condition. Both undici and @napi-rs/canvas are already in `serverExternalPackages`, so the `.node$` alias was redundant. The `resolve.fallback.node: false` does not intercept `node:` protocol imports (they bypass `resolve.fallback`), so it provided no benefit but caused minification to fail.
 
 ### Verification
-- `mcp__kody-verify__verify` — ok: true, attempt 1
+- `mcp__kody-verify__verify` — ok: true, attempt 2
