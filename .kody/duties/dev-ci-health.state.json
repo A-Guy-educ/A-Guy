@@ -1,18 +1,18 @@
 {
   "version": 1,
-  "rev": 167,
+  "rev": 168,
   "cursor": "idle",
   "data": {
     "failingChecks": [
       "Integration Tests"
     ],
-    "lastFiredAt": "2026-06-07T15:47:01.604Z",
+    "lastFiredAt": "2026-06-07T16:20:10.088Z",
     "lastOutcome": "completed",
     "lastResolution": "fix-in-flight",
     "note": "Issue #2349 already open — fix in flight, stopped",
     "sha": "6438ed3316cb9c8fdd3788b7ca37c8f1cf795c11",
     "trackingIssue": 2349,
-    "lastDurationMs": 23229
+    "lastDurationMs": 25024
   },
   "done": false
 }
