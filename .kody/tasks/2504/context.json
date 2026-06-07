@@ -1,0 +1,18 @@
+{
+  "taskId": "2504",
+  "taskType": "issue",
+  "target": "2504-p2-ask-route-redirects-to-start-instead-of-renderi",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed middleware - removed /ask from protectedPaths array",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/middleware.ts",
+    "tests/int/auth-middleware.int.spec.ts",
+    "tests/int/ask-page-redirect.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/gh-27101057335-1.jsonl",
+  "startedAt": "2026-06-07T18:41:00Z",
+  "finishedAt": "2026-06-07T18:43:30Z"
+}

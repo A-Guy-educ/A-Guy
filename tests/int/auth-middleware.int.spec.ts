@@ -25,7 +25,6 @@ describe('Auth Middleware - Learning Feature Protection', () => {
       '/study',
       '/practice',
       '/test',
-      '/ask',
       '/courses/math/chapters/intro/lessons/first-lesson',
       '/courses/science/chapters/chapter-1/lessons/lesson-1/exercises/exercise-1',
     ]
