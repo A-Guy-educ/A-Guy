@@ -176,6 +176,42 @@ export async function verifyPayPalWebhook(body: object, headers: object): Promis
 }
 
 /**
+ * Capture funds for an approved PayPal order.
+ *
+ * Required step in the PayPal v2 flow: an order created with intent: 'CAPTURE'
+ * is NOT auto-captured on buyer approval — the merchant must explicitly POST
+ * to /v2/checkout/orders/{id}/capture, which actually moves money and triggers
+ * the PAYMENT.CAPTURE.COMPLETED webhook our handler relies on.
+ *
+ * Idempotent: PayPal returns 422 ORDER_ALREADY_CAPTURED if the order has
+ * already been captured (e.g. user reloads /checkout/success). We treat that
+ * as a successful no-op so reloading the page doesn't blow up.
+ */
+export async function capturePayPalOrder(orderId: string): Promise<void> {
+  const token = await getPayPalAccessToken()
+
+  const response = await fetch(`${getPayPalApiBase()}/v2/checkout/orders/${orderId}/capture`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'PayPal-Request-Id': `capture-${orderId}`,
+    },
+  })
+
+  if (response.ok) return
+
+  const errorText = await response.text()
+
+  // Already-captured is a benign reload scenario — don't throw.
+  if (response.status === 422 && /ORDER_ALREADY_CAPTURED/.test(errorText)) {
+    return
+  }
+
+  throw new Error(`PayPal order capture failed: ${response.status} ${errorText}`)
+}
+
+/**
  * Refund a PayPal capture
  */
 export async function refundPayPal(

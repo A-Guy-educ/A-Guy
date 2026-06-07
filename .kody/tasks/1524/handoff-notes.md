@@ -1,13 +1,14 @@
-## CI Fix for PR #1524
+## Merge Conflict Resolution for PR #1524
 
-### Root Cause
-`pnpm format:check` was failing because `CHANGELOGOG.md` had Prettier formatting deviations. The CI log showed `kody.config.json` flagged but local check showed `CHANGELOGOG.md` — the file may have been updated between CI run and local check.
+### What I Did
+Resolved merge conflict in `.kody/last-run.jsonl` by taking the HEAD version (the PR branch's session log).
 
-### Fixes Applied
-1. **`CHANGELOGOG.md`**: Ran `pnpm format -- CHANGELOGOG.md` to auto-fix Prettier deviations
+### Why
+The `.kody/last-run.jsonl` file is a session run log that gets overwritten with each Claude Code session. It is not a source file that tracks intentional changes — both HEAD (161 lines) and origin/dev (67 lines) were just different session snapshots. Taking HEAD preserves the most recent session activity.
+
+### Files Touched
+- `.kody/last-run.jsonl` — replaced with HEAD version, conflict markers removed
 
 ### Verification
-All quality gates pass: typecheck, lint, format:check.
-
-### Status
-Format check now green. CI should be green on re-run.
+- File now has 164 lines with zero conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`)
+- File is valid JSONL (session log format)
