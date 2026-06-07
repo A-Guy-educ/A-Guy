@@ -1,0 +1,18 @@
+{
+  "taskId": "2502",
+  "taskType": "issue",
+  "target": "2502",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed HTTP 400 bug: learning-chat schema rejected conversationId: null sent by AgentChatWindow on first message",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/endpoints/agent/learning-chat.ts",
+    "src/server/payload/endpoints/agent/learning-chat/index.ts",
+    "tests/unit/server/endpoints/agent/learning-chat-schema.test.ts"
+  ],
+  "sessionLog": ".kody/runs/gh-27099721362-1/events.jsonl",
+  "startedAt": "2026-06-07T17:33:00Z",
+  "finishedAt": "2026-06-07T17:47:00Z"
+}
