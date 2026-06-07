@@ -1,0 +1,17 @@
+{
+  "taskId": "2497",
+  "taskType": "issue",
+  "target": "2497-p3-admin-user-avatar-blocked-by-csp",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed CSP wildcard for gravatar subdomains",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "next.config.js",
+    "tests/int/csp-vercel-feedback-admin.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/gh-27096227108-1.jsonl",
+  "startedAt": "2026-06-07T15:09:00Z",
+  "finishedAt": "2026-06-07T15:12:30Z"
+}
