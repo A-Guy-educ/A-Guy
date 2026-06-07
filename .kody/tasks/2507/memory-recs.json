@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "relationshipcell-loadrelationshipdocs-bug",
+    "hook": "RelationshipProvider effect only fires when debouncedDocuments REFERENCE changes, not cell VALUE changes",
+    "body": "Payload CMS's RelationshipProvider in list views uses a useReducer + useEffect pattern where loadRelationshipDocs only re-runs when debouncedDocuments REFERENCE changes. When RelationshipCell dispatches a REQUEST action with the same ID set to null vs null (i.e. the key already exists with null), the state reference may not change, so the effect never fires. The cell stays stuck on 'Loading...'. This is a framework-level bug in @payloadcms/ui. Workaround: use a custom Cell component that fetches relationship titles directly rather than relying on the RelationshipProvider batch mechanism.",
+    "why": "The batch-fetch pattern in RelationshipProvider is fragile — it depends on object reference identity of the debounced state, not on the logical content. Custom Cell components bypass this entirely.",
+    "confidence": 0.95
+  }
+]

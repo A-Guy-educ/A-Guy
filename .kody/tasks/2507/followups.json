@@ -1,0 +1,20 @@
+[
+  {
+    "title": "Run pnpm generate:importmap to verify import map is updated",
+    "body": "The import map generator requires BLOB_READ_WRITE_TOKEN and PAYLOAD_SECRET env vars. Set these in .env and run `pnpm generate:importmap` to ensure the new LessonRelationshipCell component is properly registered in the admin import map.",
+    "rationale": "The cell component uses an @/ import path alias which requires the import map to be regenerated.",
+    "priority": "high"
+  },
+  {
+    "title": "Fix the root RelationshipProvider batch-fetch bug in @payloadcms/ui",
+    "body": "The underlying bug — RelationshipProvider's loadRelationshipDocs effect not firing when RelationshipCell dispatches REQUEST — affects all Payload list views using relationship cells. This should ideally be fixed in @payloadcms/ui directly (e.g., by tracking pending IDs in a ref or changing the effect trigger). The custom cell is a workaround.",
+    "rationale": "The workaround only fixes this specific collection. Other collections with relationship fields in list views may exhibit the same bug.",
+    "priority": "medium"
+  },
+  {
+    "title": "Verify the test actually catches the bug by running it against the unfixed code",
+    "body": "Before merging, run the new E2E test against a build WITHOUT the fix to confirm it fails (showing 'Loading...' in the relationship cells). This proves the test is actually testing the right thing.",
+    "rationale": "Without confirming the test fails on the broken code and passes on the fixed code, we don't know if the test is actually validating the fix.",
+    "priority": "medium"
+  }
+]

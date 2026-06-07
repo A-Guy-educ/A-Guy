@@ -1,0 +1,18 @@
+{
+  "taskId": "2507",
+  "taskType": "issue",
+  "target": "2507",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed: created LessonRelationshipCell custom component that bypasses RelationshipProvider batch-fetch, updated collection config, wrote E2E test",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/collections/LessonDuplications.ts",
+    "src/ui/admin/LessonDuplications/Cells/LessonRelationshipCell/index.tsx",
+    "tests/e2e/lesson-duplication-list.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/gh-27103473628-1.jsonl",
+  "startedAt": "2026-06-07T20:10:00.000Z",
+  "finishedAt": "2026-06-07T20:45:00.000Z"
+}
