@@ -1,7 +1,3 @@
-Fixed `TypeError: Cannot read properties of undefined (reading 'error')` at `page.tsx:59`.
+Resolved merge conflict in `.kody/reports/duty-review.md`.
 
-Root cause: The `vi.mock('payload')` in `checkout-success-paypal-return.int.spec.ts` only stubbed `find` and `findByID`, but the real `getPayload()` returns an object that also has a `logger` property. When `capturePayPalOrder` throws in the test (because it's not mocked), the catch block at line 59 calls `payload.logger.error(...)` — but `payload.logger` was `undefined` in the mock.
-
-Fix: Added `logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() }` to the mock returned by `getPayload`.
-
-Also worth noting: `capturePayPalOrder` is not mocked, so any error thrown by that function hits the catch block. Consider whether an explicit mock for `@/lib/payment/paypal` should be added to control test behavior more precisely.
+Both sides modified the same rolling duty-status table. HEAD (PR branch) had Cycle 9 with staff names in the Staff column and mixed cadence values (15m, 30m, 7d). origin/dev had Cycle 13 (newer) with the Staff column cleared and cadence unified to 1d/7d/6h. Took the origin/dev version since it represents the more recent duty review state. No code files were touched; no follow-up work identified.
