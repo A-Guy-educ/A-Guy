@@ -1,19 +1,20 @@
 {
   "version": 1,
-  "rev": 155,
+  "rev": 156,
   "cursor": "idle",
   "data": {
     "failingChecks": [
+      "cleanup",
       "fix-links",
       "refresh"
     ],
-    "lastFiredAt": "2026-06-07T04:10:10.133Z",
+    "lastFiredAt": "2026-06-07T05:55:03.986Z",
     "lastOutcome": "completed",
     "lastResolution": "CI RED",
     "sha": "417ea5fa199f555ade131192fb4d1bcb543e72ea",
     "trackingIssue": 2349,
     "note": "Fix already in flight (issue #2349 open) — no new dispatch",
-    "lastDurationMs": 30523
+    "lastDurationMs": 29144
   },
   "done": false
 }
