@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "rev": 403,
+  "rev": 404,
   "cursor": "idle",
   "data": {
     "prs": {
@@ -30,9 +30,9 @@
         "lastActAt": "2026-06-07T12:57:48Z"
       }
     },
-    "lastFiredAt": "2026-06-07T12:58:26.539Z",
+    "lastFiredAt": "2026-06-07T13:58:10.424Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 99061
+    "lastDurationMs": 254988
   },
   "done": false
 }
