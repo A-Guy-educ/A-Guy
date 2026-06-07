@@ -1,26 +1,18 @@
 [
   {
     "type": "lesson",
-    "name": "serverexternalpackages-not-enough-nextjs-15-webpack",
-    "hook": "serverExternalPackages does not prevent webpack from analyzing undici/@napi-rs/canvas internals",
-    "body": "In Next.js 15.5.9, serverExternalPackages prevents packages from being included in the serverless function bundle, but webpack still analyzes the package code when processing imports from client-side code or other packages. This analysis encounters node: imports (node:console, node:dns, etc.) inside undici, causing UnhandledSchemeError. The fix is to add these packages to webpackConfig.externals for non-client builds (server + edge), which prevents webpack from analyzing their internals entirely.",
-    "why": "webpackConfig.externals and serverExternalPackages serve complementary roles — serverExternalPackages handles the serverless deployment bundling, while webpackConfig.externals prevents webpack's static analysis from processing the package. Both are needed for server-only packages that contain node: imports.",
-    "confidence": 0.9
+    "name": "node-alias-fallback-break-minify-webpack-plugin",
+    "hook": ".node$ resolve.alias and resolve.fallback.node=false break minify-webpack-plugin in Next.js 15.5.9",
+    "body": "webpackConfig.resolve.alias for \\.node$ files combined with resolve.fallback.node=false causes 'WebpackError is not a constructor' error in minify-webpack-plugin. This was explicitly removed in commit b2ae8ce94 ('remove .node$ alias and resolve.fallback that broke minify') but was re-added in 4930aa79b causing the build to fail again. These settings must NOT be added to the webpack config.",
+    "why": "minify-webpack-plugin's buildError function tries to construct new webpack.WebpackError. When resolve.fallback.node=false is set, webpack's handling of node: URL schemes is disrupted in a way that corrupts the webpack module graph, causing WebpackError to not be a proper constructor.",
+    "confidence": 0.85
   },
   {
     "type": "lesson",
-    "name": "webpack-externals-must-be-conditional-isclient",
-    "hook": "webpackConfig.externals must only be added for non-client builds using !isClient guard",
-    "body": "When adding packages to webpackConfig.externals, you MUST use the isClient parameter (second arg to webpack callback) to only add externals for non-client builds. Adding externals unconditionally (or only for server builds using webpackConfig.name checks) can cause the package to be treated as external in ALL webpack builds including client, which breaks the client build because webpack can't find the module at runtime. Use `if (!isClient) { webpackConfig.externals.push(...) }`.",
-    "why": "Next.js 15.5.9's webpack callback receives isClient as a boolean flag. When isClient is true (client build), the externals should NOT be added because the package must be bundled for the browser. When isClient is false or undefined (server/edge), externals should be added because the package is loaded from node_modules at runtime.",
-    "confidence": 0.9
-  },
-  {
-    "type": "lesson",
-    "name": "empty-stub-file-needed-for-node-native-alias",
-    "hook": "webpack resolve.alias for .node$ files requires an actual file to redirect to",
-    "body": "When using webpackConfig.resolve.alias to redirect .node native binary files to a stub, webpack requires the stub path to be an actual file that exists on disk. The empty stub file must be a real .js file (not .ts since webpack resolves .js extensions). Create src/server/utils/empty-stub.js with an empty export.",
-    "why": "webpack's resolve.alias uses the standard webpack resolve algorithm, which requires the target of an alias to exist as a resolvable file. A non-existent path causes webpack to fail with 'cannot find module'.",
-    "confidence": 0.95
+    "name": "serverexternalpackages-sufficient-for-undici-nextjs-15",
+    "hook": "serverExternalPackages alone is sufficient for undici in Next.js 15.5.9 — webpack externals not needed",
+    "body": "The isClient-guarded webpack externals for undici/@napi-rs/canvas were not the fix and added complexity. The undici package is already in serverExternalPackages which prevents it from being included in the serverless bundle. The original UnhandledSchemeError was likely a transient build issue, not a structural problem requiring webpack config changes. Keep the webpack config simple and matching dev.",
+    "why": "serverExternalPackages handles Next.js-level bundling exclusion; webpack externals are a separate mechanism that should not be needed for undici if serverExternalPackages is configured.",
+    "confidence": 0.7
   }
 ]

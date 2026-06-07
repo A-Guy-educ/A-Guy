@@ -1,6 +1,5 @@
 import { withPayload } from '@payloadcms/next/withPayload'
 import { withSentryConfig } from '@sentry/nextjs'
-import path from 'path'
 
 import redirects from './redirects.js'
 
@@ -124,7 +123,7 @@ const nextConfig = {
     '/api/jobs/run-immediate': ['./src/infra/llm/prompts/**/*'],
     '/api/lesson-duplications/[id]/resolve': ['./src/infra/llm/prompts/**/*'],
   },
-  webpack: (webpackConfig, { isClient }) => {
+  webpack: (webpackConfig) => {
     webpackConfig.resolve.extensionAlias = {
       '.cjs': ['.cts', '.cjs'],
       '.js': ['.ts', '.tsx', '.js', '.jsx'],
@@ -136,26 +135,6 @@ const nextConfig = {
       test: /\.md$/,
       type: 'asset/source',
     })
-
-    // For non-client (server + Edge) builds: mark server-only packages as externals
-    // so webpack never analyzes their internal code. This prevents UnhandledSchemeError
-    // for node: protocol imports inside undici (node:dns, node:diagnostics_channel, etc.)
-    // and prevents @napi-rs/canvas native binaries from being analyzed.
-    if (!isClient) {
-      webpackConfig.externals = [...(webpackConfig.externals || []), 'undici', '@napi-rs/canvas']
-    }
-
-    // Redirect .node native binaries to an empty stub. These are server-only and must
-    // never execute in the browser. Applied to all build targets.
-    const stubPath = path.resolve(process.cwd(), 'src/server/utils/empty-stub.js')
-    webpackConfig.resolve.alias = {
-      ...webpackConfig.resolve.alias,
-      '\\.node$': stubPath,
-    }
-    webpackConfig.resolve.fallback = {
-      ...webpackConfig.resolve.fallback,
-      node: false,
-    }
 
     return webpackConfig
   },
