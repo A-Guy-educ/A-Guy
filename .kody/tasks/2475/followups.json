@@ -1,8 +1,8 @@
 [
   {
-    "title": "Upstream fix in Next.js",
-    "body": "Report the WebpackError issue to the Next.js team. The bug is in next@15.5.9's minify-webpack-plugin which uses webpack 5.98.0's compiled webpack bundle that no longer exports WebpackError. When Next.js releases a fix, remove the prebuild script and scripts/patch-next-minify-webpack.cjs.",
-    "rationale": "The root cause is a regression in Next.js 15.5.9 that should be fixed upstream. Once fixed, the patch workaround should be removed.",
+    "title": "Remove @payloadcms/plugin-mcp from externals if plugin is removed",
+    "body": "If @payloadcms/plugin-mcp is removed from plugins/index.ts entirely (not just disabled via MCP_ENABLED=false), remove it from webpackConfig.externals in next.config.js.",
+    "rationale": "Keeping unnecessary externals is harmless but unnecessary cleanup.",
     "priority": "low"
   }
 ]

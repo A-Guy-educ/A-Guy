@@ -142,7 +142,12 @@ const nextConfig = {
     // for node: protocol imports inside undici (node:dns, node:diagnostics_channel, etc.)
     // and prevents @napi-rs/canvas native binaries from being analyzed.
     if (!isClient) {
-      webpackConfig.externals = [...(webpackConfig.externals || []), 'undici', '@napi-rs/canvas']
+      webpackConfig.externals = [
+        ...(webpackConfig.externals || []),
+        'undici',
+        '@napi-rs/canvas',
+        '@payloadcms/plugin-mcp',
+      ]
     }
 
     // Redirect .node native binaries to an empty stub. These are server-only and must

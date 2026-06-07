@@ -1,29 +1,15 @@
-## Fix: CI Build Failure — `_webpack.WebpackError is not a constructor`
+## Fix: CI Build Failure — UnhandledSchemeError for node: URL scheme imports
 
 ### Root Cause
-Next.js 15.5.9 ships with webpack 5.98.0. In this version, `WebpackError` was removed from `next/dist/compiled/webpack/webpack` (which is what `require("next/dist/compiled/webpack/webpack")` returns). The minify-webpack-plugin uses `new _webpack.WebpackError(...)` to construct error objects when minification fails, but `_webpack.WebpackError` is `undefined`, causing `TypeError: _webpack.WebpackError is not a constructor`.
+`@payloadcms/plugin-mcp` was not listed in `webpackConfig.externals` for non-client builds. Even though the plugin is conditionally disabled at runtime (`process.env.MCP_ENABLED !== 'false'` evaluates to `true` by default), the plugin is still statically imported in `plugins/index.ts`, so webpack analyzes its code.
 
-`WebpackError` IS available in `bundle5().webpack.WebpackError`, but the plugin requires the wrong path.
+The plugin transitively imports `@modelcontextprotocol/sdk` which contains `node:fs`, `node:http`, `node:https`, and `node:module` imports. Webpack's client build doesn't handle `node:` URL schemes — only `data:` and `file:` — causing `UnhandledSchemeError`.
 
 ### Fix Applied
-Created `scripts/patch-next-minify-webpack.cjs` — a Node.js script that:
-1. Finds all installed copies of the minify-webpack-plugin source file in `node_modules/.pnpm`
-2. Checks for a `// __PATCHED_MINIFY_WEBPACK_PLUGIN__` marker to avoid double-patching
-3. Replaces the `buildError` function to use `Error` as a fallback when `WebpackError` is unavailable
-
-Added to `package.json`:
-```json
-"prebuild": "node scripts/patch-next-minify-webpack.cjs"
-```
-
-The `prebuild` script runs automatically before every `pnpm build`, ensuring the patch is applied regardless of whether `node_modules` came from a fresh install or a cache restore.
+Added `@payloadcms/plugin-mcp` to `webpackConfig.externals` in the non-client build configuration in `next.config.js`. This tells webpack to treat the plugin as a Node.js native module and not analyze its internal code, avoiding the `node:` import errors entirely.
 
 ### Files Changed
-- `package.json` — added `"prebuild": "node scripts/patch-next-minify-webpack.cjs"` before the build script
-- `scripts/patch-next-minify-webpack.cjs` (new) — patches minify-webpack-plugin to handle missing WebpackError
-
-### Why a prebuild script instead of patch-package
-`patch-package` requires adding a new devDependency and configuring `.npmrc` for pnpm's postinstall scripts. A simple prebuild patching script achieves the same result without new dependencies and works reliably with pnpm's caching model.
+- `next.config.js` — added `@payloadcms/plugin-mcp` to the externals list for non-client builds
 
 ### Verification
-- `mcp__kody-verify__verify` — ok: true, attempt 2
+- `mcp__kody-verify__verify` — ok: true, attempt 1
