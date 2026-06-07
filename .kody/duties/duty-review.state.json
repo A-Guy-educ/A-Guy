@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "rev": 52,
+  "rev": 53,
   "cursor": "reported",
   "data": {
     "cycle": 12,
-    "lastFiredAt": "2026-06-07T07:30:21.436Z",
+    "lastFiredAt": "2026-06-07T13:49:43.649Z",
     "lastOutcome": "completed",
     "lastRunISO": "2026-06-07T07:29:51Z",
     "nextEligibleISO": "2026-06-07T13:29:51Z",
@@ -116,7 +116,7 @@
         "verdict": "warn"
       }
     },
-    "lastDurationMs": 337642
+    "lastDurationMs": 238242
   },
   "done": false
 }
