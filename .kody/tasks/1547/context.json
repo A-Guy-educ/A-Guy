@@ -1,14 +1,14 @@
 {
   "taskId": "1547",
   "taskType": "pr",
-  "target": "chore/auto-resolve-deterministic-tick",
+  "target": "1547",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "CI failure was environmental — transient Docker Hub network timeout. All recent CI runs (27096965013, 27096618556, 27096558537, 27096471081) passed successfully. No code changes needed.",
+  "reason": "Resolved single asymmetric conflict in duty-review.md by preferring HEAD (PR branch) version — richer staff/cadence data; dev's duty-review row excluded since that duty IS the report itself.",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/1547",
   "runUrl": null,
-  "filesTouched": [],
-  "sessionLog": ".kody/sessions/gh-27097294786-1.jsonl",
-  "startedAt": "2026-06-07T15:50:43.000Z",
-  "finishedAt": "2026-06-07T15:51:30.000Z"
+  "filesTouched": [".kody/reports/duty-review.md"],
+  "sessionLog": ".kody/sessions/gh-27103671799-1.jsonl",
+  "startedAt": "2026-06-07T20:20:00Z",
+  "finishedAt": "2026-06-07T20:21:11Z"
 }

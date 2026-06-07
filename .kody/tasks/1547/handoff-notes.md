@@ -1,9 +1,5 @@
-Task 1547: CI failure on PR #1547.
+Task 1547 merge conflict resolution.
 
-Failure: Docker Hub network timeout in Build job. Error: `Error response from daemon: Get "https://registry-1.docker.io/v2/": net/http: request canceled while waiting for connection (Client.Timeout exceeded while awaiting headers)`. The `docker/setup-buildx-action` failed when trying to pull `moby/buildkit:buildx-stable-1`.
+Conflict in .kody/reports/duty-review.md — an asymmetric table conflict where HEAD (PR branch) had the full populated table with Staff/cadence values, while origin/dev had a sparser version with a duty-review row (which belongs in the report footer, not as a data row).
 
-Root cause: Environmental — transient network issue reaching Docker Hub from the GitHub Actions runner.
-
-Resolution: No code change. This was a transient failure. The subsequent CI run (27093380581) passed all jobs including Build. The PR's code changes are fine.
-
-Fast Gate passed in the failing run. Only Build job failed.
+Resolution: Took HEAD version in full. The HEAD table is more complete and correct — origin/dev's version had a spurious duty-review entry that would have duplicated the report's own header section. No code changes beyond removing conflict markers.
