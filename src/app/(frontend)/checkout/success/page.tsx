@@ -13,18 +13,15 @@
 import { getDirection } from '@/i18n/config'
 import { getSystemLocale } from '@/i18n/server-locale'
 import { pageMetadata } from '@/infra/seo/pageMetadata'
+import { capturePayPalOrder } from '@/lib/payment/paypal'
+import { serializePaymentError } from '@/lib/payment/error-log'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import type { Metadata } from 'next'
 import { CheckoutSuccessContent } from './CheckoutSuccessContent'
 
 type Props = {
-  searchParams: Promise<{
-    session_id?: string
-    provider?: string
-    token?: string
-    PayerID?: string
-  }>
+  searchParams: Promise<{ session_id?: string; token?: string; provider?: string }>
 }
 
 export async function generateMetadata({
@@ -40,20 +37,34 @@ export async function generateMetadata({
 }
 
 export default async function CheckoutSuccessPage({ searchParams: searchParamsPromise }: Props) {
-  const { session_id, provider, token } = await searchParamsPromise
+  const { session_id, token } = await searchParamsPromise
+  // Stripe redirects with ?session_id=cs_..., PayPal with ?token=<order_id>&PayerID=...
+  // Both providers store their respective ID in transaction.providerTransactionId,
+  // so a single lookup works for either query shape.
+  const lookupId = session_id ?? token
   const locale = await getSystemLocale()
 
   let transaction = null
   let productName = ''
+  const payload = lookupId ? await getPayload({ config }) : null
 
-  // Determine the providerTransactionId lookup key:
-  // - Stripe: use session_id from ?session_id= URL param
-  // - PayPal: use token (order ID) from ?provider=paypal&token= URL params
-  const lookupId = provider === 'paypal' && token ? token : session_id
-
-  if (lookupId) {
+  // PayPal v2 requires an explicit capture call after buyer approval.
+  // Without this, intent: 'CAPTURE' orders sit in APPROVED forever and the
+  // PAYMENT.CAPTURE.COMPLETED webhook never fires. Capture is idempotent,
+  // so a page reload doesn't double-charge.
+  if (token && payload) {
     try {
-      const payload = await getPayload({ config })
+      await capturePayPalOrder(token)
+    } catch (error) {
+      payload.logger.error(
+        { err: serializePaymentError(error), orderId: token },
+        'PayPal capture failed on /checkout/success — transaction will stay pending',
+      )
+    }
+  }
+
+  if (lookupId && payload) {
+    try {
       const result = await payload.find({
         collection: 'transactions',
         where: { providerTransactionId: { equals: lookupId } },
