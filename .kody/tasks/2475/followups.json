@@ -4,5 +4,11 @@
     "body": "If @payloadcms/plugin-mcp is removed from plugins/index.ts entirely (not just disabled via MCP_ENABLED=false), remove it from webpackConfig.externals in next.config.js.",
     "rationale": "Keeping unnecessary externals is harmless but unnecessary cleanup.",
     "priority": "low"
+  },
+  {
+    "title": "Consider externalizing get-tsconfig in serverExternalPackages too",
+    "body": "get-tsconfig is currently only in webpackConfig.externals for non-client builds. It could also be added to serverExternalPackages in next.config.js to prevent Next.js from bundling it into serverless functions.",
+    "rationale": "Reduces bundle size for serverless functions and further ensures the package is never analyzed in client context.",
+    "priority": "low"
   }
 ]

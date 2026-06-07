@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "type": "lesson",
+    "name": "webpack-node-protocol-intercept-resolve-hook-stage",
+    "hook": "node: URL scheme must be intercepted at resolve hook stage -100, not via resolve.alias",
+    "body": "webpack's scheme resolver (resolveAsScheme) handles node: URL schemes BEFORE the normal resolve hook runs. resolve.alias cannot intercept node: imports because they are resolved via resolveAsScheme.for('node'), not via resolve.alias. To intercept node: imports, you must tap the 'resolve' hook with a high-priority stage (e.g., stage: -100) and redirect the request to a stub path. This runs before webpack's scheme resolver fails with UnhandledSchemeError.",
+    "why": "get-tsconfig (used by Payload migrations) and node-fetch (used by Genkit) both contain node: imports that enter the webpack bundle transitively. Without interception, webpack's scheme resolver fails because it only handles data: and file: schemes natively.",
+    "confidence": 0.9
+  }
+]

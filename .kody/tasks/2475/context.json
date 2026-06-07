@@ -4,11 +4,11 @@
   "target": "2449-p2-frontend-login-form-silently-fails-session-not",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Added @payloadcms/plugin-mcp to webpackConfig.externals for non-client builds. The plugin transitively imports @modelcontextprotocol/sdk which uses node: URL schemes (node:fs, node:http, node:https, node:module). Without being marked external, webpack tries to analyze it in the client build and fails with UnhandledSchemeError. verify passes (ok: true, attempt 1).",
+  "reason": "Added nodeProtocolPlugin webpack resolve plugin to intercept node: URL scheme imports (node:fs, node:http, node:https, node:module, node:net) and redirect them to empty-stub.js. Also added get-tsconfig to non-client externals. This prevents UnhandledSchemeError for transitive node: imports in get-tsconfig (via Payload migrations) and node-fetch (via Genkit). verify passes (ok: true, attempt 1).",
   "prUrl": null,
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27089526987",
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27090538354",
   "filesTouched": ["next.config.js"],
-  "sessionLog": ".kody/runs/gh-27090345508-1/sessions/2475.jsonl",
-  "startedAt": "2026-06-07T10:20:00Z",
-  "finishedAt": "2026-06-07T10:22:00Z"
+  "sessionLog": null,
+  "startedAt": "2026-06-07T11:10:00Z",
+  "finishedAt": "2026-06-07T11:12:00Z"
 }

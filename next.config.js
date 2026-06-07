@@ -147,8 +147,40 @@ const nextConfig = {
         'undici',
         '@napi-rs/canvas',
         '@payloadcms/plugin-mcp',
+        // get-tsconfig is used by Payload's migration system and contains node: imports
+        // (node:fs, node:https, node:module). Marking it external prevents webpack from
+        // analyzing it and encountering those imports.
+        'get-tsconfig',
       ]
     }
+
+    // Intercept node: protocol imports at the resolve stage and return empty modules.
+    // Webpack's scheme resolver (resolveAsScheme) handles node: before our plugin's resolve
+    // hook runs, but we tap into 'resolve' with high priority to catch these before
+    // webpack's normal scheme resolution fails with UnhandledSchemeError.
+    // This handles get-tsconfig (node:fs, node:https, node:module) and node-fetch
+    // (node:http, node:net, node:dns) that transitively enter via Payload and Genkit.
+    const nodeProtocolPlugin = {
+      apply(resolver) {
+        resolver
+          .getHook('resolve')
+          .tapAsync(
+            { name: 'NodeProtocolPlugin', stage: -100 },
+            (request, resolveContext, callback) => {
+              const req = request.request
+              if (typeof req === 'string' && req.startsWith('node:')) {
+                const stubPath = path.resolve(process.cwd(), 'src/server/utils/empty-stub.js')
+                return callback(null, {
+                  ...request,
+                  request: stubPath,
+                })
+              }
+              callback()
+            },
+          )
+      },
+    }
+    webpackConfig.resolve.plugins = [...(webpackConfig.resolve.plugins || []), nodeProtocolPlugin]
 
     // Redirect .node native binaries to an empty stub. These are server-only and must
     // never execute in the browser. Applied to all build targets.
