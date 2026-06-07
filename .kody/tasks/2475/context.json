@@ -4,11 +4,11 @@
   "target": "2449-p2-frontend-login-form-silently-fails-session-not",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Replaced ineffective nodeProtocolPlugin (resolve hook, stage -100) with resolve.scheme hook interception. node: URL scheme requests go through resolveForScheme before the resolve hook, so the resolve hook cannot intercept them. Also added node-fetch to serverExternalPackages to prevent webpack from tracing its node: imports. verify passes (ok: true, attempt 1).",
+  "reason": "Stale src/payload-types.ts — @payloadcms/plugin-mcp collection schema (payload-mcp-api-keys) was added to payload.config.ts but types were not regenerated, causing typecheck to fail with 'payload-types.ts is stale' error. Fixed by running pnpm generate:types.",
   "prUrl": null,
   "runUrl": null,
-  "filesTouched": ["next.config.js"],
-  "sessionLog": null,
-  "startedAt": "2026-06-07T12:20:00Z",
-  "finishedAt": "2026-06-07T12:27:00Z"
+  "filesTouched": ["src/payload-types.ts"],
+  "sessionLog": ".kody/runs/gh-27098104484-1/events.jsonl",
+  "startedAt": "2026-06-07T16:24:00Z",
+  "finishedAt": "2026-06-07T16:28:00Z"
 }

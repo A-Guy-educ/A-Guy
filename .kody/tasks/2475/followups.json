@@ -1,14 +1,8 @@
 [
   {
-    "title": "Remove @payloadcms/plugin-mcp from externals if plugin is removed",
-    "body": "If @payloadcms/plugin-mcp is removed from plugins/index.ts entirely (not just disabled via MCP_ENABLED=false), remove it from webpackConfig.externals in next.config.js.",
-    "rationale": "Keeping unnecessary externals is harmless but unnecessary cleanup.",
-    "priority": "low"
-  },
-  {
-    "title": "Consider adding get-tsconfig to serverExternalPackages too",
-    "body": "get-tsconfig is currently only in webpackConfig.externals for non-client builds. It could also be added to serverExternalPackages in next.config.js to prevent Next.js from bundling it into serverless functions.",
-    "rationale": "Reduces bundle size for serverless functions and further ensures the package is never analyzed in client context.",
-    "priority": "low"
+    "title": "Ensure pre-commit hook runs generate:types after payload.config.ts changes",
+    "body": "The stale payload-types.ts was not caught before commit. Consider adding a pre-commit hook that runs 'git diff payload.config.ts && pnpm generate:types' to ensure types are always regenerated when the config changes.",
+    "rationale": "If a pre-commit hook validated payload.config.ts changes and auto-regenerated types, this CI failure would have been caught locally.",
+    "priority": "medium"
   }
 ]

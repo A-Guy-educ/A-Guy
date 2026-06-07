@@ -1,10 +1,10 @@
 [
   {
     "type": "lesson",
-    "name": "webpack5-resolve-scheme-vs-resolve-hook-node-protocol",
-    "hook": "node: URL scheme must be intercepted via resolve.scheme hook, not resolve hook",
-    "body": "In webpack 5, node: URL scheme requests (node:fs, node:http, etc.) go through resolveForScheme BEFORE the resolve hook chain. resolveForScheme.for('node') returns NodeStuffPlugin when target='node', but if it returns undefined, UnhandledSchemeError is thrown before any resolve hook fires. Tapping the resolve hook (even with stage: -100) CANNOT intercept node: scheme requests — resolveForScheme runs first and throws if no handler exists. The correct approach is to tap the resolve.scheme hook (AsyncSeriesWaterfallHook) to register a handler for the 'node' scheme. This is how NodeStuffPlugin itself registers. Also add the offending package (node-fetch) to serverExternalPackages to prevent webpack from tracing it at all.",
-    "why": "The previous fix used the resolve hook with stage: -100, believing it would intercept node: requests before webpack's scheme resolver. But resolveForScheme runs BEFORE the resolve hook — UnhandledSchemeError is thrown first, and the resolve hook is never reached. The resolve.scheme hook fires during scheme resolution, allowing interception before the error is thrown.",
+    "name": "payload-types-stale-after-plugin-schema-change",
+    "hook": "@payloadcms/plugin-mcp schema changes require payload-types.ts regeneration",
+    "body": "When @payloadcms/plugin-mcp was added to payload.config.ts, it introduced a new 'payload-mcp-api-keys' collection. The Payload type generation (pnpm generate:types) was not run after this change, leaving src/payload-types.ts stale and causing the CI typecheck step to fail with 'payload-types.ts is stale'. Always run pnpm generate:types after any change to payload.config.ts that adds or modifies collections.",
+    "why": "Payload generates type definitions from the schema at runtime. When a plugin adds a new collection (like payload-mcp-api-keys), the type file must be regenerated for TypeScript to know about the new types. Without this, typecheck fails.",
     "confidence": 0.95
   }
 ]
