@@ -1,14 +1,15 @@
 {
   "version": 1,
-  "rev": 50,
+  "rev": 51,
   "cursor": "reported",
   "data": {
-    "lastRunISO": "2026-06-06T18:14:38Z",
-    "nextEligibleISO": "2026-06-07T00:14:38Z",
+    "lastRunISO": "2026-06-07T00:39:51Z",
+    "nextEligibleISO": "2026-06-07T06:39:51Z",
     "cycle": 12,
     "reviewed": [
       "cleanup-branches",
-      "approval-gate"
+      "approval-gate",
+      "architecture-audit"
     ],
     "verdicts": {
       "approval-gate": {
@@ -24,8 +25,8 @@
         "note": "kody-job-next-state block never emitted by procedure; state file never created"
       },
       "cleanup-branches": {
-        "verdict": "broken",
-        "note": "no per-tick procedure; policy-only; no gh write method to persist state"
+        "verdict": "healthy",
+        "note": "passes every check"
       },
       "clear-empty-goals": {
         "verdict": "broken",
@@ -112,9 +113,9 @@
         "note": "no kody-job-next-state block; state never created; disabled=true so idle by design"
       }
     },
-    "lastFiredAt": "2026-06-06T18:15:07.336Z",
+    "lastFiredAt": "2026-06-07T00:40:18.426Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 279662
+    "lastDurationMs": 109923
   },
   "done": false
 }
