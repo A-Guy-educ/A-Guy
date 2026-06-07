@@ -1,17 +1,17 @@
 {
   "version": 1,
-  "rev": 322,
+  "rev": 323,
   "cursor": "idle",
   "data": {
     "blocked_reason": null,
-    "current_tick": "2026-06-07T19:47:44.127Z",
-    "current_tick_ran": "2026-06-07T19:47:44.127Z",
+    "current_tick": "2026-06-07T21:30:49.897Z",
+    "current_tick_ran": "2026-06-07T21:30:49.897Z",
     "current_tick_result": "success",
     "current_tick_summary": "64 tasks seen, 64 already extracted, 0 new writes.",
-    "lastFiredAt": "2026-06-07T21:00:48.572Z",
+    "lastFiredAt": "2026-06-07T21:54:41.094Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 71056,
-    "last_tick": "2026-06-07T17:44:55.000Z",
+    "lastDurationMs": 19720,
+    "last_tick": "2026-06-07T19:47:44.127Z",
     "tasks_processed": 65,
     "tasks_seen": 64,
     "session": {
