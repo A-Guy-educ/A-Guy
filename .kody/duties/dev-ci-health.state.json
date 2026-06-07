@@ -1,20 +1,16 @@
 {
   "version": 1,
-  "rev": 156,
+  "rev": 157,
   "cursor": "idle",
   "data": {
-    "failingChecks": [
-      "cleanup",
-      "fix-links",
-      "refresh"
-    ],
-    "lastFiredAt": "2026-06-07T05:55:03.986Z",
+    "failingChecks": [],
+    "lastFiredAt": "2026-06-07T07:24:38.703Z",
     "lastOutcome": "completed",
-    "lastResolution": "CI RED",
-    "sha": "417ea5fa199f555ade131192fb4d1bcb543e72ea",
-    "trackingIssue": 2349,
-    "note": "Fix already in flight (issue #2349 open) — no new dispatch",
-    "lastDurationMs": 29144
+    "lastResolution": "CI GREEN",
+    "note": "Dev CI is green — no action needed",
+    "sha": "f39828c2e31e732dd13cdb6e11724afc0718f7f5",
+    "trackingIssue": null,
+    "lastDurationMs": 51206
   },
   "done": false
 }
