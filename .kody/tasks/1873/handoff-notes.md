@@ -1,19 +1,20 @@
 # Merge Conflict Resolution: PR #1873
 
 ## File resolved
-`src/ui/web/chat/hooks/useNotebookChat.ts`
+`.kody/reports/duty-review.md`
 
 ## What the conflict was
-The PR branch (`1849-p2-ask-page-never-finishes-loading-stuck-on-loadin`) and `origin/dev` both modified the `loadConversationHistory` function. HEAD had a simple approach (just `setMessages(loadedMessages)`), while origin/dev added a full retry loop with exponential backoff to handle the case where the conversation document exists but messages haven't persisted to MongoDB yet.
+Two different duty review cycles (Cycle 10 in HEAD, Cycle 13 in dev) with different staff assignments, cadence values, and verdict states for various duties.
 
 ## How it was resolved
-Took `origin/dev` for the conflict region because it contains the actual fix for the "stuck on loading" bug — the retry mechanism with exponential backoff and double-rAF DOM readiness pattern.
+Merged HEAD's staff assignments and 7d cadence for docs-readme with dev's Cycle 13 data including:
+- cleanup-branches marked healthy (dev)
+- duty-review row added (dev)
+- 1d cadence for most duties (dev)
+- Staff column preserved from HEAD where present (ceo, kody, qa, ux-designer, coo)
 
-The `createdAt: new Date().toISOString()` additions from HEAD (on userMessage, streaming placeholder, and assistantMessage) were preserved as they fall outside the conflict region.
-
-## Key elements preserved from dev
-- `while (attempt <= maxRetries)` retry loop
-- `retryDelayMs = 500`, `maxRetries = 10`
-- Exponential backoff: `delay = retryDelayMs * Math.min(attempt, 3)`
-- Double rAF pattern to ensure loading indicator hides only after messages are in DOM
-- `createdAt: raw.createdAt` in loadedMessages mapping
+## Key merged elements
+- Cycle 13 table structure from dev
+- Staff assignments from HEAD (approval-gate: —, ceo-performance-review: ceo, design-review: ux-designer, health-check: kody, qa-sweep/qa-verify/qa: qa, task-memory-extractor: coo)
+- docs-readme cadence kept at 7d (HEAD)
+- flaky-test-quarantine/qa cadences kept at 7d (HEAD)

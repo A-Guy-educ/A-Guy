@@ -1,14 +1,14 @@
 {
   "taskId": "1873",
   "taskType": "pr",
-  "target": "1849",
+  "target": "1849-p2-ask-page-never-finishes-loading-stuck-on-loadin",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Merge conflict in useNotebookChat.ts resolved by taking origin/dev retry-loop + double-rAF fix for the stuck-loading bug",
+  "reason": "Merge conflict in .kody/reports/duty-review.md resolved by merging HEAD staff assignments and 7d cadences with dev's Cycle 13 data and healthy/pending verdicts",
   "prUrl": null,
   "runUrl": null,
-  "filesTouched": ["src/ui/web/chat/hooks/useNotebookChat.ts"],
-  "sessionLog": ".kody/sessions/1873.jsonl",
+  "filesTouched": [".kody/reports/duty-review.md"],
+  "sessionLog": null,
   "startedAt": "2026-06-07T00:00:00.000Z",
-  "finishedAt": "2026-06-07T00:00:00.000Z"
+  "finishedAt": "2026-06-07T00:01:00.000Z"
 }
