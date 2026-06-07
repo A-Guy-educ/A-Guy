@@ -1,5 +1,9 @@
-Task 1547 merge conflict resolution.
+Task 1547 CI fix investigation.
 
-Conflict in .kody/reports/duty-review.md — an asymmetric table conflict where HEAD (PR branch) had the full populated table with Staff/cadence values, while origin/dev had a sparser version with a duty-review row (which belongs in the report footer, not as a data row).
+Failing run 26814534558 (2026-06-02) failed during the Integration Tests step due to Docker Hub network timeouts — `docker pull mongo:7` failed with "context deadline exceeded" and "net/http: request canceled while waiting for connection".
 
-Resolution: Took HEAD version in full. The HEAD table is more complete and correct — origin/dev's version had a spurious duty-review entry that would have duplicated the report's own header section. No code changes beyond removing conflict markers.
+Root cause: transient Docker Hub network connectivity issue, not a code defect.
+
+Resolution: The PR #1547 already contains the fix — the CI workflow was updated to use `docker pull mongo:7` with a 5-retry loop and 10s backoff before starting the MongoDB service container. This handles transient Docker Hub failures gracefully.
+
+Latest CI runs on this branch (27103745499 at 2026-06-07T20:21:46Z and earlier) are all success. No code changes needed — the failure was environmental and the retry logic in the PR already addresses it.

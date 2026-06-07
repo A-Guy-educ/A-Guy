@@ -4,11 +4,11 @@
   "target": "1547",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Resolved single asymmetric conflict in duty-review.md by preferring HEAD (PR branch) version — richer staff/cadence data; dev's duty-review row excluded since that duty IS the report itself.",
+  "reason": "CI already passing — failure was transient Docker Hub network timeout on run 26814534558; PR #1547's pre-pull MongoDB with 5 retries already fixed the root cause",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/1547",
-  "runUrl": null,
-  "filesTouched": [".kody/reports/duty-review.md"],
-  "sessionLog": ".kody/sessions/gh-27103671799-1.jsonl",
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26814534558",
+  "filesTouched": [],
+  "sessionLog": ".kody/sessions/gh-27104965121-1.jsonl",
   "startedAt": "2026-06-07T20:20:00Z",
-  "finishedAt": "2026-06-07T20:21:11Z"
+  "finishedAt": "2026-06-07T20:22:00Z"
 }
