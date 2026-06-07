@@ -4,12 +4,10 @@
 
 ### Conflicted file: `.kody/last-run.jsonl`
 This is a session log file (JSONL). Both HEAD and origin/dev had different session logs:
-- **HEAD**: 75 lines, session_id `d248d67d...`
-- **origin/dev**: 133 lines, session_id `86afddb9...` (more complete)
+- **HEAD**: 67 lines, session_id `24024472-84fb-47cd-b089-88308c384f7f`
+- **origin/dev**: 27 lines (older session)
 
-**Resolution**: Took the origin/dev version (133-line session log) as it represents the more recent and complete session. The file was validated as correct JSONL after resolution.
-
-**Note**: All other source code files had no conflicts. The conflict markers found by grep in this file were all literal text inside JSON string values (session log descriptions), not actual git conflict markers.
+**Resolution**: Took the HEAD version (current branch session log). Runtime logs represent ephemeral session state; HEAD is the authoritative version for the current branch. `git checkout --ours` was used, then staged with `git add`.
 
 ---
 
