@@ -157,30 +157,6 @@ const nextConfig = {
       ]
     }
 
-    // Intercept node: protocol imports at the scheme level.
-    // In webpack 5, node: URL scheme requests go through resolveForScheme (NOT the resolve hook).
-    // resolveForScheme.for('node') returns NodeStuffPlugin when target='node', but in Next.js
-    // server builds, resolveForScheme.for('node') returns undefined in some configurations.
-    // We tap the resolve.scheme hook (AsyncSeriesWaterfallHook) to register a handler for the
-    // 'node' scheme BEFORE webpack's scheme resolution throws UnhandledSchemeError.
-    // This handles get-tsconfig (node:fs, node:https, node:module) and node-fetch
-    // (node:http, node:net, node:dns) that transitively enter via Payload and Genkit.
-    const nodeProtocolPlugin = {
-      apply(resolver) {
-        resolver
-          .getHook('resolve.scheme')
-          .tapAsync('NodeProtocolPlugin', (scheme, resolveContext, callback) => {
-            if (scheme === 'node') {
-              const stubPath = path.resolve(process.cwd(), 'src/server/utils/empty-stub.js')
-              // Return the stub path for the scheme result — webpack will resolve it as a file
-              return callback(null, stubPath)
-            }
-            callback()
-          })
-      },
-    }
-    webpackConfig.resolve.plugins = [...(webpackConfig.resolve.plugins || []), nodeProtocolPlugin]
-
     // Redirect .node native binaries to an empty stub. These are server-only and must
     // never execute in the browser. Applied to all build targets.
     const stubPath = path.resolve(process.cwd(), 'src/server/utils/empty-stub.js')

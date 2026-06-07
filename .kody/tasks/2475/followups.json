@@ -4,5 +4,11 @@
     "body": "The stale payload-types.ts was not caught before commit. Consider adding a pre-commit hook that runs 'git diff payload.config.ts && pnpm generate:types' to ensure types are always regenerated when the config changes.",
     "rationale": "If a pre-commit hook validated payload.config.ts changes and auto-regenerated types, this CI failure would have been caught locally.",
     "priority": "medium"
+  },
+  {
+    "title": "Pre-commit hook to validate next.config.js webpack plugin compatibility",
+    "body": "The resolve.scheme hook was removed in webpack 5.98.0. Consider adding a pre-commit check that validates webpack plugin hook names against the installed webpack version to catch incompatible plugins before CI.",
+    "rationale": "A webpack plugin using a non-existent hook would fail silently in some environments and block CI in others, depending on webpack version.",
+    "priority": "low"
   }
 ]

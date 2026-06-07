@@ -6,5 +6,13 @@
     "body": "When @payloadcms/plugin-mcp was added to payload.config.ts, it introduced a new 'payload-mcp-api-keys' collection. The Payload type generation (pnpm generate:types) was not run after this change, leaving src/payload-types.ts stale and causing the CI typecheck step to fail with 'payload-types.ts is stale'. Always run pnpm generate:types after any change to payload.config.ts that adds or modifies collections.",
     "why": "Payload generates type definitions from the schema at runtime. When a plugin adds a new collection (like payload-mcp-api-keys), the type file must be regenerated for TypeScript to know about the new types. Without this, typecheck fails.",
     "confidence": 0.95
+  },
+  {
+    "type": "lesson",
+    "name": "resolve-scheme-hook-removed-webpack-5980",
+    "hook": "resolve.scheme webpack hook doesn't exist in webpack 5.98.0 — remove plugin if hook missing",
+    "body": "The resolve.scheme hook (AsyncSeriesWaterfallHook) was removed or renamed in webpack 5.98.0 (bundled with Next.js 15.5.9). A webpack plugin in next.config.js tried to tap resolve.scheme to intercept node: URL scheme imports, but the hook doesn't exist, causing 'Hook resolve.scheme doesn't exist' at build time. The plugin is unnecessary anyway since get-tsconfig is already in webpackConfig.externals for non-client builds — webpack never analyzes its internals and never encounters the node: imports.",
+    "why": "Next.js 15.5.9 uses webpack 5.98.0 which removed or renamed resolve.scheme. The plugin tap fails unconditionally in all build configurations, blocking the build entirely.",
+    "confidence": 0.95
   }
 ]
