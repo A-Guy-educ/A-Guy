@@ -1,26 +1,19 @@
-## CI Fix for PR #1873 (branch 1849-p2-ask-page-never-finishes-loading-stuck-on-loadin)
+# Merge Conflict Resolution: PR #1873
 
-### Root Cause of CI Failure
-`message-persist.int.spec.ts` returned HTTP 500 instead of 200.
+## File resolved
+`src/ui/web/chat/hooks/useNotebookChat.ts`
 
-**The prior fix (route.ts)** conditionally includes `contextRef` only when the referenced doc exists — this is correct and was already in the code.
+## What the conflict was
+The PR branch (`1849-p2-ask-page-never-finishes-loading-stuck-on-loadin`) and `origin/dev` both modified the `loadConversationHistory` function. HEAD had a simple approach (just `setMessages(loadedMessages)`), while origin/dev added a full retry loop with exponential backoff to handle the case where the conversation document exists but messages haven't persisted to MongoDB yet.
 
-**The remaining bug**: `contextRef` was `required: true` in the Conversations schema. When a conversation is created without `contextRef` (because the doc doesn't exist), the document is created successfully. However, when the `payload.update` call runs later (adding the message), Payload re-validates the document and throws because `contextRef` (a required field) is missing from the stored document.
+## How it was resolved
+Took `origin/dev` for the conflict region because it contains the actual fix for the "stuck on loading" bug — the retry mechanism with exponential backoff and double-rAF DOM readiness pattern.
 
-### Fix Applied
-Changed `contextRef` from `required: true` to `required: false` in `src/server/payload/collections/Conversations.ts`.
+The `createdAt: new Date().toISOString()` additions from HEAD (on userMessage, streaming placeholder, and assistantMessage) were preserved as they fall outside the conflict region.
 
-This is semantically correct: a conversation CAN exist without a specific context reference (e.g., a general chat that isn't tied to a lesson). The `beforeChange` hook already handles `contextRef: undefined` gracefully — it skips the `contextKey` auto-derivation but that's fine since `contextKey` is `required: false`.
-
-### Files Changed
-- `src/server/payload/collections/Conversations.ts` — `required: true` → `required: false` on `contextRef`
-- `src/payload-types.ts` — regenerated after schema change
-
-### Verification
-- Typecheck: ✅
-- Lint: ✅ (only pre-existing warnings)
-- Unit tests: ✅ (useNotebookChat: 13 tests, api-service: 6 tests)
-- Format: ✅
-
-### Why the integration test couldn't be run locally
-The `beforeAll` in `message-persist.int.spec.ts` times out in this environment due to slow MongoDB Atlas connectivity. The test's `beforeAll` creates a user, logs in, and queries/creates a lesson — all requiring a live DB connection. The CI environment has faster connectivity, so the test ran to completion there (500 response), confirming the bug.
+## Key elements preserved from dev
+- `while (attempt <= maxRetries)` retry loop
+- `retryDelayMs = 500`, `maxRetries = 10`
+- Exponential backoff: `delay = retryDelayMs * Math.min(attempt, 3)`
+- Double rAF pattern to ensure loading indicator hides only after messages are in DOM
+- `createdAt: raw.createdAt` in loadedMessages mapping

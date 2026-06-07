@@ -1,10 +1,1 @@
-[
-  {
-    "type": "lesson",
-    "name": "payload-required-on-update-after-create-without",
-    "hook": "Making a field optional in Payload is a two-part fix: route AND schema",
-    "body": "When fixing a Payload 'required field' validation error: the route fix (conditionally including the field) is necessary but not sufficient if the field is required:true in the schema. Even when a document is created without the field (key absent), subsequent UPDATE operations re-validate the full document against the schema and fail if a required field is missing. Always pair route fixes with schema changes to make the field optional.",
-    "why": "The persist route fix conditionally excluded contextRef from conversationData when the doc didn't exist. But contextRef was required:true in the schema. The create succeeded (key absent), but the update (adding a message) failed Payload's required-field re-validation. Making contextRef required:false in the schema fixed it.",
-    "confidence": 0.95
-  }
-]
+[]

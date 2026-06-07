@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "type": "lesson",
+    "name": "payload-postinstall-needs-secret",
+    "hook": "postinstall runs payload generate:types, requiring PAYLOAD_SECRET in CI",
+    "body": "This project's `postinstall` script runs `cross-env PAYLOAD_GENERATE_TYPES=true pnpm generate`, which chains to `payload generate:types`. Payload validates `PAYLOAD_SECRET` at startup and throws `Error: PAYLOAD_SECRET env var is required` if it is missing. Any CI workflow that runs `pnpm install` (triggering postinstall) must set `PAYLOAD_SECRET` at the job level, even if the workflow's actual task does not use Payload directly.\n\n**Why:** The `postinstall` lifecycle script runs after `pnpm install` and calls into Payload's type-generation CLI. Payload's config throws synchronously during load if the secret is missing.\n\n**How to apply:** When adding a new CI workflow that runs `pnpm install`, copy the env block from `ci.yml`:\n```yaml\nenv:\n  PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET || 'test-secret-for-ci' }}\n```",
+    "why": "Future CI workflows that run pnpm install will fail at postinstall unless PAYLOAD_SECRET is set. This has already bitten the deps-security-report workflow once.",
+    "confidence": 0.9
+  }
+]
