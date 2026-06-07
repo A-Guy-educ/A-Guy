@@ -1,18 +1,18 @@
 {
   "version": 1,
-  "rev": 158,
+  "rev": 159,
   "cursor": "idle",
   "data": {
     "failingChecks": [
       "audit"
     ],
-    "lastFiredAt": "2026-06-07T08:38:24.991Z",
+    "lastFiredAt": "2026-06-07T09:51:07.099Z",
     "lastOutcome": "completed",
     "lastResolution": "CI GREEN",
     "note": "Dev CI is green — no action needed",
     "sha": "f39828c2e31e732dd13cdb6e11724afc0718f7f5",
     "trackingIssue": null,
-    "lastDurationMs": 30820
+    "lastDurationMs": 26938
   },
   "done": false
 }
