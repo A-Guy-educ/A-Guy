@@ -217,6 +217,7 @@
     "tailwindcss": "^4.1.18",
     "tsx": "^4.21.0",
     "typescript": "5.9.3",
+    "terser-webpack-plugin": "5.3.9",
     "vite-tsconfig-paths": "^6.0.3",
     "vitest": "4.0.16",
     "yaml": "^2.8.2"
@@ -236,7 +237,8 @@
       "unrs-resolver"
     ],
     "overrides": {
-      "@modelcontextprotocol/sdk": ">=1.25.2"
+      "@modelcontextprotocol/sdk": ">=1.25.2",
+      "terser-webpack-plugin": "5.3.9"
     }
   },
   "packageManager": "pnpm@10.33.0"

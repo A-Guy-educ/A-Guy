@@ -1,18 +1,26 @@
 [
   {
     "type": "lesson",
-    "name": "serverexternalpackages-vs-webpackconfig-externals",
-    "hook": "serverExternalPackages prevents Next.js serverless bundling; webpackConfig.externals prevents webpack from analyzing a package's internals",
-    "body": "serverExternalPackages tells the Next.js build system to leave a package out of the serverless function bundle (loaded from node_modules at runtime). But webpack still analyzes the package's source when bundling the app code that imports it — for tree-shaking, dead code elimination, etc. webpackConfig.externals tells webpack to treat the package as an external Node.js module and skip all source analysis. Both are needed: serverExternalPackages for the bundler output, webpackConfig.externals for preventing webpack from encountering node: imports during analysis.",
-    "why": "node-fetch was in serverExternalPackages (correctly, to reduce bundle size) but NOT in webpackConfig.externals. Webpack still analyzed node-fetch's internals for tree-shaking, encountered node:https/node:http/node:net/node:dns imports, and threw UnhandledSchemeError.",
-    "confidence": 0.95
+    "name": "webpack5-98-bundle5-terser-webpack-plugin-src-missing",
+    "hook": "webpack 5.98.0 bundle5.js requires terser-webpack-plugin/src which doesn't exist",
+    "body": "webpack 5.98.0 (Next.js 15.5.9's bundled webpack, bundle5.js) requires 'next/dist/build/webpack/plugins/terser-webpack-plugin/src'. This path does not exist in terser-webpack-plugin@5.3.9 or 5.4.0 (only dist/ is shipped, not src/). The fix is to add terser-webpack-plugin@5.3.9 to devDependencies with a pnpm override, and use the prebuild script to create the missing src/index.js stub inside the next package's plugins directory.",
+    "why": "Next.js 15.5.9 bundles webpack 5.98.0 which has a hardcoded require for 'next/dist/build/webpack/plugins/terser-webpack-plugin/src'. This path is not created by default during pnpm install because terser-webpack-plugin only ships dist/. The prebuild script must create this stub.",
+    "confidence": 0.9
   },
   {
     "type": "lesson",
-    "name": "resolve-alias-cannot-intercept-node-protocol",
-    "hook": "resolve.alias CANNOT intercept node: protocol imports — use resolve.fallback instead",
-    "body": "webpack resolve.alias operates on module names after scheme parsing, but webpack 5's scheme handler (ResolvePluginFactory.createResolver with 'node' scheme) runs BEFORE alias resolution and throws UnhandledSchemeError for node:fs, node:os, etc. The correct fix is webpackConfig.resolve.fallback = { node: stubPath } — FallbackPlugin is checked during scheme resolution and returns the fallback value instead of throwing. Additionally, set webpackConfig.resolve.fallback.node = stubPath (not the individual node:fs aliases) — the 'node' key handles all node: protocol requests because the scheme handler delegates to ResolvePlugin for the 'node' request name.",
-    "why": "The previous session's fix used resolve.alias entries for node:fs, node:os etc. which are NEVER consulted because the node: scheme handler throws before alias resolution runs. The FallbackPlugin is the correct hook.",
+    "name": "devDependencies-not-installed-in-next-packages-node_modules",
+    "hook": "Next.js devDependencies like terser-webpack-plugin are not in next package's own node_modules",
+    "body": "In pnpm workspaces, a package's devDependencies are NOT installed in the package's own node_modules/ directory — they are hoisted to the workspace root node_modules/. So 'next/node_modules/terser-webpack-plugin' does not exist. When webpack 5.98.0 bundled in next requires 'next/dist/build/webpack/plugins/terser-webpack-plugin/src', Node module resolution falls back to the workspace root, but finds terser-webpack-plugin with no src/ directory. The stub must be created at the path next's webpack actually requires.",
+    "why": "pnpm deduplication means next's devDependency terser-webpack-plugin@5.3.9 is resolved from the workspace root, not from inside the next package. The 'src/' path webpack expects must be created at the path webpack looks for it.",
+    "confidence": 0.9
+  },
+  {
+    "type": "lesson",
+    "name": "prebuild-script-must-also-patch-terser-webpack-plugin",
+    "hook": "prebuild script must create terser-webpack-plugin/src stub, not just patch minify-webpack-plugin",
+    "body": "The prebuild script patches minify-webpack-plugin for the WebpackError issue, but also needs to create the terser-webpack-plugin/src/index.js stub. Both issues must be addressed in the same prebuild step since both are required for the webpack 5.98.0 build to succeed.",
+    "why": "Two separate webpack 5.98.0 issues: (1) minify-webpack-plugin uses WebpackError which was removed in webpack 5.98.0, (2) bundle5.js requires terser-webpack-plugin/src which doesn't exist. Both require prebuild patching.",
     "confidence": 0.95
   }
 ]

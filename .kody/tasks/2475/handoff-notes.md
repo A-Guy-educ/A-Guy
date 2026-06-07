@@ -1,43 +1,31 @@
-## Fix: CI Build Failure — UnhandledSchemeError for node: URL scheme imports
+## Fix: CI Build Failure — terser-webpack-plugin/src MODULE_NOT_FOUND
 
 ### Root Cause
 
-The previous session's fix used `resolve.alias` entries for individual `node:` protocol modules (`node:fs`, `node:os`, `node:path`, `node:perf_hooks`, `node:process`). These were ineffective — `resolve.alias` is consulted **after** webpack's scheme handler runs, and the scheme handler for `node:` throws `UnhandledSchemeError` before alias resolution occurs.
+webpack 5.98.0 (bundled as `bundle5.js` inside Next.js 15.5.9) requires `next/dist/build/webpack/plugins/terser-webpack-plugin/src` at runtime. This path does not exist because:
 
-The import chain was:
-- `payload.config.ts` → `payload` → `payload/dist/utilities/telemetry/conf/index.js` → `node:fs`, `node:os`
-- `payload.config.ts` → `payload` → `payload/dist/utilities/telemetry/events/serverInit.js` → `node:path`
-- `payload.config.ts` → `payload` → `payload/bin/generateImportMap/index.js` → `node:process`
-- `payload.config.ts` → `@genkit-ai/googleai` → `node-fetch` → `node:http`, `node:https`, `node:net`
+1. `terser-webpack-plugin` only ships `dist/` (no `src/` directory) in both versions 5.3.9 and 5.4.0
+2. Even though `terser-webpack-plugin@5.3.9` is a devDependency of the `next` package, pnpm deduplication means it's only installed at the workspace root `node_modules/terser-webpack-plugin/` — NOT inside the `next` package's own `node_modules/`
+3. When webpack 5.98.0's `bundle5.js` requires `next/dist/build/webpack/plugins/terser-webpack-plugin/src`, Node module resolution looks inside the `next` package (at `next/dist/build/webpack/plugins/terser-webpack-plugin/src`) and finds nothing
 
 ### Fix Applied
 
-Replaced the ineffective `resolve.alias` entries with `resolve.fallback`:
+1. **package.json**: Added `terser-webpack-plugin@5.3.9` to `devDependencies` and a pnpm `overrides` entry forcing that exact version. This ensures `5.3.9` is installed at the workspace root alongside the existing `5.4.0`.
 
-```js
-webpackConfig.resolve.fallback = {
-  ...webpackConfig.resolve.fallback,
-  node: stubPath,
-}
-```
-
-`FallbackPlugin` is checked **during** scheme resolution (before the error is thrown), and returns the fallback value instead. The single key `node` handles all `node:` protocol requests — `node:fs`, `node:os`, `node:path`, `node:perf_hooks`, `node:process`, `node:http`, `node:https`, `node:net`, `node:dns`, `node:crypto`, `node:module`, `node:diagnostics_channel`, `node:console`.
-
-Kept `\\.node$` in `resolve.alias` for native binary files.
+2. **scripts/patch-next-minify-webpack.cjs**: Extended the prebuild script to also create the missing `src/index.js` stub inside the `next` package's webpack plugins directory:
+   - Finds all `next@15.5.9` installations in `node_modules/.pnpm/`
+   - Creates `next/dist/build/webpack/plugins/terser-webpack-plugin/src/index.js`
+   - The stub uses an absolute path to `node_modules/terser-webpack-plugin/dist/index.js` to re-export TerserPlugin
+   - This makes `bundle5.js`'s `require('next/dist/build/webpack/plugins/terser-webpack-plugin/src')` resolve successfully
 
 ### Files Changed
 
-- `next.config.js` — replaced individual `node:fs`, `node:os`, etc. alias entries with `resolve.fallback['node'] = stubPath`
+- `package.json` — added `terser-webpack-plugin@5.3.9` to devDependencies and pnpm overrides
+- `scripts/patch-next-minify-webpack.cjs` — extended to create terser-webpack-plugin/src stub
 
-### Why `resolve.fallback['node']` Works But `resolve.alias['node:fs']` Did Not
+### Why Two Changes Are Needed
 
-webpack 5's scheme resolver runs in this order:
-1. `ResolvePluginFactory.createResolver` creates a resolver with a `node` scheme plugin
-2. For `node:fs`, the scheme handler delegates to `ResolvePlugin` with request name `node` and path `fs`
-3. `ResolvePlugin` checks `resolve.alias` for `node:fs` — **too late, scheme handler already threw**
-4. `FallbackPlugin` is checked inside the scheme handler **before** throwing `UnhandledSchemeError`
-
-`FallbackPlugin` with key `'node'` is checked for the `'node'` request name and returns `stubPath`, short-circuiting the error.
+The pnpm override + devDependency ensures `terser-webpack-plugin@5.3.9` is installed in the workspace root. The prebuild script creates the stub at the exact path `bundle5.js` requires (`next/dist/build/webpack/plugins/terser-webpack-plugin/src`). Both are required: one installs the package, the other creates the missing `src/` path webpack looks for.
 
 ### Verification
 
