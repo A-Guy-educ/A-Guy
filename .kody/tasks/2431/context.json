@@ -1,14 +1,14 @@
 {
   "taskId": "2431",
   "taskType": "pr",
-  "target": "PR #2431 (branch 2427-p0-app-completely-unreachable-dev-server-not-runni)",
+  "target": "2431",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Single conflicted file resolved — origin/dev (Cycle 13) taken over HEAD (Cycle 7); duty-review.md is a rolling report, dev version is authoritative",
+  "reason": "Single conflicted file (health-check.md) resolved by taking HEAD — newer timestamps and added #2369 issue make it the authoritative state",
   "prUrl": null,
   "runUrl": null,
-  "filesTouched": [".kody/reports/duty-review.md"],
-  "sessionLog": null,
-  "startedAt": "2026-06-07T00:00:00Z",
-  "finishedAt": "2026-06-07T00:01:00Z"
+  "filesTouched": [".kody/reports/health-check.md"],
+  "sessionLog": ".kody/sessions/gh-27084384147-1.jsonl",
+  "startedAt": "2026-06-07T06:01:35Z",
+  "finishedAt": "2026-06-07T06:02:22Z"
 }
