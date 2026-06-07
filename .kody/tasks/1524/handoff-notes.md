@@ -1,14 +1,16 @@
-## Merge Conflict Resolution for PR #1524
+## CI Fix Verification for PR #1524
 
 ### What I Did
-Resolved merge conflict in `.kody/last-run.jsonl` by taking the HEAD version (the PR branch's session log).
+Verified that CI is passing. The earlier failure (run 27093324205) was due to Docker memory exhaustion during preview build (`cannot allocate memory`), not a code issue.
 
 ### Why
-The `.kody/last-run.jsonl` file is a session run log that gets overwritten with each Claude Code session. It is not a source file that tracks intentional changes — both HEAD (161 lines) and origin/dev (67 lines) were just different session snapshots. Taking HEAD preserves the most recent session activity.
+The kody preview-build failed because the Docker container ran out of memory while running `next build`. This is an infrastructure constraint, not a code problem.
 
-### Files Touched
-- `.kody/last-run.jsonl` — replaced with HEAD version, conflict markers removed
+### Current CI Status
+All required CI jobs passing (run 27096415103):
+- Fast Gate: PASS
+- Integration Tests: PASS
+- Build: PASS
 
-### Verification
-- File now has 164 lines with zero conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`)
-- File is valid JSONL (session log format)
+### No Code Changes Required
+No files were modified as the CI infrastructure issue resolved itself in subsequent runs.
