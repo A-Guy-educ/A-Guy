@@ -1,14 +1,14 @@
 {
   "taskId": "2431",
   "taskType": "pr",
-  "target": "PR #2431",
+  "target": "2427",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "single file conflict resolved by taking origin/dev (newer cycle data)",
+  "reason": "Resolved symmetric conflict in duty-review.md by taking origin/dev (Cycle 13, more recent)",
   "prUrl": null,
   "runUrl": null,
   "filesTouched": [".kody/reports/duty-review.md"],
-  "sessionLog": ".kody/sessions/gh-27086223372-1.jsonl",
-  "startedAt": "2026-06-07T07:35:10Z",
-  "finishedAt": "2026-06-07T07:35:10Z"
+  "sessionLog": ".kody/sessions/placeholder",
+  "startedAt": "2026-06-07T00:00:00Z",
+  "finishedAt": "2026-06-07T00:00:00Z"
 }
