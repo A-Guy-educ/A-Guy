@@ -154,19 +154,31 @@ const nextConfig = {
         // (node:fs, node:https, node:module). Marking it external prevents webpack from
         // analyzing it and encountering those imports.
         'get-tsconfig',
+        // node-fetch contains node:http, node:https, node:net, node:dns imports that
+        // fail webpack resolution. Externalize so webpack never analyzes its internals.
+        'node-fetch',
       ]
     }
 
-    // Redirect .node native binaries to an empty stub. These are server-only and must
-    // never execute in the browser. Applied to all build targets.
+    // Redirect node: protocol imports to an empty stub. These protocols are Node.js
+    // built-ins that cannot run in browser environments. By aliasing them to a stub,
+    // any package that webpack still analyzes (due to tree-shaking or incomplete
+    // externals) will get an empty module instead of throwing UnhandledSchemeError.
+    // The stub returns null so that any runtime access fails safely.
     const stubPath = path.resolve(process.cwd(), 'src/server/utils/empty-stub.js')
     webpackConfig.resolve.alias = {
       ...webpackConfig.resolve.alias,
       '\\.node$': stubPath,
-    }
-    webpackConfig.resolve.fallback = {
-      ...webpackConfig.resolve.fallback,
-      node: false,
+      'node:fs': stubPath,
+      'node:https': stubPath,
+      'node:http': stubPath,
+      'node:net': stubPath,
+      'node:os': stubPath,
+      'node:dns': stubPath,
+      'node:module': stubPath,
+      'node:diagnostics_channel': stubPath,
+      'node:console': stubPath,
+      'node:crypto': stubPath,
     }
 
     return webpackConfig

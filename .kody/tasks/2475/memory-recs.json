@@ -1,18 +1,18 @@
 [
   {
     "type": "lesson",
-    "name": "payload-types-stale-after-plugin-schema-change",
-    "hook": "@payloadcms/plugin-mcp schema changes require payload-types.ts regeneration",
-    "body": "When @payloadcms/plugin-mcp was added to payload.config.ts, it introduced a new 'payload-mcp-api-keys' collection. The Payload type generation (pnpm generate:types) was not run after this change, leaving src/payload-types.ts stale and causing the CI typecheck step to fail with 'payload-types.ts is stale'. Always run pnpm generate:types after any change to payload.config.ts that adds or modifies collections.",
-    "why": "Payload generates type definitions from the schema at runtime. When a plugin adds a new collection (like payload-mcp-api-keys), the type file must be regenerated for TypeScript to know about the new types. Without this, typecheck fails.",
+    "name": "serverexternalpackages-vs-webpackconfig-externals",
+    "hook": "serverExternalPackages prevents Next.js serverless bundling; webpackConfig.externals prevents webpack from analyzing a package's internals",
+    "body": "serverExternalPackages tells the Next.js build system to leave a package out of the serverless function bundle (loaded from node_modules at runtime). But webpack still analyzes the package's source when bundling the app code that imports it — for tree-shaking, dead code elimination, etc. webpackConfig.externals tells webpack to treat the package as an external Node.js module and skip all source analysis. Both are needed: serverExternalPackages for the bundler output, webpackConfig.externals for preventing webpack from encountering node: imports during analysis.",
+    "why": "node-fetch was in serverExternalPackages (correctly, to reduce bundle size) but NOT in webpackConfig.externals. Webpack still analyzed node-fetch's internals for tree-shaking, encountered node:https/node:http/node:net/node:dns imports, and threw UnhandledSchemeError.",
     "confidence": 0.95
   },
   {
     "type": "lesson",
-    "name": "resolve-scheme-hook-removed-webpack-5980",
-    "hook": "resolve.scheme webpack hook doesn't exist in webpack 5.98.0 — remove plugin if hook missing",
-    "body": "The resolve.scheme hook (AsyncSeriesWaterfallHook) was removed or renamed in webpack 5.98.0 (bundled with Next.js 15.5.9). A webpack plugin in next.config.js tried to tap resolve.scheme to intercept node: URL scheme imports, but the hook doesn't exist, causing 'Hook resolve.scheme doesn't exist' at build time. The plugin is unnecessary anyway since get-tsconfig is already in webpackConfig.externals for non-client builds — webpack never analyzes its internals and never encounters the node: imports.",
-    "why": "Next.js 15.5.9 uses webpack 5.98.0 which removed or renamed resolve.scheme. The plugin tap fails unconditionally in all build configurations, blocking the build entirely.",
-    "confidence": 0.95
+    "name": "resolve-alias-handles-node-protocol-prefixed-modules",
+    "hook": "resolve.alias CAN intercept node: protocol imports when module name includes the 'node:' prefix",
+    "body": "webpack resolve.alias operates on the module request string. If a file does require('node:fs'), the module name is 'node:fs' and resolve.alias['node:fs'] correctly redirects it. The previous session's lesson said 'resolve.alias cannot intercept node: protocol' — that was wrong. The correct statement is: resolve.alias cannot intercept bare 'fs' when the code uses require('node:fs') AND the package is not in externals. But when the request IS 'node:fs', resolve.alias['node:fs'] works. The node: protocol prefix makes the module name include 'node:' so alias can match it.",
+    "why": "The previous fix (2476) used resolve.alias entries for node:console etc. but also removed externals — so webpack still analyzed undici which then had node:dns in mock utils, not via require('node:dns') directly. Now with externals AND resolve.alias together, we have defense in depth: externals prevents analysis entirely, and alias stubs any remaining node: references webpack does analyze.",
+    "confidence": 0.9
   }
 ]
