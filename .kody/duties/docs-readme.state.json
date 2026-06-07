@@ -1,14 +1,14 @@
 {
   "version": 1,
-  "rev": 11,
+  "rev": 12,
   "cursor": "idle",
   "data": {
-    "disabledReason": "dispatch verb 'chore --issue' not found in engine README — available issue verbs are: run, resolve, sync, merge, revert, preview-build. Job body must be corrected before enabling.",
+    "disabledReason": "dispatch verb 'chore --issue' not found in engine README — available issue verb is 'run --issue <N>'. Job body inbox format must be corrected to use 'run --issue' instead of 'chore --issue' before enabling.",
     "lastCheckedMergedAt": "2026-06-03T08:35:32Z",
-    "nextEligibleISO": "2026-06-06T12:00:00Z",
-    "lastFiredAt": "2026-06-06T01:30:18.132Z",
+    "nextEligibleISO": "2026-06-07T12:00:00Z",
+    "lastFiredAt": "2026-06-07T01:41:40.996Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 41780
+    "lastDurationMs": 58650
   },
   "done": false
 }
