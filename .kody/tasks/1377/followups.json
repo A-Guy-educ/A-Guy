@@ -1,8 +1,1 @@
-[
-  {
-    "title": "Add TESTING-PATTERNS.md to docs/_sidebar.md",
-    "body": "The new file docs/specs/TESTING-PATTERNS.md should be linked in the sidebar under Specs. Update docs/_sidebar.md to add this new documentation.",
-    "rationale": "The documentation exists but is not navigable from the sidebar.",
-    "priority": "low"
-  }
-]
+[]
