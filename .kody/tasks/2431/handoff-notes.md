@@ -1,1 +1,3 @@
-Resolved a single symmetric conflict in `.kody/reports/health-check.md`. Both sides had the same issues (#1583, #1563, #1562, #1236) with different section headers and timestamps. HEAD had newer timestamps (fresher `since last update` values) and an extra Running issue (#2369 — login page mobile overflow), so I kept the HEAD sections verbatim and discarded the origin/dev `kody:running`/`kody:failed` variant. No code, no quality gates — purely a report file.
+Resolved the single conflicted file `.kody/reports/duty-review.md` by taking the origin/dev side.
+
+The HEAD side had Cycle 7 data (0 healthy, 7 warn, 18 broken); origin/dev had Cycle 12 data (1 healthy, 14 broken, 10 warn) — a strictly more recent and more complete state. No judgement calls were needed; it was a straightforward "newer wins" resolution. No conflict markers remain.
