@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "csp-hostname-does-not-match-subdomain",
+    "hook": "CSP hostname gravatar.com does NOT match www.gravatar.com",
+    "body": "In CSP hostname matching, a bare domain like `gravatar.com` does NOT match subdomains like `www.gravatar.com`. You must explicitly add `www.gravatar.com` or use `*.gravatar.com` wildcard to match subdomains.\n\n**Why:** CSP hostname matching follows the origin model — `www.gravatar.com` is a different origin from `gravatar.com`. This is a common gotcha when adding CSP exceptions for Gravatar, Google Fonts, and similar services.\n\n**How to apply:** When adding CSP img-src or script-src allowances for services that use `www` subdomains in their CDN URLs, always add the `www.` prefix explicitly, or use a wildcard `*.domain.com` pattern.",
+    "why": "Payload CMS generates Gravatar avatar URLs at https://www.gravatar.com/avatar/<hash>..., but the CSP had `gravatar.com` which doesn't match `www.gravatar.com`. This bug caused avatars to be missing from the admin sidebar.",
+    "confidence": 0.95
+  }
+]
