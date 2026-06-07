@@ -1,14 +1,14 @@
 {
   "taskId": "2350",
   "taskType": "pr",
-  "target": "2349-dev-ci-is-red-kody-auto-fix",
+  "target": "PR #2350",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Single asymmetric conflict in duty-review.md resolved by taking origin/dev (Cycle 13, more recent)",
+  "reason": "Single symmetric conflict in health-check.md resolved by preferring origin/dev (more recent hour values)",
   "prUrl": null,
   "runUrl": null,
-  "filesTouched": [".kody/reports/duty-review.md"],
+  "filesTouched": [".kody/reports/health-check.md"],
   "sessionLog": null,
   "startedAt": "2026-06-07T00:00:00Z",
-  "finishedAt": "2026-06-07T00:01:00Z"
+  "finishedAt": "2026-06-07T00:00:00Z"
 }
