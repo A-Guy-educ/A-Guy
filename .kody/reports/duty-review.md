@@ -2,7 +2,7 @@
 
 _Rolling 6h cycle — one duty deep-reviewed per tick._
 
-Cycle 12 — 1 healthy, 9 warn, 15 broken of 25 duties.
+Cycle 13 — 1 healthy, 10 warn, 15 broken of 25 duties.
 
 | Duty | Staff | Cadence | Verdict | Note |
 |------|-------|---------|---------|------|
@@ -31,3 +31,4 @@ Cycle 12 — 1 healthy, 9 warn, 15 broken of 25 duties.
 | system-audit | cto | 1h | warn | no kody-job-next-state block; state never created |
 | task-memory-extractor | cto | 1h | warn | no kody-job-next-state block; state never created |
 | type-debt | cto | 7d (disabled) | warn | no kody-job-next-state block; state never created; disabled=true so idle by design |
+
