@@ -76,3 +76,5 @@ git activity belongs in `git log`, not here.
 - [Afterread Hook Siblingdata Vs Value](afterread-hook-siblingdata-vs-value.md) — afterRead hooks use siblingData for cross-field logic (discountType), not just value param (type: decision)
 
 - [Overrideaccess True Does Not Bypass Hooks](overrideAccess-true-does-not-bypass-hooks.md) — overrideAccess: true in Payload Local API bypasses access control only, NOT hooks (type: lesson)
+
+- [Payload Types Stale After Collection Removal](payload-types-stale-after-collection-removal.md) — Regenerate payload-types.ts when collections are removed from config (type: lesson)

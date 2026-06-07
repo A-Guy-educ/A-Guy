@@ -1,5 +1,7 @@
-Fixed the Dependency Security Report (Daily) CI failure.
+Verified that the fix from task gh-27091218975-1 is correctly in place:
+- `.github/workflows/deps-security-report.yml` now has `PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET || 'test-secret-for-ci' }}` at the job `env` level (line 21).
+- This matches the pattern used in `ci.yml` and `atlas-integration.yml`.
 
-Root cause: `deps-security-report.yml` did not set the `PAYLOAD_SECRET` env var. When `pnpm install --frozen-lockfile` ran, it triggered the `postinstall` script (`cross-env PAYLOAD_GENERATE_TYPES=true pnpm generate`), which calls `payload generate:types`. Payload validates PAYLOAD_SECRET at startup and throws `Error: PAYLOAD_SECRET env var is required` if it's missing.
+The failing run (27086250150, scheduled at 07:34 UTC on 2026-06-07) predated the fix (committed at 11:33 UTC the same day). The scheduled workflow uses the workflow file as-of when the run starts, so that run did not have `PAYLOAD_SECRET` — causing the postinstall script to fail when `payload generate:types` was invoked.
 
-Fix: Added `PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET || 'test-secret-for-ci' }}` to the job-level `env` block in `deps-security-report.yml`, matching the pattern used in `ci.yml` and `atlas-integration.yml`. A fallback value is appropriate here since the dependency security report only needs to install deps and run a script — no real Payload initialization is needed.
+No additional changes needed. Future scheduled runs and workflow_dispatch runs will have the secret available.

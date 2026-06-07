@@ -207,10 +207,16 @@ describe('Lesson duplication orchestrator — integration', () => {
     cleanupLessonIds.push(sourceLessonId)
 
     // Create exactly 5 exercises on the source lesson
+    // Exercise 3 (index 2) must have an ID containing '-3' so the mock throws for it
     for (let i = 0; i < 5; i++) {
       const ex = await payload.create({
         collection: 'exercises',
-        data: { title: `Orch Exercise ${i} ${ts}`, lesson: sourceLessonId },
+        data: {
+          title: `Orch Exercise ${i} ${ts}`,
+          // Slug includes '-3' for index 2 so mock runStrategy throws on 3rd exercise
+          slug: i === 2 ? `orch-exercise-${ts}-3` : `orch-exercise-${ts}-${i}`,
+          lesson: sourceLessonId,
+        },
         draft: true,
       })
       cleanupExerciseIds.push(ex.id)
