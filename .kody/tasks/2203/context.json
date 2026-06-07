@@ -1,14 +1,14 @@
 {
   "taskId": "2203",
   "taskType": "pr",
-  "target": "pr/2203",
+  "target": "gh-27091218975-1",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Version mismatch between inspector.yml (pnpm v9) and package.json (pnpm@10.33.0) — updated inspector.yml to use pnpm 10.33.0",
+  "reason": "Missing PAYLOAD_SECRET env var in deps-security-report.yml caused postinstall (pnpm generate) to fail during payload generate:types",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2203",
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27078963532",
-  "filesTouched": [".github/workflows/inspector.yml"],
-  "sessionLog": null,
-  "startedAt": "2026-06-07T01:30:00Z",
-  "finishedAt": "2026-06-07T01:30:30Z"
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27086250150",
+  "filesTouched": [".github/workflows/deps-security-report.yml"],
+  "sessionLog": ".kody/sessions/gh-27091218975-1.jsonl",
+  "startedAt": "2026-06-07T07:35:00Z",
+  "finishedAt": "2026-06-07T07:36:00Z"
 }

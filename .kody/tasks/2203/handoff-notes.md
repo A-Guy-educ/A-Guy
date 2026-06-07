@@ -1,5 +1,5 @@
-Fixed the Inspector CI failure caused by a pnpm version mismatch.
+Fixed the Dependency Security Report (Daily) CI failure.
 
-Root cause: `.github/workflows/inspector.yml` pinned `pnpm/action-setup@v4` to `version: 9`, but `package.json` specifies `"packageManager": "pnpm@10.33.0"`. The action-setup action errors when both versions are present.
+Root cause: `deps-security-report.yml` did not set the `PAYLOAD_SECRET` env var. When `pnpm install --frozen-lockfile` ran, it triggered the `postinstall` script (`cross-env PAYLOAD_GENERATE_TYPES=true pnpm generate`), which calls `payload generate:types`. Payload validates PAYLOAD_SECRET at startup and throws `Error: PAYLOAD_SECRET env var is required` if it's missing.
 
-Fix: Changed `version: 9` → `version: 10.33.0` in inspector.yml to match package.json. No other files touched.
+Fix: Added `PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET || 'test-secret-for-ci' }}` to the job-level `env` block in `deps-security-report.yml`, matching the pattern used in `ci.yml` and `atlas-integration.yml`. A fallback value is appropriate here since the dependency security report only needs to install deps and run a script — no real Payload initialization is needed.
