@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "fetch-requests-in-hooks-always-need-timeout",
+    "hook": "useCurrentUser had no timeout on its fetch call",
+    "body": "When a fetch request is made in a useEffect hook (like useCurrentUser's fetchUser), it can hang indefinitely if the server doesn't respond. This causes isLoading to stay true forever, showing a loading spinner forever.\n\nFix: Use AbortController with a setTimeout to abort the request after a reasonable timeout (e.g., 15s).\n\n**Why:** This bug (#2503) manifested as the /admin/lesson-duplications/<id> page showing 'Loading…' forever because the useCurrentUser fetch to /api/users/me had no timeout and no way to abort. This is the same pattern as the prior bug #1822, which proves this lesson needs to be applied universally: ANY useEffect fetch without a timeout is a latent bug.",
+    "why": "The same pattern (fetch in useEffect with no timeout) caused two separate bugs (#1822 and #2503). A lint rule or automated check should prevent this going forward.",
+    "confidence": 0.95
+  }
+]

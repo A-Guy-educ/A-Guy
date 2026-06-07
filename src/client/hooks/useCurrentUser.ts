@@ -10,6 +10,8 @@ interface UseCurrentUserReturn {
   refetch: () => Promise<void>
 }
 
+const FETCH_TIMEOUT_MS = 15000
+
 export function useCurrentUser(): UseCurrentUserReturn {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -18,11 +20,15 @@ export function useCurrentUser(): UseCurrentUserReturn {
   const fetchUser = useCallback(async () => {
     setIsLoading(true)
     setError(null)
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
     try {
       const response = await fetch('/api/users/me', {
         credentials: 'include',
         cache: 'no-store',
+        signal: controller.signal,
       })
+      clearTimeout(timeoutId)
       if (response.ok) {
         const data = await response.json()
         setUser(data.user || null)
@@ -30,7 +36,12 @@ export function useCurrentUser(): UseCurrentUserReturn {
         setUser(null)
       }
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch user'))
+      clearTimeout(timeoutId)
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError(new Error('Request timed out'))
+      } else {
+        setError(err instanceof Error ? err : new Error('Failed to fetch user'))
+      }
       setUser(null)
     } finally {
       setIsLoading(false)

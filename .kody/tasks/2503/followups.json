@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Add ESLint rule to prevent fetch-without-timeout in useEffect",
+    "body": "The same pattern (fetch in useEffect with no timeout) caused both #1822 and #2503. A custom ESLint rule (or a wrapper hook pattern) should prevent this class of bug. Consider: (1) an ESLint rule that flags bare fetch calls inside useEffect without an AbortController, or (2) a lint rule that enforces using a typed useFetchWithTimeout hook instead.",
+    "rationale": "Same bug class hit twice. Without an automated guard, it will hit a third time.",
+    "priority": "medium"
+  }
+]
