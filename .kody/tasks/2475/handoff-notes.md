@@ -1,29 +1,29 @@
-## Fix: CI Build Failure on PR #2475
+## Fix: CI Build Failure — `_webpack.WebpackError is not a constructor`
 
 ### Root Cause
-The CI build was failing with `UnhandledSchemeError: Reading from "node:console/node:crypto/node:dns/diagnostics_channel"` and `Error: Node.js binary module ... skia.linux-x64-gnu.node is not supported in the browser`.
+Next.js 15.5.9 ships with webpack 5.98.0. In this version, `WebpackError` was removed from `next/dist/compiled/webpack/webpack` (which is what `require("next/dist/compiled/webpack/webpack")` returns). The minify-webpack-plugin uses `new _webpack.WebpackError(...)` to construct error objects when minification fails, but `_webpack.WebpackError` is `undefined`, causing `TypeError: _webpack.WebpackError is not a constructor`.
 
-These errors occur because webpack analyzes `payload.config.ts` (imported by middleware) and traces through:
-1. `payload` → `safeFetch.js` (uses `undici`) → undici's internal `node:` imports (node:dns, node:console, etc.) → `UnhandledSchemeError`
-2. `pdf-render-service.ts` → `@napi-rs/canvas` → `.node` binary files → browser binary error
-
-The previous fix (commit 4f6d4b0ac) removed the webpack externals and `.node$` alias, relying on `serverExternalPackages` alone. But `serverExternalPackages` only prevents bundling into the serverless function — it does NOT prevent webpack from analyzing the source when the package is imported via `payload.config.ts` which is loaded by middleware (part of the client bundle analysis).
+`WebpackError` IS available in `bundle5().webpack.WebpackError`, but the plugin requires the wrong path.
 
 ### Fix Applied
-Restored the webpack callback configuration from commit `4930aa79b`:
-1. Changed callback from `(webpackConfig)` back to `(webpackConfig, { isClient })`
-2. Added `path` import (needed for stub path resolution)
-3. Added `if (!isClient)` externals block for `undici` and `@napi-rs/canvas`
-4. Added `.node$` alias to `empty-stub.js`
-5. Added `resolve.fallback.node: false`
+Created `scripts/patch-next-minify-webpack.cjs` — a Node.js script that:
+1. Finds all installed copies of the minify-webpack-plugin source file in `node_modules/.pnpm`
+2. Checks for a `// __PATCHED_MINIFY_WEBPACK_PLUGIN__` marker to avoid double-patching
+3. Replaces the `buildError` function to use `Error` as a fallback when `WebpackError` is unavailable
 
-### Why This Works
-- **Externals**: When `undici` and `@napi-rs/canvas` are in `webpackConfig.externals` for non-client builds, webpack treats them as Node.js native modules and does NOT analyze their internal source code. The `node:` imports inside undici are never encountered.
-- **`.node$` alias**: Redirects `.node` binary files to `empty-stub.js`, preventing the browser binary error.
-- **`resolve.fallback.node: false`**: Prevents webpack from providing Node.js polyfills; combined with externals, this is correct for server builds.
+Added to `package.json`:
+```json
+"prebuild": "node scripts/patch-next-minify-webpack.cjs"
+```
+
+The `prebuild` script runs automatically before every `pnpm build`, ensuring the patch is applied regardless of whether `node_modules` came from a fresh install or a cache restore.
 
 ### Files Changed
-- `next.config.js` — restored webpack callback with isClient parameter, externals, .node$ alias, and resolve.fallback.node: false
+- `package.json` — added `"prebuild": "node scripts/patch-next-minify-webpack.cjs"` before the build script
+- `scripts/patch-next-minify-webpack.cjs` (new) — patches minify-webpack-plugin to handle missing WebpackError
+
+### Why a prebuild script instead of patch-package
+`patch-package` requires adding a new devDependency and configuring `.npmrc` for pnpm's postinstall scripts. A simple prebuild patching script achieves the same result without new dependencies and works reliably with pnpm's caching model.
 
 ### Verification
-- `mcp__kody-verify__verify` — ok: true, attempt 1
+- `mcp__kody-verify__verify` — ok: true, attempt 2

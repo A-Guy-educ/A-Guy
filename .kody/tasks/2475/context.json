@@ -4,13 +4,14 @@
   "target": "2449-p2-frontend-login-form-silently-fails-session-not",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Restored webpack externals for undici/@napi-rs/canvas in non-client builds, .node$ alias to empty-stub.js, and resolve.fallback.node:false. The previous fix attempt (4f6d4b0ac) removed these to address a minify error but incorrectly left the build failing with UnhandledSchemeError for node: imports. verify passes (ok: true, attempt 1).",
+  "reason": "Fixed _webpack.WebpackError is not a constructor in minify-webpack-plugin by adding a prebuild script that patches the plugin to fall back to Error when WebpackError is unavailable (webpack 5.98.0 removed it from next/dist/compiled/webpack/webpack). verify passes (ok: true, attempt 2).",
   "prUrl": null,
   "runUrl": null,
   "filesTouched": [
-    "next.config.js"
+    "package.json",
+    "scripts/patch-next-minify-webpack.cjs"
   ],
-  "sessionLog": null,
-  "startedAt": "2026-06-07T08:50:00Z",
-  "finishedAt": "2026-06-07T08:55:00Z"
+  "sessionLog": ".kody/runs/gh-27089158100-1/events.jsonl",
+  "startedAt": "2026-06-07T09:40:00Z",
+  "finishedAt": "2026-06-07T09:50:00Z"
 }

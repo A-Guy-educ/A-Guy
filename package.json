@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "kody": "npx @kody-ade/kody-engine serve",
+    "prebuild": "node scripts/patch-next-minify-webpack.cjs",
     "build": "pnpm generate && cross-env NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS='--no-deprecation --max-old-space-size=6144' next build",
     "postbuild": "if [ \"$CI\" = \"true\" ] || [ \"$VERCEL\" = \"1\" ]; then next-sitemap --config next-sitemap.config.cjs; else echo 'Skipping sitemap (local build)'; fi",
     "build:analyze": "cross-env ANALYZE=true pnpm build",

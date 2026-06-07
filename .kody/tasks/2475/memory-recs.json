@@ -1,18 +1,18 @@
 [
   {
     "type": "lesson",
-    "name": "webpack-externals-needed-for-undici-in-non-client-builds",
-    "hook": "webpack externals for undici/@napi-rs/canvas are required in non-client builds to prevent UnhandledSchemeError",
-    "body": "webpackConfig.externals for undici and @napi-rs/canvas in non-client builds (guarded with !isClient) are REQUIRED to prevent webpack from analyzing these packages' internal code. Without externals, webpack analyzes undici's source and encounters node: protocol imports (node:dns, node:console, etc.) which cause UnhandledSchemeError in non-client builds because there is no plugin to handle node: URL schemes. serverExternalPackages only prevents Next.js from bundling into the serverless function — webpack still analyzes the code for the client build when it's imported via shared config files like payload.config.ts.",
-    "why": "payload.config.ts imports payload which imports undici. When webpack analyzes payload.config.ts for the client build, it traces into undici and encounters node: imports that it cannot handle. Only externals prevent this analysis.",
+    "name": "next-js-15-5-9-webpackerror-not-a-constructor",
+    "hook": "Next.js 15.5.9 webpack 5.98.0 removed WebpackError from compiled bundle",
+    "body": "Next.js 15.5.9 bundles webpack 5.98.0 which removed WebpackError from `next/dist/compiled/webpack/webpack`. The minify-webpack-plugin uses `new _webpack.WebpackError(...)` but _webpack.WebpackError is undefined. Fix: patch the minify-webpack-plugin source to fall back to Error when WebpackError is unavailable. Created scripts/patch-next-minify-webpack.cjs that is run via prebuild script in package.json.",
+    "why": "This is a regression in Next.js 15.5.9's bundled webpack. The minify-webpack-plugin's buildError function cannot construct a WebpackError, causing the build to fail. The fix is to patch the plugin to use Error as a fallback.",
     "confidence": 0.95
   },
   {
     "type": "lesson",
-    "name": "node-native-binary-alias-needed-with-false-fallback",
-    "hook": ".node$ alias to empty-stub.js plus resolve.fallback.node=false is required to prevent browser binary errors",
-    "body": "The .node$ alias to empty-stub.js combined with resolve.fallback.node=false is REQUIRED. Without it, webpack encounters @napi-rs/canvas's .node binary files and throws 'Node.js binary module is not supported in the browser'. The alias redirects .node files to an empty stub so webpack can proceed. resolve.fallback.node=false prevents webpack from providing Node.js polyfills. Both settings are needed together and must NOT be removed independently.",
-    "why": "@napi-rs/canvas is a native Node.js addon with .node binary files that cannot execute in the browser. The .node$ alias is the only way to prevent webpack from failing when it encounters these files during analysis.",
-    "confidence": 0.95
+    "name": "prebuild-script-patches-node-modules",
+    "hook": "Use prebuild script to patch node_modules files that need fixing after every install",
+    "body": "When a bug in a third-party package (like Next.js) needs to be fixed, and the package is not patched via patch-package, use a prebuild script to patch the file directly. The script uses find to locate the installed file, checks for a marker to avoid double-patching, and applies the fix. This ensures the patch is applied on every build regardless of how node_modules was populated.",
+    "why": "The patched file in node_modules/.pnpm would be reset on every pnpm install. Running the patch as a prebuild script ensures it's applied before every build, regardless of whether node_modules came from cache or fresh install.",
+    "confidence": 0.9
   }
 ]
