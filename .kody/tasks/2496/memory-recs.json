@@ -1,0 +1,18 @@
+[
+  {
+    "type": "lesson",
+    "name": "useastitle-must-be-text-not-date",
+    "hook": "Date fields as useAsTitle cause admin UI rendering issues",
+    "body": "useAsTitle in Payload collection admin config must be a text field, not a Date field. Using a Date field (like createdAt from timestamps: true) as useAsTitle can cause the admin UI list view to show 'Loading...' in relationship columns, because the admin UI expects a text field for the document title and misinterprets Date fields.\n\nWhy: The admin UI uses useAsTitle for document title rendering. When a Date field is used, the UI may try to treat it as a special field type, causing cascading rendering failures in list view columns.\n\nHow to apply: When creating a new collection, ensure useAsTitle points to a text field (name, title, code, etc.). For Transactions, changed useAsTitle from createdAt to providerTransactionId.",
+    "why": "Issue #2496: Transactions list showed 'Loading...' in Created At and User columns because useAsTitle was set to createdAt (a Date field from timestamps: true).",
+    "confidence": 0.85
+  },
+  {
+    "type": "lesson",
+    "name": "investigate-admin-list-relationships",
+    "hook": "Admin UI list relationship issues need depth query investigation",
+    "body": "When relationship columns show 'Loading...' in Payload admin list views, the issue could be: (1) the list query uses depth=0 and returns IDs instead of populated objects, OR (2) the admin UI makes separate API calls to fetch related documents which fail. The Enrollments collection comment says 'Relationship fields default to depth=2 (populated) in Payload', confirming relationships should populate by default.\n\nWhy: The admin UI renders list columns; relationship columns need either pre-populated data (via depth) or separate fetches. If the approach used by the admin UI fails, columns show 'Loading...'.\n\nHow to apply: Check if admin list query includes depth parameter, and whether the admin UI's relationship fetch calls succeed.",
+    "why": "Transactions relationship columns showed 'Loading...' despite no apparent access control issues. Could not fully diagnose whether issue was list query depth or admin UI separate fetches due to no DATABASE_URL for testing.",
+    "confidence": 0.7
+  }
+]

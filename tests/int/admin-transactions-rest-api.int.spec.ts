@@ -132,6 +132,49 @@ describe.skipIf(!hasDatabaseUrl)('GET /api/transactions — REST API endpoint', 
     expect(res.status).toBe(200)
   })
 
+  it('returns populated relationships WITHOUT explicit depth (admin list default depth)', async () => {
+    // Reproduces issue #2496: transactions list shows "Loading..." in relationship columns.
+    // The admin UI list view does NOT pass an explicit depth param, relying on Payload's
+    // default. If default depth is 0, relationships come back as IDs and the UI shows
+    // "Loading..." while trying to resolve them separately.
+    // This test verifies that the list query returns POPULATED relationship objects
+    // (depth >= 1) so the admin UI can display user/product names without extra fetches.
+    const handler = REST_GET(config)
+
+    // Query WITHOUT explicit depth — mimics what the admin UI sends
+    const req = new Request('http://localhost:3000/api/transactions?limit=5', {
+      method: 'GET',
+      headers: {
+        Authorization: `JWT ${adminToken}`,
+        'Content-Type': 'application/json',
+      },
+    })
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const res = (await handler(req, {
+      params: Promise.resolve({ slug: ['transactions'] }),
+    })) as Response
+
+    expect(res.status).toBe(200)
+
+    const json = (await res.json()) as { docs: Array<Record<string, unknown>> }
+    expect(json.docs.length).toBeGreaterThan(0)
+
+    const tx = json.docs[0]
+    // Relationships must be POPULATED (full objects), not just ID strings.
+    // If they are just strings (IDs), the admin UI will show "<No User>" / "<No Product>".
+    const user = tx.user
+    const product = tx.product
+    // Relationships must be POPULATED (full objects), not just ID strings.
+    // If they are just strings (IDs), the admin UI will show "<No User>" / "<No Product>".
+    expect(user).toBeDefined()
+    expect(typeof user).toBe('object')
+    expect(product).toBeDefined()
+    expect(typeof product).toBe('object')
+    expect(user).not.toBeNull()
+    expect(product).not.toBeNull()
+  })
+
   it('returns 401 without auth', async () => {
     const handler = REST_GET(config)
 

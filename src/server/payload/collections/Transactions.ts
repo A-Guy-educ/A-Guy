@@ -26,8 +26,17 @@ export const Transactions: CollectionConfig = {
   admin: {
     description:
       'Transactions are auto-created by payment webhooks and the checkout route. Manual creation is disabled — dangling records break revenue stats, refunds, and the purchases page.',
-    useAsTitle: 'createdAt',
-    defaultColumns: ['createdAt', 'user', 'product', 'amount', 'currency', 'status', 'provider'],
+    useAsTitle: 'providerTransactionId',
+    defaultColumns: [
+      'providerTransactionId',
+      'createdAt',
+      'user',
+      'product',
+      'amount',
+      'currency',
+      'status',
+      'provider',
+    ],
     listSearchableFields: ['providerTransactionId'],
     group: 'Payments',
     components: {

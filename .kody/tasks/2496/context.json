@@ -1,0 +1,17 @@
+{
+  "taskId": "2496",
+  "taskType": "issue",
+  "target": "2496",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Changed useAsTitle from createdAt (Date field) to providerTransactionId (text field). Date fields used as useAsTitle can cause admin UI rendering issues.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/collections/Transactions.ts",
+    "tests/int/admin-transactions-rest-api.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2496.jsonl",
+  "startedAt": "2026-06-07T13:00:00.000Z",
+  "finishedAt": "2026-06-07T13:15:00.000Z"
+}

@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Verify the fix by running E2E test against /admin/collections/transactions",
+    "body": "The useAsTitle fix (createdAt -> providerTransactionId) should be verified by manually navigating to /admin/collections/transactions as an admin user and confirming that relationship columns (User, Product) and Created At column no longer show 'Loading...'. The reproduction test in tests/int/admin-transactions-rest-api.int.spec.ts checks REST API relationship population but cannot fully verify the admin UI behavior without a live MongoDB.",
+    "rationale": "Integration tests are skipped due to no DATABASE_URL in this environment. The fix is based on code analysis and Payload patterns, not a live test run.",
+    "priority": "medium"
+  },
+  {
+    "title": "Investigate whether list query depth contributes to the issue",
+    "body": "If the useAsTitle fix alone doesn't resolve the issue, the admin list query might need depth override. The Transactions collection has no admin.list override, and Payload's default list depth behavior for admin UI should populate relationships (depth=2 per Enrollments hook comment). If needed, add admin.list override with custom query including depth: 2.",
+    "rationale": "Could not fully determine whether the issue was useAsTitle causing admin UI failure OR list query returning IDs instead of populated relationships. The fix addresses the useAsTitle; the depth investigation is a fallback.",
+    "priority": "low"
+  }
+]
