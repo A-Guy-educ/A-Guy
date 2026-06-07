@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Verify login page mobile behavior in production environment",
+    "body": "Issue #2505 could not be reproduced locally. The middleware correctly allows /login through without redirect. The bug may be environment-specific (production vs local) or may have been fixed by a recent middleware change (commit f8425fd46 removed /ask from protectedPaths). Need to verify behavior in production environment with actual mobile device testing at 375px viewport.",
+    "rationale": "The bug was found during QA sweep but cannot be reproduced in local testing. This could indicate an environment-specific issue or a difference between local and production middleware behavior.",
+    "priority": "medium"
+  }
+]

@@ -50,7 +50,7 @@ describe('Auth Middleware - Learning Feature Protection', () => {
   })
 
   describe('Public routes - should pass through without redirect', () => {
-    const publicRoutes = ['/', '/courses']
+    const publicRoutes = ['/', '/courses', '/login']
 
     it.each(publicRoutes)('should allow unauthenticated request to %s', (route) => {
       const request = createRequest(route)

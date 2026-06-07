@@ -1,0 +1,17 @@
+{
+  "taskId": "2505",
+  "taskType": "issue",
+  "target": "2505-p2-login-page-redirects-to-start-on-mobile-375px",
+  "outcome": "partial",
+  "exitCode": 0,
+  "reason": "Bug could not be reproduced - middleware correctly allows /login through. Added regression tests instead of finding a bug to fix.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "tests/int/auth-middleware.int.spec.ts",
+    "tests/e2e/verification/auth-onboarding.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/gh-27101741809-1.jsonl",
+  "startedAt": "2026-06-07T19:14:00Z",
+  "finishedAt": "2026-06-07T19:30:00Z"
+}

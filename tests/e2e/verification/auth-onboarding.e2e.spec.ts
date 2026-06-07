@@ -54,3 +54,38 @@ test.describe('Scenario #2 – Onboarding Journey', () => {
     test.skip(!hasPersonaUI, 'Persona selection UI not found on onboarding page')
   })
 })
+
+test.describe('Mobile Login Page - Issue #2505', () => {
+  test('login page renders at mobile viewport (375px) without redirecting to /start', async ({
+    page,
+  }) => {
+    // Set mobile viewport
+    await page.setViewportSize({ width: 375, height: 667 })
+
+    // Navigate to login page
+    await page.goto('/login')
+    await page.waitForLoadState('load')
+
+    // Verify URL stayed at /login (did not redirect to /start)
+    expect(page.url()).not.toContain('/start')
+
+    // Verify login page content is visible
+    const loginHeading = page.getByRole('heading')
+    await expect(loginHeading.first()).toBeVisible({ timeout: 10_000 })
+  })
+
+  test('login page does not redirect to /start after form appears on mobile', async ({ page }) => {
+    // Set mobile viewport
+    await page.setViewportSize({ width: 375, height: 667 })
+
+    // Navigate to login page
+    await page.goto('/login')
+    await page.waitForLoadState('networkidle')
+
+    // Wait for the page to settle
+    await page.waitForTimeout(2000)
+
+    // Verify URL is still /login
+    expect(page.url()).not.toContain('/start')
+  })
+})
