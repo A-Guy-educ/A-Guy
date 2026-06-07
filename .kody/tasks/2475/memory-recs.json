@@ -1,42 +1,26 @@
 [
   {
     "type": "lesson",
-    "name": "resolve-fallback-node-false-breaks-minify-webpack-plugin",
-    "hook": "resolve.fallback.node: false causes _webpack.WebpackError is not a constructor in Next.js 15.5.9",
-    "body": "Setting resolve.fallback.node: false in the webpack callback causes the minify-webpack-plugin to fail with '_webpack.WebpackError is not a constructor' during minification. This happens because when node: imports resolve to false (due to fallback), and the bundle code tries to use those false values, it causes JavaScript errors that webpack tries to wrap in WebpackError. But WebpackError is not exported from Next.js 15.5.9's bundled webpack (bundle5.js). The fix is to NOT set resolve.fallback.node: false at all — if packages containing node: imports are in serverExternalPackages, they are excluded from the client bundle entirely.",
-    "why": "The minify-webpack-plugin tries to construct new _webpack.WebpackError(...) to report errors during minification, but _webpack.WebpackError is undefined in Next.js 15.5.9's webpack bundle. The error being reported is a side effect of resolve.fallback.node: false returning false for node: imports.",
+    "name": "webpack-externals-never-needed-when-serverexternalpackages-set",
+    "hook": "Adding packages to webpackConfig.externals is unnecessary when they are already in serverExternalPackages",
+    "body": "When a package is listed in Next.js serverExternalPackages, Next.js prevents it from being bundled into client-side JavaScript bundles via its own bundling logic. Adding the same package to webpackConfig.externals is redundant and can cause build failures. The dev branch has no webpackConfig.externals additions and builds fine. The correct approach is: just use serverExternalPackages.",
+    "why": "webpackConfig.externals and serverExternalPackages serve different purposes — externals prevents webpack from analyzing a package's code, but serverExternalPackages already excludes the package from the client bundle. Adding externals on top of serverExternalPackages can cause webpack resolution issues in edge/server builds.",
     "confidence": 0.9
   },
   {
     "type": "lesson",
-    "name": "node-protocol-bypasses-resolve-fallback",
-    "hook": "resolve.fallback.node does NOT intercept node: URL scheme imports — use externals instead",
-    "body": "webpack resolve.fallback.node handles bare 'node' module requests (require('node')), NOT 'node:console' URL scheme requests. The node: URL scheme is resolved via webpack's resolveForScheme mechanism, which is separate from resolve.fallback. Setting resolve.fallback.node: false only returns false for require('node'), not for require('node:console'). To prevent webpack from analyzing a package's node: imports, mark the package as external in webpackConfig.externals (so webpack never analyzes its code) and ensure it is in Next.js serverExternalPackages (so Next.js doesn't bundle it for client).",
-    "why": "resolve.fallback.node: false was added thinking it would handle all node: imports, but it only handles the bare 'node' module name. node:console, node:crypto, etc. bypass resolve.fallback entirely.",
-    "confidence": 0.95
+    "name": "webpack-error-constructor-not-exported-nextjs-15-5-9",
+    "hook": "minify-webpack-plugin in Next.js 15.5.9 crashes with _webpack.WebpackError is not a constructor",
+    "body": "The minify-webpack-plugin in Next.js 15.5.9 requires webpack from next/dist/compiled/webpack/webpack and tries to use _webpack.WebpackError to report minification errors. However, WebpackError is not exported from that module. When any minification error occurs, the plugin's error handler crashes, producing '_webpack.WebpackError is not a constructor'. The root cause is the original minification error — the handler crash is a secondary symptom. The fix is to prevent the original minification error from occurring.",
+    "why": "next/dist/compiled/webpack/webpack only exports { __esModule, default, init } — WebpackError is not accessible. The minify-webpack-plugin's buildError function unconditionally calls new _webpack.WebpackError(...), which fails.",
+    "confidence": 0.85
   },
   {
     "type": "lesson",
-    "name": "serverexternalpackages-prevents-client-bundling",
-    "hook": "packages in serverExternalPackages are excluded from client bundles by Next.js",
-    "body": "When a package is listed in Next.js serverExternalPackages (next.config.js), Next.js prevents it from being bundled into client-side JavaScript bundles. This means webpack never sees the package's internal code in the client build context. Both undici and @napi-rs/canvas are already in serverExternalPackages, so any .node$ alias or resolve.fallback configuration is redundant for the client build.",
-    "why": "serverExternalPackages is Next.js's declarative way of marking packages as server-only. WebpackConfig.externals is webpack's mechanism. Both work together: serverExternalPackages prevents Next.js from bundling, webpackConfig.externals prevents webpack from analyzing.",
-    "confidence": 0.95
-  },
-  {
-    "type": "lesson",
-    "name": "isclient-always-undefined-nextjs-15-webpack-callback",
-    "hook": "isClient is always undefined in Next.js 15.5.9 webpack callback — !isClient is always true",
-    "body": "In Next.js 15.5.9, the webpack callback second argument only contains { dir, dev, isServer, buildId, config, defaultLoaders, totalPages, webpack, nextRuntime }. isClient is NOT a parameter. Destructuring { isClient } gives undefined, and !undefined === true. This means any conditional like if (!isClient) { /* runs for all builds */ } behaves the same as if (true). The correct way to identify the client build is webpackConfig.name === 'client'.",
-    "why": "The webpack callback was refactored to use webpackConfig.name !== 'client' instead of !isClient to differentiate client from server builds. But !isClient being always true is actually correct behavior for the externals use case (preventing webpack from analyzing undici in ALL builds).",
-    "confidence": 0.95
-  },
-  {
-    "type": "lesson",
-    "name": "empty-stub-file-not-needed",
-    "hook": "The empty-stub.js file is unnecessary when packages are in serverExternalPackages",
-    "body": "The empty-stub.js was created to serve as a webpack resolve.alias target for .node$ patterns, in case any native binary paths needed stubbing. But since undici and @napi-rs/canvas are in serverExternalPackages, they never enter the client bundle, making the stub file unnecessary. The .node$ alias was also causing the minify-webpack-plugin error.",
-    "why": "If packages are properly excluded from the client bundle via serverExternalPackages, there is no need for .node$ alias or empty-stub files.",
+    "name": "ci-fix-attempts-stack-not-replace",
+    "hook": "CI fixes on this branch were additive — each commit added new webpack config without removing the broken parts",
+    "body": "The branch 2449-p2-frontend-login-form-silently-fails-session-not has 40+ CI-fix commits, all failing. Each attempt added webpack configuration (externals, .node$ alias, resolve.fallback, etc.) without removing the previous broken configurations. The correct fix was to revert the webpack callback to match dev exactly. Always verify that a CI fix actually produces a passing build before committing it.",
+    "why": "The webpack callback accumulated multiple conflicting configurations over 40+ commits. Only reverting to the dev baseline (no webpack callback changes) resolved the build.",
     "confidence": 0.95
   }
 ]

@@ -136,20 +136,6 @@ const nextConfig = {
       type: 'asset/source',
     })
 
-    // Mark server-only packages as externals so webpack never analyzes their internal
-    // code in any build. This prevents UnhandledSchemeError for node: protocol imports
-    // inside undici (node:dns, node:diagnostics_channel, etc.) and prevents
-    // @napi-rs/canvas from being bundled.
-    // Note: !isClient is intentionally used (not webpackConfig.name !== 'client')
-    // because !isClient correctly evaluates to true for server and edge builds,
-    // while isClient (which would be true for client) is never passed by Next.js 15.5.9.
-    // This means undici is external for ALL builds, which is safe because both
-    // serverExternalPackages (for Next.js bundling) and webpackConfig.externals
-    // (for webpack analysis) prevent undici from entering any client-side bundle.
-    // We use this approach (rather than webpackConfig.name !== 'client') to ensure
-    // undici is never analyzed in any webpack build, including edge runtime.
-    webpackConfig.externals = [...(webpackConfig.externals || []), 'undici', '@napi-rs/canvas']
-
     return webpackConfig
   },
   reactStrictMode: true,

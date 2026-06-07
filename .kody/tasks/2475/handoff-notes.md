@@ -1,21 +1,16 @@
-## Fix: CI Build Failure on PR #2475 — `_webpack.WebpackError is not a constructor`
+## Fix: CI Build Failure on PR #2475
 
 ### Root Cause
-The previous task 2475 attempt changed the webpack callback from `!isClient` to `webpackConfig.name !== 'client'`. However, `isClient` is always `undefined` in Next.js 15.5.9's webpack callback (only `isServer` is passed). The `.node$` alias (pointing to `empty-stub.js`) and `resolve.fallback.node: false` were being applied to ALL builds including the client build. These settings caused the minify-webpack-plugin to fail when it tried to report an error during minification — `_webpack.WebpackError` is not exported from Next.js 15.5.9's bundled webpack.
+Every CI-fix attempt on this branch (40+ commits) failed because none of them reverted the webpack callback to match `dev`. The webpack callback had `webpackConfig.externals = [...(webpackConfig.externals || []), 'undici', '@napi-rs/canvas']` added, which has no counterpart in `dev` and was never needed (undici and @napi-rs/canvas are already in `serverExternalPackages`). This addition, combined with the earlier `.node$` alias and `resolve.fallback.node: false` attempts, created a cascade of webpack misconfigurations that all failed with `_webpack.WebpackError is not a constructor`.
 
 ### Fix Applied
-1. **Removed** the `\\.node$` resolve.alias and `resolve.fallback.node: false` settings — these were unnecessary (undici and @napi-rs/canvas are in `serverExternalPackages`) and were causing the minify-webpack-plugin error.
-
-2. **Removed** the unused `path` import and `src/server/utils/empty-stub.js` file.
-
-3. **Kept** undici and @napi-rs/canvas in `webpackConfig.externals` using `!isClient` (always `true` since `isClient` is `undefined`). This ensures webpack never analyzes undici's code in any build. Safe because `serverExternalPackages` prevents them from entering the client bundle in the first place.
+Reverted the webpack callback to match `dev` exactly — removed the unconditional `webpackConfig.externals` addition. The dev webpack config (just `extensionAlias` and markdown loader) was always the correct configuration. The login form fixes (middleware hasAuthToken async, loginAction token handling) are unrelated to webpack and remain intact.
 
 ### Files Changed
-- `next.config.js` — removed `.node$` alias, `resolve.fallback.node: false`, `path` import; simplified externals
-- `src/server/utils/empty-stub.js` — deleted (no longer needed)
+- `next.config.js` — removed `webpackConfig.externals` addition from webpack callback
 
-### Key Insight
-In Next.js 15.5.9 webpack callback, `isClient` is always `undefined`. The `.node$` alias and `resolve.fallback.node: false` were the actual cause of the CI failure — not the `!isClient` condition. Both undici and @napi-rs/canvas are already in `serverExternalPackages`, so the `.node$` alias was redundant. The `resolve.fallback.node: false` does not intercept `node:` protocol imports (they bypass `resolve.fallback`), so it provided no benefit but caused minification to fail.
+### Why This Works
+The `dev` branch builds successfully because undici and @napi-rs/canvas are already in `serverExternalPackages`, which tells Next.js not to bundle them for the client. No webpack-level externals configuration is needed. Adding `webpackConfig.externals` was a misguided fix that never worked and introduced conflicts in the webpack build.
 
 ### Verification
-- `mcp__kody-verify__verify` — ok: true, attempt 2
+- `mcp__kody-verify__verify` — ok: true, attempt 3
