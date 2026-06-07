@@ -6,7 +6,7 @@
     "priority": "low"
   },
   {
-    "title": "Consider externalizing get-tsconfig in serverExternalPackages too",
+    "title": "Consider adding get-tsconfig to serverExternalPackages too",
     "body": "get-tsconfig is currently only in webpackConfig.externals for non-client builds. It could also be added to serverExternalPackages in next.config.js to prevent Next.js from bundling it into serverless functions.",
     "rationale": "Reduces bundle size for serverless functions and further ensures the package is never analyzed in client context.",
     "priority": "low"

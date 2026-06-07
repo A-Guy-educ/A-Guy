@@ -1,25 +1,20 @@
 ## Fix: CI Build Failure — UnhandledSchemeError for node: URL scheme imports
 
 ### Root Cause
-The previous fix (commit 85ff3aeed) added `@payloadcms/plugin-mcp` to `webpackConfig.externals` for non-client builds, but the build still failed. The remaining errors come from two other packages:
-
-1. **get-tsconfig** (via Payload migrations) — imports `node:fs`, `node:https`, `node:module` in its source
-2. **node-fetch** (via @genkit-ai/googleai → Genkit) — imports `node:http`, `node:net`, `node:dns`
-
-These packages are not in `externals`, so webpack analyzes their code during bundling and encounters the `node:` imports, which fail with `UnhandledSchemeError`.
+The previous fix (commit 3bcdd3563) attempted to intercept `node:` URL scheme imports using the webpack `resolve` hook with `stage: -100`. However, in webpack 5, `node:` URL scheme requests go through `resolveForScheme.for('node')` **before** the resolve hook chain — `UnhandledSchemeError` is thrown before any resolve hook fires. Tapping the `resolve` hook cannot intercept `node:` scheme requests.
 
 ### Fix Applied
 Two changes in `next.config.js`:
 
-1. **Added `get-tsconfig` to `webpackConfig.externals`** for non-client builds — prevents webpack from analyzing its internals.
+1. **Added `node-fetch` to `serverExternalPackages`** — `node-fetch` (used by Genkit) was not in the server external packages list, so webpack traced its internals and encountered `node:http`, `node:https`, `node:net`, `node:dns` imports.
 
-2. **Added `nodeProtocolPlugin`** — a webpack resolve plugin that intercepts `node:` URL scheme imports at the resolve hook stage (stage: -100) and redirects them to `empty-stub.js`. This is necessary because webpack's scheme resolver (`resolveAsScheme.for('node')`) handles `node:` imports before the normal resolve pipeline, so `resolve.alias` cannot intercept them. By tapping the resolve hook with high priority, we catch `node:` imports before webpack's scheme resolver fails with `UnhandledSchemeError`.
+2. **Replaced `nodeProtocolPlugin` resolve hook with `resolve.scheme` hook** — The `resolve.scheme` hook (AsyncSeriesWaterfallHook) is the correct webpack 5 hook for scheme-level interception. It fires during scheme resolution, allowing us to register a handler for the `node` scheme before `UnhandledSchemeError` is thrown. The plugin now calls `resolver.getHook('resolve.scheme').tapAsync(...)` and returns the stub path for the `node` scheme.
 
 ### Files Changed
-- `next.config.js` — added `get-tsconfig` to non-client externals; added `nodeProtocolPlugin` resolve plugin
+- `next.config.js` — added `node-fetch` to serverExternalPackages; rewrote `nodeProtocolPlugin` to use `resolve.scheme` hook instead of `resolve` hook
 
 ### Verification
 - `mcp__kody-verify__verify` — ok: true, attempt 1
 
-### Why the plugin approach works
-Webpack's resolve pipeline: resolve hooks → scheme resolution (resolveAsScheme) → alias/fallback. The scheme resolver runs BEFORE our plugin taps the resolve hook unless we use a high-priority stage (stage: -100). At that priority, our plugin runs before webpack's scheme resolver processes the request, letting us redirect `node:` imports to the stub before they fail.
+### Why the fix works
+Webpack 5 resolves `node:fs` by first calling `resolveForScheme.for('node')`. If this returns `undefined` (NodeStuffPlugin not registered), `UnhandledSchemeError` is thrown immediately — the resolve hook is never reached. The `resolve.scheme` hook fires during scheme resolution, before the error is thrown, allowing our plugin to return a result for the `node` scheme. Webpack then resolves the returned stub path as a normal file request.

@@ -1,10 +1,10 @@
 [
   {
     "type": "lesson",
-    "name": "webpack-node-protocol-intercept-resolve-hook-stage",
-    "hook": "node: URL scheme must be intercepted at resolve hook stage -100, not via resolve.alias",
-    "body": "webpack's scheme resolver (resolveAsScheme) handles node: URL schemes BEFORE the normal resolve hook runs. resolve.alias cannot intercept node: imports because they are resolved via resolveAsScheme.for('node'), not via resolve.alias. To intercept node: imports, you must tap the 'resolve' hook with a high-priority stage (e.g., stage: -100) and redirect the request to a stub path. This runs before webpack's scheme resolver fails with UnhandledSchemeError.",
-    "why": "get-tsconfig (used by Payload migrations) and node-fetch (used by Genkit) both contain node: imports that enter the webpack bundle transitively. Without interception, webpack's scheme resolver fails because it only handles data: and file: schemes natively.",
-    "confidence": 0.9
+    "name": "webpack5-resolve-scheme-vs-resolve-hook-node-protocol",
+    "hook": "node: URL scheme must be intercepted via resolve.scheme hook, not resolve hook",
+    "body": "In webpack 5, node: URL scheme requests (node:fs, node:http, etc.) go through resolveForScheme BEFORE the resolve hook chain. resolveForScheme.for('node') returns NodeStuffPlugin when target='node', but if it returns undefined, UnhandledSchemeError is thrown before any resolve hook fires. Tapping the resolve hook (even with stage: -100) CANNOT intercept node: scheme requests — resolveForScheme runs first and throws if no handler exists. The correct approach is to tap the resolve.scheme hook (AsyncSeriesWaterfallHook) to register a handler for the 'node' scheme. This is how NodeStuffPlugin itself registers. Also add the offending package (node-fetch) to serverExternalPackages to prevent webpack from tracing it at all.",
+    "why": "The previous fix used the resolve hook with stage: -100, believing it would intercept node: requests before webpack's scheme resolver. But resolveForScheme runs BEFORE the resolve hook — UnhandledSchemeError is thrown first, and the resolve hook is never reached. The resolve.scheme hook fires during scheme resolution, allowing interception before the error is thrown.",
+    "confidence": 0.95
   }
 ]

@@ -62,6 +62,9 @@ const nextConfig = {
     // Only used via the `kody` npx script, never imported in src.
     '@kody-ade/engine',
     '@anthropic-ai/claude-agent-sdk',
+    // node-fetch contains node:http, node:https, node:net, node:dns imports that
+    // fail webpack resolution. Externalize so webpack never analyzes its internals.
+    'node-fetch',
   ],
   images: {
     remotePatterns: [
@@ -154,30 +157,26 @@ const nextConfig = {
       ]
     }
 
-    // Intercept node: protocol imports at the resolve stage and return empty modules.
-    // Webpack's scheme resolver (resolveAsScheme) handles node: before our plugin's resolve
-    // hook runs, but we tap into 'resolve' with high priority to catch these before
-    // webpack's normal scheme resolution fails with UnhandledSchemeError.
+    // Intercept node: protocol imports at the scheme level.
+    // In webpack 5, node: URL scheme requests go through resolveForScheme (NOT the resolve hook).
+    // resolveForScheme.for('node') returns NodeStuffPlugin when target='node', but in Next.js
+    // server builds, resolveForScheme.for('node') returns undefined in some configurations.
+    // We tap the resolve.scheme hook (AsyncSeriesWaterfallHook) to register a handler for the
+    // 'node' scheme BEFORE webpack's scheme resolution throws UnhandledSchemeError.
     // This handles get-tsconfig (node:fs, node:https, node:module) and node-fetch
     // (node:http, node:net, node:dns) that transitively enter via Payload and Genkit.
     const nodeProtocolPlugin = {
       apply(resolver) {
         resolver
-          .getHook('resolve')
-          .tapAsync(
-            { name: 'NodeProtocolPlugin', stage: -100 },
-            (request, resolveContext, callback) => {
-              const req = request.request
-              if (typeof req === 'string' && req.startsWith('node:')) {
-                const stubPath = path.resolve(process.cwd(), 'src/server/utils/empty-stub.js')
-                return callback(null, {
-                  ...request,
-                  request: stubPath,
-                })
-              }
-              callback()
-            },
-          )
+          .getHook('resolve.scheme')
+          .tapAsync('NodeProtocolPlugin', (scheme, resolveContext, callback) => {
+            if (scheme === 'node') {
+              const stubPath = path.resolve(process.cwd(), 'src/server/utils/empty-stub.js')
+              // Return the stub path for the scheme result — webpack will resolve it as a file
+              return callback(null, stubPath)
+            }
+            callback()
+          })
       },
     }
     webpackConfig.resolve.plugins = [...(webpackConfig.resolve.plugins || []), nodeProtocolPlugin]
