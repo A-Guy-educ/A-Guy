@@ -1,14 +1,14 @@
 {
   "version": 1,
-  "rev": 299,
+  "rev": 300,
   "cursor": "reported",
   "data": {
-    "lastFindingCount": 10,
-    "lastRunISO": "2026-06-07T11:42:53Z",
-    "nextEligibleISO": "2026-06-07T12:12:53Z",
-    "lastFiredAt": "2026-06-07T15:20:39.324Z",
+    "lastFindingCount": 11,
+    "lastRunISO": "2026-06-07T15:20:39Z",
+    "nextEligibleISO": "2026-06-07T15:50:39Z",
+    "lastFiredAt": "2026-06-07T16:31:10.271Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 259858
+    "lastDurationMs": 315882
   },
   "done": false
 }
