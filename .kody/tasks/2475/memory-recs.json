@@ -1,18 +1,18 @@
 [
   {
     "type": "lesson",
-    "name": "node-alias-fallback-break-minify-webpack-plugin",
-    "hook": ".node$ resolve.alias and resolve.fallback.node=false break minify-webpack-plugin in Next.js 15.5.9",
-    "body": "webpackConfig.resolve.alias for \\.node$ files combined with resolve.fallback.node=false causes 'WebpackError is not a constructor' error in minify-webpack-plugin. This was explicitly removed in commit b2ae8ce94 ('remove .node$ alias and resolve.fallback that broke minify') but was re-added in 4930aa79b causing the build to fail again. These settings must NOT be added to the webpack config.",
-    "why": "minify-webpack-plugin's buildError function tries to construct new webpack.WebpackError. When resolve.fallback.node=false is set, webpack's handling of node: URL schemes is disrupted in a way that corrupts the webpack module graph, causing WebpackError to not be a proper constructor.",
-    "confidence": 0.85
+    "name": "webpack-externals-needed-for-undici-in-non-client-builds",
+    "hook": "webpack externals for undici/@napi-rs/canvas are required in non-client builds to prevent UnhandledSchemeError",
+    "body": "webpackConfig.externals for undici and @napi-rs/canvas in non-client builds (guarded with !isClient) are REQUIRED to prevent webpack from analyzing these packages' internal code. Without externals, webpack analyzes undici's source and encounters node: protocol imports (node:dns, node:console, etc.) which cause UnhandledSchemeError in non-client builds because there is no plugin to handle node: URL schemes. serverExternalPackages only prevents Next.js from bundling into the serverless function — webpack still analyzes the code for the client build when it's imported via shared config files like payload.config.ts.",
+    "why": "payload.config.ts imports payload which imports undici. When webpack analyzes payload.config.ts for the client build, it traces into undici and encounters node: imports that it cannot handle. Only externals prevent this analysis.",
+    "confidence": 0.95
   },
   {
     "type": "lesson",
-    "name": "serverexternalpackages-sufficient-for-undici-nextjs-15",
-    "hook": "serverExternalPackages alone is sufficient for undici in Next.js 15.5.9 — webpack externals not needed",
-    "body": "The isClient-guarded webpack externals for undici/@napi-rs/canvas were not the fix and added complexity. The undici package is already in serverExternalPackages which prevents it from being included in the serverless bundle. The original UnhandledSchemeError was likely a transient build issue, not a structural problem requiring webpack config changes. Keep the webpack config simple and matching dev.",
-    "why": "serverExternalPackages handles Next.js-level bundling exclusion; webpack externals are a separate mechanism that should not be needed for undici if serverExternalPackages is configured.",
-    "confidence": 0.7
+    "name": "node-native-binary-alias-needed-with-false-fallback",
+    "hook": ".node$ alias to empty-stub.js plus resolve.fallback.node=false is required to prevent browser binary errors",
+    "body": "The .node$ alias to empty-stub.js combined with resolve.fallback.node=false is REQUIRED. Without it, webpack encounters @napi-rs/canvas's .node binary files and throws 'Node.js binary module is not supported in the browser'. The alias redirects .node files to an empty stub so webpack can proceed. resolve.fallback.node=false prevents webpack from providing Node.js polyfills. Both settings are needed together and must NOT be removed independently.",
+    "why": "@napi-rs/canvas is a native Node.js addon with .node binary files that cannot execute in the browser. The .node$ alias is the only way to prevent webpack from failing when it encounters these files during analysis.",
+    "confidence": 0.95
   }
 ]

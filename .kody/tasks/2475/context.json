@@ -4,13 +4,13 @@
   "target": "2449-p2-frontend-login-form-silently-fails-session-not",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Removed .node$ alias, resolve.fallback.node=false, and isClient-guarded externals from webpack config — these broke minify with 'WebpackError is not a constructor'. Webpack callback now matches dev (no externals, no stub alias). verify passes.",
+  "reason": "Restored webpack externals for undici/@napi-rs/canvas in non-client builds, .node$ alias to empty-stub.js, and resolve.fallback.node:false. The previous fix attempt (4f6d4b0ac) removed these to address a minify error but incorrectly left the build failing with UnhandledSchemeError for node: imports. verify passes (ok: true, attempt 1).",
   "prUrl": null,
   "runUrl": null,
   "filesTouched": [
     "next.config.js"
   ],
   "sessionLog": null,
-  "startedAt": "2026-06-07T06:10:00Z",
-  "finishedAt": "2026-06-07T07:40:00Z"
+  "startedAt": "2026-06-07T08:50:00Z",
+  "finishedAt": "2026-06-07T08:55:00Z"
 }
