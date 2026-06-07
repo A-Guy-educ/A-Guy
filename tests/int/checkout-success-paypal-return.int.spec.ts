@@ -29,6 +29,12 @@ vi.mock('payload', () => ({
     Promise.resolve({
       find: mockFind,
       findByID: mockFindByID,
+      logger: {
+        error: vi.fn(),
+        warn: vi.fn(),
+        info: vi.fn(),
+        debug: vi.fn(),
+      },
     }),
   ),
 }))
