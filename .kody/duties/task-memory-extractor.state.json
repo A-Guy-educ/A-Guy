@@ -1,19 +1,19 @@
 {
   "version": 1,
-  "rev": 316,
+  "rev": 317,
   "cursor": "idle",
   "data": {
-    "current_tick": "2026-06-07T11:00:02.000Z",
-    "current_tick_ran": "2026-06-07T11:00:02.000Z",
-    "current_tick_result": "all_done",
-    "current_tick_summary": "63 tasks seen, 59 already extracted, 0 new writes.",
-    "lastFiredAt": "2026-06-07T14:18:49.296Z",
-    "lastOutcome": "completed",
-    "lastDurationMs": 235783,
-    "last_tick": "2026-06-07T10:30:00.000Z",
-    "tasks_seen": 63,
-    "tasks_processed": 63,
     "blocked_reason": null,
+    "current_tick": "2026-06-07T15:20:58.000Z",
+    "current_tick_ran": "2026-06-07T15:20:58.000Z",
+    "current_tick_result": "success",
+    "current_tick_summary": "64 tasks seen, 59 already extracted, 1 new write (payload-types-stale-after-collection-removal.md from task 1574). Push succeeded after resolving remote divergence via rebase.",
+    "lastFiredAt": "2026-06-07T15:22:25.965Z",
+    "lastOutcome": "completed",
+    "lastDurationMs": 95666,
+    "last_tick": "2026-06-07T11:00:02.000Z",
+    "tasks_processed": 64,
+    "tasks_seen": 64,
     "session": {
       "memory_files_written": [
         "jsx-in-ts-causes-ts1005-error.md",
@@ -24,12 +24,13 @@
         "e2e-test-locale-setup.md",
         "coupon-fixed-discount-unit-conversion.md",
         "afterread-hook-siblingdata-vs-value.md",
-        "overrideAccess-true-does-not-bypass-hooks.md"
+        "overrideAccess-true-does-not-bypass-hooks.md",
+        "payload-types-stale-after-collection-removal.md"
       ],
       "push_state": "success",
       "started": "2026-05-27T17:44:47.000Z",
-      "tasks_processed_this_session": 63,
-      "tasks_seen_this_session": 63
+      "tasks_processed_this_session": 64,
+      "tasks_seen_this_session": 64
     }
   },
   "done": false
