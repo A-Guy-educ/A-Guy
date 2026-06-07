@@ -226,9 +226,22 @@ function getPeriodStart(now: Date, period: Period): Date {
 }
 
 export async function GET(req: Request) {
-  const payload = await getPayload({ config })
+  let payload
+  try {
+    payload = await getPayload({ config })
+  } catch (error) {
+    console.error('Failed to initialize Payload:', error)
+    return Response.json({ error: 'Internal server error' }, { status: 500 })
+  }
 
-  const authResult = await payload.auth({ headers: req.headers })
+  let authResult
+  try {
+    authResult = await payload.auth({ headers: req.headers })
+  } catch (error) {
+    console.error('Authentication error:', error)
+    return Response.json({ error: 'Authentication failed' }, { status: 401 })
+  }
+
   if (!authResult.user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -266,526 +279,531 @@ export async function GET(req: Request) {
 
   const periodStart = getPeriodStart(now, period)
 
-  const [
-    activeToday,
-    activeYesterday,
-    activeLastWeek,
-    activeLastMonth,
-    registeredYesterday,
-    registeredThisWeek,
-    registeredLastWeek,
-    registeredThisMonth,
-    registeredLastMonth,
-    totalUsersResult,
-    totalGuestsResult,
-    guestsToday,
-    guestsLastWeek,
-    guestsLastMonth,
-    guestClaimedResult,
-    coursesCount,
-    lessonsCount,
-    exercisesCount,
-    formulaSheetsCount,
-    promptsCount,
-    allUserStats,
-    coursesWithTitles,
-    activeEnrollments,
-    learningLessons,
-    practiceLessons,
-    examLessons,
-    returningUsersResult,
-    totalUsersInPeriod,
-    allTransactions,
-  ] = await Promise.all([
-    // Active users today/yesterday
-    payload.find({
-      collection: 'user-stats',
-      where: { lastActiveDate: { equals: todayStr } },
-      limit: 0,
-      overrideAccess: true,
-    }),
-    payload.find({
-      collection: 'user-stats',
-      where: { lastActiveDate: { equals: yesterdayStr } },
-      limit: 0,
-      overrideAccess: true,
-    }),
-    // Active users last week (within last 7 days, excluding today)
-    payload.find({
-      collection: 'user-stats',
-      where: {
-        lastActiveDate: {
-          greater_than_equal: lastWeekStart.toISOString().split('T')[0],
-          less_than: thisWeekStart.toISOString().split('T')[0],
-        },
-      },
-      limit: 0,
-      overrideAccess: true,
-    }),
-    // Active users last month (within last 30 days, excluding last week)
-    payload.find({
-      collection: 'user-stats',
-      where: {
-        lastActiveDate: {
-          greater_than_equal: lastMonthStart.toISOString().split('T')[0],
-          less_than: lastWeekStart.toISOString().split('T')[0],
-        },
-      },
-      limit: 0,
-      overrideAccess: true,
-    }),
-    // Registration counts
-    payload.find({
-      collection: 'users',
-      where: {
-        createdAt: {
-          greater_than_equal: yesterdayStart.toISOString(),
-          less_than: todayStart.toISOString(),
-        },
-      },
-      limit: 0,
-      overrideAccess: true,
-    }),
-    payload.find({
-      collection: 'users',
-      where: { createdAt: { greater_than_equal: thisWeekStart.toISOString() } },
-      limit: 0,
-      overrideAccess: true,
-    }),
-    payload.find({
-      collection: 'users',
-      where: {
-        createdAt: {
-          greater_than_equal: lastWeekStart.toISOString(),
-          less_than: thisWeekStart.toISOString(),
-        },
-      },
-      limit: 0,
-      overrideAccess: true,
-    }),
-    payload.find({
-      collection: 'users',
-      where: { createdAt: { greater_than_equal: thisMonthStart.toISOString() } },
-      limit: 0,
-      overrideAccess: true,
-    }),
-    payload.find({
-      collection: 'users',
-      where: {
-        createdAt: {
-          greater_than_equal: lastMonthStart.toISOString(),
-          less_than: thisMonthStart.toISOString(),
-        },
-      },
-      limit: 0,
-      overrideAccess: true,
-    }),
-    // Total users
-    payload.find({ collection: 'users', limit: 0, overrideAccess: true }),
-    // Total guest sessions
-    payload.find({ collection: 'guest-sessions', limit: 0, overrideAccess: true }),
-    // Guest sessions today
-    payload.find({
-      collection: 'guest-sessions',
-      where: {
-        createdAt: { greater_than_equal: todayStart.toISOString() },
-      },
-      limit: 0,
-      overrideAccess: true,
-    }),
-    // Guest sessions last week
-    payload.find({
-      collection: 'guest-sessions',
-      where: {
-        createdAt: {
-          greater_than_equal: lastWeekStart.toISOString(),
-          less_than: thisWeekStart.toISOString(),
-        },
-      },
-      limit: 0,
-      overrideAccess: true,
-    }),
-    // Guest sessions last month
-    payload.find({
-      collection: 'guest-sessions',
-      where: {
-        createdAt: {
-          greater_than_equal: lastMonthStart.toISOString(),
-          less_than: lastWeekStart.toISOString(),
-        },
-      },
-      limit: 0,
-      overrideAccess: true,
-    }),
-    // Guests that converted
-    payload.find({
-      collection: 'guest-sessions',
-      where: { claimedByUser: { exists: true } },
-      limit: 0,
-      overrideAccess: true,
-    }),
-    // Content counts
-    payload.find({ collection: 'courses', limit: 0, overrideAccess: true }),
-    payload.find({ collection: 'lessons', limit: 0, overrideAccess: true }),
-    payload.find({ collection: 'exercises', limit: 0, overrideAccess: true }),
-    payload.find({ collection: 'formula-sheets', limit: 0, overrideAccess: true }),
-    payload.find({ collection: 'prompts', limit: 0, overrideAccess: true }),
-    // Engagement: user-stats with time data — paginated to avoid truncation
-    // Also fetches createdAt (firstActiveDate proxy via Payload timestamps), lastActiveDate, returnCount for returned users calculation
-    findAll<{
-      totalTimeSpentSeconds?: number
-      activityLog?: Array<{ actionType?: string }>
-      createdAt?: string
-      lastActiveDate?: string
-      returnCount?: number
-    }>(
-      (page) =>
-        payload.find({
-          collection: 'user-stats',
-          where: { totalTimeSpentSeconds: { greater_than: 0 } },
-          limit: 500,
-          page,
-          overrideAccess: true,
-          select: {
-            totalTimeSpentSeconds: true,
-            activityLog: true,
-            createdAt: true,
-            lastActiveDate: true,
-            returnCount: true,
+  try {
+    const [
+      activeToday,
+      activeYesterday,
+      activeLastWeek,
+      activeLastMonth,
+      registeredYesterday,
+      registeredThisWeek,
+      registeredLastWeek,
+      registeredThisMonth,
+      registeredLastMonth,
+      totalUsersResult,
+      totalGuestsResult,
+      guestsToday,
+      guestsLastWeek,
+      guestsLastMonth,
+      guestClaimedResult,
+      coursesCount,
+      lessonsCount,
+      exercisesCount,
+      formulaSheetsCount,
+      promptsCount,
+      allUserStats,
+      coursesWithTitles,
+      activeEnrollments,
+      learningLessons,
+      practiceLessons,
+      examLessons,
+      returningUsersResult,
+      totalUsersInPeriod,
+      allTransactions,
+    ] = await Promise.all([
+      // Active users today/yesterday
+      payload.find({
+        collection: 'user-stats',
+        where: { lastActiveDate: { equals: todayStr } },
+        limit: 0,
+        overrideAccess: true,
+      }),
+      payload.find({
+        collection: 'user-stats',
+        where: { lastActiveDate: { equals: yesterdayStr } },
+        limit: 0,
+        overrideAccess: true,
+      }),
+      // Active users last week (within last 7 days, excluding today)
+      payload.find({
+        collection: 'user-stats',
+        where: {
+          lastActiveDate: {
+            greater_than_equal: lastWeekStart.toISOString().split('T')[0],
+            less_than: thisWeekStart.toISOString().split('T')[0],
           },
-        }) as Promise<{
-          docs: {
-            totalTimeSpentSeconds?: number
-            activityLog?: Array<{ actionType?: string }>
-            createdAt?: string
-            lastActiveDate?: string
-            returnCount?: number
-          }[]
-          hasNextPage: boolean
-          totalPages: number
-        }>,
-    ),
-    // Courses with titles (fetch all fields so we get id + title)
-    payload.find({
-      collection: 'courses',
-      limit: 100,
-      overrideAccess: true,
-    }),
-    // Enrollments — query Enrollments collection directly for active enrollments
-    findAll<{
-      user?: string | { id?: string }
-      course?: string | { id?: string }
-      status?: string
-    }>(
-      (page) =>
-        payload.find({
-          collection: 'enrollments',
-          where: { status: { equals: 'active' } },
-          limit: 500,
-          page,
-          overrideAccess: true,
-          select: {
-            user: true,
-            course: true,
-            status: true,
+        },
+        limit: 0,
+        overrideAccess: true,
+      }),
+      // Active users last month (within last 30 days, excluding last week)
+      payload.find({
+        collection: 'user-stats',
+        where: {
+          lastActiveDate: {
+            greater_than_equal: lastMonthStart.toISOString().split('T')[0],
+            less_than: lastWeekStart.toISOString().split('T')[0],
           },
-        }) as Promise<{
-          docs: {
-            user?: string | { id?: string }
-            course?: string | { id?: string }
-            status?: string
-          }[]
-          hasNextPage: boolean
-          totalPages: number
-        }>,
-    ),
-    // Lesson type counts
-    payload.find({
-      collection: 'lessons',
-      where: { type: { equals: 'learning' } },
-      limit: 0,
-      overrideAccess: true,
-    }),
-    payload.find({
-      collection: 'lessons',
-      where: { type: { equals: 'practice' } },
-      limit: 0,
-      overrideAccess: true,
-    }),
-    payload.find({
-      collection: 'lessons',
-      where: { type: { equals: 'exam' } },
-      limit: 0,
-      overrideAccess: true,
-    }),
-    // Returning users: users who were active in the selected period
-    // (have a lastActiveDate >= periodStart)
-    payload.find({
-      collection: 'user-stats',
-      where: {
-        lastActiveDate: { greater_than_equal: periodStart.toISOString().split('T')[0] },
-      },
-      limit: 0,
-      overrideAccess: true,
-    }),
-    // Users who registered before the period (existing users)
-    payload.find({
-      collection: 'users',
-      where: { createdAt: { less_than: periodStart.toISOString() } },
-      limit: 0,
-      overrideAccess: true,
-    }),
-    // Revenue metrics: fetch all transactions in period using findAll
-    findAll<{
-      status?: string
-      amount?: number
-      currency?: string
-      product?: unknown
-    }>(
-      (page) =>
-        payload.find({
-          collection: 'transactions',
-          where: {
-            createdAt: { greater_than_equal: periodStart.toISOString() },
+        },
+        limit: 0,
+        overrideAccess: true,
+      }),
+      // Registration counts
+      payload.find({
+        collection: 'users',
+        where: {
+          createdAt: {
+            greater_than_equal: yesterdayStart.toISOString(),
+            less_than: todayStart.toISOString(),
           },
-          limit: 500,
-          page,
-          overrideAccess: true,
-          select: {
-            status: true,
-            amount: true,
-            currency: true,
-            product: true,
+        },
+        limit: 0,
+        overrideAccess: true,
+      }),
+      payload.find({
+        collection: 'users',
+        where: { createdAt: { greater_than_equal: thisWeekStart.toISOString() } },
+        limit: 0,
+        overrideAccess: true,
+      }),
+      payload.find({
+        collection: 'users',
+        where: {
+          createdAt: {
+            greater_than_equal: lastWeekStart.toISOString(),
+            less_than: thisWeekStart.toISOString(),
           },
-        }) as Promise<{
-          docs: { status?: string; amount?: number; currency?: string; product?: unknown }[]
-          hasNextPage: boolean
-          totalPages: number
-        }>,
-    ),
-  ])
+        },
+        limit: 0,
+        overrideAccess: true,
+      }),
+      payload.find({
+        collection: 'users',
+        where: { createdAt: { greater_than_equal: thisMonthStart.toISOString() } },
+        limit: 0,
+        overrideAccess: true,
+      }),
+      payload.find({
+        collection: 'users',
+        where: {
+          createdAt: {
+            greater_than_equal: lastMonthStart.toISOString(),
+            less_than: thisMonthStart.toISOString(),
+          },
+        },
+        limit: 0,
+        overrideAccess: true,
+      }),
+      // Total users
+      payload.find({ collection: 'users', limit: 0, overrideAccess: true }),
+      // Total guest sessions
+      payload.find({ collection: 'guest-sessions', limit: 0, overrideAccess: true }),
+      // Guest sessions today
+      payload.find({
+        collection: 'guest-sessions',
+        where: {
+          createdAt: { greater_than_equal: todayStart.toISOString() },
+        },
+        limit: 0,
+        overrideAccess: true,
+      }),
+      // Guest sessions last week
+      payload.find({
+        collection: 'guest-sessions',
+        where: {
+          createdAt: {
+            greater_than_equal: lastWeekStart.toISOString(),
+            less_than: thisWeekStart.toISOString(),
+          },
+        },
+        limit: 0,
+        overrideAccess: true,
+      }),
+      // Guest sessions last month
+      payload.find({
+        collection: 'guest-sessions',
+        where: {
+          createdAt: {
+            greater_than_equal: lastMonthStart.toISOString(),
+            less_than: lastWeekStart.toISOString(),
+          },
+        },
+        limit: 0,
+        overrideAccess: true,
+      }),
+      // Guests that converted
+      payload.find({
+        collection: 'guest-sessions',
+        where: { claimedByUser: { exists: true } },
+        limit: 0,
+        overrideAccess: true,
+      }),
+      // Content counts
+      payload.find({ collection: 'courses', limit: 0, overrideAccess: true }),
+      payload.find({ collection: 'lessons', limit: 0, overrideAccess: true }),
+      payload.find({ collection: 'exercises', limit: 0, overrideAccess: true }),
+      payload.find({ collection: 'formula-sheets', limit: 0, overrideAccess: true }),
+      payload.find({ collection: 'prompts', limit: 0, overrideAccess: true }),
+      // Engagement: user-stats with time data — paginated to avoid truncation
+      // Also fetches createdAt (firstActiveDate proxy via Payload timestamps), lastActiveDate, returnCount for returned users calculation
+      findAll<{
+        totalTimeSpentSeconds?: number
+        activityLog?: Array<{ actionType?: string }>
+        createdAt?: string
+        lastActiveDate?: string
+        returnCount?: number
+      }>(
+        (page) =>
+          payload.find({
+            collection: 'user-stats',
+            where: { totalTimeSpentSeconds: { greater_than: 0 } },
+            limit: 500,
+            page,
+            overrideAccess: true,
+            select: {
+              totalTimeSpentSeconds: true,
+              activityLog: true,
+              createdAt: true,
+              lastActiveDate: true,
+              returnCount: true,
+            },
+          }) as Promise<{
+            docs: {
+              totalTimeSpentSeconds?: number
+              activityLog?: Array<{ actionType?: string }>
+              createdAt?: string
+              lastActiveDate?: string
+              returnCount?: number
+            }[]
+            hasNextPage: boolean
+            totalPages: number
+          }>,
+      ),
+      // Courses with titles (fetch all fields so we get id + title)
+      payload.find({
+        collection: 'courses',
+        limit: 100,
+        overrideAccess: true,
+      }),
+      // Enrollments — query Enrollments collection directly for active enrollments
+      findAll<{
+        user?: string | { id?: string }
+        course?: string | { id?: string }
+        status?: string
+      }>(
+        (page) =>
+          payload.find({
+            collection: 'enrollments',
+            where: { status: { equals: 'active' } },
+            limit: 500,
+            page,
+            overrideAccess: true,
+            select: {
+              user: true,
+              course: true,
+              status: true,
+            },
+          }) as Promise<{
+            docs: {
+              user?: string | { id?: string }
+              course?: string | { id?: string }
+              status?: string
+            }[]
+            hasNextPage: boolean
+            totalPages: number
+          }>,
+      ),
+      // Lesson type counts
+      payload.find({
+        collection: 'lessons',
+        where: { type: { equals: 'learning' } },
+        limit: 0,
+        overrideAccess: true,
+      }),
+      payload.find({
+        collection: 'lessons',
+        where: { type: { equals: 'practice' } },
+        limit: 0,
+        overrideAccess: true,
+      }),
+      payload.find({
+        collection: 'lessons',
+        where: { type: { equals: 'exam' } },
+        limit: 0,
+        overrideAccess: true,
+      }),
+      // Returning users: users who were active in the selected period
+      // (have a lastActiveDate >= periodStart)
+      payload.find({
+        collection: 'user-stats',
+        where: {
+          lastActiveDate: { greater_than_equal: periodStart.toISOString().split('T')[0] },
+        },
+        limit: 0,
+        overrideAccess: true,
+      }),
+      // Users who registered before the period (existing users)
+      payload.find({
+        collection: 'users',
+        where: { createdAt: { less_than: periodStart.toISOString() } },
+        limit: 0,
+        overrideAccess: true,
+      }),
+      // Revenue metrics: fetch all transactions in period using findAll
+      findAll<{
+        status?: string
+        amount?: number
+        currency?: string
+        product?: unknown
+      }>(
+        (page) =>
+          payload.find({
+            collection: 'transactions',
+            where: {
+              createdAt: { greater_than_equal: periodStart.toISOString() },
+            },
+            limit: 500,
+            page,
+            overrideAccess: true,
+            select: {
+              status: true,
+              amount: true,
+              currency: true,
+              product: true,
+            },
+          }) as Promise<{
+            docs: { status?: string; amount?: number; currency?: string; product?: unknown }[]
+            hasNextPage: boolean
+            totalPages: number
+          }>,
+      ),
+    ])
 
-  // Calculate avg time spent (allUserStats is already a flat array from findAll)
-  const statsWithTime = allUserStats
-  const totalSeconds = statsWithTime.reduce((sum, s) => sum + (s.totalTimeSpentSeconds || 0), 0)
-  const avgTimeMinutes =
-    statsWithTime.length > 0 ? Math.round(totalSeconds / statsWithTime.length / 60) : 0
+    // Calculate avg time spent (allUserStats is already a flat array from findAll)
+    const statsWithTime = allUserStats
+    const totalSeconds = statsWithTime.reduce((sum, s) => sum + (s.totalTimeSpentSeconds || 0), 0)
+    const avgTimeMinutes =
+      statsWithTime.length > 0 ? Math.round(totalSeconds / statsWithTime.length / 60) : 0
 
-  // Calculate guest → registered percentage (capped at 0-100)
-  const guestToRegisteredPercentage = Math.min(
-    100,
-    Math.max(
-      0,
-      totalGuestsResult.totalDocs > 0
-        ? (guestClaimedResult.totalDocs / totalGuestsResult.totalDocs) * 100
-        : 0,
-    ),
-  )
+    // Calculate guest → registered percentage (capped at 0-100)
+    const guestToRegisteredPercentage = Math.min(
+      100,
+      Math.max(
+        0,
+        totalGuestsResult.totalDocs > 0
+          ? (guestClaimedResult.totalDocs / totalGuestsResult.totalDocs) * 100
+          : 0,
+      ),
+    )
 
-  // Calculate returned users metrics
-  // ReturnedOnceCount: users who returned at least once (createdAt < lastActiveDate)
-  // ReturnedMultipleCount: users who returned more than twice (returnCount > 2)
-  // Uses allUserStats which includes createdAt (firstActiveDate proxy), lastActiveDate, returnCount
-  const returnedOnceCount = allUserStats.filter(
-    (s) => s.createdAt && s.lastActiveDate && s.createdAt < s.lastActiveDate,
-  ).length
-  const returnedMultipleCount = allUserStats.filter((s) => (s.returnCount || 0) > 2).length
-  const totalUsers = totalUsersResult.totalDocs
-  const returnedOncePercentage = Math.min(
-    100,
-    Math.max(0, totalUsers > 0 ? (returnedOnceCount / totalUsers) * 100 : 0),
-  )
-  const returnedMultiplePercentage = Math.min(
-    100,
-    Math.max(0, totalUsers > 0 ? (returnedMultipleCount / totalUsers) * 100 : 0),
-  )
+    // Calculate returned users metrics
+    // ReturnedOnceCount: users who returned at least once (createdAt < lastActiveDate)
+    // ReturnedMultipleCount: users who returned more than twice (returnCount > 2)
+    // Uses allUserStats which includes createdAt (firstActiveDate proxy), lastActiveDate, returnCount
+    const returnedOnceCount = allUserStats.filter(
+      (s) => s.createdAt && s.lastActiveDate && s.createdAt < s.lastActiveDate,
+    ).length
+    const returnedMultipleCount = allUserStats.filter((s) => (s.returnCount || 0) > 2).length
+    const totalUsers = totalUsersResult.totalDocs
+    const returnedOncePercentage = Math.min(
+      100,
+      Math.max(0, totalUsers > 0 ? (returnedOnceCount / totalUsers) * 100 : 0),
+    )
+    const returnedMultiplePercentage = Math.min(
+      100,
+      Math.max(0, totalUsers > 0 ? (returnedMultipleCount / totalUsers) * 100 : 0),
+    )
 
-  // Aggregate feature usage from activityLog
-  const featureUsage = {
-    questionsAsked: 0,
-    conversationsStarted: 0,
-    lessonsCompleted: 0,
-    exercisesAttempted: 0,
-    exercisesCompleted: 0,
-  }
-  for (const stat of statsWithTime) {
-    for (const entry of stat.activityLog || []) {
-      switch (entry.actionType) {
-        case 'question_asked':
-          featureUsage.questionsAsked++
-          break
-        case 'conversation_started':
-          featureUsage.conversationsStarted++
-          break
-        case 'lesson_completed':
-          featureUsage.lessonsCompleted++
-          break
-        case 'exercise_attempted':
-          featureUsage.exercisesAttempted++
-          break
-        case 'exercise_completed':
-          featureUsage.exercisesCompleted++
-          break
+    // Aggregate feature usage from activityLog
+    const featureUsage = {
+      questionsAsked: 0,
+      conversationsStarted: 0,
+      lessonsCompleted: 0,
+      exercisesAttempted: 0,
+      exercisesCompleted: 0,
+    }
+    for (const stat of statsWithTime) {
+      for (const entry of stat.activityLog || []) {
+        switch (entry.actionType) {
+          case 'question_asked':
+            featureUsage.questionsAsked++
+            break
+          case 'conversation_started':
+            featureUsage.conversationsStarted++
+            break
+          case 'lesson_completed':
+            featureUsage.lessonsCompleted++
+            break
+          case 'exercise_attempted':
+            featureUsage.exercisesAttempted++
+            break
+          case 'exercise_completed':
+            featureUsage.exercisesCompleted++
+            break
+        }
       }
     }
-  }
 
-  // Revenue metrics aggregation
-  // allTransactions is already a flat array from findAll
-  const totalRevenueByCurrency: CurrencyRevenue = { ILS: 0, USD: 0, EUR: 0 }
-  let refundedTotal = 0
-  let failedTotal = 0
-  let succeededCount = 0
-  let nonPendingCount = 0
-  const productRevenueMap = new Map<string, number>()
+    // Revenue metrics aggregation
+    // allTransactions is already a flat array from findAll
+    const totalRevenueByCurrency: CurrencyRevenue = { ILS: 0, USD: 0, EUR: 0 }
+    let refundedTotal = 0
+    let failedTotal = 0
+    let succeededCount = 0
+    let nonPendingCount = 0
+    const productRevenueMap = new Map<string, number>()
 
-  for (const tx of allTransactions) {
-    const amount = tx.amount || 0
-    const currency = tx.currency || 'ILS'
+    for (const tx of allTransactions) {
+      const amount = tx.amount || 0
+      const currency = tx.currency || 'ILS'
 
-    if (tx.status === 'succeeded') {
-      totalRevenueByCurrency[currency] = (totalRevenueByCurrency[currency] || 0) + amount
-      succeededCount++
-      nonPendingCount++
-      // Aggregate by product
-      const productId = extractProductId(tx.product)
-      if (productId) {
-        productRevenueMap.set(productId, (productRevenueMap.get(productId) || 0) + amount)
+      if (tx.status === 'succeeded') {
+        totalRevenueByCurrency[currency] = (totalRevenueByCurrency[currency] || 0) + amount
+        succeededCount++
+        nonPendingCount++
+        // Aggregate by product
+        const productId = extractProductId(tx.product)
+        if (productId) {
+          productRevenueMap.set(productId, (productRevenueMap.get(productId) || 0) + amount)
+        }
+      } else if (tx.status === 'refunded') {
+        refundedTotal += amount
+        nonPendingCount++
+      } else if (tx.status === 'failed') {
+        failedTotal += amount
+        nonPendingCount++
       }
-    } else if (tx.status === 'refunded') {
-      refundedTotal += amount
-      nonPendingCount++
-    } else if (tx.status === 'failed') {
-      failedTotal += amount
-      nonPendingCount++
     }
-  }
 
-  const revenueTransactionCount = allTransactions.length
-  const successRate =
-    nonPendingCount > 0 ? Math.round((succeededCount / nonPendingCount) * 1000) / 10 : 0
+    const revenueTransactionCount = allTransactions.length
+    const successRate =
+      nonPendingCount > 0 ? Math.round((succeededCount / nonPendingCount) * 1000) / 10 : 0
 
-  // Resolve top 5 products by revenue
-  const uniqueProductIds = Array.from(productRevenueMap.keys())
-  const productIdToName = new Map<string, string>()
-  if (uniqueProductIds.length > 0) {
-    const products = await payload.find({
-      collection: 'products',
-      where: { id: { in: uniqueProductIds } },
-      limit: uniqueProductIds.length,
-      overrideAccess: true,
-    })
-    for (const p of products.docs) {
-      const prod = p as unknown as { id: string; name?: string; slug?: string }
-      productIdToName.set(
-        String(prod.id),
-        prod.name || prod.slug || `Product ${String(prod.id).slice(-6)}`,
-      )
+    // Resolve top 5 products by revenue
+    const uniqueProductIds = Array.from(productRevenueMap.keys())
+    const productIdToName = new Map<string, string>()
+    if (uniqueProductIds.length > 0) {
+      const products = await payload.find({
+        collection: 'products',
+        where: { id: { in: uniqueProductIds } },
+        limit: uniqueProductIds.length,
+        overrideAccess: true,
+      })
+      for (const p of products.docs) {
+        const prod = p as unknown as { id: string; name?: string; slug?: string }
+        productIdToName.set(
+          String(prod.id),
+          prod.name || prod.slug || `Product ${String(prod.id).slice(-6)}`,
+        )
+      }
     }
-  }
 
-  const topProducts: TopProduct[] = Array.from(productRevenueMap.entries())
-    .map(([id, agorot]) => ({
-      productName: productIdToName.get(id) || `__DELETED__:${id.slice(-6)}`,
-      agorot,
-    }))
-    .sort((a, b) => b.agorot - a.agorot)
-    .slice(0, 5)
+    const topProducts: TopProduct[] = Array.from(productRevenueMap.entries())
+      .map(([id, agorot]) => ({
+        productName: productIdToName.get(id) || `__DELETED__:${id.slice(-6)}`,
+        agorot,
+      }))
+      .sort((a, b) => b.agorot - a.agorot)
+      .slice(0, 5)
 
-  // Count enrollments per course ID (from Enrollments collection)
-  // activeEnrollments is already a flat array from findAll
-  const enrollmentCounts = new Map<string, number>()
-  for (const enrollment of activeEnrollments) {
-    const courseId = extractCourseId(enrollment.course)
-    if (!courseId) continue
-    enrollmentCounts.set(courseId, (enrollmentCounts.get(courseId) || 0) + 1)
-  }
+    // Count enrollments per course ID (from Enrollments collection)
+    // activeEnrollments is already a flat array from findAll
+    const enrollmentCounts = new Map<string, number>()
+    for (const enrollment of activeEnrollments) {
+      const courseId = extractCourseId(enrollment.course)
+      if (!courseId) continue
+      enrollmentCounts.set(courseId, (enrollmentCounts.get(courseId) || 0) + 1)
+    }
 
-  // Build courseIdToTitle map from ALL courses (not just enrolled ones)
-  // This ensures courses with 0 enrollments are included
-  const courseIdToTitle = new Map<string, string>()
-  const resolveTitle = (c: {
-    id: string
-    title?: string
-    courseLabel?: string
-    slug?: string
-  }): string => {
-    return c.title || c.courseLabel || c.slug || `Course ${String(c.id).slice(-6)}`
-  }
-  for (const course of coursesWithTitles.docs) {
-    const c = course as unknown as {
+    // Build courseIdToTitle map from ALL courses (not just enrolled ones)
+    // This ensures courses with 0 enrollments are included
+    const courseIdToTitle = new Map<string, string>()
+    const resolveTitle = (c: {
       id: string
       title?: string
       courseLabel?: string
       slug?: string
+    }): string => {
+      return c.title || c.courseLabel || c.slug || `Course ${String(c.id).slice(-6)}`
     }
-    courseIdToTitle.set(String(c.id), resolveTitle(c))
-  }
-
-  // Build courseEnrollments from ALL courses, with 0 for courses without entitlements
-  const courseEnrollments: CourseEnrollment[] = coursesWithTitles.docs
-    .map((course) => {
-      const c = course as unknown as { id: string }
-      const id = String(c.id)
-      return {
-        courseTitle: courseIdToTitle.get(id) || `__DELETED__:${id.slice(-6)}`,
-        count: enrollmentCounts.get(id) || 0,
+    for (const course of coursesWithTitles.docs) {
+      const c = course as unknown as {
+        id: string
+        title?: string
+        courseLabel?: string
+        slug?: string
       }
-    })
-    .sort((a, b) => b.count - a.count)
+      courseIdToTitle.set(String(c.id), resolveTitle(c))
+    }
 
-  const response: DashboardMetricsResponse = {
-    period,
-    userMetrics: {
-      activeUsersToday: activeToday.totalDocs,
-      activeUsersYesterday: activeYesterday.totalDocs,
-      activeUsersLastWeek: activeLastWeek.totalDocs,
-      activeUsersLastMonth: activeLastMonth.totalDocs,
-      registeredYesterday: registeredYesterday.totalDocs,
-      registeredThisWeek: registeredThisWeek.totalDocs,
-      registeredLastWeek: registeredLastWeek.totalDocs,
-      registeredThisMonth: registeredThisMonth.totalDocs,
-      registeredLastMonth: registeredLastMonth.totalDocs,
-      totalUsers: totalUsersResult.totalDocs,
-      totalGuestSessions: totalGuestsResult.totalDocs,
-      guestSessionsToday: guestsToday.totalDocs,
-      guestSessionsLastWeek: guestsLastWeek.totalDocs,
-      guestSessionsLastMonth: guestsLastMonth.totalDocs,
-      guestToRegisteredCount: guestClaimedResult.totalDocs,
-      guestToRegisteredPercentage: Math.round(guestToRegisteredPercentage * 10) / 10,
-      returnedOnceCount,
-      returnedOncePercentage: Math.round(returnedOncePercentage * 10) / 10,
-      returnedMultipleCount,
-      returnedMultiplePercentage: Math.round(returnedMultiplePercentage * 10) / 10,
-      returningUsers: returningUsersResult.totalDocs,
-      returningUsersTotal: totalUsersInPeriod.totalDocs,
-    },
-    contentCounts: {
-      courses: coursesCount.totalDocs,
-      lessons: lessonsCount.totalDocs,
-      exercises: exercisesCount.totalDocs,
-      formulaSheets: formulaSheetsCount.totalDocs,
-      prompts: promptsCount.totalDocs,
-    },
-    engagement: {
-      avgTimeSpentMinutes: avgTimeMinutes,
-      courseEnrollments,
-      featureUsage,
-      lessonTypeUsage: {
-        learning: learningLessons.totalDocs,
-        practice: practiceLessons.totalDocs,
-        exam: examLessons.totalDocs,
+    // Build courseEnrollments from ALL courses, with 0 for courses without entitlements
+    const courseEnrollments: CourseEnrollment[] = coursesWithTitles.docs
+      .map((course) => {
+        const c = course as unknown as { id: string }
+        const id = String(c.id)
+        return {
+          courseTitle: courseIdToTitle.get(id) || `__DELETED__:${id.slice(-6)}`,
+          count: enrollmentCounts.get(id) || 0,
+        }
+      })
+      .sort((a, b) => b.count - a.count)
+
+    const response: DashboardMetricsResponse = {
+      period,
+      userMetrics: {
+        activeUsersToday: activeToday.totalDocs,
+        activeUsersYesterday: activeYesterday.totalDocs,
+        activeUsersLastWeek: activeLastWeek.totalDocs,
+        activeUsersLastMonth: activeLastMonth.totalDocs,
+        registeredYesterday: registeredYesterday.totalDocs,
+        registeredThisWeek: registeredThisWeek.totalDocs,
+        registeredLastWeek: registeredLastWeek.totalDocs,
+        registeredThisMonth: registeredThisMonth.totalDocs,
+        registeredLastMonth: registeredLastMonth.totalDocs,
+        totalUsers: totalUsersResult.totalDocs,
+        totalGuestSessions: totalGuestsResult.totalDocs,
+        guestSessionsToday: guestsToday.totalDocs,
+        guestSessionsLastWeek: guestsLastWeek.totalDocs,
+        guestSessionsLastMonth: guestsLastMonth.totalDocs,
+        guestToRegisteredCount: guestClaimedResult.totalDocs,
+        guestToRegisteredPercentage: Math.round(guestToRegisteredPercentage * 10) / 10,
+        returnedOnceCount,
+        returnedOncePercentage: Math.round(returnedOncePercentage * 10) / 10,
+        returnedMultipleCount,
+        returnedMultiplePercentage: Math.round(returnedMultiplePercentage * 10) / 10,
+        returningUsers: returningUsersResult.totalDocs,
+        returningUsersTotal: totalUsersInPeriod.totalDocs,
       },
-    },
-    revenueMetrics: {
-      totalRevenueAgorot: totalRevenueByCurrency,
-      refundedAgorot: refundedTotal,
-      failedAgorot: failedTotal,
-      transactionCount: revenueTransactionCount,
-      successRate,
-      topProducts,
-    },
-  }
+      contentCounts: {
+        courses: coursesCount.totalDocs,
+        lessons: lessonsCount.totalDocs,
+        exercises: exercisesCount.totalDocs,
+        formulaSheets: formulaSheetsCount.totalDocs,
+        prompts: promptsCount.totalDocs,
+      },
+      engagement: {
+        avgTimeSpentMinutes: avgTimeMinutes,
+        courseEnrollments,
+        featureUsage,
+        lessonTypeUsage: {
+          learning: learningLessons.totalDocs,
+          practice: practiceLessons.totalDocs,
+          exam: examLessons.totalDocs,
+        },
+      },
+      revenueMetrics: {
+        totalRevenueAgorot: totalRevenueByCurrency,
+        refundedAgorot: refundedTotal,
+        failedAgorot: failedTotal,
+        transactionCount: revenueTransactionCount,
+        successRate,
+        topProducts,
+      },
+    }
 
-  return Response.json(response)
+    return Response.json(response)
+  } catch (error) {
+    console.error('Dashboard metrics query failed:', error)
+    return Response.json({ error: 'Failed to fetch metrics' }, { status: 500 })
+  }
 }

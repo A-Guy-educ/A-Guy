@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Investigate what actually caused the async operation to fail",
+    "body": "The fix adds error handling to prevent crashes, but we didn't identify the root cause of what caused getPayload, payload.auth, or the Promise.all to fail. Consider adding more specific error handling and logging to identify the root cause in production.",
+    "rationale": "The fix is defensive - it ensures the route always returns a response. But the underlying issue (what caused the async operation to fail) wasn't identified.",
+    "priority": "medium"
+  },
+  {
+    "title": "Add AbortController/timeout to fetch in MetricsProvider",
+    "body": "The MetricsProvider fetch has no timeout. If the API route hangs (instead of throwing), the fetch would hang indefinitely. Consider adding an AbortController timeout to prevent indefinite hangs.",
+    "rationale": "Even with error handling on the server, if the route hangs (e.g., due to a deadlock), the client fetch would still hang indefinitely.",
+    "priority": "low"
+  }
+]

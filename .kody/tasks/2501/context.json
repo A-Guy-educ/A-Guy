@@ -1,0 +1,14 @@
+{
+  "taskId": "2501",
+  "taskType": "issue",
+  "target": "2501",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed the admin dashboard widgets permanently stuck loading issue by adding proper error handling to the dashboard-metrics API route",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": ["src/app/api/admin/dashboard-metrics/route.ts"],
+  "sessionLog": ".kody/sessions/gh-27098732359-1.jsonl",
+  "startedAt": "2026-06-07T16:51:05.107Z",
+  "finishedAt": "2026-06-07T17:15:00.000Z"
+}

@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "api-route-always-needs-error-handling",
+    "hook": "API routes with multiple async operations need try-catch around each stage",
+    "body": "When an API route performs multiple async operations (getPayload, auth, Promise.all), any unhandled exception will crash the route without returning a response, causing client fetches to hang indefinitely. Wrap each stage in try-catch to ensure always returns a response.\n\n**Why:** Without error handling, if getPayload, payload.auth, or Promise.all throws, the route crashes without returning. The client fetch hangs forever because it never gets a response.\n\n**How to apply:** When writing API routes that perform multiple async operations, wrap each operation (getPayload, auth, Promise.all) in its own try-catch block. Always return a response (even a 500) so the client fetch completes.",
+    "why": "This bug manifested as permanently loading widgets because the route crashed without returning a response when an async operation failed.",
+    "confidence": 0.9
+  }
+]
