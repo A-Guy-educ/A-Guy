@@ -1,18 +1,13 @@
 {
   "version": 1,
-  "rev": 53,
+  "rev": 54,
   "cursor": "reported",
   "data": {
-    "cycle": 12,
-    "lastFiredAt": "2026-06-07T13:49:43.649Z",
-    "lastOutcome": "completed",
-    "lastRunISO": "2026-06-07T07:29:51Z",
-    "nextEligibleISO": "2026-06-07T13:29:51Z",
+    "cycle": 13,
+    "lastRunISO": "2026-06-07T20:15:54Z",
+    "nextEligibleISO": "2026-06-08T02:15:54Z",
     "reviewed": [
-      "cleanup-branches",
-      "approval-gate",
-      "architecture-audit",
-      "ceo-performance-review"
+      "clear-empty-goals"
     ],
     "verdicts": {
       "approval-gate": {
@@ -32,7 +27,7 @@
         "verdict": "healthy"
       },
       "clear-empty-goals": {
-        "note": "0 steps; no system target; no kody-job-next-state block",
+        "note": "0-step body; no kody-job-next-state block; state file never created",
         "verdict": "broken"
       },
       "coverage-floor": {
@@ -116,7 +111,9 @@
         "verdict": "warn"
       }
     },
-    "lastDurationMs": 238242
+    "lastDurationMs": 101248,
+    "lastFiredAt": "2026-06-07T20:16:13.304Z",
+    "lastOutcome": "completed"
   },
   "done": false
 }
