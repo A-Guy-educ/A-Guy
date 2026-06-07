@@ -1,3 +1,13 @@
+/**
+ * @fileType utility
+ * @domain infra
+ * @pattern media-url
+ * @ai-summary Prepends the client-side base URL to relative media paths and optionally appends a cache-bust query param.
+ *
+ * If the URL already has an http/https protocol this function leaves it untouched;
+ * only relative paths get the base URL prepended.
+ */
+
 import { getClientSideURL } from '@/infra/utils/getURL'
 
 /**

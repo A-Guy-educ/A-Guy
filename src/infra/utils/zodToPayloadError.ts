@@ -1,3 +1,13 @@
+/**
+ * @fileType utility
+ * @domain infra
+ * @pattern validation-adapter
+ * @ai-summary Converts Zod errors to Payload ValidationError format for use in Payload field hooks; formats dot-notation paths and respects a max-issue cap (default 50).
+ *
+ * validateJsonField combines safeParse and throwPayloadValidationError for the common case
+ * of validating a JSON field value inside a Payload beforeChange hook.
+ */
+
 import { ZodError } from 'zod'
 import { ValidationError } from 'payload'
 

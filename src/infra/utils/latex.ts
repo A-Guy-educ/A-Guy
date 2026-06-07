@@ -1,3 +1,12 @@
+/**
+ * @fileType utility
+ * @domain shared
+ * @pattern text-injection
+ * @ai-summary Injects a LaTeX template string into a text field at the current cursor range and repositions the cursor.
+ *
+ * Does not validate that the template is balanced; malformed templates will produce unclosed LaTeX expressions.
+ */
+
 export function injectLatex(
   currentValue: string,
   selectionStart: number,

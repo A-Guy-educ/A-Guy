@@ -1,3 +1,13 @@
+/**
+ * @fileType utility
+ * @domain shared
+ * @pattern clickable-card
+ * @ai-summary Client-side hook that makes a card element behave as a link: single left-click within 250ms navigates, but links inside the card are preserved and right-clicks are not suppressed.
+ *
+ * The link ref must be rendered inside the card ref DOM subtree; if the link is rendered outside the card,
+ * the navigation logic still fires but will use the card's mousedown position as the click origin.
+ */
+
 'use client'
 import type { RefObject } from 'react'
 

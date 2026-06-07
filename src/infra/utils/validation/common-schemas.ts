@@ -1,3 +1,12 @@
+/**
+ * @fileType utility
+ * @domain shared
+ * @pattern validation-schema
+ * @ai-summary Reusable Zod schemas for common validation patterns: email, password, ObjectId, URL, phone, pagination, date-range, and contact-form.
+ *
+ * These schemas are not self-validating — pass them to validate() or safeValidate() from this same directory.
+ */
+
 import { z } from 'zod'
 
 /**

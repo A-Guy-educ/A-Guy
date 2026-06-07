@@ -1,4 +1,14 @@
 /**
+ * @fileType utility
+ * @domain infra
+ * @pattern bounded-parallelism
+ * @ai-summary Semaphore-style concurrency limiter: defers promise creation until a slot frees, ensuring bounded parallelism from the first task onward.
+ *
+ * Unlike Promise.all with a pool, this avoids creating all N promises upfront;
+ * if items.length is 0 the function returns [] immediately without calling factory.
+ */
+
+/**
  * Concurrency Utilities
  *
  * Provides helpers for bounding parallel async work.

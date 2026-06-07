@@ -1,4 +1,14 @@
 /**
+ * @fileType utility
+ * @domain infra
+ * @pattern test-infrastructure
+ * @ai-summary Guardrail that blocks production/shared MongoDB URLs in test environments; vector-search tests are the only exception and require Atlas.
+ *
+ * If DATABASE_URL is set to an Atlas URL in a non-vector-search test, this throws a fatal error.
+ * This is a one-way gate — the process exits on violation, it does not return.
+ */
+
+/**
  * Enforces that integration and E2E tests ONLY use testcontainers
  * Prevents accidental use of production/shared databases in tests
  */

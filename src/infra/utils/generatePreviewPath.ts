@@ -1,3 +1,13 @@
+/**
+ * @fileType utility
+ * @domain infra
+ * @pattern preview-url
+ * @ai-summary Builds a Next.js preview-mode URL for the Payload admin; includes previewSecret for auth.
+ *
+ * The PREVIEW_SECRET must match the `SECRET_COOKIE_NAME` secret in Next.js config,
+ * otherwise the preview endpoint will reject the request silently.
+ */
+
 import { PayloadRequest, CollectionSlug } from 'payload'
 
 const collectionPrefixMap: Partial<Record<CollectionSlug, string>> = {

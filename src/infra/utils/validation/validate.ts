@@ -1,3 +1,12 @@
+/**
+ * @fileType utility
+ * @domain shared
+ * @pattern validation-helper
+ * @ai-summary Zod validation helpers: parse-or-throw, safe-parse returning discriminated union, and error formatting for API responses.
+ *
+ * The validate() function throws on failure; use safeValidate() when you need to handle errors without exceptions.
+ */
+
 import { z } from 'zod'
 
 /**

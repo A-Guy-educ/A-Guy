@@ -1,3 +1,13 @@
+/**
+ * @fileType utility
+ * @domain infra
+ * @pattern cache-tagged-fetch
+ * @ai-summary Payload global document fetcher with Next.js unstable_cache per slug; tag is global_{slug}.
+ *
+ * Each global's cache must be manually revalidated via `revalidateTag('global_{slug}')`
+ * after any global update, or the admin panel will show stale data.
+ */
+
 import type { Config } from 'src/payload-types'
 
 import configPromise from '@payload-config'

@@ -1,3 +1,13 @@
+/**
+ * @fileType utility
+ * @domain infra
+ * @pattern test-infrastructure
+ * @ai-summary Manages MongoDB testcontainers for integration tests; reuses a single container across test files via module-level singleton.
+ *
+ * In CI with USE_MONGO_SERVICE=true the container is skipped entirely and localhost:27017 is used directly.
+ * Containers are NOT stopped by individual test files — cleanup is handled by global-int-setup.ts teardown.
+ */
+
 import { MongoDBContainer, StartedMongoDBContainer } from '@testcontainers/mongodb'
 import { isProductionDatabase } from './test-db-constraint'
 

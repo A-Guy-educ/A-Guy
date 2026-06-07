@@ -1,4 +1,14 @@
 /**
+ * @fileType utility
+ * @domain infra
+ * @pattern path-normalization
+ * @ai-summary Normalizes paths by stripping query strings, hashes, and trailing slashes, and ensuring a leading slash; used to detect redirect loops.
+ *
+ * normalizePath does NOT collapse multiple consecutive slashes — //home remains //home,
+ * which could cause loop-detection false negatives if redirects use multi-slash paths.
+ */
+
+/**
  * Normalize a path string for consistent matching.
  * Rules:
  * - Trim whitespace first

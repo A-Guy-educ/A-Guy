@@ -1,4 +1,14 @@
 /**
+ * @fileType utility
+ * @domain shared
+ * @pattern latex-preprocessing
+ * @ai-summary Normalizes LLM-output LaTeX delimiters to remark-math-compatible $...$ and $$...$$ forms; also fixes over-escaped commands, bare LaTeX in text, and Hebrew-adjacent $ boundaries.
+ *
+ * remark-math only recognises $...$ and $$...$$ — this is the one-way converter for LLMs that output
+ * \[...\], \(...\), over-escaped backslashes, or bare LaTeX commands in prose.
+ */
+
+/**
  * Normalizes LaTeX delimiters and escaping for remark-math compatibility.
  *
  * remark-math only recognizes $...$ and $$...$$ delimiters.

@@ -1,3 +1,13 @@
+/**
+ * @fileType utility
+ * @domain infra
+ * @pattern cache-tagged-fetch
+ * @ai-summary Payload document fetcher by slug with Next.js unstable_cache; tag is {collection}_{slug}.
+ *
+ * The cache tag format `{collection}_{slug}` means moving/renaming a document will serve
+ * stale cached data under the old slug tag until the cache expires.
+ */
+
 import type { Config } from 'src/payload-types'
 
 import configPromise from '@payload-config'

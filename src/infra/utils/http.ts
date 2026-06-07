@@ -1,4 +1,13 @@
 /**
+ * @fileType utility
+ * @domain infra
+ * @pattern http-fetch-retry
+ * @ai-summary Fetches a buffer with exponential-backoff retry on 5xx errors and a hard timeout; 4xx errors throw immediately without retry.
+ *
+ * Retries are per-URL not global, so multiple concurrent callers each get their own retry budget.
+ */
+
+/**
  * HTTP utilities for fetching resources
  */
 

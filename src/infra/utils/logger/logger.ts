@@ -1,3 +1,13 @@
+/**
+ * @fileType utility
+ * @domain infra
+ * @pattern structured-logging
+ * @ai-summary Pino logger instance with JSON output in production and pretty-print in development; transport is disabled to avoid worker.js thread-stream issues.
+ *
+ * All project logging should go through this module (logger, createRequestLogger), not console.log,
+ * so that log level and format can be controlled from a single place.
+ */
+
 import pino from 'pino'
 
 /**

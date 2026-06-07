@@ -1,3 +1,12 @@
+/**
+ * @fileType utility
+ * @domain infra
+ * @pattern metadata-merge
+ * @ai-summary Merges caller OG overrides onto brand defaults resolved fresh from getBrand() on every call; safe to call in RSC without caching brand data.
+ *
+ * Brand resolution is not cached within a request; if getBrand() throws, a hardcoded fallback is used silently.
+ */
+
 import type { Metadata } from 'next'
 
 import { getBrand } from '@/brands'

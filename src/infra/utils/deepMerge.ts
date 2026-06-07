@@ -1,3 +1,12 @@
+/**
+ * @fileType utility
+ * @domain shared
+ * @pattern object-merge
+ * @ai-summary Deep-merges source into target, recursing into nested objects; source scalar values always override.
+ *
+ * Array values are NOT merged — the source array replaces the target array entirely.
+ * The target object is shallow-copied before mutation, so the original is not modified.
+ */
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 

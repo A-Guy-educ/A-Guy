@@ -1,3 +1,10 @@
+/**
+ * @fileType utility
+ * @domain infra
+ * @pattern next-metadata
+ * @ai-summary Builds Next.js Metadata from a Payload page document; falls back to a hardcoded template title if doc.meta is absent.
+ */
+
 import type { Metadata } from 'next'
 
 import type { Page } from '../../payload-types'

@@ -1,4 +1,13 @@
 /**
+ * @fileType utility
+ * @domain shared
+ * @pattern markdown-preprocessing
+ * @ai-summary Converts single newlines to Markdown hard breaks (two trailing spaces + newline); leaves paragraph breaks and existing hard breaks intact.
+ *
+ * Lines already ending with two spaces are assumed to already be hard breaks and are not modified.
+ */
+
+/**
  * Text preprocessing utilities for rich text rendering
  */
 

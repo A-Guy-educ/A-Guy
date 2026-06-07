@@ -1,3 +1,13 @@
+/**
+ * @fileType utility
+ * @domain auth
+ * @pattern session-resolution
+ * @ai-summary Resolves the authenticated user from the Payload JWT cookie; fetches /api/users/me to validate.
+ *
+ * Falls back to payload-token cookie for legacy sessions; if both cookies are absent and
+ * nullUserRedirect is set, this function throws a redirect — it does NOT return.
+ */
+
 import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 

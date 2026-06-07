@@ -1,3 +1,13 @@
+/**
+ * @fileType utility
+ * @domain infra
+ * @pattern cache-tagged-fetch
+ * @ai-summary Payload redirects collection fetcher; cached with Next.js unstable_cache and tagged for revalidation.
+ *
+ * The 'redirects' cache tag must be revalidated after any redirect CRUD operation,
+ * otherwise stale redirects will be served until the Next.js cache expires.
+ */
+
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { unstable_cache } from 'next/cache'
