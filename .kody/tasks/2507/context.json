@@ -5,7 +5,7 @@
   "outcome": "success",
   "exitCode": 0,
   "reason": "Fixed: created LessonRelationshipCell custom component that bypasses RelationshipProvider batch-fetch, updated collection config, wrote E2E test",
-  "prUrl": null,
+  "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2514",
   "runUrl": null,
   "filesTouched": [
     "src/server/payload/collections/LessonDuplications.ts",
