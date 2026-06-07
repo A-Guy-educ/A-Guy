@@ -1677,6 +1677,8 @@
 - start interactive session interactive-1778075175838-vd0im6 (1b6229b27)
 ## [Unreleased]
 
+- #1570: feat: show per-message timestamp in admin chat ([#1574](https://github.com/A-Guy-educ/A-Guy/pull/1574)) — @aguyaharonyair · 🔄 QA (#2498)
+- fix(checkout/success): Accept PayPal token in addition to Stripe session_id ([#2494](https://github.com/A-Guy-educ/A-Guy/pull/2494)) — @aguyshayb · ⚠️ QA 2026-06-07 (#2495)
 - fix(paypal): Drop Stripe-only placeholder from PayPal return_url ([#2446](https://github.com/A-Guy-educ/A-Guy/pull/2446)) — @aguyshayb · ⚠️ QA 2026-06-05 (#2478)
 - #2192: Add mobile chat FAB (button-to-open) on lesson pages — redo of r… ([#2193](https://github.com/A-Guy-educ/A-Guy/pull/2193)) — @kodyade[bot] · ⚠️ QA 2026-06-04 (#2464)
 - fix(payments): Surface real error messages in checkout + webhook logs ([#2432](https://github.com/A-Guy-educ/A-Guy/pull/2432)) — @aguyshayb · ⚠️ QA 2026-06-04 (#2454)
@@ -1696,8 +1698,8 @@
 ## [v0.25.9] - 2026-05-26
 
 - chore: release v0.25.9 ([#2121](https://github.com/A-Guy-educ/A-Guy/pull/2121)) — @kodyade[bot]
-- #2113: Add public product catalog page and checkout success/cancel pages ([#2117_(https://github.com/A-Guy-educ/A-Guy/pull/2117)) — @aguyaharonyair · 🔄 QA (#2166)
-- #2112: Add PayPal sandbox key smoke test script + developer setup doc ([#2114](https://github.com/A-Guy-educ/A-Guy/pull/2114)) — @aguyaharonyair · 🔄 QA (#2166)
-- #2104: [Admin] Lesson page — show all exercises inline with full conten… ([#2108](https://github.com/A-Guy-educ/A-Guy/pull/2108)) — @aguyaharonyair · 🔄 QA (#2166)
+- #2113: Add public product catalog page and checkout success/cancel pages ([#2117_(https://github.com/A-Guy-educ/A-Guy/pull/2117)) — @aguyaharonyair
+- #2112: Add PayPal sandbox key smoke test script + developer setup doc ([#2114](https://github.com/A-Guy-educ/A-Guy/pull/2114)) — @aguyaharonyair
+- #2104: [Admin] Lesson page — show all exercises inline with full conten… ([#2108](https://github.com/A-Guy-educ/A-Guy/pull/2108)) — @aguyaharonyair
 - fix(lesson-blocks): Persist exercise deletions in lesson blocks UI ([#2109](https://github.com/A-Guy-educ/A-Guy/pull/2109)) — @aguyshayb
 - #2011: Fail closed in checkout tenant guard when user has no tenant ([#2012](https://github.com/A-Guy-educ/A-Guy/pull/2012)) — @kodyade · ⚠️ QA 2026-05-25 (#2079)
