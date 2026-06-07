@@ -1,0 +1,13 @@
+{"ts":"2026-06-03T11:23:58.071Z","runId":"gh-26881487482-1","executable":"fix-ci","kind":"stage_start"}
+{"ts":"2026-06-03T11:24:09.219Z","runId":"gh-26881487482-1","executable":"fix-ci","kind":"preflight","name":"syncFlow","durationMs":4055,"outcome":"ok"}
+{"ts":"2026-06-03T11:24:13.379Z","runId":"gh-26881487482-1","executable":"fix-ci","kind":"preflight","name":"setLifecycleLabel","durationMs":4160,"outcome":"ok"}
+{"ts":"2026-06-03T11:24:17.813Z","runId":"gh-26881487482-1","executable":"fix-ci","kind":"preflight","name":"fixCiFlow","durationMs":4434,"outcome":"ok"}
+{"ts":"2026-06-03T11:24:18.910Z","runId":"gh-26881487482-1","executable":"fix-ci","kind":"preflight","name":"loadTaskState","durationMs":1096,"outcome":"ok"}
+{"ts":"2026-06-03T11:24:18.910Z","runId":"gh-26881487482-1","executable":"fix-ci","kind":"preflight","name":"loadConventions","durationMs":0,"outcome":"ok"}
+{"ts":"2026-06-03T11:24:18.911Z","runId":"gh-26881487482-1","executable":"fix-ci","kind":"preflight","name":"loadCoverageRules","durationMs":0,"outcome":"ok"}
+{"ts":"2026-06-03T11:24:18.912Z","runId":"gh-26881487482-1","executable":"fix-ci","kind":"preflight","name":"composePrompt","durationMs":1,"outcome":"ok"}
+{"ts":"2026-06-03T11:24:18.913Z","runId":"gh-26881487482-1","executable":"fix-ci","kind":"agent_start"}
+{"ts":"2026-06-03T11:25:27.354Z","runId":"gh-26881487482-1","executable":"fix-ci","kind":"agent_end","durationMs":68440,"outcome":"ok","meta":{"kind":"ok","tokens":{"input":0,"output":0,"cacheRead":0,"cacheCreate":0},"messageCount":5,"error":"Claude Code returned an error result: Prompt is too long"}}
+{"ts":"2026-06-03T11:25:27.355Z","runId":"gh-26881487482-1","executable":"fix-ci","kind":"postflight","name":"parseAgentResult","durationMs":1,"outcome":"ok"}
+{"ts":"2026-06-03T11:35:01.141Z","runId":"gh-26881487482-1","executable":"fix-ci","kind":"postflight","name":"verify_attempt_1","durationMs":207555,"outcome":"failed","meta":{"attempt":1,"failureCount":1,"recovered":[]}}
+{"ts":"2026-06-03T11:36:56.521Z","runId":"gh-26881487482-1","executable":"fix-ci","kind":"postflight","name":"verify_attempt_2","durationMs":95681,"outcome":"ok","meta":{"attempt":2,"failureCount":0,"recovered":[]}}
