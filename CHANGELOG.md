@@ -1677,7 +1677,7 @@
 - start interactive session interactive-1778075175838-vd0im6 (1b6229b27)
 ## [Unreleased]
 
-- #1570: feat: show per-message timestamp in admin chat ([#1574](https://github.com/A-Guy-educ/A-Guy/pull/1574)) — @aguyaharonyair · 🔄 QA (#2498)
+- #1570: feat: show per-message timestamp in admin chat ([#1574](https://github.com/A-Guy-educ/A-Guy/pull/1574)) — @aguyaharonyair · ✅ QA 2026-06-07
 - fix(checkout/success): Accept PayPal token in addition to Stripe session_id ([#2494](https://github.com/A-Guy-educ/A-Guy/pull/2494)) — @aguyshayb · ⚠️ QA 2026-06-07 (#2495)
 - fix(paypal): Drop Stripe-only placeholder from PayPal return_url ([#2446](https://github.com/A-Guy-educ/A-Guy/pull/2446)) — @aguyshayb · ⚠️ QA 2026-06-05 (#2478)
 - #2192: Add mobile chat FAB (button-to-open) on lesson pages — redo of r… ([#2193](https://github.com/A-Guy-educ/A-Guy/pull/2193)) — @kodyade[bot] · ⚠️ QA 2026-06-04 (#2464)
