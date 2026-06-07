@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "payload-types-stale-after-collection-removal",
+    "hook": "Regenerate payload-types.ts when collections are removed from config",
+    "body": "When a collection is removed from payload.config.ts, the payload-types.ts must be regenerated with `pnpm generate:types`. The check-types-drift.ts script will fail if the committed types don't match what the current config generates.",
+    "why": "The payload-types.ts contained references to 'payload-mcp-api-keys' collection that no longer existed in the config. This caused CI to fail with a types drift error.",
+    "confidence": 0.95
+  }
+]
