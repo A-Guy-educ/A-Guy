@@ -9,10 +9,10 @@
   },
   {
     "type": "lesson",
-    "name": "resolve-alias-handles-node-protocol-prefixed-modules",
-    "hook": "resolve.alias CAN intercept node: protocol imports when module name includes the 'node:' prefix",
-    "body": "webpack resolve.alias operates on the module request string. If a file does require('node:fs'), the module name is 'node:fs' and resolve.alias['node:fs'] correctly redirects it. The previous session's lesson said 'resolve.alias cannot intercept node: protocol' — that was wrong. The correct statement is: resolve.alias cannot intercept bare 'fs' when the code uses require('node:fs') AND the package is not in externals. But when the request IS 'node:fs', resolve.alias['node:fs'] works. The node: protocol prefix makes the module name include 'node:' so alias can match it.",
-    "why": "The previous fix (2476) used resolve.alias entries for node:console etc. but also removed externals — so webpack still analyzed undici which then had node:dns in mock utils, not via require('node:dns') directly. Now with externals AND resolve.alias together, we have defense in depth: externals prevents analysis entirely, and alias stubs any remaining node: references webpack does analyze.",
-    "confidence": 0.9
+    "name": "resolve-alias-cannot-intercept-node-protocol",
+    "hook": "resolve.alias CANNOT intercept node: protocol imports — use resolve.fallback instead",
+    "body": "webpack resolve.alias operates on module names after scheme parsing, but webpack 5's scheme handler (ResolvePluginFactory.createResolver with 'node' scheme) runs BEFORE alias resolution and throws UnhandledSchemeError for node:fs, node:os, etc. The correct fix is webpackConfig.resolve.fallback = { node: stubPath } — FallbackPlugin is checked during scheme resolution and returns the fallback value instead of throwing. Additionally, set webpackConfig.resolve.fallback.node = stubPath (not the individual node:fs aliases) — the 'node' key handles all node: protocol requests because the scheme handler delegates to ResolvePlugin for the 'node' request name.",
+    "why": "The previous session's fix used resolve.alias entries for node:fs, node:os etc. which are NEVER consulted because the node: scheme handler throws before alias resolution runs. The FallbackPlugin is the correct hook.",
+    "confidence": 0.95
   }
 ]

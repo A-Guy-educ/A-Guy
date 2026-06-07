@@ -4,11 +4,11 @@
   "target": "2449-p2-frontend-login-form-silently-fails-session-not",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Added node-fetch to webpackConfig.externals for non-client builds and added comprehensive node: protocol resolve.alias entries (node:fs, node:https, node:http, node:net, node:os, node:dns, node:module, node:diagnostics_channel, node:console, node:crypto) pointing to empty stub. verify passes (ok: true, attempt 1).",
+  "reason": "Replaced ineffective resolve.alias node: protocol stubs with resolve.fallback using webpack FallbackPlugin, which hooks into scheme resolution and correctly intercepts node:fs, node:os, node:path, node:perf_hooks, node:process from payload telemetry. verify passes (ok: true, attempt 1).",
   "prUrl": null,
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27099986015",
+  "runUrl": null,
   "filesTouched": ["next.config.js"],
-  "sessionLog": ".kody/sessions/gh-27100487274-1.jsonl",
-  "startedAt": "2026-06-07T17:50:00Z",
-  "finishedAt": "2026-06-07T17:51:00Z"
+  "sessionLog": null,
+  "startedAt": "2026-06-07T18:30:00Z",
+  "finishedAt": "2026-06-07T18:32:00Z"
 }

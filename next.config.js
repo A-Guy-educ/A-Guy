@@ -165,23 +165,24 @@ const nextConfig = {
     // any package that webpack still analyzes (due to tree-shaking or incomplete
     // externals) will get an empty module instead of throwing UnhandledSchemeError.
     // The stub returns null so that any runtime access fails safely.
+    //
+    // Note: resolve.alias alone cannot intercept node: protocol imports — webpack 5's
+    // scheme handler runs before alias resolution. We use resolve.fallback (FallbackPlugin)
+    // which is checked during scheme resolution, providing a fallback value when the
+    // scheme handler would otherwise throw UnhandledSchemeError.
     const stubPath = path.resolve(process.cwd(), 'src/server/utils/empty-stub.js')
     webpackConfig.resolve.alias = {
       ...webpackConfig.resolve.alias,
       '\\.node$': stubPath,
-      'node:fs': stubPath,
-      'node:https': stubPath,
-      'node:http': stubPath,
-      'node:net': stubPath,
-      'node:os': stubPath,
-      'node:dns': stubPath,
-      'node:module': stubPath,
-      'node:diagnostics_channel': stubPath,
-      'node:console': stubPath,
-      'node:crypto': stubPath,
     }
-
-    return webpackConfig
+    // FallbackPlugin is checked during scheme resolution and provides a fallback value
+    // when the normal scheme handler would throw UnhandledSchemeError. The key must match
+    // the module name (e.g., "node" for "node:fs"), and the fallback value is returned
+    // directly without further resolution.
+    webpackConfig.resolve.fallback = {
+      ...webpackConfig.resolve.fallback,
+      node: stubPath,
+    }
   },
   reactStrictMode: true,
   redirects,

@@ -7,8 +7,8 @@
   },
   {
     "title": "Consolidate node: protocol handling into a single authoritative place",
-    "body": "The node: protocol handling has been attempted via resolve.scheme webpack plugin (removed in 2475), resolve.alias (added then removed in 2476), and now both externals + comprehensive resolve.alias. Document in a comment in next.config.js that the correct pattern is BOTH externals for the package AND resolve.alias for individual node: protocol stubs, so future maintainers don't remove one thinking the other is sufficient.",
-    "rationale": "Three CI failures (2475, 2476, and this session) were caused by incomplete node: protocol fixes that only addressed one layer of the problem. The correct approach needs both externals (prevents analysis) and resolve.alias (stubs any references webpack does analyze).",
+    "body": "The node: protocol handling has been attempted via resolve.scheme webpack plugin (incompatible with webpack 5.98.0, removed), resolve.alias entries for individual node: modules (ineffective, removed), and now resolve.fallback with the 'node' key. Document in next.config.js that the correct pattern is BOTH externals for the package AND resolve.fallback with the 'node' key — so future maintainers don't try to add resolve.alias entries for individual node: modules.",
+    "rationale": "Multiple CI failures (2475, 2476, and this session) were caused by incomplete or incorrect node: protocol fixes. The correct approach is externals (prevents analysis) + resolve.fallback['node'] (stubs any remaining node: references webpack does analyze).",
     "priority": "low"
   }
 ]

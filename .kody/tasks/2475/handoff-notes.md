@@ -2,28 +2,42 @@
 
 ### Root Cause
 
-Two fixes applied separately in prior sessions were each incomplete:
+The previous session's fix used `resolve.alias` entries for individual `node:` protocol modules (`node:fs`, `node:os`, `node:path`, `node:perf_hooks`, `node:process`). These were ineffective — `resolve.alias` is consulted **after** webpack's scheme handler runs, and the scheme handler for `node:` throws `UnhandledSchemeError` before alias resolution occurs.
 
-1. **session 2475 (first fix)**: Removed the `resolve.scheme` webpack plugin hook (incompatible with webpack 5.98.0), relying on `webpackConfig.externals` for `get-tsconfig`. But other packages (`payload` via its telemetry, `node-fetch` via `@genkit-ai/googleai`) still had their internals analyzed.
-
-2. **session 2476 (second fix)**: Added `resolve.alias` entries for `node:console`, `node:crypto`, `node:dns`, `node:diagnostics_channel` but ALSO removed `externals` for undici. Webpack then analyzed undici's mock utilities which contain `require('node:dns')` and `require('node:diagnostics_channel')`, causing `UnhandledSchemeError`.
-
-The root cause: **`node-fetch` was in `serverExternalPackages` but NOT in `webpackConfig.externals`**. `serverExternalPackages` prevents Next.js from including a package in the serverless bundle, but webpack still analyzes the package's source for tree-shaking. `webpackConfig.externals` is what tells webpack to skip analysis entirely. `node-fetch` was pulled into the build by `@genkit-ai/googleai` (import chain: `payload.config.ts` → `import-from-image.ts` → `data-extractor-service.ts` → `unified-adapter.ts` → `@genkit-ai/googleai` → `node-fetch`).
+The import chain was:
+- `payload.config.ts` → `payload` → `payload/dist/utilities/telemetry/conf/index.js` → `node:fs`, `node:os`
+- `payload.config.ts` → `payload` → `payload/dist/utilities/telemetry/events/serverInit.js` → `node:path`
+- `payload.config.ts` → `payload` → `payload/bin/generateImportMap/index.js` → `node:process`
+- `payload.config.ts` → `@genkit-ai/googleai` → `node-fetch` → `node:http`, `node:https`, `node:net`
 
 ### Fix Applied
 
-1. Added `node-fetch` to `webpackConfig.externals` for non-client builds — webpack never analyzes its internals, so the `node:http`, `node:https`, `node:net`, `node:dns` imports inside it are never encountered.
+Replaced the ineffective `resolve.alias` entries with `resolve.fallback`:
 
-2. Added comprehensive `resolve.alias` entries for all known `node:` protocol modules (`node:fs`, `node:https`, `node:http`, `node:net`, `node:os`, `node:dns`, `node:module`, `node:diagnostics_channel`, `node:console`, `node:crypto`) plus `\\.node$` for native binaries. All redirect to `src/server/utils/empty-stub.js`. This is defense-in-depth: packages in `externals` are never analyzed, but any remaining code that webpack does analyze (e.g., payload's telemetry) gets stubbed instead of throwing.
+```js
+webpackConfig.resolve.fallback = {
+  ...webpackConfig.resolve.fallback,
+  node: stubPath,
+}
+```
+
+`FallbackPlugin` is checked **during** scheme resolution (before the error is thrown), and returns the fallback value instead. The single key `node` handles all `node:` protocol requests — `node:fs`, `node:os`, `node:path`, `node:perf_hooks`, `node:process`, `node:http`, `node:https`, `node:net`, `node:dns`, `node:crypto`, `node:module`, `node:diagnostics_channel`, `node:console`.
+
+Kept `\\.node$` in `resolve.alias` for native binary files.
 
 ### Files Changed
 
-- `next.config.js` — added `node-fetch` to webpackConfig.externals; added comprehensive `node:` protocol `resolve.alias` entries; removed redundant old stub block.
+- `next.config.js` — replaced individual `node:fs`, `node:os`, etc. alias entries with `resolve.fallback['node'] = stubPath`
 
-### Why Both externals AND resolve.alias Are Needed
+### Why `resolve.fallback['node']` Works But `resolve.alias['node:fs']` Did Not
 
-- **`webpackConfig.externals`**: tells webpack "never analyze this package's source code" — prevents the problem at the source
-- **`resolve.alias`**: stubs any `node:` imports that webpack does encounter during analysis of non-external packages — catches stray references
+webpack 5's scheme resolver runs in this order:
+1. `ResolvePluginFactory.createResolver` creates a resolver with a `node` scheme plugin
+2. For `node:fs`, the scheme handler delegates to `ResolvePlugin` with request name `node` and path `fs`
+3. `ResolvePlugin` checks `resolve.alias` for `node:fs` — **too late, scheme handler already threw**
+4. `FallbackPlugin` is checked inside the scheme handler **before** throwing `UnhandledSchemeError`
+
+`FallbackPlugin` with key `'node'` is checked for the `'node'` request name and returns `stubPath`, short-circuiting the error.
 
 ### Verification
 
