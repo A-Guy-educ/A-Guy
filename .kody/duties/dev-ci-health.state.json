@@ -1,16 +1,18 @@
 {
   "version": 1,
-  "rev": 166,
+  "rev": 167,
   "cursor": "idle",
   "data": {
-    "failingChecks": [],
-    "lastFiredAt": "2026-06-07T15:09:57.259Z",
+    "failingChecks": [
+      "Integration Tests"
+    ],
+    "lastFiredAt": "2026-06-07T15:47:01.604Z",
     "lastOutcome": "completed",
-    "lastResolution": "CI GREEN",
-    "note": "Dev CI is green — no action needed",
-    "sha": "d649613336ff3bd4c736b00e77baa6634c4dc675",
-    "trackingIssue": null,
-    "lastDurationMs": 15080
+    "lastResolution": "fix-in-flight",
+    "note": "Issue #2349 already open — fix in flight, stopped",
+    "sha": "6438ed3316cb9c8fdd3788b7ca37c8f1cf795c11",
+    "trackingIssue": 2349,
+    "lastDurationMs": 23229
   },
   "done": false
 }
