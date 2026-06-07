@@ -4,11 +4,11 @@
   "target": "chore/auto-resolve-deterministic-tick",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "No code defect - kody preview-build fails with OOM in remote Docker builder (transient infrastructure issue). CI ci.yml passes. No code fix needed.",
+  "reason": "Single conflicted file (.kody/last-run.jsonl) resolved by taking HEAD version from git index stage 2",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/1547",
   "runUrl": null,
-  "filesTouched": [],
-  "sessionLog": ".kody/sessions/4070a25b-719e-4b14-9d14-68eb340d0b35.jsonl",
-  "startedAt": "2026-06-07T02:46:00.000Z",
-  "finishedAt": "2026-06-07T03:10:00.000Z"
+  "filesTouched": [".kody/last-run.jsonl"],
+  "sessionLog": ".kody/sessions/gh-27093230221-1.jsonl",
+  "startedAt": "2026-06-07T12:00:00.000Z",
+  "finishedAt": "2026-06-07T13:05:00.000Z"
 }
