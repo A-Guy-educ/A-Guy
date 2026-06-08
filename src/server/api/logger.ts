@@ -1,3 +1,10 @@
+/**
+ * Request-scoped logger factory for API routes
+ *
+ * @fileType utility
+ * @domain api
+ * @ai-summary Attaches request ID, method, URL, and OpenTelemetry trace context to every API log line.
+ */
 import { createRequestLogger, logger } from '@/infra/utils/logger'
 import type { NextRequest } from 'next/server'
 

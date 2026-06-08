@@ -1,3 +1,10 @@
+/**
+ * @fileType utility
+ * @domain seo
+ * @pattern opengraph-merger
+ * @ai-summary Merges caller OG overrides onto brand defaults fetched fresh per call; if brand resolution fails, silently falls back to a bare site-name entry with no image.
+ */
+
 import type { Metadata } from 'next'
 
 import { getBrand } from '@/brands'
