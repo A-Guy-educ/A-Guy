@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Check other Payload queries for unnecessary depth settings",
+    "body": "Search the codebase for other `depth: [12]` usages in Payload find/get calls, especially in API endpoints. depth:2 causes recursive population that can silently add seconds to query times. Verify each usage actually needs the populated data vs. plain IDs.",
+    "rationale": "The get-conversation.ts fix was found by inspection. Other endpoints may have the same pattern. A sweep could prevent similar performance issues elsewhere.",
+    "priority": "low"
+  }
+]

@@ -1,0 +1,18 @@
+[
+  {
+    "type": "lesson",
+    "name": "payload-depth-2-causes-query-explosion",
+    "hook": "Payload depth:2 triggers N+1 query explosion on read endpoints",
+    "body": "Payload's `depth: 2` setting recursively populates ALL relationship fields including nested array subdocuments (e.g. messages[].media[].mediaId → triggers media collection lookup per item). For a conversation with 100 messages × 5 media items, depth:2 triggers 500+ extra DB queries. For read-only endpoints that only need plain data, use `depth: 0`.\n\nWhy: depth: 2 on the get-conversation endpoint was the root cause of the /admin/chat ~2min loading spinner. The endpoint only needs message text, not populated relationships.\n\nHow to apply: When writing read-only API endpoints that query collections with relationship fields, start with `depth: 0` and only increase if the endpoint actually needs populated data.",
+    "why": "The get-conversation endpoint (get-conversation.ts) used depth:2 to populate contextRef, user, and messages.media/chatAssets relationships. For conversations with many messages, this caused 2+ minute query times.",
+    "confidence": 0.95
+  },
+  {
+    "type": "lesson",
+    "name": "media-id-string-vs-object-mapping",
+    "hook": "Media/chatAssets IDs can be strings or objects depending on Payload depth",
+    "body": "When a Payload array subdocument contains a relationship field (e.g. messages[].media[].mediaId), the field value is a string ID at depth:0 but a fully-populated object { id, filename, url, ... } at depth:2+. The mapping code must check `typeof fieldValue === 'object'` before accessing properties.\n\nWhy: Reducing depth:2 to depth:0 in get-conversation.ts required updating the media/chatAssets mapping to handle string IDs, otherwise the destructuring `const { filename } = 'abc'` throws.\n\nHow to apply: In any mapping code for subdocument relationship fields, always check `typeof field === 'object'` before destructuring.",
+    "why": "The original mapping assumed mediaId was always an object (depth:2 case). With depth:0 it can be a plain string, causing TypeError at runtime.",
+    "confidence": 0.95
+  }
+]

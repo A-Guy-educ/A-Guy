@@ -107,7 +107,7 @@ export async function getConversation(req: PayloadRequest & { json?: () => Promi
         where: whereClause as unknown as Where,
         limit: 1,
         sort: '-lastMessageAt',
-        depth: 2,
+        depth: 0,
         // Use overrideAccess: true for guests since session was validated from cookie
         // The where clause already filters by the verified guestSessionId
         user: guestSessionId ? undefined : (user ?? undefined),
@@ -198,26 +198,42 @@ export async function getConversation(req: PayloadRequest & { json?: () => Promi
           role: msg.role === 'user' ? ChatRole.User : ChatRole.Assistant,
           content: String(msg.content).trim(),
           media: msg.media?.map((m) => {
+            // Handle both depth:0 (string mediaId) and depth:2 (populated object)
             if (typeof m === 'object' && m !== null && 'mediaId' in m) {
-              const mediaId = typeof m.mediaId === 'object' ? m.mediaId.id : m.mediaId
-              const filename = typeof m.mediaId === 'object' ? m.mediaId.filename : undefined
-              const url = typeof m.mediaId === 'object' ? m.mediaId.url : undefined
-              reqLogger.info({ mediaId, filename }, '[DEBUG] Mapped media item')
-              return {
-                mediaId: String(mediaId),
-                filename,
-                url,
+              // m.mediaId can be a string (depth:0) or a populated object (depth:2+)
+              if (typeof m.mediaId === 'object' && m.mediaId !== null) {
+                const mediaId = m.mediaId.id
+                const filename = m.mediaId.filename
+                const url = m.mediaId.url
+                reqLogger.info({ mediaId, filename }, '[DEBUG] Mapped media item')
+                return {
+                  mediaId: String(mediaId),
+                  filename,
+                  url,
+                }
+              } else {
+                // depth:0 - mediaId is a string ID, filename/url not available without population
+                return {
+                  mediaId: String(m.mediaId),
+                  filename: undefined,
+                  url: undefined,
+                }
               }
             }
             reqLogger.warn({ rawM: m }, '[DEBUG] Unexpected media structure')
             return { mediaId: String(m), filename: undefined, url: undefined }
           }),
           chatAssets: msg.chatAssets?.map((a) => {
+            // Handle both depth:0 (string chatAssetId) and depth:2+ (populated object)
             if (typeof a === 'object' && a !== null && 'chatAssetId' in a) {
-              const assetId = typeof a.chatAssetId === 'object' ? a.chatAssetId.id : a.chatAssetId
-              const filename =
-                typeof a.chatAssetId === 'object' ? a.chatAssetId.originalFilename : undefined
-              return { chatAssetId: String(assetId), filename }
+              if (typeof a.chatAssetId === 'object' && a.chatAssetId !== null) {
+                const assetId = a.chatAssetId.id
+                const filename = a.chatAssetId.originalFilename
+                return { chatAssetId: String(assetId), filename }
+              } else {
+                // depth:0 - chatAssetId is a string ID
+                return { chatAssetId: String(a.chatAssetId), filename: undefined }
+              }
             }
             return { chatAssetId: String(a), filename: undefined }
           }),
