@@ -18,12 +18,6 @@ describe('CSP Configuration - Vercel Feedback Script on /admin', () => {
   const projectRoot = path.resolve(__dirname, '../..')
   const nextConfigPath = path.join(projectRoot, 'next.config.js')
 
-  // Helper to extract CSP value from headers array
-  function extractCSPValue(headers: Array<{ key: string; value: string }>): string | null {
-    const cspHeader = headers.find((h) => h.key === 'Content-Security-Policy')
-    return cspHeader?.value ?? null
-  }
-
   // Helper to extract script-src directive from CSP string
   function extractScriptSrc(csp: string): string | null {
     const match = csp.match(/script-src\s+([^;]+)/)

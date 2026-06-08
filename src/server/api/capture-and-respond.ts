@@ -1,3 +1,10 @@
+/**
+ * Centralized error handler for API routes not wrapped by withApiHandler
+ *
+ * @fileType utility
+ * @domain api
+ * @ai-summary Logs to Sentry, then returns a 500 JSON response — use this only for routes that skip withApiHandler's own try/catch.
+ */
 import * as Sentry from '@sentry/nextjs'
 import { NextResponse } from 'next/server'
 import { apiLogger } from './logger'

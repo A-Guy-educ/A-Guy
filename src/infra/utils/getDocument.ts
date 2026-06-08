@@ -1,3 +1,10 @@
+/**
+ * @fileType utility
+ * @domain payload
+ * @pattern cached-document-fetcher
+ * @ai-summary Wraps Payload local API with unstable_cache; the cache tag scopes invalidation per collection+slug but the underlying query bypasses access control (overrideAccess defaults to true in local API).
+ */
+
 import type { Config } from 'src/payload-types'
 
 import configPromise from '@payload-config'

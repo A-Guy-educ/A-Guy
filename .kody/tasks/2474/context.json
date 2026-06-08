@@ -1,0 +1,17 @@
+{
+  "taskId": "2474",
+  "taskType": "pr",
+  "target": "2462-p3-admin-dashboard-widgets-not-rendered-on-page-lo",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Resolved merge conflicts in next.config.js (worker-src CSP directive) and tests/int/csp-vercel-feedback-admin.int.spec.ts (worker-src test for Monaco editor)",
+  "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2474",
+  "runUrl": null,
+  "filesTouched": [
+    "next.config.js",
+    "tests/int/csp-vercel-feedback-admin.int.spec.ts"
+  ],
+  "sessionLog": null,
+  "startedAt": "2026-06-08T17:03:30.000Z",
+  "finishedAt": "2026-06-08T17:03:45.000Z"
+}
