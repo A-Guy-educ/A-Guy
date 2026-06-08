@@ -13,6 +13,12 @@ let testTenantId: string
 
 const TEST_CRON_SECRET = 'test-cron-secret-12345'
 
+// Strict blob token validation — match pattern used in v2-task-handler.int.spec.ts
+const hasBlobToken =
+  process.env.BLOB_READ_WRITE_TOKEN &&
+  process.env.BLOB_READ_WRITE_TOKEN !== '' &&
+  process.env.BLOB_READ_WRITE_TOKEN !== 'mock-token-for-testing'
+
 beforeAll(async () => {
   originalDatabaseUrl = process.env.DATABASE_URL
   originalCronSecret = process.env.CRON_SECRET
@@ -220,8 +226,8 @@ describe('Media Cleanup Endpoint', () => {
     })
   })
 
-  // Skip file upload tests if Vercel Blob is not configured
-  const cleanupTests = process.env.BLOB_READ_WRITE_TOKEN ? describe : describe.skip
+  // Skip file upload tests if Vercel Blob token is invalid
+  const cleanupTests = hasBlobToken ? describe : describe.skip
 
   cleanupTests('Cleanup Logic', () => {
     it('deletes expired ephemeral media', async () => {

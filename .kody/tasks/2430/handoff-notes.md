@@ -1,12 +1,11 @@
-## Task 2430: Verify CSP fix on fly.dev preview
+## Merge Conflict Resolution — PR #2430
 
-Verified the CSP fix from PR #2430 / task #2417 is deployed and correct on the fly.dev preview URL.
+**File:** `tests/int/csp-vercel-feedback-admin.int.spec.ts`
 
-**Verification performed:**
-1. Navigated to `https://kp-866cab-8111e4-pr-2430.fly.dev/admin` — redirects to login (admin requires auth)
-2. Ran `curl -sI` against the same URL to inspect CSP response header
-3. Confirmed `img-src ... *.gravatar.com` (wildcard) is present in the deployed CSP
-4. All 4 CSP integration tests pass (`pnpm exec vitest run tests/int/csp-vercel-feedback-admin.int.spec.ts`)
-5. Quality gates (typecheck, lint, tests): all green
+**Conflict type:** Symmetric — both sides expected `*.gravatar.com` in img-src, but differed in comment detail and test coverage.
 
-**No code changes were needed** — the existing fix (`gravatar.com` → `*.gravatar.com` in next.config.js line 185) was already correct and is now confirmed deployed on the preview.
+**Resolution:** Took origin/dev's version which had:
+- More detailed comments explaining why `*.gravatar.com` is needed (CSP wildcard syntax)
+- An additional test case covering the `www.gravatar.com` vs `gravatar.com` distinction
+
+**Verification:** All 5 tests in the file pass (224ms).

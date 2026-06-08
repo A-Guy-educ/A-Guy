@@ -1,3 +1,10 @@
+/**
+ * @fileType utility
+ * @domain payload
+ * @pattern zod-payload-error-bridge
+ * @ai-summary Converts Zod validation errors to Payload ValidationError so they surface in the admin UI; the fieldPrefix parameter must match the actual JSON path prefix used in Payload's data storage or errors are silently misaddressed.
+ */
+
 import { ZodError } from 'zod'
 import { ValidationError } from 'payload'
 

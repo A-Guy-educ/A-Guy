@@ -3,7 +3,7 @@
 import { ChatMessageRole } from '@/infra/llm/chat-message-role'
 import { useCurrentUser } from '@/client/hooks/useCurrentUser'
 import { cn } from '@/infra/utils/ui'
-import { useTranslations } from '@/ui/web/providers/I18n'
+import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import {
   BookOpen,
   CheckCircle,
@@ -29,6 +29,7 @@ import { useChatQuota } from '../hooks/useChatQuota'
 import { useNotebookChat } from '../hooks/useNotebookChat'
 import { useTeacherProfileLabel } from '../hooks/useTeacherProfileLabel'
 import { useTTS } from '../hooks/useTTS'
+import { formatMessageTime } from '../utils/formatMessageTime'
 import { FormulaComposer } from '@/ui/web/shared/MathInput/FormulaComposer'
 import { MathMarkdown } from '@/ui/web/shared/MathMarkdown'
 import { FunctionSquare } from 'lucide-react'
@@ -131,6 +132,7 @@ export function ChatInterface({
 }: ChatInterfaceProps) {
   const t = useTranslations(translationNamespace)
   const tCourses = useTranslations('courses')
+  const locale = useLocale()
 
   const {
     messages,
@@ -542,6 +544,11 @@ export function ChatInterface({
                     labelResume={tCourses('chatResume')}
                     labelSpeed={tCourses('chatSpeed')}
                   />
+                )}
+                {adminMode && msg.createdAt && (
+                  <span className="block mt-1.5 text-body-xs text-muted-foreground">
+                    {formatMessageTime(msg.createdAt, locale)}
+                  </span>
                 )}
               </div>
             )

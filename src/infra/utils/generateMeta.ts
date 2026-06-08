@@ -1,3 +1,10 @@
+/**
+ * @fileType utility
+ * @domain seo
+ * @pattern nextjs-metadata-generator
+ * @ai-summary Generates Next.js Metadata from Payload page docs; title defaults to the generic "Payload Website Template" when no doc is provided.
+ */
+
 import type { Metadata } from 'next'
 
 import type { Page } from '../../payload-types'
