@@ -1,11 +1,11 @@
 {
   "version": 1,
-  "rev": 384,
+  "rev": 385,
   "cursor": "idle",
   "data": {
-    "lastFiredAt": "2026-06-08T21:11:02.737Z",
+    "lastFiredAt": "2026-06-08T21:36:27.048Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 41345,
+    "lastDurationMs": 22230,
     "lastRunISO": "2026-06-08T21:04:38Z",
     "proposed": {
       "sentry-digest": {
