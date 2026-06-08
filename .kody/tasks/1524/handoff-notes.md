@@ -1,24 +1,13 @@
-# Handoff Notes — Task 1524 CI Fix
+# Handoff Notes — Task 1524 Merge Conflict Resolution
 
-## Root Cause
+## What Was Done
 
-PR #1524 added references to `h.vgCallCount` (resetting the mock call counter) in three places inside `tests/int/lesson-duplication-orchestrator.int.spec.ts`, but never declared the `h` object. The file had `const { mockState } = vi.hoisted(...)` but no corresponding `const h = vi.hoisted(...)`.
+Resolved merge conflict in `.kody/reports/duty-review.md` — the only conflicted file from merging `origin/dev` into PR #1524 (`goal-add-per-user-chat-memory-recall-ui`).
 
-## Fix Applied
+## Conflict Resolution
 
-Added the missing declaration in `tests/int/lesson-duplication-orchestrator.int.spec.ts` at line 42–43:
-
-```typescript
-// Tracks call count for tests that need to reset between runs
-const h = vi.hoisted(() => ({ vgCallCount: 0 }))
-```
-
-This matches the identical pattern already used in the sibling test file `tests/int/lesson-duplication-orchestrator-none.int.spec.ts`.
+The file is a rolling duty-status report. HEAD (PR) had Cycle 12 with stale staff assignments and missing cadences; `origin/dev` had Cycle 14 with updated values. Since this is a report that snapshots current state, the newer Cycle 14 data from `origin/dev` was taken in full.
 
 ## Files Changed
 
-- `tests/int/lesson-duplication-orchestrator.int.spec.ts` — added `const h = vi.hoisted(...)` declaration
-
-## Verification
-
-- `tsc --noEmit` passes with zero errors for the test file
+- `.kody/reports/duty-review.md` — conflict markers removed, `origin/dev` content preserved (Cycle 14 roster)
