@@ -1,3 +1,10 @@
+/**
+ * @fileType utility
+ * @domain shared
+ * @pattern server-client-url-resolver
+ * @ai-summary Resolves server URL from env with Vercel/specific fallback order; getClientSideURL reads window.location which is only available in the browser.
+ */
+
 export const getServerSideURL = () => {
   return (
     process.env.NEXT_PUBLIC_SERVER_URL ||

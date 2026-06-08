@@ -62,11 +62,12 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
 
   // 4. Validate status — double-refund guard
-  if (transaction.status === 'refunded') {
+  const tx = transaction as unknown as Transaction
+  if (tx.status === 'refunded') {
     return NextResponse.json({ error: 'העסקה כבר הוחזרה' }, { status: 400 })
   }
 
-  if (transaction.status !== 'succeeded') {
+  if (tx.status !== 'succeeded') {
     return NextResponse.json(
       { error: 'Only succeeded transactions can be refunded' },
       { status: 400 },
@@ -74,7 +75,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   }
 
   // 5. Call provider refund
-  const { provider, providerTransactionId, amount, currency } = transaction as {
+  const { provider, providerTransactionId, amount, currency } = tx as {
     provider: 'stripe' | 'paypal'
     providerTransactionId: string
     amount: number

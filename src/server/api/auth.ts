@@ -1,3 +1,10 @@
+/**
+ * Authentication helpers for API routes
+ *
+ * @fileType utility
+ * @domain api
+ * @ai-summary Authentication guards for API routes — throws on failure rather than returning false for admin/auth checks (use hasValidTestSecret explicitly to allow test secret bypass).
+ */
 import { isUsersCollectionUser } from '@/server/payload/access/isUsersCollectionUser'
 import { AccountRole } from '@/server/payload/collections/Users/roles'
 import type { User } from 'payload'

@@ -11,8 +11,10 @@
 **/temp
 **/docs/**
 tsconfig.json
+kody.config.json
 pnpm-lock.yaml
 CHANGELOG.md
+CHANGELOGOG.md
 .next
 .cache
 coverage

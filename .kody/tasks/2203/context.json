@@ -1,14 +1,14 @@
 {
   "taskId": "2203",
   "taskType": "pr",
-  "target": "Dependency Security Report (Daily) workflow failure",
+  "target": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27086250150",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "postinstall script ran 'pnpm generate' without PAYLOAD_GENERATE_TYPES set; cross-env in generate:types only sets it for the immediate payload child, not nested processes that load payload.config.ts",
+  "reason": "Fix already applied by task gh-27091218975-1: added PAYLOAD_SECRET at job level in deps-security-report.yml. Failing run (27086250150) predated the fix (scheduled run at 07:34 UTC, fix committed at 11:33 UTC).",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2203",
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27002243399",
-  "filesTouched": ["package.json"],
-  "sessionLog": ".kody/sessions/78f14aa9-8348-403a-bcd9-7aa6badef47d.jsonl",
-  "startedAt": "2026-06-05T14:55:00Z",
-  "finishedAt": "2026-06-05T15:00:00Z"
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27086250150",
+  "filesTouched": [".github/workflows/deps-security-report.yml"],
+  "sessionLog": ".kody/sessions/gh-27092197449-1.jsonl",
+  "startedAt": "2026-06-07T12:00:00Z",
+  "finishedAt": "2026-06-07T12:05:00Z"
 }
