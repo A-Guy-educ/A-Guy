@@ -149,6 +149,9 @@ export const Transactions: CollectionConfig = {
       min: 0,
       admin: {
         description: 'Amount in agorot (1 ILS = 100 agorot)',
+        components: {
+          Cell: '@/ui/admin/TransactionAmountCell#TransactionAmountCell',
+        },
       },
     },
 
