@@ -1,0 +1,18 @@
+{
+  "taskId": "2532",
+  "taskType": "issue",
+  "target": "2532",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed MetricsProvider and RecentTransactionsWidget fetch timeouts",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/ConversionTracking/MetricsProvider.tsx",
+    "src/ui/admin/RecentTransactionsWidget/index.tsx",
+    "tests/unit/ui/admin/metrics-provider-timeout.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/gh-27166095158-1.jsonl",
+  "startedAt": "2026-06-08T20:52:04.000Z",
+  "finishedAt": "2026-06-08T21:03:31.000Z"
+}

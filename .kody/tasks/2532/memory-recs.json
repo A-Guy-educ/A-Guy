@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "admin-dashboard-widgets-stuck-on-loading",
+    "hook": "Fetch without timeout causes infinite Loading in admin dashboard",
+    "body": "When fetching data in client components (MetricsProvider, RecentTransactionsWidget), always implement a 30s timeout using AbortController + setTimeout. Without a timeout, if the API hangs the widgets stay on Loading state forever. Use clearTimeout in both finally and catch blocks to prevent memory leaks.\n\nWhy: The MetricsProvider and RecentTransactionsWidget fetched /api/admin/dashboard-metrics and /api/transactions with no timeout. When the API is slow/hanging, widgets stay stuck on Loading instead of showing an error.\n\nHow to apply: Any client-side fetch in admin widgets should include:\n```\nconst controller = new AbortController()\nconst timeoutId = setTimeout(() => controller.abort(), 30_000)\ntry {\n  const res = await fetch(url, { signal: controller.signal })\n  clearTimeout(timeoutId)\n  // handle response\n} catch (err) {\n  clearTimeout(timeoutId)\n  if (err instanceof Error && err.name === 'AbortError') {\n    setError('timeout')\n  } else {\n    setError(err.message)\n  }\n}\n```",
+    "why": "Prevented infinite loading states in admin dashboard when API is slow/hanging",
+    "confidence": 0.9
+  }
+]

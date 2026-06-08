@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Add timeout to all admin widget fetches",
+    "body": "Check if there are other admin dashboard widgets/components that make fetch calls without timeout. Apply the same 30s AbortController timeout pattern to any missing widgets.",
+    "rationale": "Consistency: only MetricsProvider and RecentTransactionsWidget were fixed. Other widgets may have the same issue.",
+    "priority": "medium"
+  }
+]
