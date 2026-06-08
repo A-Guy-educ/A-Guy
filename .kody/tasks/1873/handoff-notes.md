@@ -1,3 +1,3 @@
-Resolved a single conflicted file: `.kody/reports/duty-review.md`.
+Resolved merge conflict in `.kody/reports/health-check.md` by taking the `origin/dev` side.
 
-Both sides were identical-format duty review snapshots at different cycles (Cycle 10 on HEAD vs Cycle 13 on origin/dev). The dev branch had the newer, more complete snapshot — staff assignments were filled in (cto/ceo vs "—") and cadence values updated — so Cycle 13 was taken verbatim. No code or logic changes were made.
+The conflict was asymmetric in a trivial sense: both sides listed the same four stale issues (#1583, #1563, #1562, #1236), but with different hour counts. The `origin/dev` branch had fresher counts (660h/499h/502h/1052h) from a more recent duty-review refresh compared to HEAD (609h/449h/452h/1001h). Since health-check.md is a report snapshot refreshed by duty-review, the more current values were preserved.
