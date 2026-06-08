@@ -1,9 +1,7 @@
-Task 1547 CI fix investigation.
+# Merge Conflict Resolution — Task 1547
 
-Failing run 26814534558 (2026-06-02) failed during the Integration Tests step due to Docker Hub network timeouts — `docker pull mongo:7` failed with "context deadline exceeded" and "net/http: request canceled while waiting for connection".
+Resolved a single conflicted file: `.kody/reports/duty-review.md`.
 
-Root cause: transient Docker Hub network connectivity issue, not a code defect.
+Both sides (HEAD vs origin/dev) had substantive changes to the duty-review report table — different staff assignments, cadence values, and header counts (15 broken vs 14 broken). Per task rules, took HEAD (PR branch) since this was a report snapshot conflict, not a security/correctness fix that needed preserving from dev.
 
-Resolution: The PR #1547 already contains the fix — the CI workflow was updated to use `docker pull mongo:7` with a 5-retry loop and 10s backoff before starting the MongoDB service container. This handles transient Docker Hub failures gracefully.
-
-Latest CI runs on this branch (27103745499 at 2026-06-07T20:21:46Z and earlier) are all success. No code changes needed — the failure was environmental and the retry logic in the PR already addresses it.
+No conflict markers remain. No quality gates needed to run (report file only, not source code).
