@@ -4,11 +4,11 @@
   "target": "2485-p3-admin-course-enrollments-widget-shows-counts-on",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Single conflict in next.config.js resolved by taking origin/dev img-src wildcard (*.gravatar.com vs gravatar.com www.gravatar.com)",
-  "prUrl": null,
+  "reason": "Single asymmetric conflict in duty-review.md resolved by taking origin/dev (Cycle 14, more recent state)",
+  "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2490",
   "runUrl": null,
-  "filesTouched": ["next.config.js"],
-  "sessionLog": null,
+  "filesTouched": [".kody/reports/duty-review.md"],
+  "sessionLog": ".kody/sessions/",
   "startedAt": "2026-06-08T00:00:00Z",
-  "finishedAt": "2026-06-08T00:05:00Z"
+  "finishedAt": "2026-06-08T00:00:00Z"
 }
