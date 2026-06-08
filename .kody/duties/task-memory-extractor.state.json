@@ -1,18 +1,18 @@
 {
   "version": 1,
-  "rev": 333,
+  "rev": 334,
   "cursor": "idle",
   "data": {
     "current_tick": "2026-06-08T12:30:00.000Z",
-    "current_tick_ran": "2026-06-08T12:30:00.000Z",
+    "current_tick_ran": "2026-06-08T12:49:25.870Z",
     "current_tick_result": "success",
-    "current_tick_summary": "75 tasks seen, 64 already extracted, 11 new tasks processed — 0 high-confidence writes (remaining recs are medium/low confidence).",
-    "lastFiredAt": "2026-06-08T12:49:25.870Z",
+    "current_tick_summary": "80 tasks seen, 64 already extracted, 16 new tasks processed — 0 high-confidence writes (remaining recs are medium/low confidence).",
+    "lastFiredAt": "2026-06-08T14:21:47.463Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 96585,
+    "lastDurationMs": 20435,
     "last_tick": "2026-06-08T09:28:18.882Z",
     "tasks_processed": 81,
-    "tasks_seen": 75,
+    "tasks_seen": 80,
     "session": {
       "memory_files_written": [
         "jsx-in-ts-causes-ts1005-error.md",
@@ -29,7 +29,7 @@
       "push_state": "success",
       "started": "2026-05-27T17:44:47.000Z",
       "tasks_processed_this_session": 81,
-      "tasks_seen_this_session": 75
+      "tasks_seen_this_session": 80
     }
   },
   "done": false
