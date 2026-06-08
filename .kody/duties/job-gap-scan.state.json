@@ -1,30 +1,34 @@
 {
   "version": 1,
-  "rev": 373,
+  "rev": 374,
   "cursor": "idle",
   "data": {
-    "lastRunISO": "2026-06-08T05:37:23.000Z",
+    "lastRunISO": "2026-05-31T10:17:39Z",
     "proposed": {
       "sentry-digest": {
         "firstSuggestedISO": "2026-05-20T12:37:00Z",
-        "lastWrittenISO": "2026-06-01T10:17:39Z"
-      },
-      "bundle-size-diff": {
-        "firstSuggestedISO": "2026-06-01T08:39:00Z",
-        "lastWrittenISO": "2026-06-01T08:39:00Z"
-      },
-      "issue-auto-triage": {
-        "firstSuggestedISO": "2026-05-20T19:54:00Z",
-        "lastWrittenISO": "2026-06-05T10:00:00Z"
+        "lastWrittenISO": "2026-05-31T10:17:39Z"
       },
       "secret-leak-scan": {
         "firstSuggestedISO": "2026-05-20T13:01:00Z",
         "lastWrittenISO": "2026-05-20T13:01:00Z"
+      },
+      "stale-pr-janitor": {
+        "firstSuggestedISO": "2026-05-20T14:17:00Z",
+        "lastWrittenISO": "2026-05-20T14:17:00Z"
+      },
+      "issue-auto-triage": {
+        "firstSuggestedISO": "2026-05-20T19:54:00Z",
+        "lastWrittenISO": "2026-05-20T19:54:00Z"
+      },
+      "bundle-size-diff": {
+        "firstSuggestedISO": "2026-05-26T08:39:00Z",
+        "lastWrittenISO": "2026-05-26T08:39:00Z"
       }
     },
-    "lastFiredAt": "2026-06-08T07:20:53.516Z",
+    "lastFiredAt": "2026-06-08T09:17:21.889Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 33391
+    "lastDurationMs": 192390
   },
   "done": false
 }
