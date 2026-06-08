@@ -33,13 +33,16 @@ function LoginFormContent() {
     try {
       const formData = new FormData(e.currentTarget)
       const result = await loginAction(formData)
+      setIsLoading(false)
       if (result.success) {
-        window.location.href = returnTo
+        // Use assign instead of direct href assignment for reliable navigation
+        window.location.assign(returnTo)
       } else {
         setError(t('errors.invalidCredentials'))
       }
-    } finally {
+    } catch {
       setIsLoading(false)
+      setError(t('errors.invalidCredentials'))
     }
   }
 

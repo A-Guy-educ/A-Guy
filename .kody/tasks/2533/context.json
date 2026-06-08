@@ -1,0 +1,14 @@
+{
+  "taskId": "2533",
+  "taskType": "issue",
+  "target": "Login button permanently shows 'Logging in...' after successful auth",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed handleSubmit in LoginForm.tsx - moved setIsLoading(false) before window.location.assign() to prevent button staying disabled after successful auth",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": ["src/app/(frontend)/login/LoginForm.tsx"],
+  "sessionLog": ".kody/sessions/gh-27168413971-1.jsonl",
+  "startedAt": "2026-06-08T22:00:00.000Z",
+  "finishedAt": "2026-06-08T22:05:00.000Z"
+}
