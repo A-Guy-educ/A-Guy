@@ -4,14 +4,11 @@
   "target": "2297-p3-admin-footer-shows-unversioned-vdev-label",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Fixed CSP test failures by restoring *.gravatar.com wildcard (was incorrectly replaced with explicit gravatar.com/secure.gravatar.com) and updated test to expect wildcard",
+  "reason": "Single symmetric conflict in duty-review.md resolved by taking newer origin/dev version",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2321",
   "runUrl": null,
-  "filesTouched": [
-    "next.config.js",
-    "tests/int/csp-vercel-feedback-admin.int.spec.ts"
-  ],
-  "sessionLog": ".kody/sessions/current.jsonl",
-  "startedAt": "2026-06-08T20:58:00Z",
-  "finishedAt": "2026-06-08T20:59:00Z"
+  "filesTouched": [".kody/reports/duty-review.md"],
+  "sessionLog": ".kody/sessions/gh-27170724733-1-1.jsonl",
+  "startedAt": "2026-06-08T21:00:00Z",
+  "finishedAt": "2026-06-08T21:01:00Z"
 }
