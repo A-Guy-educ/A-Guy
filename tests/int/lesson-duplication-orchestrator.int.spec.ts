@@ -17,15 +17,28 @@ import { runDuplicationOrchestrator } from '@/server/services/lesson-duplication
 
 // Mock the variation service so AiVariationStrategy (used for medium/deep level)
 // does not make real LLM calls in the integration test environment.
-// The variation service is only called when level != 'none' &&
-// (level != 'light' || scriptStrategy.needsAiFallback).
+//
 // Uses call-count tracking instead of ID pattern — Payload generates UUIDs for
 // exercise IDs which don't contain '-3', so the old ID-based condition never triggered.
 // Must be vi.hoisted: the vi.mock factory below runs hoisted above imports,
 // so it may only close over hoisted refs. A plain `let` here makes the
 // factory throw at runtime, silently falling back to the REAL variation
 // service → real LLM call → flaky 180s timeout.
-const h = vi.hoisted(() => ({ vgCallCount: 0 }))
+const { mockState } = vi.hoisted(() => {
+  let callCount = 0
+  return {
+    mockState: {
+      reset() {
+        callCount = 0
+      },
+      get next() {
+        callCount++
+        return callCount
+      },
+    },
+  }
+})
+
 vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
   generateVariation: vi.fn().mockImplementation(
     async (
@@ -35,9 +48,11 @@ vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
       exercise: { id: string; content: { blocks: unknown[] } }
       tokensUsed: { inputTokens: number; outputTokens: number }
     }> => {
-      h.vgCallCount++
+      // Capture once — `mockState.next` is a getter that increments on
+      // every read, so re-reading it inside the check would skip past 3.
+      const callNumber = mockState.next
       // Force failure on the 3rd exercise (call count 3 = index 2)
-      if (h.vgCallCount === 3) {
+      if (callNumber === 3) {
         throw new Error('Forced failure for test')
       }
       return {
@@ -108,6 +123,17 @@ vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
   ),
 }))
 
+// Also mock generateVariation so AiVariationStrategy (reached via RouterStrategy when
+// level='medium' in the mock) never makes real LLM calls.
+vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
+  generateVariation: vi.fn().mockResolvedValue({
+    exercise: {
+      id: 'mock-variation',
+      content: { blocks: [] },
+    },
+  }),
+}))
+
 async function ensureDefaultTenant(payload: Payload): Promise<string> {
   const slug = getDefaultTenantSlug()
   const existing = await payload.find({
@@ -125,6 +151,11 @@ async function ensureDefaultTenant(payload: Payload): Promise<string> {
   return created.id
 }
 
+// Reset mock call count before each test to ensure the 3rd exercise always fails
+beforeEach(() => {
+  mockState.reset()
+})
+
 describe('Lesson duplication orchestrator — integration', () => {
   let payload: Payload
   let categoryId: string
@@ -135,10 +166,6 @@ describe('Lesson duplication orchestrator — integration', () => {
   const cleanupLessonIds: string[] = []
   const cleanupExerciseIds: string[] = []
   const cleanupDuplicationIds: string[] = []
-
-  beforeEach(() => {
-    h.vgCallCount = 0
-  })
 
   beforeAll(async () => {
     payload = await getPayload({ config })
@@ -207,10 +234,16 @@ describe('Lesson duplication orchestrator — integration', () => {
     cleanupLessonIds.push(sourceLessonId)
 
     // Create exactly 5 exercises on the source lesson
+    // Exercise 3 (index 2) must have an ID containing '-3' so the mock throws for it
     for (let i = 0; i < 5; i++) {
       const ex = await payload.create({
         collection: 'exercises',
-        data: { title: `Orch Exercise ${i} ${ts}`, lesson: sourceLessonId },
+        data: {
+          title: `Orch Exercise ${i} ${ts}`,
+          // Slug includes '-3' for index 2 so mock runStrategy throws on 3rd exercise
+          slug: i === 2 ? `orch-exercise-${ts}-3` : `orch-exercise-${ts}-${i}`,
+          lesson: sourceLessonId,
+        },
         draft: true,
       })
       cleanupExerciseIds.push(ex.id)

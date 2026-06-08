@@ -1,14 +1,14 @@
 {
   "taskId": "2203",
   "taskType": "pr",
-  "target": "PR #2203",
+  "target": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27086250150",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "CI format check on kody.config.json was transient - file passes prettier locally after recent reformat commit c8cd6a43d",
+  "reason": "Fix already applied by task gh-27091218975-1: added PAYLOAD_SECRET at job level in deps-security-report.yml. Failing run (27086250150) predated the fix (scheduled run at 07:34 UTC, fix committed at 11:33 UTC).",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2203",
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26748671139",
-  "filesTouched": [],
-  "sessionLog": ".kody/sessions/2203.jsonl",
-  "startedAt": "2026-06-01T13:30:00.000Z",
-  "finishedAt": "2026-06-01T13:38:00.000Z"
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27086250150",
+  "filesTouched": [".github/workflows/deps-security-report.yml"],
+  "sessionLog": ".kody/sessions/gh-27092197449-1.jsonl",
+  "startedAt": "2026-06-07T12:00:00Z",
+  "finishedAt": "2026-06-07T12:05:00Z"
 }

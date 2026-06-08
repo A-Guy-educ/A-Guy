@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { useField } from '@payloadcms/ui'
+import { useField, useForm } from '@payloadcms/ui'
 import { useRouter } from 'next/navigation'
 import {
   GripVertical,
@@ -95,6 +95,7 @@ function parseBlocks(val: unknown): RawBlock[] {
 
 export const LessonBlocksField: React.FC<{ path: string }> = ({ path }) => {
   const { value, setValue } = useField<string>({ path })
+  const { setModified } = useForm()
   const router = useRouter()
 
   const blocks: RawBlock[] = useMemo(() => parseBlocks(value), [value])
@@ -212,8 +213,11 @@ export const LessonBlocksField: React.FC<{ path: string }> = ({ path }) => {
       const next = [...blocks]
       next.splice(index, 1)
       updateBlocks(next)
+      if (setModified) {
+        setModified(true)
+      }
     },
-    [blocks, updateBlocks],
+    [blocks, updateBlocks, setModified],
   )
 
   const editBlock = useCallback(
