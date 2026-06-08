@@ -17,6 +17,7 @@
  * - Ensure leading /
  * - Remove trailing slash (except /)
  */
+
 export function normalizePath(input: string): string {
   let path = input.trim()
 
