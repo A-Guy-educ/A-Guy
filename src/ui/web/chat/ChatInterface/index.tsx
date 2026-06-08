@@ -3,7 +3,7 @@
 import { ChatMessageRole } from '@/infra/llm/chat-message-role'
 import { useCurrentUser } from '@/client/hooks/useCurrentUser'
 import { cn } from '@/infra/utils/ui'
-import { useTranslations } from '@/ui/web/providers/I18n'
+import { useLocale, useTranslations } from '@/ui/web/providers/I18n'
 import {
   BookOpen,
   CheckCircle,
@@ -29,6 +29,7 @@ import { useChatQuota } from '../hooks/useChatQuota'
 import { useNotebookChat } from '../hooks/useNotebookChat'
 import { useTeacherProfileLabel } from '../hooks/useTeacherProfileLabel'
 import { useTTS } from '../hooks/useTTS'
+import { formatMessageTime } from '../utils/formatMessageTime'
 import { FormulaComposer } from '@/ui/web/shared/MathInput/FormulaComposer'
 import { MathMarkdown } from '@/ui/web/shared/MathMarkdown'
 import { FunctionSquare } from 'lucide-react'
@@ -101,6 +102,7 @@ interface ChatInterfaceProps {
   viewMode?: ViewMode
   onModeToggle?: () => void
   onChatInteraction?: () => void
+  fabOpen?: boolean
 }
 
 export function ChatInterface({
@@ -126,9 +128,11 @@ export function ChatInterface({
   viewMode,
   onModeToggle,
   onChatInteraction,
+  fabOpen = false,
 }: ChatInterfaceProps) {
   const t = useTranslations(translationNamespace)
   const tCourses = useTranslations('courses')
+  const locale = useLocale()
 
   const {
     messages,
@@ -541,6 +545,11 @@ export function ChatInterface({
                     labelSpeed={tCourses('chatSpeed')}
                   />
                 )}
+                {adminMode && msg.createdAt && (
+                  <span className="block mt-1.5 text-body-xs text-muted-foreground">
+                    {formatMessageTime(msg.createdAt, locale)}
+                  </span>
+                )}
               </div>
             )
           })}
@@ -617,7 +626,10 @@ export function ChatInterface({
 
       {/* Input Container */}
       <div
-        className="flex-grow-0 flex-shrink-0 bg-card border-t border-border p-5 pb-8 relative"
+        className={cn(
+          'flex-grow-0 flex-shrink-0 bg-card border-t border-border p-5 pb-8 relative',
+          fabOpen && 'hidden',
+        )}
         data-math-controls
       >
         {/* Formula Composer Popup */}
