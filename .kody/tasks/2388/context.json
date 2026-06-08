@@ -1,0 +1,14 @@
+{
+  "taskId": "2388",
+  "taskType": "pr",
+  "target": "2377-p3-investigate-courses-storefront-empty-state-mism",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Single symmetric conflict in duty-review.md resolved by taking origin/dev (Cycle 14, newer snapshot)",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [".kody/reports/duty-review.md"],
+  "sessionLog": null,
+  "startedAt": "2026-06-08T00:00:00.000Z",
+  "finishedAt": "2026-06-08T00:00:00.000Z"
+}
