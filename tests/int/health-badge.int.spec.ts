@@ -7,24 +7,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 interface HealthResponse {
   ok: boolean
   gitSha: string
-  payloadVersion: string
-  projectVersion: string
+  version: string
   timestamp: string
 }
 
 const healthyResponse: HealthResponse = {
   ok: true,
   gitSha: 'abc123def456',
-  payloadVersion: '3.73.0',
-  projectVersion: '0.6.0',
+  version: '0.6.0',
   timestamp: '2026-07-02T12:00:00.000Z',
 }
 
 const unhealthyResponse: HealthResponse = {
   ok: false,
   gitSha: 'abc123def456',
-  payloadVersion: '3.73.0',
-  projectVersion: '0.6.0',
+  version: '0.6.0',
   timestamp: '2026-07-02T12:00:00.000Z',
 }
 
@@ -94,6 +91,29 @@ describe('HealthBadge component', () => {
 
       expect(await screen.findByText('API OK')).toBeTruthy()
       expect(screen.getByText(/0\.6\.0/)).toBeTruthy()
+      expect(screen.getByText(/abc123d/)).toBeTruthy()
+    })
+
+    // Regression test: health API returns `version` not `projectVersion`
+    it('displays version from actual API response when showVersion is true', async () => {
+      // This is the actual API response structure - note `version` not `projectVersion`
+      const actualApiResponse = {
+        ok: true,
+        checks: { database: true },
+        version: '1.2.3',
+        gitSha: 'abc123def456',
+        timestamp: '2026-07-02T12:00:00.000Z',
+      }
+
+      vi.spyOn(global, 'fetch').mockResolvedValue(
+        new Response(JSON.stringify(actualApiResponse), { status: 200 }),
+      )
+
+      renderHealthBadge(true)
+
+      expect(await screen.findByText('API OK')).toBeTruthy()
+      // The version from the actual API should be displayed
+      expect(screen.getByText(/1\.2\.3/)).toBeTruthy()
       expect(screen.getByText(/abc123d/)).toBeTruthy()
     })
   })

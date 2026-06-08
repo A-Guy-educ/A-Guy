@@ -1,0 +1,14 @@
+{
+  "taskId": "2500",
+  "taskType": "pr",
+  "target": "PR #2500 / #2497-p3-admin-user-avatar-blocked-by-csp",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Resolved asymmetric conflict in csp-vercel-feedback-admin.int.spec.ts - took origin/dev's assertion and new test; HEAD's deletion of the expect was an incomplete refactor",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": ["tests/int/csp-vercel-feedback-admin.int.spec.ts"],
+  "sessionLog": ".kody/sessions/unknown.jsonl",
+  "startedAt": "2026-06-08T00:00:00.000Z",
+  "finishedAt": "2026-06-08T00:00:00.000Z"
+}
