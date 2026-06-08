@@ -1,5 +1,10 @@
 /**
  * HTTP utilities for fetching resources
+ *
+ * @fileType utility
+ * @domain shared
+ * @pattern fetch-with-retry
+ * @ai-summary Fetches a buffer with retry and exponential backoff; retries 5xx only, never retries 4xx client errors, and always throws after MAX_RETRIES rather than returning a partial result.
  */
 
 /**

@@ -1,3 +1,10 @@
+/**
+ * @fileType utility
+ * @domain payload
+ * @pattern cached-global-fetcher
+ * @ai-summary Wraps Payload findGlobal with unstable_cache; cache tag is global_<slug> so any update to the global invalidates it, but the query runs without access-control restrictions.
+ */
+
 import type { Config } from 'src/payload-types'
 
 import configPromise from '@payload-config'

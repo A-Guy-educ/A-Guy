@@ -1,7 +1,23 @@
-## Fix: Prettier format check failure in CI
+# Merge Conflict Resolution for #1587
 
-**Root cause:** `CHANGELOGOG.md` line 1709 contained `([#2117\_(` — an escaped underscore inside a markdown link bracket. Prettier flags this as an unnecessary escape and fails the format check with exit code 1.
+## What was done
 
-**Fix:** Replaced `([#2117\_(https://...)` with `([#2117](https://...)` on line 1709. The underscore in a markdown link URL does not need escaping; the brackets already disambiguate it.
+Resolved 7 identical conflicts in `.github/workflows/ci.yml`. The conflict was purely cosmetic — the pnpm version was specified as `10.33.0` (HEAD/PR branch) vs `'10.33.0'` (origin/dev) in all 7 occurrences.
 
-**Verification:** `pnpm format:check` now passes with no warnings on CHANGELOGOG.md.
+## Resolution
+
+Kept the HEAD/PR branch version: `version: 10.33.0` (without quotes), consistent with the `packageManager` field in `package.json` which uses `pnpm@10.33.0` without quotes around the version.
+
+## Conflicts resolved
+
+- `fast-gate` job pnpm setup
+- `integration-tests` job pnpm setup
+- `build` job pnpm setup
+- `e2e-gate` job pnpm setup
+- `e2e-system-tests` job pnpm setup
+- `qa-scenarios-core` job pnpm setup
+- `qa-scenarios-full` job pnpm setup
+
+## Note
+
+The lint warning in `src/ui/web/shared/LatexDocumentViewer/index.tsx:113` is pre-existing and unrelated to this merge.
