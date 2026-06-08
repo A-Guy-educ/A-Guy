@@ -3,6 +3,10 @@
  *
  * Encapsulates all API calls with error handling.
  * Provides simple interface for components to interact with backend endpoints.
+ *
+ * @fileType service
+ * @domain api-client
+ * @ai-summary chatStream() requires mediaAttachments/adminMode=false; passing them silently yields an error — check before calling.
  */
 import { ChatRole } from '@/infra/llm/chat-message-role'
 import { logger } from '@/infra/utils/logger'

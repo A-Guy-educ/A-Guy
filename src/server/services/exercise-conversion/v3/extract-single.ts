@@ -13,6 +13,7 @@
  * @fileType service
  * @domain conversion
  * @pattern orchestrator
+ * @ai-summary Media must be attached to the lesson's contentFiles — detached media is rejected before any LLM call.
  */
 
 import type { Payload } from 'payload'

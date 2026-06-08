@@ -8,6 +8,10 @@
  * sent to the LLM independently, validated, then stitched into one LaTeX document.
  *
  * All Payload Local API calls use overrideAccess: false + user context for security.
+ *
+ * @fileType service
+ * @domain conversion
+ * @ai-summary Page-by-page extraction means pages have no shared numbering context — two pages each starting with "1" will be merged with renumbering conflict detection.
  */
 import { isVercelBlobUrl } from '@/infra/blob/vercel-blob-adapter'
 import { fetchBuffer } from '@/infra/utils/http'

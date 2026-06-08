@@ -1,3 +1,13 @@
+/**
+ * Study Plan Constants
+ *
+ * Weights, durations, and activity templates for study plan generation.
+ *
+ * @fileType constants
+ * @domain learning
+ * @ai-summary MASTERY_WEIGHTS controls weak=3x/medium=2x/strong=1x frequency — changing weak weight alone reshapes the entire plan's focus distribution.
+ */
+
 import type { ActivityType, TimeframeMode } from './types'
 
 export const MASTERY_WEIGHTS: Record<string, number> = {

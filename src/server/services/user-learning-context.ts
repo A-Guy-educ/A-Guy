@@ -3,6 +3,10 @@
  *
  * Aggregates user learning data for injection into the agent's system prompt.
  * Fetches progress, activity, and study plans to personalize agent responses.
+ *
+ * @fileType service
+ * @domain ai
+ * @ai-summary Silently returns empty context on error — the agent will proceed without personalization, which is intentional (graceful degradation).
  */
 
 import type { Payload } from 'payload'

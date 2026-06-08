@@ -14,6 +14,10 @@
  *   - POST /api/lessons/create-context-exercises (Steps Convert)
  *   - runFullMediaPipeline (Full Convert (Media))
  *   - runFullLatexPipeline (Full Convert (LaTeX))
+ *
+ * @fileType service
+ * @domain conversion
+ * @ai-summary Always deletes and recreates origin='context_extraction' exercises — any manual edits to those exercises are lost on re-run.
  */
 import type { Payload, User } from 'payload'
 import { parseContextText } from '@/lib/context-exercise-parser'

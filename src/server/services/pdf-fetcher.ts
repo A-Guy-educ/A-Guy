@@ -1,3 +1,13 @@
+/**
+ * PDF Fetcher Service
+ *
+ * Fetches PDF files from blob storage or Payload URLs.
+ * Handles Vercel Blob URLs, relative URLs, and external URLs.
+ *
+ * @fileType service
+ * @domain media
+ * @ai-summary Normalizes relative Payload URLs to absolute using VERCEL_PROJECT_PRODUCTION_URL; falling back to localhost in dev can cause fetch mismatches.
+ */
 import type { Payload } from 'payload'
 import { getPdfBufferFromUrl, isVercelBlobUrl } from '@/infra/blob/vercel-blob-adapter'
 import { fetchBuffer } from '@/infra/utils/http'

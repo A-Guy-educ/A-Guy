@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "ai-summary-editing-causes-import-loss",
+    "hook": "Editing JSDoc at top of file can swallow the first import line if not careful",
+    "body": "When adding a JSDoc block to a file that starts with `/**` and an import on line 2, replacing from the `/**` through `*/` and then the next line (the import) can cause the import to be accidentally consumed by the old_string match, leaving it out of the new_string. Fix: always verify imports are intact after editing the file header.",
+    "why": "I lost `import { nanoid }` from helpers.ts and `import type { Payload }` from pdf-fetcher.ts because the old_string match consumed the line following the closing `*/` when replacing the JSDoc block.",
+    "confidence": 0.95
+  }
+]

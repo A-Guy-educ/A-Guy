@@ -1,0 +1,8 @@
+[
+  {
+    "title": "payload-types.ts stale check failure",
+    "body": "The quality gate `typecheck` step fails because `src/payload-types.ts` is detected as stale by `scripts/check-types-drift.ts`. This is a pre-existing issue in the repo — schema changes were committed without regenerating types. Fix: run `pnpm generate:types` and commit the updated file.",
+    "rationale": "The typecheck failure is unrelated to the @ai-summary additions — only JSDoc comments were modified, no schema changes.",
+    "priority": "medium"
+  }
+]

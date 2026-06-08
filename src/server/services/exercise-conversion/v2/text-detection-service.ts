@@ -8,6 +8,7 @@
  * @fileType service
  * @domain conversion
  * @pattern text-extraction, pattern-matching
+ * @ai-summary Pattern-matches exercise labels — works on native-text PDFs but silently returns empty on scanned/image-only PDFs where the text layer is absent.
  */
 
 import type { ExerciseStart, PageDetectionResult } from './vision-detection-service'

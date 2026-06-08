@@ -2,6 +2,10 @@
  * Course tree isolation validation
  *
  * Ensures all children (chapters) of a course reference that course.
+ *
+ * @fileType service
+ * @domain data-integrity
+ * @ai-summary Catches stale chapter-course references that survive soft deletes — a chapter pointing to a deleted/replaced course will surface here.
  */
 import type { Payload } from 'payload'
 

@@ -5,6 +5,10 @@
  * so each page returns an exercises array directly, instead of free-form
  * LaTeX that must be re-split with regex. The latex/solution fields still
  * carry compile-ready LaTeX content per the existing prompt rules.
+ *
+ * @fileType schema
+ * @domain conversion
+ * @ai-summary Exercise number comes from the LLM (preserves original numbering); when merging across pages, duplicate numbers trigger sequential renumbering — the LLM's numbers are used as-is when no conflict exists.
  */
 import { z } from 'zod'
 

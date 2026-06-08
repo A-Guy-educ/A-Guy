@@ -5,6 +5,11 @@
  * Implements a tiered resolution strategy:
  * - Authenticated users: Tier 1 (user settings) → Tier 2 (default) → Tier 3 (first active) → Tier 4 (failsafe)
  * - Guests: Tier 2 (default) → Tier 4 (failsafe)
+ *
+ * @fileType service
+ * @domain ai
+ * @pattern prompt-resolution, tiered-fallback
+ * @ai-summary Identical tiered cascade to agent-behavior-prompt-resolver; both must stay in sync when adding new tiers.
  */
 
 import type { Payload } from 'payload'

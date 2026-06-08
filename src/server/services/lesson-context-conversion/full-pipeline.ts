@@ -14,6 +14,10 @@
  *     to typed blocks. No Gemini call for splitting; the per-exercise
  *     LaTeX conversion still uses the existing AI fallback when the
  *     deterministic parser can't handle a block.
+ *
+ * @fileType service
+ * @domain conversion
+ * @ai-summary Full re-run deletes all prior context-extraction exercises and recreates them — intermediate state is not preserved on failure.
  */
 import type { Payload, PayloadRequest, User } from 'payload'
 import { fetchBuffer } from '@/infra/utils/http'

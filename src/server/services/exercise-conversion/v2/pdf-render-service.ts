@@ -8,6 +8,7 @@
  * @fileType service
  * @domain conversion
  * @pattern pdf-processing
+ * @ai-summary Loads the PDF once and keeps all page proxies in memory — large PDFs (>50 pages) can exhaust serverless memory; split first.
  */
 
 /**

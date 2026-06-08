@@ -13,6 +13,7 @@
  * @fileType service
  * @domain conversion
  * @pattern combo-detection, vision+text
+ * @ai-summary Vision gives semantic Y-positions; text-extraction snaps them to pixel coordinates — without the snap step, crop coordinates drift by the Vision estimate error.
  */
 
 import type { Payload } from 'payload'

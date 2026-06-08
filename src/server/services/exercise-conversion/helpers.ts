@@ -1,3 +1,13 @@
+/**
+ * Exercise Conversion Helpers
+ *
+ * Shared utilities for PDF→Exercises conversion pipeline.
+ * Includes block ID enrichment, job queries, response parsing, and normalization.
+ *
+ * @fileType utility
+ * @domain conversion
+ * @ai-summary CRITICAL: enrichBlockIds() must be called AFTER Zod validation and BEFORE hashing/persistence — skipping this step produces non-deterministic exercise IDs.
+ */
 import { nanoid } from 'nanoid'
 import type { Tenant } from '@/payload-types'
 import type { ContentBlock } from '@/server/payload/collections/Exercises/types'

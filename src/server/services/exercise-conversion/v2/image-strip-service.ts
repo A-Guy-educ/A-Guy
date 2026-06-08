@@ -7,6 +7,7 @@
  * @fileType service
  * @domain conversion
  * @pattern image-processing
+ * @ai-summary Exercises spanning pages are stitched by vertical coordinate overlap; if two exercises have identical vertical ranges the stitch boundary becomes ambiguous.
  */
 
 import type { PageImage } from './pdf-render-service'

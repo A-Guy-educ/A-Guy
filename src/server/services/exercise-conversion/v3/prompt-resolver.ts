@@ -7,6 +7,7 @@
  * @fileType service
  * @domain conversion
  * @pattern prompt-resolution
+ * @ai-summary Tenant isolation is enforced via query filter — if the tenant has no published extractor prompt the call throws, not silently falls back.
  */
 
 import type { Payload } from 'payload'

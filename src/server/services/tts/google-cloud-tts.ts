@@ -3,6 +3,10 @@
  *
  * Calls the REST API with the project's GEMINI_API_KEY.
  * Key resolution: ConfigSecrets (DB) → process.env fallback.
+ *
+ * @fileType service
+ * @domain tts
+ * @ai-summary Uses GEMINI_API_KEY for the texttospeech endpoint — not a separate TTS key; if GEMINI_API_KEY is absent the call throws.
  */
 
 import { z } from 'zod'

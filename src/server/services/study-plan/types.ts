@@ -1,3 +1,13 @@
+/**
+ * Study Plan Types
+ *
+ * Core type definitions for study plan generation.
+ *
+ * @fileType types
+ * @domain learning
+ * @ai-summary TopicInput.mastery is user-annotated; weak topics receive 3x more cycle slots than strong — accurate annotations directly control study focus distribution.
+ */
+
 export type MasteryLevel = 'weak' | 'medium' | 'strong'
 export type ActivityType = 'practice' | 'hybrid' | 'full_simulation' | 'reinforcement' | 'warmup'
 export type DayStatus = 'planned' | 'completed'

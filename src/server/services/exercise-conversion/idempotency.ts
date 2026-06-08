@@ -9,6 +9,10 @@
  *
  * CRITICAL: The ordinal MUST be the array index from code execution (deterministic),
  * NOT the LLM-provided `orderInSegment` (non-deterministic across runs).
+ *
+ * @fileType utility
+ * @domain conversion
+ * @ai-summary systemOrdinal MUST be the code-derived loop index, NOT LLM orderInSegment — using the latter breaks idempotency across re-runs.
  */
 
 /**

@@ -7,6 +7,7 @@
  * @fileType utility
  * @domain conversion
  * @pattern validation
+ * @ai-summary Sanitizes LaTeX on the server side — client-side rendering still re-processes it, so warnings signal potential issues rather than hard failures.
  */
 
 import { sanitizeLatex } from '@/lib/latex-parser/sanitizer'

@@ -1,3 +1,14 @@
+/**
+ * Study Plan Engine
+ *
+ * Generates 7-day study plans anchored to exam date.
+ * Provides topic prioritization, cycle building, and activity scheduling.
+ *
+ * @fileType service
+ * @domain learning
+ * @ai-summary generateStudyPlan anchors Day 0 to examDate-6 — if the caller passes a today/today-anchored examDate the plan is shifted by a week.
+ */
+
 import { addDays, formatYmd, parseISO } from '@/lib/dates'
 
 import {

@@ -8,6 +8,7 @@
  * @fileType service
  * @domain conversion
  * @pattern ocr, pattern-matching
+ * @ai-summary OCR is slow (~2-5s/page); use text-detection first and only fall back to OCR when the PDF has no extractable text layer.
  */
 
 import type { ExerciseStart, PageDetectionResult } from './vision-detection-service'

@@ -6,6 +6,10 @@
  * payload. Bypasses the unified Genkit adapter only because that adapter
  * does not surface responseSchema today; the same retry/timeout/circuit-
  * breaker primitives are applied here as in the rest of the LLM layer.
+ *
+ * @fileType service
+ * @domain conversion
+ * @ai-summary Gemini's responseSchema strips out complex Zod features (transforms, refinements) — derived fields like acceptedAnswers must be handled in the transform step.
  */
 import { z } from 'zod'
 import { logger } from '@/infra/utils/logger/logger'

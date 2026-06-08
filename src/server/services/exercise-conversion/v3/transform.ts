@@ -9,6 +9,7 @@
  * @fileType service
  * @domain conversion
  * @pattern transform
+ * @ai-summary BLOCK IDs ARE REGENERATED via nanoid() — LLM-supplied block IDs are NOT preserved; if you need stable IDs across edits, the rebuild path needs a different ID strategy.
  */
 
 import type { ContentBlock } from '@/server/payload/collections/Exercises/schemas'

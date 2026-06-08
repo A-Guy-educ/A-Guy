@@ -8,6 +8,7 @@
  * @fileType service
  * @domain ai
  * @pattern vision-detection, pdf-processing
+ * @ai-summary Detects Y-coordinates only, not X or width — use text-extraction or OCR to get bounding boxes for cropping.
  */
 
 import type { Payload } from 'payload'

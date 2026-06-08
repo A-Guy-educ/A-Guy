@@ -6,6 +6,11 @@
  * - Tier 1 (Authenticated users): User settings → Tier 2 → Tier 3 → Tier 4 (failsafe)
  * - Tier 2: Default by isDefault flag → Tier 3 → Tier 4 (failsafe)
  * - Tier 3: Highest priority published → Tier 4 (failsafe)
+ *
+ * @fileType service
+ * @domain ai
+ * @pattern prompt-resolution, tiered-fallback
+ * @ai-summary Cascades through published profile tiers; a newly published profile can shadow a failsafe even if no explicit user setting exists.
  */
 
 import type { Payload } from 'payload'
