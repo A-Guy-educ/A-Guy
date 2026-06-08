@@ -1,7 +1,11 @@
-Verified that the fix from task gh-27091218975-1 is correctly in place:
-- `.github/workflows/deps-security-report.yml` now has `PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET || 'test-secret-for-ci' }}` at the job `env` level (line 21).
-- This matches the pattern used in `ci.yml` and `atlas-integration.yml`.
+## Root Cause
 
-The failing run (27086250150, scheduled at 07:34 UTC on 2026-06-07) predated the fix (committed at 11:33 UTC the same day). The scheduled workflow uses the workflow file as-of when the run starts, so that run did not have `PAYLOAD_SECRET` — causing the postinstall script to fail when `payload generate:types` was invoked.
+`atlas-integration.yml` had `version: 9` hardcoded in `pnpm/action-setup@v4`, while `package.json` pins `pnpm@10.33.0` via the `packageManager` field. The pnpm/action-setup action errors when both are specified.
 
-No additional changes needed. Future scheduled runs and workflow_dispatch runs will have the secret available.
+## Fix Applied
+
+Removed `version: 9` from the `with:` block in `.github/workflows/atlas-integration.yml`. The action now reads the version from `packageManager` in package.json, consistent with the project's established pattern (documented in `.kody/memory/decisions/package-manager-pnpm.md` and confirmed by the `ci.yml` workflow which has no version in its pnpm/action-setup steps).
+
+## Why This Is the Right Fix
+
+The project's convention is to pin pnpm via `packageManager` in `package.json` and leave `pnpm/action-setup` without an explicit version. Adding `version: 9` was a mistake introduced in the atlas workflow that diverged from the rest of CI.
