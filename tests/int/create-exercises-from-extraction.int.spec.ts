@@ -18,6 +18,12 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 const hasDatabaseUrl = !!process.env.DATABASE_URL
 
+// Blob token validation — required for seedExtraction which creates media with file uploads
+const hasBlobToken =
+  process.env.BLOB_READ_WRITE_TOKEN &&
+  process.env.BLOB_READ_WRITE_TOKEN !== '' &&
+  process.env.BLOB_READ_WRITE_TOKEN !== 'mock-token-for-testing'
+
 let payload: Payload
 let adminUser: User
 let tenantId: string
@@ -215,7 +221,7 @@ async function seedExtraction(
   createdExtractionIds.push(extraction.id)
 }
 
-describe('createExercisesFromExtraction', () => {
+describe.skipIf(!hasBlobToken)('createExercisesFromExtraction', () => {
   it.skipIf(!hasDatabaseUrl)(
     'returns NO_EXTRACTION when the lesson has no extraction yet',
     async () => {

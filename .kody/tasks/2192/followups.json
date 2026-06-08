@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Send path verification - POST /api/agent/chat/stream request body shape",
+    "body": "Issue #2192 mentions the previous attempt had POST /api/agent/chat/stream returning 400. The current implementation uses ChatInterface directly inside the FAB panel, so the send path should work as-is. However, end-to-end testing on a local/preview deploy is recommended before shipping.",
+    "rationale": "Issue #2192 specifically calls out that 'The send path must work' and mentions a prior 400 error from the streaming endpoint.",
+    "priority": "high"
+  }
+]

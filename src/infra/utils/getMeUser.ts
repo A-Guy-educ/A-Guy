@@ -1,3 +1,10 @@
+/**
+ * @fileType utility
+ * @domain auth
+ * @pattern current-user-resolver
+ * @ai-summary Resolves the current user from JWT cookie by calling /api/users/me; redirects on auth failure only when a redirect target is supplied, otherwise returns null user silently.
+ */
+
 import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 

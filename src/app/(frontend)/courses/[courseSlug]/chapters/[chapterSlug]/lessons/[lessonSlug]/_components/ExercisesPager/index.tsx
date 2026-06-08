@@ -15,7 +15,6 @@ import { ChatInterface } from '@/ui/web/chat'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/infra/utils/ui'
 import { Confetti } from '@/ui/web/components/confetti'
-import { FloatingAskButton } from '../FloatingAskButton'
 
 const pageTransition = {
   initial: { opacity: 0, x: 20 },
@@ -501,8 +500,6 @@ export function ExercisesPager({
           )}
         </div>
       </main>
-      {/* Floating Ask Button - visible at bottom-left, moves to center when navigation arrows appear */}
-      <FloatingAskButton isCentered={isAt85Percent} />
     </div>
   )
 }

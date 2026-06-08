@@ -21,6 +21,7 @@ import Stripe from 'stripe'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 
+import { serializePaymentError } from '@/lib/payment/error-log'
 import { grantProductEntitlements } from '@/lib/payment/grant-entitlements'
 import { verifyStripeWebhook } from '@/lib/payment/stripe'
 import { sendPurchaseReceipt } from '@/server/email/services/purchase-receipt-service'
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
 
     if (isSignatureError) {
       payload.logger.warn(
-        { error: err, sourceIp, bodySnippet },
+        { err: serializePaymentError(err), sourceIp, bodySnippet },
         'Stripe webhook signature verification failed — returning 400',
       )
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
 
     // Transient error (network issue, missing config, etc.) — provider should retry
     payload.logger.error(
-      { error: err, sourceIp, bodySnippet },
+      { err: serializePaymentError(err), sourceIp, bodySnippet },
       'Stripe webhook signature verification threw transient error — returning 500',
     )
     return NextResponse.json({ error: 'Verification failed' }, { status: 500 })
@@ -116,7 +117,7 @@ export async function POST(request: NextRequest) {
     }
     // Unexpected error — log and return 500 so provider retries
     payload.logger.error(
-      { error: err, eventId: event.id },
+      { err: serializePaymentError(err), eventId: event.id },
       'Stripe webhook: unexpected error during dedup gate',
     )
     return NextResponse.json({ error: 'Dedup gate error' }, { status: 500 })
@@ -126,7 +127,10 @@ export async function POST(request: NextRequest) {
   try {
     await handleEvent(payload, event)
   } catch (err) {
-    payload.logger.error({ error: err, eventType: event.type }, 'Stripe webhook handler error')
+    payload.logger.error(
+      { err: serializePaymentError(err), eventType: event.type },
+      'Stripe webhook handler error',
+    )
     return NextResponse.json({ error: 'Handler error' }, { status: 500 })
   }
 
@@ -338,7 +342,7 @@ async function handleEvent(
           // Do NOT swallow — log and re-throw so the webhook returns 500 and provider retries.
           // Entitlements are already granted (idempotent), so retry is safe for coupon consumption.
           payload.logger.error(
-            { error: err, transactionId: transaction.id },
+            { err: serializePaymentError(err), transactionId: transaction.id },
             'Coupon consumption failed — returning 500 so provider retries',
           )
           throw err
@@ -434,7 +438,7 @@ async function handleEvent(
           await consumeCouponOnPayment(payload, transaction as any, transaction.tenant as string)
         } catch (err) {
           payload.logger.error(
-            { error: err, transactionId: transaction.id },
+            { err: serializePaymentError(err), transactionId: transaction.id },
             'Coupon consumption failed — returning 500 so provider retries',
           )
           throw err

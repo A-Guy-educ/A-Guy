@@ -88,8 +88,11 @@ function isAdminUser(req: PayloadRequest): boolean {
 
 // Validate DATABASE_URL is set and not empty
 // This prevents accidental fallback to localhost when Atlas connection string is expected
+// Skip validation during type generation (PAYLOAD_GENERATE_TYPES) or in CI (no DB available)
+const isGeneratingTypes = process.env.PAYLOAD_GENERATE_TYPES === 'true'
+const isCI = process.env.CI === 'true'
 const databaseUrl = process.env.DATABASE_URL
-if (!databaseUrl || databaseUrl.trim() === '') {
+if (!isGeneratingTypes && !isCI && (!databaseUrl || databaseUrl.trim() === '')) {
   throw new Error(
     'DATABASE_URL environment variable is required but not set. ' +
       'Please set DATABASE_URL to your MongoDB connection string (e.g., mongodb+srv://... for Atlas).',
@@ -112,7 +115,8 @@ export default buildConfig({
       beforeLogin: ['@/ui/admin/BeforeLogin'],
       // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below.
-      beforeDashboard: ['@/ui/admin/ConversionTracking/DashboardWidgets', '@/ui/admin/VersionInfo'],
+      beforeDashboard: ['@/ui/admin/ConversionTracking/DashboardWidgets'],
+      afterDashboard: ['@/ui/admin/VersionInfo'],
       beforeNavLinks: [
         '@/ui/admin/PdfConversion/SidebarLink',
         '@/ui/admin/LessonDuplicationReview/SidebarLink',
