@@ -115,4 +115,24 @@ describe('CSP Configuration - Vercel Feedback Script on /admin', () => {
     // See: https://www.w3.org/TR/CSP/#source-list-syntax
     expect(imgSrc).toMatch(/\*\.gravatar\.com/)
   })
+
+  it('should include secure.gravatar.com explicitly in img-src for /admin routes (primary avatar CDN)', async () => {
+    const configContent = fs.readFileSync(nextConfigPath, 'utf8')
+
+    // Extract the /admin route CSP
+    const adminRouteMatch = configContent.match(
+      /source:\s*'\/admin\/:path\*'[\s\S]*?Content-Security-Policy[\s\S]*?value:\s*"([^"]+)"/,
+    )
+    expect(adminRouteMatch).not.toBeNull()
+
+    const csp = adminRouteMatch![1]
+    const imgSrcMatch = csp.match(/img-src\s+([^;]+)/)
+
+    expect(imgSrcMatch).not.toBeNull()
+    const imgSrc = imgSrcMatch![1]
+    // secure.gravatar.com is the primary CDN for serving avatar images (e.g., https://secure.gravatar.com/avatar/...)
+    // The *.gravatar.com wildcard may not reliably match this specific subdomain in all browsers,
+    // so we explicitly include it to ensure avatars load without CSP violations.
+    expect(imgSrc).toContain('secure.gravatar.com')
+  })
 })

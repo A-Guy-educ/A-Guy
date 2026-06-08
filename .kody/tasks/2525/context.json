@@ -1,0 +1,17 @@
+{
+  "taskId": "2525",
+  "taskType": "issue",
+  "target": "2525",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added secure.gravatar.com to admin CSP img-src; fixed bug where avatar images loaded from secure.gravatar.com were blocked by CSP",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "next.config.js",
+    "tests/int/csp-vercel-feedback-admin.int.spec.ts"
+  ],
+  "sessionLog": ".kody/runs/gh-27160382620-1/events.jsonl",
+  "startedAt": "2026-06-08T19:07:00.000Z",
+  "finishedAt": "2026-06-08T19:08:45.000Z"
+}
