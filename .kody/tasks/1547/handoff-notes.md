@@ -1,7 +1,1 @@
-# Merge Conflict Resolution — Task 1547
-
-Resolved a single conflicted file: `.kody/reports/duty-review.md`.
-
-Both sides (HEAD vs origin/dev) had substantive changes to the duty-review report table — different staff assignments, cadence values, and header counts (15 broken vs 14 broken). Per task rules, took HEAD (PR branch) since this was a report snapshot conflict, not a security/correctness fix that needed preserving from dev.
-
-No conflict markers remain. No quality gates needed to run (report file only, not source code).
+Resolved a single symmetric conflict in `.kody/reports/health-check.md` — the auto-generated health check report that tracks stale kody issues. Both HEAD and origin/dev had identical issue lists with the same issue numbers, but different stale-hour timestamps (HEAD had older timestamps, origin/dev had newer). Since the conflict was purely about auto-generated timestamps and not content, I preserved the HEAD side to maintain the PR branch's view of the data. All conflict markers removed; file is clean.
