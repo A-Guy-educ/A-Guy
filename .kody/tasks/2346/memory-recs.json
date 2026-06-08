@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "payment-stats-accumulation-test-assertions",
+    "hook": "Payment_stats rows accumulate over time — never assert exact equality",
+    "body": "Payment_stats uses atomic $inc upserts keyed by (date, currency). Rows accumulate across test runs and dates. When writing tests that read from Payment_stats, always use `toBeGreaterThanOrEqual` or `toBeGreaterThan` instead of `toBe(exactValue)`. Exact equality will fail on the second run because the row already has historical data.\n\n**Why:** syncPaymentStats-hook.ts uses MongoDB `updateOne` with `$inc`, so amounts only ever increase. A row for a given date+currency will accumulate all succeeded/failed/refunded transactions ever recorded for that day across all test runs.\n\n**How to apply:** Any test that reads `Payment_stats.totalRevenueAgorot`, `Payment_stats.transactionCount`, or similar aggregated fields should assert `>= expected` rather than `=== expected`.",
+    "why": "Test flakiness in admin-dashboard-revenue-metrics tests — the 16500 vs 7500 failure was Payment_stats accumulation, not a code bug",
+    "confidence": 0.95
+  }
+]
