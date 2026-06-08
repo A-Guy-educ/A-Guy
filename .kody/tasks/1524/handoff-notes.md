@@ -1,14 +1,24 @@
-# Handoff Notes — Task 1524 Merge Conflict Resolution
+# Handoff Notes — Task 1524 CI Fix
 
-Resolved 2 conflicted files from `git merge origin/dev` into PR #1524.
+## Root Cause
 
-## Files resolved
+PR #1524 added references to `h.vgCallCount` (resetting the mock call counter) in three places inside `tests/int/lesson-duplication-orchestrator.int.spec.ts`, but never declared the `h` object. The file had `const { mockState } = vi.hoisted(...)` but no corresponding `const h = vi.hoisted(...)`.
 
-### `.kody/last-run.jsonl`
-- Conflict: HEAD (161 lines, previous session) vs origin/dev (133 lines)
-- Resolution: Took HEAD version — represents the current working session state
-- Note: HEAD version contains nested conflict markers in tool-result strings (from a previous session's attempted resolution). These are data-in-JSONL, not unmerged git conflicts.
+## Fix Applied
 
-### `.kody/reports/duty-review.md`
-- Conflict: HEAD (adds ## Headline section, mixed staff assignments, many "?" cadences) vs origin/dev (no headline, consistent staff assignments, populated cadences)
-- Resolution: Took origin/dev version — more recently updated with actual cadence values; HEAD's headline section was an additive change from an older analysis cycle
+Added the missing declaration in `tests/int/lesson-duplication-orchestrator.int.spec.ts` at line 42–43:
+
+```typescript
+// Tracks call count for tests that need to reset between runs
+const h = vi.hoisted(() => ({ vgCallCount: 0 }))
+```
+
+This matches the identical pattern already used in the sibling test file `tests/int/lesson-duplication-orchestrator-none.int.spec.ts`.
+
+## Files Changed
+
+- `tests/int/lesson-duplication-orchestrator.int.spec.ts` — added `const h = vi.hoisted(...)` declaration
+
+## Verification
+
+- `tsc --noEmit` passes with zero errors for the test file

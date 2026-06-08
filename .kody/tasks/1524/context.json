@@ -4,11 +4,11 @@
   "target": "PR #1524 goal-add-per-user-chat-memory-recall-ui",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "resolved both merge conflicts: took HEAD for last-run.jsonl, took origin/dev for duty-review.md",
+  "reason": "TypeScript error TS2304: Cannot find name 'h' in tests/int/lesson-duplication-orchestrator.int.spec.ts — PR added h.vgCallCount = 0 refs without declaring h. Added const h = vi.hoisted(() => ({ vgCallCount: 0 })) using same pattern as sibling test file.",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/1524",
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27143609195",
-  "filesTouched": [".kody/last-run.jsonl", ".kody/reports/duty-review.md"],
-  "sessionLog": ".kody/sessions/gh-27143609195-1.jsonl",
-  "startedAt": "2026-06-08T14:13:55Z",
-  "finishedAt": "2026-06-08T14:16:00Z"
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27144027334",
+  "filesTouched": ["tests/int/lesson-duplication-orchestrator.int.spec.ts"],
+  "sessionLog": ".kody/sessions/gh-27160532467-1-1.jsonl",
+  "startedAt": "2026-06-08T14:19:12.859Z",
+  "finishedAt": "2026-06-08T14:19:45.185Z"
 }

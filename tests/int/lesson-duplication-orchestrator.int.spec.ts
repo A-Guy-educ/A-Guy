@@ -39,6 +39,9 @@ const { mockState } = vi.hoisted(() => {
   }
 })
 
+// Tracks call count for tests that need to reset between runs
+const h = vi.hoisted(() => ({ vgCallCount: 0 }))
+
 vi.mock('@/infra/llm/services/lesson-duplication-variation-service', () => ({
   generateVariation: vi.fn().mockImplementation(
     async (
