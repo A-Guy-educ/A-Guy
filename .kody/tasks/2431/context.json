@@ -4,11 +4,11 @@
   "target": "2431",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Resolved merge conflicts in .kody/last-run.jsonl, .kody/reports/duty-review.md, and .kody/reports/health-check.md by taking origin/dev version for operational log and report files",
+  "reason": "Single conflicted file .kody/reports/duty-review.md resolved by taking origin/dev (Cycle 14) over PR branch (Cycle 7)",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2431",
-  "runUrl": null,
-  "filesTouched": [".kody/last-run.jsonl", ".kody/reports/duty-review.md", ".kody/reports/health-check.md"],
-  "sessionLog": ".kody/sessions/gh-27133049819-1.jsonl",
-  "startedAt": "2026-06-08T11:00:00Z",
-  "finishedAt": "2026-06-08T11:02:00Z"
+  "runUrl": ".kody/runs/gh-27172656523-1/",
+  "filesTouched": [".kody/reports/duty-review.md"],
+  "sessionLog": ".kody/sessions/",
+  "startedAt": "2026-06-08T23:07:00Z",
+  "finishedAt": "2026-06-08T23:09:19Z"
 }
