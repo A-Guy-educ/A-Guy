@@ -1,16 +1,17 @@
-## CI Fix Verification for PR #1524
+## Merge Conflict Resolution for PR #1524
 
 ### What I Did
-Verified that CI is passing. The earlier failure (run 27093324205) was due to Docker memory exhaustion during preview build (`cannot allocate memory`), not a code issue.
+Resolved a single merge conflict in `.kody/last-run.jsonl` by taking the HEAD (origin/dev) version.
 
 ### Why
-The kody preview-build failed because the Docker container ran out of memory while running `next build`. This is an infrastructure constraint, not a code problem.
+The conflict was between two different Kody session logs:
+- HEAD (dev): session `86afddb9-3f73-4295-b747-002e71f54ef1`
+- PR branch: session `aab97aab-9b3f-4654-964b-31bff4489273`
 
-### Current CI Status
-All required CI jobs passing (run 27096415103):
-- Fast Gate: PASS
-- Integration Tests: PASS
-- Build: PASS
+Both branches had replaced the session log file with their own session data. Since `.kody/last-run.jsonl` is a runtime session log (not meaningful to preserve across branches), taking HEAD is the correct approach.
+
+### Files Changed
+- `.kody/last-run.jsonl` - took HEAD version (session log from dev branch merge)
 
 ### No Code Changes Required
-No files were modified as the CI infrastructure issue resolved itself in subsequent runs.
+No source code was modified. The conflict was in a Kody system file.
