@@ -4,11 +4,11 @@
   "target": "2297-p3-admin-footer-shows-unversioned-vdev-label",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Resolved single conflicted file taking origin/dev (static package.json read) over HEAD (dynamic API fetch that caused unversioned vdev label)",
+  "reason": "Single asymmetric CSP header conflict resolved by taking PR branch (HEAD) gravatar.com/secure.gravatar.com over origin/dev *.gravatar.com wildcard",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2321",
   "runUrl": null,
-  "filesTouched": ["src/ui/admin/VersionInfo/index.tsx"],
+  "filesTouched": ["next.config.js"],
   "sessionLog": ".kody/sessions/current.jsonl",
   "startedAt": "2026-06-08T00:00:00.000Z",
-  "finishedAt": "2026-06-08T00:00:00.000Z"
+  "finishedAt": "2026-06-08T00:01:00.000Z"
 }

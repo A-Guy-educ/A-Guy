@@ -1,9 +1,7 @@
-Resolved merge conflict in `src/ui/admin/VersionInfo/index.tsx` by taking the origin/dev side.
+Resolved merge conflict in `next.config.js` by taking the PR branch (HEAD) side.
 
-The conflict was between:
-- HEAD (PR branch): dynamic fetch from `/api/version` at runtime, falling back to 'dev'
-- origin/dev: static read from `package.json` at build time via require
+The conflict was a single asymmetric CSP header change in the admin routes section:
+- HEAD (PR branch): `gravatar.com secure.gravatar.com` (explicit domains)
+- origin/dev: `*.gravatar.com` (wildcard pattern)
 
-origin/dev wins because the PR's stated goal is to fix "unversioned vdev label" — the dynamic fetch approach fails in production when the API endpoint is unavailable, causing exactly the bug being fixed. The static approach always shows the real version from package.json.
-
-The `'use client'` directive was removed since the origin/dev version has no client-side state or effects.
+Took HEAD side per directive (preserve PR intent unless origin/dev made a security/correctness fix). No other changes were made.
