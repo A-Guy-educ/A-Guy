@@ -18,12 +18,6 @@ describe('CSP Configuration - Vercel Feedback Script on /admin', () => {
   const projectRoot = path.resolve(__dirname, '../..')
   const nextConfigPath = path.join(projectRoot, 'next.config.js')
 
-  // Helper to extract CSP value from headers array
-  function extractCSPValue(headers: Array<{ key: string; value: string }>): string | null {
-    const cspHeader = headers.find((h) => h.key === 'Content-Security-Policy')
-    return cspHeader?.value ?? null
-  }
-
   // Helper to extract script-src directive from CSP string
   function extractScriptSrc(csp: string): string | null {
     const match = csp.match(/script-src\s+([^;]+)/)
@@ -97,6 +91,28 @@ describe('CSP Configuration - Vercel Feedback Script on /admin', () => {
     expect(imgSrcMatch).not.toBeNull()
     const imgSrc = imgSrcMatch![1]
     // Admin routes MUST have gravatar.com in img-src for user avatars to load
-    expect(imgSrc).toContain('gravatar.com')
+    // Use *.gravatar.com to match www.gravatar.com where avatars are actually served
+    expect(imgSrc).toContain('*.gravatar.com')
+  })
+
+  it('should allow www.gravatar.com in img-src for /admin routes (not just gravatar.com)', async () => {
+    const configContent = fs.readFileSync(nextConfigPath, 'utf8')
+
+    // Extract the /admin route CSP
+    const adminRouteMatch = configContent.match(
+      /source:\s*'\/admin\/:path\*'[\s\S]*?Content-Security-Policy[\s\S]*?value:\s*"([^"]+)"/,
+    )
+    expect(adminRouteMatch).not.toBeNull()
+
+    const csp = adminRouteMatch![1]
+    const imgSrcMatch = csp.match(/img-src\s+([^;]+)/)
+
+    expect(imgSrcMatch).not.toBeNull()
+    const imgSrc = imgSrcMatch![1]
+    // Gravatar avatars are served from www.gravatar.com, not gravatar.com directly.
+    // In CSP, 'gravatar.com' does NOT match 'www.gravatar.com' (different host).
+    // We need '*.gravatar.com' to match subdomains like www.gravatar.com.
+    // See: https://www.w3.org/TR/CSP/#source-list-syntax
+    expect(imgSrc).toMatch(/\*\.gravatar\.com/)
   })
 })

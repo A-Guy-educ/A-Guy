@@ -1,3 +1,10 @@
+/**
+ * @fileType utility
+ * @domain shared
+ * @pattern preview-url-generator
+ * @ai-summary Generates next/preview URLs for Payload draft previews; silently uses an empty PREVIEW_SECRET if the env var is unset, making preview links publicly guessable in that case.
+ */
+
 import { PayloadRequest, CollectionSlug } from 'payload'
 
 const collectionPrefixMap: Partial<Record<CollectionSlug, string>> = {

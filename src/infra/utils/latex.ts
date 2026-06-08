@@ -1,3 +1,10 @@
+/**
+ * @fileType utility
+ * @domain shared
+ * @pattern editor-latex-template
+ * @ai-summary Injects LaTeX template strings into the editor at cursor position; does not validate whether the template is well-formed LaTeX before insertion.
+ */
+
 export function injectLatex(
   currentValue: string,
   selectionStart: number,

@@ -1,0 +1,17 @@
+{
+  "taskId": "2331",
+  "taskType": "issue",
+  "target": "2331",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added @ai-summary barrel headers to index.ts and schemas/index.ts (completing full doc coverage of src/server/api/)",
+  "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2333",
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/api/index.ts",
+    "src/server/api/schemas/index.ts"
+  ],
+  "sessionLog": ".kody/sessions/2331.jsonl",
+  "startedAt": "2026-06-01T23:05:00Z",
+  "finishedAt": "2026-06-02T05:54:24Z"
+}
