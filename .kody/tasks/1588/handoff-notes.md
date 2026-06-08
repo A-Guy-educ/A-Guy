@@ -2,22 +2,15 @@
 
 ## What was done
 
-Resolved 7 identical conflicts in `.github/workflows/ci.yml`. The conflict was purely cosmetic — the pnpm version was specified as `10.33.0` (HEAD/PR branch) vs `'10.33.0'` (origin/dev) in all 7 occurrences.
+Resolved a single conflict in `.kody/reports/duty-review.md`. The conflict was a timing/data drift between two duty-review cycles: Cycle 9 (HEAD/PR branch) vs Cycle 12 (origin/dev).
 
 ## Resolution
 
-Kept the HEAD/PR branch version: `version: 10.33.0` (without quotes), consistent with the `packageManager` field in `package.json` which uses `pnpm@10.33.0` without quotes around the version.
-
-## Conflicts resolved
-
-- `fast-gate` job pnpm setup
-- `integration-tests` job pnpm setup
-- `build` job pnpm setup
-- `e2e-gate` job pnpm setup
-- `e2e-system-tests` job pnpm setup
-- `qa-scenarios-core` job pnpm setup
-- `qa-scenarios-full` job pnpm setup
+Took origin/dev's Cycle 12 as it is the more recent cycle state with updated cadence values and staff assignments. Key differences preserved:
+- `cleanup-branches` is now marked healthy (was broken in Cycle 9)
+- Several cadence values updated (15m→1h, 5m, 30m, etc.)
+- Staff assignments aligned to ceo/cto/coo (previously mixed with kody/qa/coo)
 
 ## Note
 
-The lint warning in `src/ui/web/shared/LatexDocumentViewer/index.tsx:113` is pre-existing and unrelated to this merge.
+The duty-review.md is a rolling report file regenerated per cycle. The origin/dev version represents the current live state.
