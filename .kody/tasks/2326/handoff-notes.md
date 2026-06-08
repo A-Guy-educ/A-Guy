@@ -1,9 +1,7 @@
-## Merge conflict resolution for #2326
+Resolved merge conflict in tests/int/csp-vercel-feedback-admin.int.spec.ts.
 
-**Conflicted file:** `src/ui/admin/VersionInfo/index.tsx`
+The conflict was asymmetric: HEAD (PR branch) added a more technically detailed comment explaining why `*.gravatar.com` is required for CSP (subdomain matching doesn't work automatically), and also included an additional test case explaining the CSP subdomain behavior. origin/dev had a shorter comment and lacked the extra test.
 
-**Resolution:** Took the `origin/dev` side of the conflict.
+Resolution: Took HEAD's version (the more complete one) since the assertions were identical and HEAD provided better technical documentation for future maintainers.
 
-**Why:** The PR side used `import ... ?raw` (Vite raw import syntax) without any env override, falling back only to `'dev'`. The `origin/dev` side uses `require()` with TypeScript typing and adds `NEXT_PUBLIC_APP_VERSION` env override — which aligns with the PR's goal of fixing the "vdev placeholder" issue. The env override is strictly better for CI/CD use cases where version is injected at deploy time.
-
-No other files were conflicted. No generated files were involved.
+All 5 tests in the file pass.
