@@ -1,14 +1,1 @@
-[
-  {
-    "title": "Ensure pre-commit hook runs generate:types after payload.config.ts changes",
-    "body": "The stale payload-types.ts was not caught before commit. Consider adding a pre-commit hook that runs 'git diff payload.config.ts && pnpm generate:types' to ensure types are always regenerated when the config changes.",
-    "rationale": "If a pre-commit hook validated payload.config.ts changes and auto-regenerated types, this CI failure would have been caught locally.",
-    "priority": "medium"
-  },
-  {
-    "title": "Consolidate node: protocol handling into a single authoritative place",
-    "body": "The node: protocol handling has been attempted via resolve.scheme webpack plugin (incompatible with webpack 5.98.0, removed), resolve.alias entries for individual node: modules (ineffective, removed), and now resolve.fallback with the 'node' key. Document in next.config.js that the correct pattern is BOTH externals for the package AND resolve.fallback with the 'node' key — so future maintainers don't try to add resolve.alias entries for individual node: modules.",
-    "rationale": "Multiple CI failures (2475, 2476, and this session) were caused by incomplete or incorrect node: protocol fixes. The correct approach is externals (prevents analysis) + resolve.fallback['node'] (stubs any remaining node: references webpack does analyze).",
-    "priority": "low"
-  }
-]
+[]
