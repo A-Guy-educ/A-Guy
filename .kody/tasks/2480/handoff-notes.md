@@ -1,3 +1,6 @@
-Resolved merge conflict in `.kody/reports/duty-review.md`.
+Resolved merge conflicts in two generated report files by taking the origin/dev version (newer cycle/higher hour counts).
 
-Both sides modified the same rolling duty-status table. HEAD (PR branch) had Cycle 9 with staff names in the Staff column and mixed cadence values (15m, 30m, 7d). origin/dev had Cycle 13 (newer) with the Staff column cleared and cadence unified to 1d/7d/6h. Took the origin/dev version since it represents the more recent duty review state. No code files were touched; no follow-up work identified.
+- .kody/reports/duty-review.md: HEAD (Cycle 9) vs origin/dev (Cycle 11) — took origin/dev as it reflects the more recent automated state
+- .kody/reports/health-check.md: HEAD (older hour counts, "Running"/"Failed" headers) vs origin/dev (newer hour counts, "kody:running"/"kody:failed" headers) — took origin/dev
+
+Both are auto-generated reports; the dev branch carries the fresher snapshot. No application code files were touched.
