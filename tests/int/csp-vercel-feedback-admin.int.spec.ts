@@ -116,7 +116,7 @@ describe('CSP Configuration - Vercel Feedback Script on /admin', () => {
     expect(imgSrc).toMatch(/\*\.gravatar\.com/)
   })
 
-  it('should include secure.gravatar.com in img-src for /admin routes', async () => {
+  it('should include *.gravatar.com wildcard in img-src for /admin routes', async () => {
     const configContent = fs.readFileSync(nextConfigPath, 'utf8')
 
     // Extract the /admin route CSP
@@ -130,9 +130,11 @@ describe('CSP Configuration - Vercel Feedback Script on /admin', () => {
 
     expect(imgSrcMatch).not.toBeNull()
     const imgSrc = imgSrcMatch![1]
-    // Admin routes MUST have secure.gravatar.com in img-src because Gravatar
+    // Admin routes MUST have *.gravatar.com in img-src because Gravatar
     // redirects from www.gravatar.com to secure.gravatar.com, and CSP is checked
-    // on the final redirected URL (Issue #2295)
-    expect(imgSrc).toContain('secure.gravatar.com')
+    // on the final redirected URL (Issue #2295). The wildcard *.gravatar.com
+    // covers both www.gravatar.com (where avatars are served) and secure.gravatar.com
+    // (the redirect target).
+    expect(imgSrc).toContain('*.gravatar.com')
   })
 })
