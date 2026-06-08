@@ -1,8 +1,1 @@
-[
-  {
-    "title": "Payment_stats test isolation — no cleanup between test runs",
-    "body": "The Payment_stats collection is not cleared between integration test runs. Since rows accumulate by (date, currency) using atomic $inc, historical data persists across test suites. Consider either: (1) adding a global beforeAll/afterAll that clears Payment_stats in the test environment, or (2) using unique dates per test via time mocking, or (3) filtering by a test-specific metadata field on the Payment_stats rows.",
-    "rationale": "Test isolation issue — accumulation causes flaky tests when multiple test suites or runs touch the same date+currency combinations",
-    "priority": "low"
-  }
-]
+[]
