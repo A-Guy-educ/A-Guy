@@ -1677,11 +1677,11 @@
 - start interactive session interactive-1778075175838-vd0im6 (1b6229b27)
 ## [Unreleased]
 
-- #2250: docs-drift: Exercises (#2154) ([#2341](https://github.com/A-Guy-educ/A-Guy/pull/2341)) — @kodyade[bot] · 🔄 QA (#2527)
-- #2248: docs-drift: Block Rendering (#2116) ([#2340](https://github.com/A-Guy-educ/A-Guy/pull/2340)) — @kodyade[bot]
-- #2246: docs-drift: Admin Components (#2108) ([#2339](https://github.com/A-Guy-educ/A-Guy/pull/2339)) — @kodyade[bot]
+- #2250: docs-drift: Exercises (#2154) ([#2341](https://github.com/A-Guy-educ/A-Guy/pull/2341)) — @kodyade[bot] · ⚠️ QA 2026-06-08 (#2527)
+- #2248: docs-drift: Block Rendering (#2116) ([#2340](https://github.com/A-Guy-educ/A-Guy/pull/2340)) — @kodyade[bot] · ⚠️ QA 2026-06-08 (#2530)
+- #2246: docs-drift: Admin Components (#2108) ([#2339](https://github.com/A-Guy-educ/A-Guy/pull/2339)) — @kodyade[bot] · ✅ QA 2026-06-08
 - fix(csp): Allow *.gravatar.com subdomains in admin img-src ([#2521](https://github.com/A-Guy-educ/A-Guy/pull/2521)) — @aguyshayb
-- #2247: docs-drift: Admin Components (#2115) ([#2337](https://github.com/A-Guy-educ/A-Guy/pull/2337)) — @kodyade[bot]
+- #2247: docs-drift: Admin Components (#2115) ([#2337](https://github.com/A-Guy-educ/A-Guy/pull/2337)) — @kodyade[bot] · 🔄 QA (#2539)
 - #2331: src/server/api/ — thin in-code documentation ([#2333](https://github.com/A-Guy-educ/A-Guy/pull/2333)) — @kodyade[bot]
 - #2291: [P1] Add autosave to LessonBlocksField delete operations ([#2307](https://github.com/A-Guy-educ/A-Guy/pull/2307)) — @kodyade[bot]
 - #2162: Doc gap: src/infra/utils/ — 6/27 modules carry @ai-summary ([#2164](https://github.com/A-Guy-educ/A-Guy/pull/2164)) — @kodyade[bot]
