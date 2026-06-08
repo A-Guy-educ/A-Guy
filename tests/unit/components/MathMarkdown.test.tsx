@@ -1,9 +1,48 @@
 // @vitest-environment jsdom
 import { MathMarkdown } from '@/ui/web/shared'
 import { render } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 
 describe('MathMarkdown', () => {
+  let warnSpy: ReturnType<typeof vi.spyOn>
+
+  beforeEach(() => {
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    warnSpy.mockRestore()
+  })
+
+  describe('Hebrew Unicode in math delimiters — KaTeX strict-mode warnings', () => {
+    it('does not emit console warnings for Hebrew characters inside inline math delimiters', () => {
+      // Hebrew text inside inline math delimiters — KaTeX warns because Hebrew letters
+      // are not valid KaTeX tokens. This tests the fix: MathMarkdown passes
+      // strict: false to rehype-katex so these warnings are suppressed.
+      render(<MathMarkdown content="פתרון: $x^2 + חזקה$ וגם $y^3$" />)
+
+      const katexWarnings = warnSpy.mock.calls.filter((call: unknown[]) =>
+        call.some(
+          (arg: unknown) =>
+            typeof arg === 'string' && (arg.includes('Unicode') || arg.includes('strict')),
+        ),
+      )
+      expect(katexWarnings).toHaveLength(0)
+    })
+
+    it('does not emit console warnings for Hebrew characters inside block math delimiters', () => {
+      render(<MathMarkdown content={`נוסחה:\n$$\nx^2 + y^2 + חזקה\n$$`} />)
+
+      const katexWarnings = warnSpy.mock.calls.filter((call: unknown[]) =>
+        call.some(
+          (arg: unknown) =>
+            typeof arg === 'string' && (arg.includes('Unicode') || arg.includes('strict')),
+        ),
+      )
+      expect(katexWarnings).toHaveLength(0)
+    })
+  })
+
   describe('Plain text (no math)', () => {
     it('renders plain text without math wrappers', () => {
       const { container } = render(<MathMarkdown content="Hello world" />)

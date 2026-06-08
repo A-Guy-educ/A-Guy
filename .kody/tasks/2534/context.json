@@ -1,0 +1,17 @@
+{
+  "taskId": "2534",
+  "taskType": "issue",
+  "target": "2534",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed KaTeX strict-mode warnings for Hebrew Unicode chars by passing strict: false to rehype-katex in MathMarkdown",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/shared/MathMarkdown/index.tsx",
+    "tests/unit/components/MathMarkdown.test.tsx"
+  ],
+  "sessionLog": ".kody/sessions/gh-27170517451-1-1.jsonl",
+  "startedAt": "2026-06-08T22:19:06.163Z",
+  "finishedAt": "2026-06-08T22:25:00.000Z"
+}

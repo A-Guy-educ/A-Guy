@@ -62,7 +62,7 @@ export function MathMarkdown({ content, className, components }: MathMarkdownPro
     <div className={cn(className)}>
       <ReactMarkdown
         remarkPlugins={[remarkMath, remarkGfm, remarkColorSyntax]}
-        rehypePlugins={[rehypeKatex, rehypeMathWrapper]}
+        rehypePlugins={[[rehypeKatex, { strict: false }], rehypeMathWrapper]}
         components={components}
       >
         {content}
