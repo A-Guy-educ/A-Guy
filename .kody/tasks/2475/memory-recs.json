@@ -22,5 +22,13 @@
     "body": "The prebuild script patches minify-webpack-plugin for the WebpackError issue, but also needs to create the terser-webpack-plugin/src/index.js stub. Both issues must be addressed in the same prebuild step since both are required for the webpack 5.98.0 build to succeed.",
     "why": "Two separate webpack 5.98.0 issues: (1) minify-webpack-plugin uses WebpackError which was removed in webpack 5.98.0, (2) bundle5.js requires terser-webpack-plugin/src which doesn't exist. Both require prebuild patching.",
     "confidence": 0.95
+  },
+  {
+    "type": "lesson",
+    "name": "pnpm-lockfile-inconsistency-stale-node-modules",
+    "hook": "pnpm lockfile and node_modules can get out of sync after package.json changes — run pnpm install to reconcile",
+    "body": "After adding terser-webpack-plugin@5.3.9 to devDependencies and overrides, the pnpm-lock.yaml was updated but node_modules was not refreshed. The result: no terser-webpack-plugin at workspace root, only a bundled copy at node_modules/.pnpm/terser-webpack-plugin@5.4.0_webpack@5.104.1/. The prebuild script created a stub pointing to node_modules/terser-webpack-plugin/dist/index.js which didn't exist, causing 'Can't resolve ./src' error. Running 'pnpm install' fixed it by reconciling the lockfile with the actual node_modules state.",
+    "why": "In CI, pnpm install runs from a cache that may have a stale node_modules while the lockfile is fresh. Running pnpm install before the build reconciles the two.",
+    "confidence": 0.85
   }
 ]

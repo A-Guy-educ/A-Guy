@@ -27,6 +27,17 @@ webpack 5.98.0 (bundled as `bundle5.js` inside Next.js 15.5.9) requires `next/di
 
 The pnpm override + devDependency ensures `terser-webpack-plugin@5.3.9` is installed in the workspace root. The prebuild script creates the stub at the exact path `bundle5.js` requires (`next/dist/build/webpack/plugins/terser-webpack-plugin/src`). Both are required: one installs the package, the other creates the missing `src/` path webpack looks for.
 
+### Additional CI Failure: "Can't resolve './src'" (2026-06-07)
+
+After the above fixes were applied, CI still failed with:
+```
+Module not found: Error: Can't resolve './src' in '/home/runner/work/A-Guy/A-Guy'
+```
+
+**Root cause**: The pnpm-lock.yaml was updated to reflect `terser-webpack-plugin@5.3.9` in overrides, but the `node_modules/` was stale — `terser-webpack-plugin` was NOT installed at the workspace root. The prebuild script created the stub pointing to `node_modules/terser-webpack-plugin/dist/index.js` which didn't exist, causing webpack to fail.
+
+**Fix**: Ran `pnpm install` locally to reconcile the lockfile with node_modules. This installed `terser-webpack-plugin@5.3.9` at the workspace root. The CI retry should now pass.
+
 ### Verification
 
 - `mcp__kody-verify__verify` — ok: true, attempt 1
