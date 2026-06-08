@@ -1,3 +1,10 @@
+/**
+ * @fileType utility
+ * @domain logging
+ * @pattern pino-logger
+ * @ai-summary Structured logger with pino; pretty-prints in development and JSON-outputs in production; transport is disabled to avoid worker.js thread-stream issues in dev.
+ */
+
 import pino from 'pino'
 
 /**

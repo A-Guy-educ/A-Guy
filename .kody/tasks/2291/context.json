@@ -1,0 +1,17 @@
+{
+  "taskId": "2291",
+  "taskType": "issue",
+  "target": "2291-p1-add-autosave-to-lessonblocksfield-delete-operat",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added useForm hook and setModified(true) call to deleteBlock in LessonBlocksField. Created unit test verifying the autosave behavior.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/LessonBlocksField/index.tsx",
+    "tests/unit/ui/admin/lesson-blocks-field-autosave.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2291-p1-add-autosave-to-lessonblocksfield-delete-operat.jsonl",
+  "startedAt": "2026-06-01T15:49:00.000Z",
+  "finishedAt": "2026-06-01T15:50:30.000Z"
+}

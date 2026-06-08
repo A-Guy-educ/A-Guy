@@ -1,3 +1,10 @@
+/**
+ * @fileType utility
+ * @domain payload
+ * @pattern cached-redirect-rules
+ * @ai-summary Fetches all redirect rules from Payload and caches them as a single lump-sum tag; adding or removing a redirect invalidates the entire cache, not just the changed entry.
+ */
+
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { unstable_cache } from 'next/cache'

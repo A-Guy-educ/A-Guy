@@ -1,3 +1,10 @@
+/**
+ * Standard API route wrapper — handles auth, body/query parsing, logging, and Sentry error capture
+ *
+ * @fileType utility
+ * @domain api
+ * @ai-summary Wrap every Next.js API route with this instead of writing auth/parsing/error-handling inline — it owns the try/catch and treats operational errors (ValidationError, "not found", "already exists") as 400s and all others as 500s.
+ */
 import * as Sentry from '@sentry/nextjs'
 import configPromise from '@payload-config'
 import { NextRequest, NextResponse } from 'next/server'

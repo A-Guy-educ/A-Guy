@@ -1,3 +1,10 @@
+/**
+ * @fileType utility
+ * @domain validation
+ * @pattern zod-wrapper
+ * @ai-summary Thin wrappers around Zod parse/safeParse; validate() throws on failure while safeValidate() returns a discriminated union — callers must choose deliberately rather than always reaching for the throwing variant.
+ */
+
 import { z } from 'zod'
 
 /**
