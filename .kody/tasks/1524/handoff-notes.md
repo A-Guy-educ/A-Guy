@@ -1,17 +1,21 @@
 ## Merge Conflict Resolution for PR #1524
 
 ### What I Did
-Resolved a single merge conflict in `.kody/last-run.jsonl` by taking the HEAD (origin/dev) version.
+Resolved 3 merge conflicts from `git merge origin/dev` into `goal-add-per-user-chat-memory-recall-ui`:
+
+1. **`.kody/last-run.jsonl`** — took theirs (origin/dev, 78 lines) because both versions were session logs with embedded conflict markers from reading conflicted files; theirs was simpler
+2. **`.kody/reports/duty-review.md`** — took HEAD (Cycle 12 with staff assignments) because it was more recent and complete than origin/dev (Cycle 11)
+3. **`.kody/reports/health-check.md`** — took HEAD (higher hour counts = more recent) because it represented the current state
 
 ### Why
-The conflict was between two different Kody session logs:
-- HEAD (dev): session `86afddb9-3f73-4295-b747-002e71f54ef1`
-- PR branch: session `aab97aab-9b3f-4654-964b-31bff4489273`
-
-Both branches had replaced the session log file with their own session data. Since `.kody/last-run.jsonl` is a runtime session log (not meaningful to preserve across branches), taking HEAD is the correct approach.
+- `last-run.jsonl`: Session log accumulated entries; origin/dev version was cleaner with fewer embedded conflict markers
+- `duty-review.md`: HEAD had Cycle 12 data with filled-in staff assignments vs Cycle 11 with empty fields
+- `health-check.md`: HEAD had current runtime metrics (635h, 474h, etc.) vs older origin/dev values (609h, 449h)
 
 ### Files Changed
-- `.kody/last-run.jsonl` - took HEAD version (session log from dev branch merge)
+- `.kody/last-run.jsonl` — took theirs (origin/dev)
+- `.kody/reports/duty-review.md` — took HEAD (PR branch)
+- `.kody/reports/health-check.md` — took HEAD (PR branch)
 
-### No Code Changes Required
-No source code was modified. The conflict was in a Kody system file.
+### Note
+The last-run.jsonl still contains some embedded conflict marker strings within JSON string values (tool result content). These are historical session records where a prior session logged files that had conflict markers. Git considers the file resolved (no unmerged paths).

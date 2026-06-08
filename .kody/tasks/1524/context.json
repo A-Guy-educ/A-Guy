@@ -1,14 +1,18 @@
 {
   "taskId": "1524",
   "taskType": "pr",
-  "target": "goal-add-per-user-chat-memory-recall-ui",
+  "target": "PR #1524: goal-add-per-user-chat-memory-recall-ui",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Single file conflict resolved by taking HEAD version",
+  "reason": "Resolved 3 merge conflicts: last-run.jsonl (took theirs/origin-dev), duty-review.md (took HEAD with Cycle 12 data), health-check.md (took HEAD with newer timestamps)",
   "prUrl": null,
   "runUrl": null,
-  "filesTouched": [".kody/last-run.jsonl"],
-  "sessionLog": ".kody/sessions/27127922101-1.jsonl",
-  "startedAt": "2026-06-08T09:21:27Z",
-  "finishedAt": "2026-06-08T09:23:21Z"
+  "filesTouched": [
+    ".kody/last-run.jsonl",
+    ".kody/reports/duty-review.md",
+    ".kody/reports/health-check.md"
+  ],
+  "sessionLog": ".kody/sessions/67592717-e8e3-4410-b3d3-caf4304e18e3.jsonl",
+  "startedAt": "2026-06-08T00:00:00.000Z",
+  "finishedAt": "2026-06-08T00:00:00.000Z"
 }
