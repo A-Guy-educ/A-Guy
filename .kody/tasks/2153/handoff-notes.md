@@ -1,9 +1,23 @@
-Resolved merge conflicts from `git merge origin/dev` into branch `2138-eliminate-horizontal-scroll-across-the-site-mobile` for PR #2153.
+# Merge Conflict Resolution - Task 2153
 
-Two conflicted files:
+## Files Resolved
 
-1. `.kody/last-run.jsonl` — JSONL session log. Content conflict (HEAD: 178 lines session 86afddb9, origin/dev: 78 lines session 62f59). Took HEAD version since it's the PR branch state. Note: The 26 `<<<<<<<` strings in this file are embedded inside JSON message content from prior session logs — not actual conflict markers, just logged text.
+1. **`.kody/reports/duty-review.md`**
+   - Conflict: Cycle 10 (HEAD/PR branch) vs Cycle 12 (origin/dev)
+   - Resolution: Took origin/dev's Cycle 12 (more recent report with `cto` staff assignments, cleanup-branches marked healthy)
+   - Why: origin/dev had the more complete and recent duty status report
 
-2. `.kody/reports/duty-review.md` — Conflict markers between Cycle 10 (HEAD) and Cycle 11 (origin/dev). Took origin/dev's Cycle 11 since it is the more recent cycle.
+2. **`.kody/last-run.jsonl`**
+   - Conflict: Different session IDs (86afddb9... vs 7108de63...)
+   - Resolution: Accepted origin/dev's version (session 7108de63)
+   - Why: JSONL log file - origin/dev version was clean and complete
 
-No application code or logic was modified.
+## Quality Checks
+- Lint: Passed (warnings only, no errors)
+- Format check: Passed (Prettier auto-formatted JSONL)
+- Typecheck: Failed on payload type generation (unrelated to these changes)
+
+## Notes
+- The wrapper handles git add/commit for the merge resolution
+- No source code files were modified
+- duty-review.md resolved to Cycle 12 (not Cycle 11 from prior attempt)

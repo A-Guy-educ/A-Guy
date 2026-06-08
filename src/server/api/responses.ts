@@ -1,3 +1,10 @@
+/**
+ * Standardized API response helpers and typed error codes
+ *
+ * @fileType utility
+ * @domain api
+ * @ai-summary Provides apiSuccess/apiError/ApiErrors factory and Zod-based request body/query parsers — every API route should use these to keep error shapes consistent.
+ */
 import { formatZodErrors } from '@/infra/utils/validation'
 import { NextResponse, type NextRequest } from 'next/server'
 import type { ZodError } from 'zod'
