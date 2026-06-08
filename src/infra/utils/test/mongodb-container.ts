@@ -1,3 +1,10 @@
+/**
+ * @fileType utility
+ * @domain testing
+ * @pattern testcontainers-mongodb
+ * @ai-summary Starts a MongoDB testcontainer for each test suite; when USE_MONGO_SERVICE=true (CI) it returns the service container URL directly, bypassing testcontainers entirely for speed.
+ */
+
 import { MongoDBContainer, StartedMongoDBContainer } from '@testcontainers/mongodb'
 import { isProductionDatabase } from './test-db-constraint'
 

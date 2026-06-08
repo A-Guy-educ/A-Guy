@@ -1,3 +1,10 @@
+/**
+ * @fileType utility
+ * @domain media
+ * @pattern media-url-resolver
+ * @ai-summary Converts relative media URLs to absolute; prepends client-side origin even when the URL is a full path under the same domain, so mismatches between server and client origins produce wrong URLs.
+ */
+
 import { getClientSideURL } from '@/infra/utils/getURL'
 
 /**

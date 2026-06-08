@@ -2,6 +2,11 @@
  * Concurrency Utilities
  *
  * Provides helpers for bounding parallel async work.
+ *
+ * @fileType utility
+ * @domain shared
+ * @pattern bounded-parallelism
+ * @ai-summary Bounded-parallelism queue: prevents thundering-herd on shared resources by limiting concurrent async operations; slots are claimed lazily, not upfront.
  */
 
 /**

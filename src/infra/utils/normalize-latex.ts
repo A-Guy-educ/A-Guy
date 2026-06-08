@@ -1,22 +1,12 @@
 /**
  * Normalizes LaTeX delimiters and escaping for remark-math compatibility.
  *
- * remark-math only recognizes $...$ and $$...$$ delimiters.
- * LLMs often output \[...\] and \(...\) with various escape levels.
- *
- * Handles:
- * - Single/double/triple backslash delimiters: \[, \\[, \\\[ → $$
- * - Bare brackets with LaTeX: [ \frac{a}{b} ] → $$...$$ (detected by LaTeX command presence)
- * - Undelimited LaTeX: \frac{a}{b} outside of $ → wrapped in $...$
- * - Over-escaped LaTeX commands: \\frac → \frac
- * - Escaped equals: \= → =
- *
- * Conversions:
- * - \[...\], \\[...\\], \\\[...\\\] → $$...$$ (block/display math)
- * - \(...\), \\(...\\), \\\(...\\\) → $...$ (inline math, preserves sentence flow)
- * - \\frac, \\sigma, etc. → \frac, \sigma (normalize commands)
- * - Bare LaTeX commands → wrapped in $...$ (safety net for LLM output)
+ * @fileType utility
+ * @domain shared
+ * @pattern latex-normalizer
+ * @ai-summary Converts AI-output LaTeX to remark-math-compatible delimiters; the Hebrew-escape step silently converts entire $ pairs to escaped text rather than failing, which can hide real delimiter-mismatch bugs upstream.
  */
+
 export function normalizeLatexDelimiters(content: string): string {
   if (!content) return content
 

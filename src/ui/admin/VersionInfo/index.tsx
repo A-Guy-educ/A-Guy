@@ -2,23 +2,21 @@
 
 import React from 'react'
 
-// Version from package.json - fallback to 'dev' if not available
-const VERSION = process.env.NEXT_PUBLIC_APP_VERSION || 'dev'
+// Read version from package.json at build time; allow env override for CI/CD
+const packageJson: { version?: string } = require('../../../../package.json') as {
+  version?: string
+}
+const VERSION = process.env.NEXT_PUBLIC_APP_VERSION || packageJson.version || 'dev'
 
 /**
- * VersionInfo component for admin footer
- * Displays version and build date from package.json and environment
- * @ai-summary Version/build date display for admin footer
+ * VersionInfo — displays the app version in the admin dashboard footer.
+ * Reads from package.json at build time; NEXT_PUBLIC_APP_VERSION overrides when set.
+ * Renders as muted text on every admin dashboard page.
+ *
+ * @ai-summary App version display for admin footer
  */
 export const VersionInfo: React.FC = () => {
-  // Read version from environment variable or use fallback
-  const version = VERSION
-
-  // Read build date from environment variable or use current date
-  const buildDate = process.env.BUILD_DATE || new Date().toISOString().split('T')[0]
-
-  // Format the display string
-  const versionDisplay = `v${version}`
+  const versionDisplay = `v${VERSION}`
 
   return (
     <div
@@ -29,12 +27,9 @@ export const VersionInfo: React.FC = () => {
         color: 'var(--theme-elevation-400)',
         textAlign: 'center',
         borderTop: '1px solid var(--theme-elevation-100)',
-        marginTop: 'auto',
       }}
     >
       <span>{versionDisplay}</span>
-      <span style={{ margin: '0 8px' }}>•</span>
-      <span>Built {buildDate}</span>
     </div>
   )
 }

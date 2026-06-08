@@ -1,0 +1,14 @@
+{
+  "taskId": "2514",
+  "taskType": "pr",
+  "target": "2507-p2-admin-table-relationship-cells-show-loading-ins",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Resolved merge conflicts in next.config.js and test file; took HEAD side for CSP img-src (www.gravatar.com) and removed invalid regex test",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": ["next.config.js", "tests/int/csp-vercel-feedback-admin.int.spec.ts"],
+  "sessionLog": ".kody/sessions/invalid",
+  "startedAt": "2026-06-08T19:09:37Z",
+  "finishedAt": "2026-06-08T19:09:52Z"
+}

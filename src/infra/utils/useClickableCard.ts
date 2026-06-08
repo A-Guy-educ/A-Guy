@@ -1,4 +1,11 @@
 'use client'
+/**
+ * @fileType utility
+ * @domain ui
+ * @pattern clickable-card
+ * @ai-summary Makes a card surface clickable by treating a non-link mousedown within the card as navigation; keyboard-only users and screen-reader users cannot activate the card behavior since there is no focusable element or aria role.
+ */
+
 import type { RefObject } from 'react'
 
 import { useRouter } from 'next/navigation'
