@@ -4,11 +4,11 @@
   "target": "2417-p3-csp-blocks-gravatar-avatar-images-in-admin-pane",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Single file with symmetric conflict — resolved by taking origin/dev's more detailed comments and additional test case",
+  "reason": "Single conflicted file (.kody/reports/duty-review.md) resolved by taking origin/dev Cycle 14 data over HEAD Cycle 7 data",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2430",
   "runUrl": null,
-  "filesTouched": ["tests/int/csp-vercel-feedback-admin.int.spec.ts"],
-  "sessionLog": ".kody/sessions/2430.jsonl",
-  "startedAt": "2026-06-08T15:51:00Z",
-  "finishedAt": "2026-06-08T15:52:00Z"
+  "filesTouched": [".kody/reports/duty-review.md"],
+  "sessionLog": ".kody/sessions/gh-27172655105-1-1.jsonl",
+  "startedAt": "2026-06-08T00:00:00.000Z",
+  "finishedAt": "2026-06-08T00:01:00.000Z"
 }

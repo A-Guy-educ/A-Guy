@@ -1,11 +1,19 @@
-## Merge Conflict Resolution — PR #2430
+# Merge Conflict Resolution for PR #2430
 
-**File:** `tests/int/csp-vercel-feedback-admin.int.spec.ts`
+## What was done
 
-**Conflict type:** Symmetric — both sides expected `*.gravatar.com` in img-src, but differed in comment detail and test coverage.
+Resolved merge conflict in `.kody/reports/duty-review.md` between HEAD (branch `2417-p3-csp-blocks-gravatar-avatar-images-in-admin-pane`) and `origin/dev`.
 
-**Resolution:** Took origin/dev's version which had:
-- More detailed comments explaining why `*.gravatar.com` is needed (CSP wildcard syntax)
-- An additional test case covering the `www.gravatar.com` vs `gravatar.com` distinction
+## Conflict Details
 
-**Verification:** All 5 tests in the file pass (224ms).
+The file had two conflict regions:
+1. Header + first 6 duty rows (Cycle 7 vs Cycle 14)
+2. Last 7 duty rows (different cadence assignments and values)
+
+Both sides had valid but different auto-generated duty review data. Since origin/dev had Cycle 14 (more recent) versus HEAD's Cycle 7, the origin/dev version was taken for both conflict regions.
+
+## Resolution
+
+- Took origin/dev (Cycle 14) data for all conflicting rows
+- File is clean with no remaining conflict markers
+- No quality issues were introduced (file is a markdown report, not code)
