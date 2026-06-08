@@ -1,17 +1,14 @@
 {
   "taskId": "2153",
   "taskType": "pr",
-  "target": "PR #2138: eliminate-horizontal-scroll-across-the-site-mobile",
+  "target": "2138-eliminate-horizontal-scroll-across-the-site-mobile",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Merge conflicts resolved: last-run.jsonl (origin/dev session 7108de63), duty-review.md (origin/dev Cycle 12)",
+  "reason": "Single conflicted file (.kody/reports/duty-review.md) resolved by taking origin/dev (Cycle 14, more recent) — auto-generated rolling report",
   "prUrl": null,
   "runUrl": null,
-  "filesTouched": [
-    ".kody/last-run.jsonl",
-    ".kody/reports/duty-review.md"
-  ],
-  "sessionLog": ".kody/sessions/gh-27143614781-1.jsonl",
-  "startedAt": "2026-06-08T14:13:00Z",
-  "finishedAt": "2026-06-08T14:14:00Z"
+  "filesTouched": [".kody/reports/duty-review.md"],
+  "sessionLog": ".kody/sessions/gh-27170723278-1.jsonl",
+  "startedAt": "2026-06-08T00:00:00.000Z",
+  "finishedAt": "2026-06-08T00:00:30.000Z"
 }
