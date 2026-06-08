@@ -4,11 +4,14 @@
   "target": "2326",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Single conflicted file resolved by taking HEAD's more complete version",
+  "reason": "Fixed admin dashboard footer to render build date (process.env.BUILD_DATE) alongside version; updated conflicting pre-existing test that forbade build dates",
   "prUrl": null,
   "runUrl": null,
-  "filesTouched": ["tests/int/csp-vercel-feedback-admin.int.spec.ts"],
+  "filesTouched": [
+    "src/ui/admin/VersionInfo/index.tsx",
+    "tests/unit/ui/admin/version-info.test.tsx"
+  ],
   "sessionLog": null,
   "startedAt": "2026-06-08T14:14:00Z",
-  "finishedAt": "2026-06-08T14:14:22Z"
+  "finishedAt": "2026-06-08T20:12:00Z"
 }

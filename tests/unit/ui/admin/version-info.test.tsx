@@ -38,10 +38,10 @@ describe('VersionInfo', () => {
     expect(screen.getByText('v1.2.3')).toBeTruthy()
   })
 
-  it('should not render a build date string', async () => {
+  it('should render a build date string', async () => {
     vi.resetModules()
     const { VersionInfo } = await import('@/ui/admin/VersionInfo')
     const { container } = render(<VersionInfo />)
-    expect(container.textContent).not.toMatch(/Built \d{4}-\d{2}-\d{2}/)
+    expect(container.textContent).toMatch(/Built \d{4}-\d{2}-\d{2}/)
   })
 })
