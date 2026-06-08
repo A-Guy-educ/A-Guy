@@ -1,6 +1,11 @@
 /**
  * Enforces that integration and E2E tests ONLY use testcontainers
  * Prevents accidental use of production/shared databases in tests
+ *
+ * @fileType utility
+ * @domain testing
+ * @pattern test-env-database-guard
+ * @ai-summary Throws at test startup if DATABASE_URL points to a production database; vector search tests are exempted via ALLOW_ATLAS_FOR_VECTOR_SEARCH but the exemption is easy to misuse for non-vector tests.
  */
 
 /**

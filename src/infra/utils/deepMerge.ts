@@ -1,3 +1,10 @@
+/**
+ * @fileType utility
+ * @domain shared
+ * @pattern object-deep-merge
+ * @ai-summary Shallow copy of target + recursive merge of source; does not clone nested objects, so source object references are retained in the output.
+ */
+
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
 
