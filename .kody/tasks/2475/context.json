@@ -6,9 +6,9 @@
   "exitCode": 0,
   "reason": "Ran pnpm install to reconcile lockfile — terser-webpack-plugin@5.3.9 was listed in devDependencies and pnpm overrides but not installed at workspace root (only bundled copy existed). The prebuild stub pointed to node_modules/terser-webpack-plugin/dist/index.js which didn't exist. pnpm install resolved the inconsistency. verify passes (ok: true, attempt 1).",
   "prUrl": null,
-  "runUrl": null,
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27118314497",
   "filesTouched": [],
-  "sessionLog": null,
+  "sessionLog": ".kody/runs/gh-27133054418-1/events.jsonl",
   "startedAt": "2026-06-08T01:36:00Z",
   "finishedAt": "2026-06-08T01:38:00Z"
 }
