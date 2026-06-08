@@ -221,6 +221,12 @@ export async function getConversation(req: PayloadRequest & { json?: () => Promi
             }
             return { chatAssetId: String(a), filename: undefined }
           }),
+          createdAt: msg.timestamp
+            ? typeof msg.timestamp === 'string'
+              ? msg.timestamp
+              : // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (msg.timestamp as any).toISOString()
+            : undefined,
         }
       })
 

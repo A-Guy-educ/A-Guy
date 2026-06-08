@@ -1,3 +1,10 @@
+/**
+ * @fileType utility
+ * @domain validation
+ * @pattern reusable-zod-schemas
+ * @ai-summary Shared Zod schemas for common fields; schemas like emailSchema and passwordSchema are intentionally permissive to avoid false rejections, so validation strictness must be enforced at the call site.
+ */
+
 import { z } from 'zod'
 
 /**

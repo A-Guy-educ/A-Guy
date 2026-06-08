@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Clean up stale PayloadMcpApiKey references in payload.config.ts",
+    "body": "The payload.config.ts at lines 77-86 contains a comment referencing 'PayloadMcpApiKey' and code that checks for it, but this collection no longer exists. The isAdminUser function could be simplified since it only checks 'users' collection now.",
+    "rationale": "Dead code/reference to a deleted collection - reduces confusion and potential confusion for future developers",
+    "priority": "low"
+  }
+]

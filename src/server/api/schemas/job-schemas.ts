@@ -1,3 +1,10 @@
+/**
+ * Zod schemas for job-queue API endpoints (run, status, queue)
+ *
+ * @fileType schema
+ * @domain api
+ * @ai-summary Shared input validation for job management endpoints — ObjectId regex is stricter than Payload's default (accepts only 24-char hex), so copy-pasting this schema to new endpoints without adjustment would silently reject valid IDs from other collections.
+ */
 import { z } from 'zod'
 
 const objectIdSchema = z.string().regex(/^[a-f\d]{24}$/i, 'Invalid ObjectId format')
