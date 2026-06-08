@@ -1,12 +1,10 @@
 /**
- * Normalize a path string for consistent matching.
- * Rules:
- * - Trim whitespace first
- * - If empty after trim → return '/'
- * - Strip query string and hash
- * - Ensure leading /
- * - Remove trailing slash (except /)
+ * @fileType utility
+ * @domain shared
+ * @pattern path-normalization
+ * @ai-summary Normalizes URL paths for consistent matching; does not collapse // or resolve ../, so paths like //evil.com or /a/../b are passed through unchanged.
  */
+
 export function normalizePath(input: string): string {
   let path = input.trim()
 

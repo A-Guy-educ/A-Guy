@@ -1,0 +1,16 @@
+{
+  "taskId": "1783",
+  "taskType": "issue",
+  "target": "1783-p1-recent-transactions-widget-shows-http-404-error",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed by creating internal /api/admin/recent-transactions endpoint that uses Payload local API, replacing direct REST API call that returned 404",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/admin/recent-transactions/route.ts",
+    "src/ui/admin/RecentTransactionsWidget/index.tsx",
+    "tests/int/admin-recent-transactions.int.spec.ts"
+  ],
+  "sessionLog": ".kody/runs/gh-26294358686-1/session.jsonl"
+}

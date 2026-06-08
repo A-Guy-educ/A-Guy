@@ -1,3 +1,10 @@
+/**
+ * @fileType utility
+ * @domain shared
+ * @pattern datetime-format
+ * @ai-summary Formats timestamps as MM/DD/YYYY in local time without timezone conversion; silently falls back to current time for invalid input.
+ */
+
 export const formatDateTime = (timestamp: string): string => {
   const now = new Date()
   let date = now
