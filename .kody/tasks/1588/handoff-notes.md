@@ -1,27 +1,11 @@
-# CI Fix Investigation for #1587
+# Merge Conflict Resolution for #1587
 
-## What was investigated
+## What was done
 
-CI workflow run 26930191668 was failing on the `format:check` step (Prettier).
+Resolved a single conflicted file from `git merge origin/dev` into branch 1587:
 
-## Root Cause
+- `.kody/reports/duty-review.md` — symmetric conflict: both sides had the same table structure with different cycle data (Cycle 9 vs Cycle 14). Took origin/dev (Cycle 14) as the newer state.
 
-The `pnpm format:check` step was failing due to a Prettier formatting issue in `CHANGELOGOG.md`. The log showed:
-```
-[warn] CHANGELOGOG.md
-Code style issues found in the above file. Run Prettier with --write to fix.
-```
+## Conflict resolution rationale
 
-The diff on this PR shows the CHANGELOGOG.md change was fixing a malformed Markdown link:
-```
--#2113: ... ([#2117\_(https://github.com/A-Guy-educ/A-Guy/pull/2117)) — ...
-+#2113: ... ([#2117](https://github.com/A-Guy-educ/A-Guy/pull/2117)) — ...
-```
-
-## Resolution
-
-The malformed link (`(#2117\_(`) was already corrected to `(#2117](https://...)` in the current branch. Running `pnpm format:check` locally passes cleanly. All quality gates (typecheck, lint, format, tests) pass.
-
-## Note
-
-The CI failure was a stale run — the fix was already present on branch 1587. No code changes were needed.
+The duty-review.md is a rolling status report. HEAD had Cycle 9 data and origin/dev had Cycle 14 data — a later cycle number indicates more recent evaluation. Preferring the newer cycle is the correct resolution.
