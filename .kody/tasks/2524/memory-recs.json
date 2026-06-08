@@ -1,0 +1,18 @@
+[
+  {
+    "type": "lesson",
+    "name": "brand-message-shallow-merge-loses-nested-keys",
+    "hook": "Brand messages use shallow merge — nested keys in base i18n are lost",
+    "body": "When brand messages are merged with base i18n messages using spread `{ ...base, ...brand }`, the merge is shallow. If the brand defines `account.purchases` (even partially), it completely replaces the base's `account.purchases` object, losing all nested keys the brand didn't override.\n\n**Why:** The `mergeMessages` function uses object spread, not deep merge. So adding `statuses` to the brand removes `status` from the base for that namespace.\n\n**How to apply:** When adding keys to brand messages under a namespace that already exists in base i18n, you must replicate ALL keys from the base or use deep merge. Alternatively, use a different key name (like `statuses`) that doesn't conflict with existing base keys.",
+    "why": "This bug existed because someone added 'statuses' to the brand without realizing the base had 'status' — the shallow merge silently dropped the base's status keys. A similar issue could affect other namespaces.",
+    "confidence": 0.95
+  },
+  {
+    "type": "lesson",
+    "name": "hebrew-i18n-missing-account-purchases",
+    "hook": "Hebrew base i18n has no account.purchases — all translations come from brand",
+    "body": "The Hebrew base i18n (src/i18n/he.json) does not contain an `account.purchases` key at all. All Hebrew translations for the purchases page come exclusively from the brand's he.json. This means Hebrew was always showing raw keys unless the brand provided them.\n\n**Why:** The Hebrew base i18n is incomplete for this namespace. In contrast, the English base i18n DOES have `account.purchases.status` with Hebrew translations.\n\n**How to apply:** When adding Hebrew translations, ensure they go into both the base he.json AND the brand's he.json. If the base already has the correct keys, the brand doesn't need to override them.",
+    "why": "The Hebrew base has account.purchases.status.{pending,succeeded,failed,refunded} with correct Hebrew translations, but the brand's shallow merge replaced the entire account.purchases object, losing those base keys. The brand SHOULD NOT override this namespace unless it fully replicates all base keys.",
+    "confidence": 0.9
+  }
+]

@@ -3,12 +3,12 @@
  *
  * @fileType unit-test
  * @domain brands,i18n
+ * @pattern translation-keys
  * @ai-summary Verifies that account.purchases.* i18n keys exist in brand messages.
  *
  * The purchases pages (account/purchases and account/purchases/[transactionId])
- * use useTranslations('account.purchases') to resolve keys like title, refresh,
- * status.*, etc. These keys must exist in the brand messages to avoid raw key
- * names being displayed to users.
+ * use useTranslations('account.purchases') to resolve keys. These keys must
+ * exist in the brand messages to avoid raw key names being displayed to users.
  */
 
 import { describe, expect, it } from 'vitest'
@@ -38,6 +38,9 @@ describe('account.purchases i18n keys in brand messages', () => {
     return typeof value === 'string' ? value : undefined
   }
 
+  // Note: JSON cannot have duplicate keys, so status types use 'statuses' object
+  // while the singular field label uses 'statusLabel'. The StatusBadge and
+  // StatusDisplay components use t('statuses.${status}') for badges.
   const requiredKeys: Array<{ key: string; en: string; he: string }> = [
     // PurchasesPageContent.tsx
     { key: 'account.purchases.title', en: 'My Purchases', he: 'הרכישות שלי' },
@@ -51,11 +54,7 @@ describe('account.purchases i18n keys in brand messages', () => {
       he: 'טרם ביצעת רכישות. עיין במוצרים שלנו כדי להתחיל.',
     },
     { key: 'account.purchases.empty.cta', en: 'Browse Products', he: 'עיין במוצרים' },
-    // Status badges (shared across both pages)
-    // Note: JSON cannot have duplicate keys, so status types use 'statuses' object
-    // while the field label uses 'statusLabel'. The component uses t('status.${status}')
-    // for badges and t('status') for the label; the brand messages must use
-    // 'statuses' for types to avoid the duplicate key issue.
+    // Status badges — the component uses t('statuses.${status}')
     { key: 'account.purchases.statuses.pending', en: 'Pending', he: 'בהמתנה' },
     { key: 'account.purchases.statuses.succeeded', en: 'Succeeded', he: 'הושלם' },
     { key: 'account.purchases.statuses.failed', en: 'Failed', he: 'נכשל' },

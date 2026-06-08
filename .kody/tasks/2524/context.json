@@ -1,0 +1,18 @@
+{
+  "taskId": "2524",
+  "taskType": "issue",
+  "target": "2524",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed StatusBadge/StatusDisplay calling t('status.${status}') but brand defines 'statuses' — changed both to use 'statuses.${status}'",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/account/purchases/PurchasesPageContent.tsx",
+    "src/app/(frontend)/account/purchases/[transactionId]/TransactionDetailContent.tsx",
+    "tests/unit/brands-account-purchases-i18n.test.ts"
+  ],
+  "sessionLog": ".kody/sessions/gh-27157016386-1-1.jsonl",
+  "startedAt": "2026-06-08T18:08:00Z",
+  "finishedAt": "2026-06-08T18:15:30Z"
+}

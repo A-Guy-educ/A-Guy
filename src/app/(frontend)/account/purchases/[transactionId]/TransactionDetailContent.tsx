@@ -88,7 +88,7 @@ function StatusDisplay({ status }: { status: TransactionStatus }) {
   const t = useTranslations('account.purchases')
   const cfg = STATUS_CONFIG[status]
   const Icon = cfg.icon
-  const label = t(`status.${status}`)
+  const label = t(`statuses.${status}`)
 
   return (
     <div className="flex items-center gap-2">

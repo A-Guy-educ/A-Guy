@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Brand override of account.purchases causes English base keys to be lost",
+    "body": "The brand's `src/brands/aguy/messages/en.json` defines `account.purchases` with a `statuses` key, but the base `src/i18n/en.json` has `account.purchases.status` (singular). The shallow merge means the brand's `statuses` completely replaces the base's `status`. Currently the component was fixed to use `statuses`, so it works. But the brand's `account.purchases` override is unnecessary and risky — it should be removed so the base's keys are used directly, or the brand should fully replicate all base keys.",
+    "rationale": "Shallow merge of brand messages silently drops nested base keys. This pattern could cause similar bugs in other namespaces. The brand should not partially override `account.purchases`.",
+    "priority": "low"
+  }
+]
