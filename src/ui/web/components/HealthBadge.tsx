@@ -5,8 +5,7 @@ import { useEffect, useState } from 'react'
 interface HealthResponse {
   ok: boolean
   gitSha: string
-  payloadVersion: string
-  projectVersion: string
+  version: string
   timestamp: string
 }
 
@@ -87,7 +86,7 @@ export function HealthBadge({ showVersion = false }: HealthBadgeProps) {
       <span>API OK</span>
       {showVersion && data && (
         <span className="text-body-xs opacity-75 ms-2">
-          {data.projectVersion} ({data.gitSha.slice(0, 7)})
+          {data.version} ({data.gitSha.slice(0, 7)})
         </span>
       )}
     </div>

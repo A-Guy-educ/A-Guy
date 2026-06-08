@@ -1,5 +1,10 @@
 /**
  * Text preprocessing utilities for rich text rendering
+ *
+ * @fileType utility
+ * @domain shared
+ * @pattern markdown-hard-break
+ * @ai-summary Converts single newlines to Markdown hard breaks (trailing spaces); preserves existing hard breaks and paragraph breaks untouched.
  */
 
 /**

@@ -1,0 +1,14 @@
+{
+  "taskId": "2321",
+  "taskType": "pr",
+  "target": "2297-p3-admin-footer-shows-unversioned-vdev-label",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Resolved single conflicted file taking origin/dev (static package.json read) over HEAD (dynamic API fetch that caused unversioned vdev label)",
+  "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2321",
+  "runUrl": null,
+  "filesTouched": ["src/ui/admin/VersionInfo/index.tsx"],
+  "sessionLog": ".kody/sessions/current.jsonl",
+  "startedAt": "2026-06-08T00:00:00.000Z",
+  "finishedAt": "2026-06-08T00:00:00.000Z"
+}
