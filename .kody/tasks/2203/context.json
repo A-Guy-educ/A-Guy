@@ -4,11 +4,11 @@
   "target": "2203",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Removed hardcoded version: 9 from pnpm/action-setup in atlas-integration.yml — aligns with packageManager field in package.json (pnpm@10.33.0)",
-  "prUrl": null,
+  "reason": "Fix already present in dev (4a6a5b370). CI run 27123713146 hit older commit 690058fb8 still carrying version:9 conflict. No code changes needed — fix was already applied.",
+  "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2203",
   "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27123713146",
-  "filesTouched": [".github/workflows/atlas-integration.yml"],
-  "sessionLog": ".kody/sessions/kody-2203.jsonl",
-  "startedAt": "2026-06-08T07:55:00.000Z",
-  "finishedAt": "2026-06-08T08:00:00.000Z"
+  "filesTouched": [],
+  "sessionLog": ".kody/sessions/gh-27163567120-1-1.jsonl",
+  "startedAt": "2026-06-08T08:00:00.000Z",
+  "finishedAt": "2026-06-08T08:00:30.000Z"
 }
