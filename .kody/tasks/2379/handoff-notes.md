@@ -1,7 +1,7 @@
-Resolved the single merge conflict in `.kody/reports/health-check.md` by taking the HEAD side.
+# Handoff Notes — Task 2379
 
-The conflict was between:
-- HEAD (PR branch): Uses `## Running`/`## Failed` headers, includes #1563, has newer timing values (541h vs 684h for #1583)
-- origin/dev: Uses `### running`/`### failed` headers, lacks #1563, has older timing values
+Resolved a single merge conflict in `.kody/reports/duty-review.md` between HEAD (Cycle 6) and `origin/dev` (Cycle 16).
 
-HEAD side was chosen because it has more recent data (smaller hour values indicate more recent updates) and includes an additional Failed issue (#1563). No conflict markers remain.
+Both sides were competing cycles of the same rolling duty-review report. Took the `origin/dev` side (Cycle 16) as it represents the most recent system state.
+
+No other conflicts were present. The PR branch is ready for the merge commit.
