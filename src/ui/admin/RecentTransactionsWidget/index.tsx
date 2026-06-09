@@ -91,10 +91,15 @@ const RecentTransactionsWidget: React.FC = () => {
   const fetchTransactions = useCallback(async () => {
     setLoading(true)
     setError(null)
+    const controller = new AbortController()
+    const TIMEOUT_MS = 30_000
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS)
     try {
       const res = await fetch('/api/transactions?limit=5&sort=-createdAt&depth=2', {
         credentials: 'include',
+        signal: controller.signal,
       })
+      clearTimeout(timeoutId)
       if (!res.ok) {
         if (res.status === 403) {
           setError('admin-only')
@@ -105,8 +110,14 @@ const RecentTransactionsWidget: React.FC = () => {
       const json = (await res.json()) as TransactionsResponse
       setTransactions(json.docs ?? [])
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
+      clearTimeout(timeoutId)
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('timeout')
+      } else {
+        setError(err instanceof Error ? err.message : 'Unknown error')
+      }
     } finally {
+      clearTimeout(timeoutId)
       setLoading(false)
     }
   }, [])

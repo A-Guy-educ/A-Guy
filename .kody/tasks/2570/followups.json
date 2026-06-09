@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Add user-facing timeout error display",
+    "body": "MetricsProvider now sets error='timeout' on fetch timeout, but no widget currently renders this state with a meaningful message to the user. Consider adding a specific UI treatment for the 'timeout' error in the widgets (e.g., 'Failed to load — network timeout' with a retry button).",
+    "rationale": "Right now a timeout error would render as the generic error state ('Failed to load: timeout') which is not user-friendly.",
+    "priority": "low"
+  }
+]

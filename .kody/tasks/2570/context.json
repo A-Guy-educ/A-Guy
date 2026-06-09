@@ -1,0 +1,18 @@
+{
+  "taskId": "2570",
+  "taskType": "issue",
+  "target": "2570",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed admin dashboard widgets permanently stuck on Loading by adding 30s fetch timeout via AbortController to MetricsProvider and RecentTransactionsWidget",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/ConversionTracking/MetricsProvider.tsx",
+    "src/ui/admin/RecentTransactionsWidget/index.tsx",
+    "tests/unit/ui/admin/metrics-provider-timeout.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/gh-27228048128-1-1.jsonl",
+  "startedAt": "2026-06-09T18:54:00Z",
+  "finishedAt": "2026-06-09T18:55:00Z"
+}

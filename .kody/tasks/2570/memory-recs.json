@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "admin-dashboard-widgets-stuck-loading-fix",
+    "hook": "Fetch timeout needed for admin dashboard widgets",
+    "body": "Admin dashboard widgets (MetricsProvider and RecentTransactionsWidget) had no fetch timeout — if the API hung, loading stayed true forever and all widgets showed 'Loading...' permanently. Fix: add AbortController with 30s setTimeout, pass signal to fetch, clearTimeout on all exit paths, treat AbortError as 'timeout' error.",
+    "why": "This is a common UX pattern — any fetch that can hang indefinitely needs a timeout. The same fix was needed for RecentTransactionsWidget (which fetches separately from MetricsProvider). Without it, users see a permanently frozen loading state.",
+    "confidence": 0.95
+  }
+]
