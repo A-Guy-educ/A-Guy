@@ -4,14 +4,11 @@
   "target": "2485-p3-admin-course-enrollments-widget-shows-counts-on",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Both conflicted report files resolved — duty-review.md and health-check.md are rolling auto-generated reports where origin/dev's newer cycle (16) supersedes HEAD's older cycle (9); origin/dev wins for both.",
+  "reason": "Single conflicted file (.kody/reports/duty-review.md) resolved by taking origin/dev (Cycle 16) over HEAD (Cycle 9)",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2490",
   "runUrl": null,
-  "filesTouched": [
-    ".kody/reports/duty-review.md",
-    ".kody/reports/health-check.md"
-  ],
+  "filesTouched": [".kody/reports/duty-review.md"],
   "sessionLog": ".kody/sessions/2490.jsonl",
   "startedAt": "2026-06-09T00:00:00Z",
-  "finishedAt": "2026-06-09T00:01:00Z"
+  "finishedAt": "2026-06-09T00:00:30Z"
 }
