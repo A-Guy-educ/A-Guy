@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Investigate root cause of relationship cells showing Loading",
+    "body": "The custom cell components handle both string IDs and populated objects, but the root cause of why the default Payload relationship cell shows 'Loading...' was not fully identified. It may be a query depth issue in the list view or an issue with how the relationships are stored. Further investigation may be needed if the fix doesn't fully resolve the issue.",
+    "rationale": "The fix provides graceful fallback handling but may not address the underlying cause of the 'Loading...' state in the default relationship cell",
+    "priority": "low"
+  }
+]

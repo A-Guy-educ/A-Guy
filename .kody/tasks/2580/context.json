@@ -1,0 +1,19 @@
+{
+  "taskId": "2580",
+  "taskType": "issue",
+  "target": "2580",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed by adding custom cell components for sourceLesson and outputLesson relationship fields that handle both string IDs and populated objects",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/collections/LessonDuplications.ts",
+    "src/ui/admin/LessonDuplicationReview/Cells/SourceLessonCell.tsx",
+    "src/ui/admin/LessonDuplicationReview/Cells/OutputLessonCell.tsx",
+    "src/payload-types.ts"
+  ],
+  "sessionLog": ".kody/sessions/instant-classify-2580-1-1.jsonl",
+  "startedAt": "2026-06-09T21:13:04.553Z",
+  "finishedAt": "2026-06-09T21:28:00.000Z"
+}
