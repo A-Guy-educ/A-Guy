@@ -1,12 +1,14 @@
-## Root Cause
+## Handoff: Fix Missing PAYLOAD_SECRET in inspector.yml
 
-`atlas-integration.yml` had `version: 9` hardcoded in `pnpm/action-setup@v4`, while `package.json` pins `pnpm@10.33.0` via the `packageManager` field. The pnpm/action-setup action errors when both are specified.
+**Root cause:** The `Inspector` workflow (`inspector.yml`) runs `pnpm install` which triggers a `postinstall` script. That script calls `payload generate:types`, which loads `src/payload.config.ts`. The config requires `PAYLOAD_SECRET` to be set and throws `Error: PAYLOAD_SECRET env var is required` if absent.
 
-## Status
+**What I changed:** Added `PAYLOAD_SECRET` to the job-level `env` block in `.github/workflows/inspector.yml`, matching the pattern used in `ci.yml`:
 
-Fix already present in dev (commit 4a6a5b370). CI run 27123713146 hit an older commit (690058fb8) that predated the fix. The fix removes `version: 9` from the `with:` block in `.github/workflows/atlas-integration.yml`, allowing the action to read the version from `packageManager` in package.json. No code changes were needed in this session — the fix was already merged.
+```yaml
+env:
+  PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET || 'test-secret-for-ci' }}
+```
 
-## Verification
+This was added at the job level (above `steps:`) so it is in scope for both the `Install dependencies` step (where `postinstall` runs) and the `Run Inspector` step.
 
-- `pnpm/action-setup@v4` step in atlas-integration.yml has no `version` parameter (fix confirmed)
-- QA gates (typecheck, lint) passed with `mcp__kody-verify__verify`
+**Why the fix works:** The `payload.config.ts` accepts any non-empty string for `PAYLOAD_SECRET`; the value is only used for cryptographic signing. A CI-friendly placeholder is sufficient for the type-generation step.
