@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Consider adding cascade delete for chapters when course is deleted via standard Payload delete",
+    "body": "The Courses collection has afterDelete hooks for cleaning up entitlements and enrollments, but no hook to cascade-delete chapters. The /api/cascade-delete endpoint handles this manually, but the same gap exists: if someone calls payload.delete({ collection: 'courses', id }) directly, chapters and their lessons are orphaned.\n\nAdd an afterDelete hook to Courses similar to cascadeDeleteLessons that finds all chapters belonging to the course and deletes them (which will then trigger cascadeDeleteLessons for each chapter's lessons).",
+    "rationale": "Same root cause as #2553: Payload standard delete bypasses the cascade-delete endpoint and leaves orphaned child records. Consistent pattern with the fix applied to Chapters.",
+    "priority": "medium"
+  },
+  {
+    "title": "Fix pre-existing broken integration tests that don't use MongoDB container",
+    "body": "Several integration tests (lesson-query-hierarchy-safety, lesson-blocks-delete-persistence, lesson-duplication-endpoint-queue, and others) call getPayload({ config }) directly without starting the MongoDB container first. These tests fail in all environments.\n\nThe lesson-query-hierarchy-safety test should use startMongoContainer/stopMongoContainer like the chapter-lesson-cascade-delete test does. Same pattern for the others.",
+    "rationale": "These tests are currently non-functional and provide no value. They mask real regressions because their failures are ignored as 'pre-existing issues'.",
+    "priority": "low"
+  }
+]

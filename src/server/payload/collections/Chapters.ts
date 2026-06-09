@@ -8,6 +8,7 @@ import { createdByField } from '../fields/createdBy'
 import { formatSlug } from '../fields/formatSlug'
 import { translatedFromField } from '../fields/translatedFrom'
 import { computeAdminTitle } from '../hooks/chapters/computeAdminTitle'
+import { cascadeDeleteLessons } from '../hooks/chapters/cascadeDeleteLessons'
 
 export const Chapters: CollectionConfig = {
   slug: 'chapters',
@@ -30,6 +31,7 @@ export const Chapters: CollectionConfig = {
       },
       computeAdminTitle,
     ],
+    afterDelete: [cascadeDeleteLessons],
   },
   admin: {
     useAsTitle: 'adminTitle',

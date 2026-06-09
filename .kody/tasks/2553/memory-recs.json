@@ -1,0 +1,18 @@
+[
+  {
+    "type": "lesson",
+    "name": "chapters-need-afterdelete-hook",
+    "hook": "Chapters collection needs afterDelete hook to cascade-delete lessons",
+    "body": "The Chapters collection had no afterDelete hook. When a chapter was deleted via Payload's standard delete (bypassing the /api/cascade-delete endpoint), its lessons remained orphaned in the DB with stale chapter references. This caused 404 errors when anything tried to fetch those lessons by ID.\n\n**Fix**: Added `cascadeDeleteLessons` afterDelete hook to Chapters collection, which finds all lessons with `chapter == id` and deletes them.\n\n**Why this matters**: The CascadeDeleteButton uses a custom API endpoint that handles cascading manually, but Payload's standard delete had no such protection. Any code that called `payload.delete({ collection: 'chapters', ... })` directly would leave orphaned lessons.",
+    "why": "Data integrity bug that silently left orphaned lessons causing 404 errors in production. The fix follows the same pattern used by Courses (cleanupOrphanEntitlements, cleanupOrphanEnrollments).",
+    "confidence": 0.95
+  },
+  {
+    "type": "lesson",
+    "name": "lesson-duplications-needs-afterdelete",
+    "hook": "LessonDuplications references need cleanup when source/output lesson is deleted",
+    "body": "The LessonDuplications collection has two relationship fields to lessons (sourceLesson and outputLesson) but no cleanup when either referenced lesson is deleted. Stale records remain in the DB, causing broken UI in the duplication review screen.\n\n**Fix**: Added `cleanupOrphanLessonDuplications` afterDelete hook to Lessons collection, which deletes any LessonDuplications records referencing the deleted lesson.",
+    "why": "The duplication review screen would show broken references to deleted lessons. The pipeline might also try to process stale records.",
+    "confidence": 0.9
+  }
+]

@@ -9,6 +9,7 @@ import { contentStatusFields } from '../fields/contentStatus'
 import { createdByField } from '../fields/createdBy'
 import { formatSlug, formatSlugAsync } from '../fields/formatSlug'
 import { translatedFromField } from '../fields/translatedFrom'
+import { cleanupOrphanLessonDuplications } from '../hooks/lessons/cleanupOrphanLessonDuplications'
 
 // Type for visibleRenderers field data
 type VisibleRenderersData = {
@@ -217,6 +218,7 @@ export const Lessons: CollectionConfig = {
         return doc
       },
     ],
+    afterDelete: [cleanupOrphanLessonDuplications],
   },
   // Hide Payload's built-in Duplicate action so admins can only use our
   // custom modal button. The built-in does a dumb field-copy that bypasses
