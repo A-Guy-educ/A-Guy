@@ -1,6 +1,7 @@
 ---
 every: 7d
 staff: ceo
+disabled: true
 ---
 
 # CEO Performance Review

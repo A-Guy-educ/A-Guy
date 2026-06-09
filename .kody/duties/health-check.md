@@ -1,7 +1,7 @@
 ---
-disabled: false
-staff: kody
 every: 1d
+staff: kody
+disabled: true
 ---
 
 # Kody Health Check

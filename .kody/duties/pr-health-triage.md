@@ -2,9 +2,8 @@
 every: 15m
 staff: cto
 mentions: aguyaharonyair
+disabled: true
 ---
-
-# PR health
 
 # PR health
 

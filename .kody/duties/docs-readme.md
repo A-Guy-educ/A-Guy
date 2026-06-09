@@ -2,7 +2,7 @@
 every: 1d
 staff: tech-writer
 mentions: aguyaharonyair
-disabled: false
+disabled: true
 ---
 
 # Docs Drift — feature READMEs

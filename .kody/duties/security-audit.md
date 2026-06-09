@@ -1,6 +1,7 @@
 ---
-staff: cto
 every: 1d
+staff: cto
+disabled: true
 ---
 
 # Security Audit
