@@ -3,7 +3,7 @@ every: 15m
 staff: cto
 mentions: aguyaharonyair
 tools: read_check_runs, ensure_issue, dispatch_workflow, ensure_comment
-disabled: false
+disabled: true
 ---
 
 # Dev CI health
