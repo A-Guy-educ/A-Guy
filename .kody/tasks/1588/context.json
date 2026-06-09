@@ -4,11 +4,11 @@
   "target": "1587",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "CI failure was from pre-existing CHANGELOGOG.md formatting issue — already resolved on branch. No code changes needed.",
-  "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/1588",
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/26930191668",
-  "filesTouched": [],
-  "sessionLog": ".kody/sessions/placeholder.jsonl",
+  "reason": "Single conflicted file (.kody/reports/duty-review.md) resolved by taking origin/dev Cycle 16 (newer report) over PR branch Cycle 9",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [".kody/reports/duty-review.md"],
+  "sessionLog": ".kody/sessions/gh-27185635878-1-1.jsonl",
   "startedAt": "2026-06-09T00:00:00.000Z",
-  "finishedAt": "2026-06-09T00:01:00.000Z"
+  "finishedAt": "2026-06-09T00:00:30.000Z"
 }

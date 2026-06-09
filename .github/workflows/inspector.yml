@@ -21,6 +21,8 @@ jobs:
       contents: write
       pull-requests: write
       actions: write
+    env:
+      PAYLOAD_SECRET: ${{ secrets.PAYLOAD_SECRET || 'test-secret-for-ci' }}
     steps:
       - uses: actions/checkout@v4
 

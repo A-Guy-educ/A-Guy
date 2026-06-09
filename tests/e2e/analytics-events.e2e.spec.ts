@@ -87,13 +87,38 @@ async function installGtagInterceptor(page: Page) {
 async function loadAppAndGetEvents(page: Page): Promise<CapturedEvent[]> {
   await page.goto('/')
   await page.waitForLoadState('networkidle')
-  await page.waitForTimeout(1500) // Allow async subscriber + adapter init
+  await waitForCapturedEvent(page, 'session_started')
+  await waitForCapturedEvent(page, 'page_view')
   const events = await page.evaluate(() => {
     return (window as unknown as Record<string, unknown>).__capturedMixpanelEvents as
       | CapturedEvent[]
       | undefined
   })
   return events ?? []
+}
+
+async function getCapturedEvents(page: Page): Promise<CapturedEvent[]> {
+  const events = await page.evaluate(() => {
+    return (window as unknown as Record<string, unknown>).__capturedMixpanelEvents as
+      | CapturedEvent[]
+      | undefined
+  })
+
+  return events ?? []
+}
+
+async function waitForCapturedEvent(page: Page, eventName: string): Promise<void> {
+  await page.waitForFunction(
+    (name) => {
+      const events = (window as unknown as Record<string, unknown>).__capturedMixpanelEvents as
+        | CapturedEvent[]
+        | undefined
+
+      return events?.some((event) => event.event === name) ?? false
+    },
+    eventName,
+    { timeout: 10_000 },
+  )
 }
 
 test.describe('Analytics Events E2E', () => {
@@ -158,26 +183,15 @@ test.describe('Analytics Events E2E', () => {
   test('fires additional page_view events on navigation', async ({ page }) => {
     await loadAppAndGetEvents(page) // initial load events
 
-    const initialCount = await page.evaluate(
-      () =>
-        (
-          (window as unknown as Record<string, unknown>).__capturedMixpanelEvents as
-            | CapturedEvent[]
-            | undefined
-        )?.filter((e) => e.event === 'page_view').length ?? 0,
-    )
-
-    // Navigate to courses
     await page.goto('/courses')
-    await page.waitForTimeout(1000)
+    await page.waitForLoadState('networkidle')
+    await waitForCapturedEvent(page, 'page_view')
 
-    const events = await page.evaluate(() => {
-      return (window as unknown as Record<string, unknown>).__capturedMixpanelEvents as
-        | CapturedEvent[]
-        | undefined
-    })
-    const newCount = events?.filter((e) => e.event === 'page_view').length ?? 0
-    expect(newCount).toBeGreaterThan(initialCount)
+    const events = await getCapturedEvents(page)
+    const coursesPageView = events.find(
+      (e) => e.event === 'page_view' && e.properties.page_path === '/courses',
+    )
+    expect(coursesPageView).toBeDefined()
   })
 
   test('fires lesson_started when navigating to a lesson', async ({ page }) => {

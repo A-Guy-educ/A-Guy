@@ -1,12 +1,7 @@
-## Root Cause
+## Fix Summary
 
-`atlas-integration.yml` had `version: 9` hardcoded in `pnpm/action-setup@v4`, while `package.json` pins `pnpm@10.33.0` via the `packageManager` field. The pnpm/action-setup action errors when both are specified.
+**Root cause**: `ai-docs-refresh.yml` had `version: 10` hardcoded in the `pnpm/action-setup@v4` step (line 30), but `package.json` already pins the pnpm version via the `packageManager` field (`pnpm@10.33.0`). The pnpm action-setup v4 detects this duplicate version specification and fails with `ERR_PNPM_BAD_PM_VERSION`.
 
-## Status
+**What changed**: Removed the `with: version: 10` block from the Setup pnpm step in `.github/workflows/ai-docs-refresh.yml`. The workflow now defers to the `packageManager` field for pnpm version, which is the correct single source of truth.
 
-Fix already present in dev (commit 4a6a5b370). CI run 27123713146 hit an older commit (690058fb8) that predated the fix. The fix removes `version: 9` from the `with:` block in `.github/workflows/atlas-integration.yml`, allowing the action to read the version from `packageManager` in package.json. No code changes were needed in this session — the fix was already merged.
-
-## Verification
-
-- `pnpm/action-setup@v4` step in atlas-integration.yml has no `version` parameter (fix confirmed)
-- QA gates (typecheck, lint) passed with `mcp__kody-verify__verify`
+**Why this is the right fix**: When `packageManager` is set in `package.json`, pnpm v10+ requires that the action-setup action NOT also specify a version — the two conflict. Removing the explicit version from the workflow lets the action read from `packageManager`, keeping one authoritative version source.
