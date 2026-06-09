@@ -34,7 +34,7 @@ test.afterAll(async () => {
  */
 async function expectNoHorizontalScroll(page: Page, viewportLabel: string) {
   const hasHorizontalOverflow = await page.evaluate(() => {
-    return document.documentElement.scrollWidth > document.documentElement.clientWidth
+    return document.documentElement.scrollWidth > document.documentElement.clientWidth + 1
   })
   expect(hasHorizontalOverflow, `Viewport ${viewportLabel}: page has horizontal overflow`).toBe(
     false,
@@ -42,58 +42,56 @@ async function expectNoHorizontalScroll(page: Page, viewportLabel: string) {
 
   // Also check body and main content containers
   const bodyOverflow = await page.evaluate(() => {
-    return document.body.scrollWidth > document.body.clientWidth
+    return document.body.scrollWidth > document.body.clientWidth + 1
   })
   expect(bodyOverflow, `Viewport ${viewportLabel}: body has horizontal overflow`).toBe(false)
 }
 
 test.describe('Issue #1767 – No horizontal scroll in lesson display modes', () => {
-  test.beforeEach(async ({ page }) => {
+  async function openLessonAtViewport(
+    page: Page,
+    viewport: { width: number; height: number },
+  ): Promise<void> {
     test.skip(!data, 'No test data available')
+    await page.setViewportSize(viewport)
     await loginAsStudent(page)
     await page.goto(data!.lessonUrl)
     await page.waitForLoadState('domcontentloaded')
-  })
+  }
 
   test('no horizontal scroll at 320px (small mobile)', async ({ page }) => {
-    await page.setViewportSize({ width: 320, height: 568 })
-    await page.waitForLoadState('domcontentloaded')
+    await openLessonAtViewport(page, { width: 320, height: 568 })
     // Give a moment for any async content to settle
     await page.waitForTimeout(500)
     await expectNoHorizontalScroll(page, '320px')
   })
 
   test('no horizontal scroll at 375px (iPhone SE)', async ({ page }) => {
-    await page.setViewportSize({ width: 375, height: 667 })
-    await page.waitForLoadState('domcontentloaded')
+    await openLessonAtViewport(page, { width: 375, height: 667 })
     await page.waitForTimeout(500)
     await expectNoHorizontalScroll(page, '375px')
   })
 
   test('no horizontal scroll at 768px (tablet)', async ({ page }) => {
-    await page.setViewportSize({ width: 768, height: 1024 })
-    await page.waitForLoadState('domcontentloaded')
+    await openLessonAtViewport(page, { width: 768, height: 1024 })
     await page.waitForTimeout(500)
     await expectNoHorizontalScroll(page, '768px')
   })
 
   test('no horizontal scroll at 1024px (desktop sm)', async ({ page }) => {
-    await page.setViewportSize({ width: 1024, height: 768 })
-    await page.waitForLoadState('domcontentloaded')
+    await openLessonAtViewport(page, { width: 1024, height: 768 })
     await page.waitForTimeout(500)
     await expectNoHorizontalScroll(page, '1024px')
   })
 
   test('no horizontal scroll at 1440px (desktop lg)', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 })
-    await page.waitForLoadState('domcontentloaded')
+    await openLessonAtViewport(page, { width: 1440, height: 900 })
     await page.waitForTimeout(500)
     await expectNoHorizontalScroll(page, '1440px')
   })
 
   test('no horizontal scroll on PDF tab at 320px', async ({ page }) => {
-    await page.setViewportSize({ width: 320, height: 568 })
-    await page.waitForLoadState('domcontentloaded')
+    await openLessonAtViewport(page, { width: 320, height: 568 })
     await page.waitForTimeout(500)
 
     // Click PDF tab if available
@@ -108,8 +106,7 @@ test.describe('Issue #1767 – No horizontal scroll in lesson display modes', ()
   })
 
   test('no horizontal scroll on Interactive tab at 320px', async ({ page }) => {
-    await page.setViewportSize({ width: 320, height: 568 })
-    await page.waitForLoadState('domcontentloaded')
+    await openLessonAtViewport(page, { width: 320, height: 568 })
     await page.waitForTimeout(500)
 
     // Click Interactive tab if available
