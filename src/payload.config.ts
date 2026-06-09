@@ -401,6 +401,11 @@ export default buildConfig({
       payload.logger.info(`[onInit] Created default tenant "${defaultTenantSlug}"`)
     }
 
+    if (process.env.SKIP_BUILD === 'true') {
+      payload.logger.info('[onInit] Skipping expensive init tasks')
+      return
+    }
+
     await runBackfillOnInit(payload)
     await runPopulateLessonBlocksOnInit(payload)
     await runLocalizeTeacherProfilesOnInit(payload)

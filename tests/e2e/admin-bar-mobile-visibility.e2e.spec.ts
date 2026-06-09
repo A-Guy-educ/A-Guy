@@ -65,7 +65,7 @@ test.describe('Admin Bar Mobile Visibility', () => {
     await page.setViewportSize({ width: 375, height: 812 })
 
     // Navigate to frontend page
-    await page.goto('/')
+    await page.goto('/courses')
     await page.waitForLoadState('networkidle')
 
     // The admin bar is a div with py-2 bg-foreground text-background
@@ -96,7 +96,7 @@ test.describe('Admin Bar Mobile Visibility', () => {
     await page.setViewportSize({ width: 1280, height: 720 })
 
     // Navigate to frontend page
-    await page.goto('/')
+    await page.goto('/courses')
     await page.waitForLoadState('networkidle')
 
     // After fix (hidden sm:block), admin bar should be visible on desktop

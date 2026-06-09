@@ -27,6 +27,23 @@ const TEST_ADMIN_EMAIL = 'config-test-admin@example.com'
 const TEST_ADMIN_PASSWORD = 'test-password-min-32-chars!!'
 const TEST_TENANT_1_SLUG = 'config-test-tenant-1'
 const TEST_TENANT_2_SLUG = 'config-test-tenant-2'
+const TEST_CONFIG_KEYS = [
+  'test_secret',
+  'shared_key',
+  'unique_key',
+  'Invalid-Key-Format',
+  'test_immutable',
+  'new_key',
+  'test_update_enabled_only',
+  'test_audit_create',
+  'test_audit_update',
+  'test_audit_toggle',
+  'test_audit_secret',
+  'test_ui_secret',
+  'test_db_encryption',
+  'direct_create_test',
+  'test_hook_override_access',
+]
 
 describe('Config Secrets (Tenant-Scoped)', () => {
   let payload: Awaited<ReturnType<typeof getPayload>>
@@ -92,23 +109,43 @@ describe('Config Secrets (Tenant-Scoped)', () => {
         overrideAccess: true,
       })
     }
+
+    const testTenantIds = [tenant1.id, tenant2.id]
+    await payload.delete({
+      collection: 'config_secrets',
+      where: {
+        and: [{ key: { in: TEST_CONFIG_KEYS } }, { tenant: { in: testTenantIds } }],
+      },
+      overrideAccess: true,
+    })
+    await payload.delete({
+      collection: 'config_audit_logs',
+      where: {
+        and: [{ key: { in: TEST_CONFIG_KEYS } }, { tenant: { in: testTenantIds } }],
+      },
+      overrideAccess: true,
+    })
   })
 
   afterAll(async () => {
+    if (!payload || !tenant1 || !tenant2) return
+
     // Cleanup test data with tenant filter
     try {
       const testTenantIds = [tenant1.id, tenant2.id]
       await payload.delete({
         collection: 'config_secrets',
         where: {
-          and: [{ key: { like: 'test_' } }, { tenant: { in: testTenantIds } }],
+          and: [{ key: { in: TEST_CONFIG_KEYS } }, { tenant: { in: testTenantIds } }],
         },
+        overrideAccess: true,
       })
       await payload.delete({
         collection: 'config_audit_logs',
         where: {
-          and: [{ key: { like: 'test_' } }, { tenant: { in: testTenantIds } }],
+          and: [{ key: { in: TEST_CONFIG_KEYS } }, { tenant: { in: testTenantIds } }],
         },
+        overrideAccess: true,
       })
     } catch {
       // Ignore cleanup errors

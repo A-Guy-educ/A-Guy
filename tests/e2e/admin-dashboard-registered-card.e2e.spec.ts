@@ -43,7 +43,10 @@ test.describe('Admin Dashboard: Registered Users Card', () => {
 
     // Look for the total users number (large font, typically > 30px)
     // The card should display a large number representing total users
-    const totalUsersText = await page.locator('text=נרשמו').first().isVisible()
+    const totalUsersText = await page
+      .getByText(/נרשמו|Registered/)
+      .first()
+      .isVisible()
     expect(totalUsersText).toBeTruthy()
 
     // Verify no filter pill buttons for registration (they should be removed)
