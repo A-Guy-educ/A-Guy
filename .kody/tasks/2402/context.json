@@ -1,14 +1,14 @@
 {
   "taskId": "2402",
   "taskType": "pr",
-  "target": "2396-p2-remove-gravatar-from-img-src-csp-or-add-it-to-a",
+  "target": "2402",
   "outcome": "success",
   "exitCode": 0,
   "reason": "Resolved single conflicted file .kody/reports/duty-review.md by taking origin/dev (Cycle 16) over HEAD (Cycle 6) — more recent duty review data",
-  "prUrl": null,
-  "runUrl": null,
+  "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2402",
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/gh-27207865986-1-1",
   "filesTouched": [".kody/reports/duty-review.md"],
-  "sessionLog": null,
+  "sessionLog": ".kody/sessions/gh-27207865986-1-1.jsonl",
   "startedAt": "2026-06-09T00:00:00.000Z",
   "finishedAt": "2026-06-09T00:01:00.000Z"
 }
