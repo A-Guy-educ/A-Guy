@@ -7,7 +7,7 @@ import type { Page } from '@playwright/test'
 import type { TestCourseData } from './courses'
 import type { TestExerciseData } from './admin'
 import { generateTestUserEmail, setupAuthenticatedUser, cleanupTestUsers } from './auth'
-import { seedTestCourseData, buildLessonUrl } from './courses'
+import { seedTestCourseData, buildLessonUrl, cleanupTestCourseData } from './courses'
 import { seedTestExercises, cleanupTestExercisesById } from './admin'
 
 export interface VerificationData {
@@ -37,6 +37,7 @@ export async function cleanupVerificationData(data: VerificationData | null): Pr
   if (data) {
     const ids = data.exercises.map((e) => e.exerciseId)
     await cleanupTestExercisesById(ids)
+    await cleanupTestCourseData(data.course)
   }
   await cleanupTestUsers()
 }

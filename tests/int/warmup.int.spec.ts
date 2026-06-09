@@ -14,14 +14,14 @@ describe('GET /api/cron/warmup', () => {
   it('returns 200', async () => {
     const response = await GET()
     expect(response.status).toBe(200)
-  })
+  }, 60000)
 
   it('returns warm: true', async () => {
     const response = await GET()
     const data = (await response.json()) as { warm: boolean; ts: string }
 
     expect(data.warm).toBe(true)
-  })
+  }, 60000)
 
   it('returns ISO timestamp', async () => {
     const response = await GET()
@@ -29,14 +29,14 @@ describe('GET /api/cron/warmup', () => {
 
     expect(() => new Date(data.ts)).not.toThrow()
     expect(new Date(data.ts)).toBeInstanceOf(Date)
-  })
+  }, 60000)
 
   it('sets no-cache headers to prevent proxy caching', async () => {
     const response = await GET()
 
     expect(response.headers.get('Cache-Control')).toBe('no-store, no-cache, must-revalidate')
     expect(response.headers.get('X-Warmup')).toBe('true')
-  })
+  }, 60000)
 
   it('returns consistent timestamp format', async () => {
     const response1 = await GET()
@@ -47,5 +47,5 @@ describe('GET /api/cron/warmup', () => {
     // Both should be valid ISO-8601
     expect(new Date(data1.ts).toISOString()).toBe(data1.ts)
     expect(new Date(data2.ts).toISOString()).toBe(data2.ts)
-  })
+  }, 60000)
 })

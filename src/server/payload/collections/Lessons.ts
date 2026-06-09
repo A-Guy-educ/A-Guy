@@ -16,6 +16,8 @@ type VisibleRenderersData = {
 }
 
 const VALID_RENDERERS = ['media', 'pdf', 'interactive'] as const
+const VALID_LESSON_TYPES = ['learning', 'practice', 'exam'] as const
+const DEFAULT_LESSON_TYPE = 'learning' as const
 
 /**
  * Validates `visibleRenderers` when present. Treats missing/undefined as
@@ -34,6 +36,23 @@ const validateVisibleRenderers: CollectionBeforeChangeHook = async ({ data, oper
     throw new Error('visibleRenderers contains an invalid value.')
   }
   return data
+}
+
+/**
+ * Validates the `type` field is always set to a valid value on create/update.
+ * Rejects explicit invalid values (legacy bad data should be fixed via afterRead hook).
+ */
+const validateLessonType: CollectionBeforeChangeHook = async ({ data, operation }) => {
+  if (operation !== 'create' && operation !== 'update') return data
+  if (!data) return data
+
+  const type = (data as { type?: string }).type
+  // Null/undefined will be filled by defaultValue — only reject explicitly bad values
+  if (type == null || (VALID_LESSON_TYPES as readonly string[]).includes(type)) {
+    return data
+  }
+
+  throw new Error(`Invalid lesson type "${type}". Must be one of: ${VALID_LESSON_TYPES.join(', ')}`)
 }
 
 export const Lessons: CollectionConfig = {
@@ -127,6 +146,7 @@ export const Lessons: CollectionConfig = {
         return data
       },
       validateVisibleRenderers,
+      validateLessonType,
     ],
     afterRead: [
       // Lazy backfill: when a lesson is read and its denormalized course field is
@@ -163,6 +183,35 @@ export const Lessons: CollectionConfig = {
           }
         } catch {
           // Silently skip — backfill is best-effort
+        }
+
+        return doc
+      },
+      // Fix legacy lessons with null/invalid type field. Persists the corrected
+      // value to DB so subsequent reads are fast (no repeated write attempts).
+      async ({ doc, req }) => {
+        if (!doc) return doc
+        const type = (doc as { type?: string }).type
+        if (type && (VALID_LESSON_TYPES as readonly string[]).includes(type)) {
+          return doc
+        }
+
+        // Fix invalid/missing type
+        ;(doc as { type: string }).type = DEFAULT_LESSON_TYPE
+
+        // Persist to DB if we have a user context (skip during build/seed)
+        if (req.user && doc.id) {
+          try {
+            await req.payload.update({
+              collection: 'lessons',
+              id: doc.id,
+              data: { type: DEFAULT_LESSON_TYPE } as never,
+              overrideAccess: true,
+              req,
+            })
+          } catch {
+            // Silently skip — best-effort fix for display purposes
+          }
         }
 
         return doc
