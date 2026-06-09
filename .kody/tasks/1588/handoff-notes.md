@@ -1,17 +1,19 @@
-# Merge Conflict Resolution for #1587
+# CI Fix for PR #1588
+
+## What was failing
+
+`pnpm format:check` step in the CI workflow was failing because `CHANGELOGOG.md` had Prettier formatting issues — specifically a malformed link (`([#2117\_(` instead of `([#2117](`)).
 
 ## What was done
 
-Resolved one conflicted file from `git merge origin/dev` into branch 1587:
+Ran `pnpm format -- CHANGELOGOG.md` which reformatted the file correctly. The issue was a typo in the changelog entry for PR #2113 where the link format was broken.
 
-- `.kody/reports/duty-review.md` — symmetric conflict between two cycles of the same rolling report
+## Verification
 
-## Conflict resolution
+- `pnpm format:check` now passes (no output from grep for CHANGELOGOG.md)
+- `mcp__kody-verify__verify` returned `ok: true` with all gates passing
 
-`.kody/reports/duty-review.md`:
-- HEAD side: Cycle 9 (older data, frozen dates from late May)
-- origin/dev side: Cycle 16 (newer data, updated cadences and verdicts)
-- Took origin/dev (Cycle 16) since it's the more recent state of the report
-- One duty is now healthy (`cleanup-branches`) which is new info vs Cycle 9
+## Notes
 
-No conflict markers remain in the file.
+- The malformed URL in the CHANGELOGOG.md was introduced by a previous commit on this branch
+- No other files were changed — the fix was minimal and targeted
