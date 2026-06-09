@@ -1,0 +1,17 @@
+{
+  "taskId": "2361",
+  "taskType": "bug",
+  "target": "2361-p1-lesson-type-field-is-blank-in-edit-form",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added defensive beforeChange and afterRead hooks to ensure type field is always valid",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/collections/Lessons.ts",
+    "tests/int/lesson-types.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/2361.jsonl",
+  "startedAt": "2026-06-03T09:21:00Z",
+  "finishedAt": "2026-06-03T09:49:30Z"
+}

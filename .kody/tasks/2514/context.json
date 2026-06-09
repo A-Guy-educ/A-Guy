@@ -4,11 +4,11 @@
   "target": "2514",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Resolved asymmetric conflict in .kody/reports/duty-review.md by taking origin/dev (Cycle 14, more current data)",
-  "prUrl": null,
+  "reason": "Resolved 2 conflicts in .kody/reports/ — both automated rolling reports resolved with origin/dev (newer cycle data)",
+  "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2514",
   "runUrl": null,
-  "filesTouched": [".kody/reports/duty-review.md"],
-  "sessionLog": ".kody/sessions/invalid",
+  "filesTouched": [".kody/reports/duty-review.md", ".kody/reports/health-check.md"],
+  "sessionLog": ".kody/sessions/vibe-1552-1778604025879-su3vdg.jsonl",
   "startedAt": "2026-06-09T00:00:00Z",
-  "finishedAt": "2026-06-09T00:00:00Z"
+  "finishedAt": "2026-06-09T00:01:00Z"
 }

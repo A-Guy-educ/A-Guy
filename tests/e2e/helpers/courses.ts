@@ -49,93 +49,12 @@ async function ensureDefaultTenant(payload: Payload): Promise<string> {
 }
 
 /**
- * Delete existing test data to avoid unique constraint violations
- * Uses depth: 0 to avoid populating relationships that may cause null reference errors
- */
-async function cleanupTestData(payload: Payload): Promise<void> {
-  // Delete in reverse order to avoid relationship issues: lessons → chapters → courses
-  // Use depth: 0 to avoid populating relationships during cleanup
-
-  // Find and delete test lessons
-  const lessons = await payload.find({
-    collection: 'lessons',
-    where: {
-      slug: {
-        like: 'test-lesson-',
-      },
-    },
-    limit: 100,
-    depth: 0,
-  })
-
-  for (const lesson of lessons.docs) {
-    try {
-      await payload.delete({
-        collection: 'lessons',
-        id: lesson.id,
-      })
-    } catch {
-      // Ignore errors - document may already be deleted
-    }
-  }
-
-  // Find and delete test chapters
-  const chapters = await payload.find({
-    collection: 'chapters',
-    where: {
-      slug: {
-        like: 'test-chapter-',
-      },
-    },
-    limit: 100,
-    depth: 0,
-  })
-
-  for (const chapter of chapters.docs) {
-    try {
-      await payload.delete({
-        collection: 'chapters',
-        id: chapter.id,
-      })
-    } catch {
-      // Ignore errors - document may already be deleted
-    }
-  }
-
-  // Delete test courses (by prefix)
-  const courses = await payload.find({
-    collection: 'courses',
-    where: {
-      slug: {
-        like: 'test-course-',
-      },
-    },
-    limit: 100,
-    depth: 0,
-  })
-
-  for (const course of courses.docs) {
-    try {
-      await payload.delete({
-        collection: 'courses',
-        id: course.id,
-      })
-    } catch {
-      // Ignore errors - document may already be deleted
-    }
-  }
-}
-
-/**
  * Seed test course data if it doesn't exist
  * Creates a test course with a chapter and lesson, all published and active
  */
 export async function seedTestCourseData(): Promise<TestCourseData | null> {
   try {
     const payload = await getPayload({ config })
-
-    // Clean up any existing test data first
-    await cleanupTestData(payload)
 
     logger.info('Seeding test course data...')
 
@@ -241,6 +160,23 @@ export async function seedTestCourseData(): Promise<TestCourseData | null> {
     const err = error instanceof Error ? error : new Error('Unknown error')
     logger.error({ err, message: err.message, stack: err.stack }, 'Error seeding test course data')
     return null
+  }
+}
+
+export async function cleanupTestCourseData(data: TestCourseData | null): Promise<void> {
+  if (!data) return
+
+  const payload = await getPayload({ config })
+  for (const item of [
+    { collection: 'lessons' as const, id: data.lessonId },
+    { collection: 'chapters' as const, id: data.chapterId },
+    { collection: 'courses' as const, id: data.courseId },
+  ]) {
+    try {
+      await payload.delete({ ...item, overrideAccess: true })
+    } catch {
+      // Ignore cleanup errors from already-removed fixtures.
+    }
   }
 }
 

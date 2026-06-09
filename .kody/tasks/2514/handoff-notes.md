@@ -1,3 +1,6 @@
-Resolved the single conflicted file from merging origin/dev into PR #2514:
+Resolved 2 conflicts in `.kody/reports/` — both automated rolling reports:
 
-`.kody/reports/duty-review.md` — duty status report. HEAD side had Cycle 12 data with stale/missing cadence info; origin/dev had Cycle 14 with more complete cadence values. Took the origin/dev side as it represents the more current system state snapshot.
+- **duty-review.md**: HEAD had Cycle 12 data, origin/dev had Cycle 16 (more current). Took origin/dev.
+- **health-check.md**: HEAD had 4 failed items including a stale #1563 entry; origin/dev had 2 failed items with updated hours. Took origin/dev.
+
+Both files are rolling automated reports — origin/dev always wins since it reflects the latest automated refresh.

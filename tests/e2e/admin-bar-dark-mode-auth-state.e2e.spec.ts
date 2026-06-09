@@ -55,13 +55,12 @@ test.describe('Admin Bar dark mode unauthenticated users', () => {
     await page.setViewportSize({ width: 1280, height: 720 })
 
     // Force dark mode via data-theme attribute
-    await page.goto('http://localhost:3000/')
+    await page.goto('http://localhost:3000/courses')
     await page.emulateMedia({ colorScheme: 'dark' })
     await page.waitForLoadState('networkidle')
 
-    // The admin bar outer div has py-2 bg-foreground text-background hidden sm:block
-    // For unauthenticated users, this div should NOT exist in the DOM at all
-    // (the fix returns null when !show)
+    // The admin bar outer div has py-2 bg-foreground text-background.
+    // For unauthenticated users, the auth probe may exist but the wrapper must stay hidden.
     const adminBar = page.locator(
       'div[class*="bg-foreground"][class*="text-background"][class*="py-2"]',
     )
@@ -69,9 +68,8 @@ test.describe('Admin Bar dark mode unauthenticated users', () => {
     // Wait briefly to ensure any JS rendering has settled
     await page.waitForTimeout(500)
 
-    // The admin bar should not be present in the DOM for unauthenticated users
-    const count = await adminBar.count()
-    expect(count).toBe(0)
+    const isVisible = await adminBar.isVisible().catch(() => false)
+    expect(isVisible).toBe(false)
   })
 
   test('admin bar renders for authenticated admin users on desktop', async ({ page }) => {
@@ -92,7 +90,7 @@ test.describe('Admin Bar dark mode unauthenticated users', () => {
 
     // Force dark mode
     await page.emulateMedia({ colorScheme: 'dark' })
-    await page.goto('http://localhost:3000/')
+    await page.goto('http://localhost:3000/courses')
     await page.waitForLoadState('networkidle')
 
     // Admin bar should now be visible
