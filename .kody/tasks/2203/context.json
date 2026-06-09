@@ -1,14 +1,14 @@
 {
   "taskId": "2203",
   "taskType": "pr",
-  "target": "gh-27177669337-1-1 / PR #2203",
+  "target": "gh-27179818974-1-1",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Missing PAYLOAD_SECRET env var in inspector.yml caused postinstall (payload generate:types) to throw",
+  "reason": "Removed conflicting pnpm version: 10 from ai-docs-refresh.yml; package.json already pins pnpm@10.33.0 via packageManager field, causing ERR_PNPM_BAD_PM_VERSION",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2203",
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27177255842",
-  "filesTouched": [".github/workflows/inspector.yml"],
-  "sessionLog": ".kody/sessions/52c540a5-c46d-42eb-9006-0f3a37a7c4d3.jsonl",
-  "startedAt": "2026-06-09T01:21:26Z",
-  "finishedAt": "2026-06-09T01:21:40Z"
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27178837550",
+  "filesTouched": [".github/workflows/ai-docs-refresh.yml"],
+  "sessionLog": ".kody/sessions/0c635250-56b9-460b-9fa5-09eb7eeb431b.jsonl",
+  "startedAt": "2026-06-09T02:24:21Z",
+  "finishedAt": "2026-06-09T02:24:40Z"
 }
