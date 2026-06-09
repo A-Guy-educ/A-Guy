@@ -1,0 +1,17 @@
+{
+  "taskId": "2575",
+  "taskType": "issue",
+  "target": "2575",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed useCurrentUser fetch with AbortController 15s timeout, added unit test, all gates green",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/client/hooks/useCurrentUser.ts",
+    "tests/unit/hooks/useCurrentUser-timeout.test.ts"
+  ],
+  "sessionLog": ".kody/sessions/instant-classify-2575-gh-27233708729-1-1.jsonl",
+  "startedAt": "2026-06-09T20:29:20Z",
+  "finishedAt": "2026-06-09T20:48:00Z"
+}
