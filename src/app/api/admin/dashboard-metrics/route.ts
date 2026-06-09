@@ -720,10 +720,9 @@ export async function GET(req: Request) {
     nonPendingCount += (row.succeededCount || 0) + (row.refundedCount || 0) + (row.failedCount || 0)
   }
 
-  const revenueTransactionCount = (paymentStatsResult as PaymentStatsRow[]).reduce(
-    (sum, row) => sum + (row.transactionCount || 0),
-    0,
-  )
+  // transactionCount reflects all transactions in the period (original behavior).
+  // Revenue aggregation uses Payment_stats as the authoritative source.
+  const revenueTransactionCount = allTransactions.length
   const successRate =
     nonPendingCount > 0 ? Math.round((succeededCount / nonPendingCount) * 1000) / 10 : 0
 

@@ -1,14 +1,16 @@
 {
   "taskId": "2346",
   "taskType": "pr",
-  "target": "2346",
+  "target": "https://github.com/A-Guy-educ/A-Guy/pull/2346",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Single asymmetric conflict in duty-review.md resolved by preserving origin/dev content (HEAD side was empty)",
-  "prUrl": null,
-  "runUrl": null,
-  "filesTouched": [".kody/reports/duty-review.md"],
+  "reason": "Fixed transactionCount regression: changed from payment_stats.transactionCount (only terminal states) back to allTransactions.length (all transactions), preserving payment_stats as revenue source per issue #2279",
+  "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2346",
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27177733857",
+  "filesTouched": [
+    "src/app/api/admin/dashboard-metrics/route.ts"
+  ],
   "sessionLog": null,
-  "startedAt": "2026-06-08T00:00:00Z",
-  "finishedAt": "2026-06-08T00:01:00Z"
+  "startedAt": "2026-06-09T01:37:38.608Z",
+  "finishedAt": "2026-06-09T02:00:00.000Z"
 }
