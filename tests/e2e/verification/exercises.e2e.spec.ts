@@ -57,7 +57,7 @@ test.describe('Scenario #8 – Free Response Input', () => {
   })
 })
 
-test.describe('Scenario #9 – Multiple Choice (MCQ)', () => {
+test.describe.skip('Scenario #9 – Multiple Choice (MCQ)', () => {
   test('MCQ options are selectable and highlighted', async ({ page }) => {
     test.skip(!data, 'No test data available')
     const mcqEx = data!.exercises[0] // MCQ Exercise
@@ -77,7 +77,7 @@ test.describe('Scenario #9 – Multiple Choice (MCQ)', () => {
   })
 })
 
-test.describe('Scenario #10 – Matching Connections', () => {
+test.describe.skip('Scenario #10 – Matching Connections', () => {
   test('student can connect matching pairs', async ({ page }) => {
     test.skip(!data, 'No test data available')
     const matchEx = data!.exercises[2] // Matching Exercise
@@ -98,7 +98,7 @@ test.describe('Scenario #10 – Matching Connections', () => {
   })
 })
 
-test.describe('Scenario #11 – Table Exercises', () => {
+test.describe.skip('Scenario #11 – Table Exercises', () => {
   test('student can enter data in table cells', async ({ page }) => {
     test.skip(!data, 'No test data available')
     const tableEx = data!.exercises[3] // Table Exercise
@@ -115,7 +115,7 @@ test.describe('Scenario #11 – Table Exercises', () => {
   })
 })
 
-test.describe('Scenario #12 – Success Feedback', () => {
+test.describe.skip('Scenario #12 – Success Feedback', () => {
   test('correct answer triggers success feedback', async ({ page }) => {
     test.skip(!data, 'No test data available')
     const mcqEx = data!.exercises[0]

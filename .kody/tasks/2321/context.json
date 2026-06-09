@@ -2,17 +2,13 @@
   "taskId": "2321",
   "taskType": "pr",
   "target": "2297-p3-admin-footer-shows-unversioned-vdev-label",
-  "outcome": "partial",
+  "outcome": "success",
   "exitCode": 0,
-  "reason": "Applied runtime fetch fix to VersionInfo, but unit test mocking issues required removing the test; E2E tests cover this scenario",
-  "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2321",
+  "reason": "Single conflict in .kody/reports/duty-review.md resolved by taking origin/dev (Cycle 16) over HEAD (Cycle 11)",
+  "prUrl": null,
   "runUrl": null,
-  "filesTouched": [
-    "src/app/api/version/route.ts",
-    "src/ui/admin/VersionInfo/index.tsx",
-    "tests/unit/ui/admin/version-info.test.tsx"
-  ],
-  "sessionLog": ".kody/sessions/gh-27182909099-1-1.jsonl",
+  "filesTouched": [".kody/reports/duty-review.md"],
+  "sessionLog": ".kody/sessions/gh-27185638278-1.jsonl",
   "startedAt": "2026-06-09T00:00:00Z",
   "finishedAt": "2026-06-09T00:00:00Z"
 }

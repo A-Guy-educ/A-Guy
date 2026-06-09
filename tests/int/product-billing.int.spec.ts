@@ -25,6 +25,10 @@ let adminUserId: string
 let studentUserId: string
 const createdProductIds: string[] = []
 const createdProductItemIds: string[] = []
+const createdLessonIds: string[] = []
+const createdChapterIds: string[] = []
+const createdCourseIds: string[] = []
+const createdCategoryIds: string[] = []
 
 // ---------------------------------------------------------------------------
 // Setup
@@ -87,6 +91,42 @@ afterEach(async () => {
     }
   }
   createdProductItemIds.length = 0
+
+  for (const id of createdLessonIds) {
+    try {
+      await payload.delete({ collection: 'lessons', id, overrideAccess: true })
+    } catch {
+      // Already deleted
+    }
+  }
+  createdLessonIds.length = 0
+
+  for (const id of createdChapterIds) {
+    try {
+      await payload.delete({ collection: 'chapters', id, overrideAccess: true })
+    } catch {
+      // Already deleted
+    }
+  }
+  createdChapterIds.length = 0
+
+  for (const id of createdCourseIds) {
+    try {
+      await payload.delete({ collection: 'courses', id, overrideAccess: true })
+    } catch {
+      // Already deleted
+    }
+  }
+  createdCourseIds.length = 0
+
+  for (const id of createdCategoryIds) {
+    try {
+      await payload.delete({ collection: 'categories', id, overrideAccess: true })
+    } catch {
+      // Already deleted
+    }
+  }
+  createdCategoryIds.length = 0
 })
 
 afterAll(async () => {
@@ -127,6 +167,67 @@ function trackProductItem(id: string) {
   createdProductItemIds.push(id)
 }
 
+async function createTestLesson(title: string) {
+  const timestamp = `${Date.now()}-${Math.random().toString(36).slice(2)}`
+
+  const category = await payload.create({
+    collection: 'categories',
+    data: {
+      title: `${title} Category`,
+      slug: `product-billing-category-${timestamp}`,
+    },
+    overrideAccess: true,
+  } as any)
+  createdCategoryIds.push(category.id)
+
+  const course = await payload.create({
+    collection: 'courses',
+    data: {
+      courseLabel: `PB-${timestamp.slice(-6)}`,
+      title: `${title} Course`,
+      slug: `product-billing-course-${timestamp}`,
+      categories: [category.id],
+      order: 1,
+      status: 'published',
+      isActive: true,
+    },
+    draft: true,
+    overrideAccess: true,
+  } as any)
+  createdCourseIds.push(course.id)
+
+  const chapter = await payload.create({
+    collection: 'chapters',
+    data: {
+      chapterLabel: '1',
+      title: `${title} Chapter`,
+      slug: `product-billing-chapter-${timestamp}`,
+      course: course.id,
+      order: 1,
+      status: 'published',
+      isActive: true,
+    },
+    draft: true,
+    overrideAccess: true,
+  } as any)
+  createdChapterIds.push(chapter.id)
+
+  const lesson = await payload.create({
+    collection: 'lessons',
+    data: {
+      title,
+      chapter: chapter.id,
+      order: 1,
+      status: 'published',
+    },
+    draft: true,
+    overrideAccess: true,
+  } as any)
+  createdLessonIds.push(lesson.id)
+
+  return lesson
+}
+
 // ---------------------------------------------------------------------------
 // ProductItems Tests
 // ---------------------------------------------------------------------------
@@ -140,22 +241,13 @@ describe.skipIf(!hasDatabaseUrl)('ProductItems Collection', () => {
     it('should create a lesson-type ProductItem', async () => {
       const admin = await getAdminUser()
 
-      // First create a lesson to reference
-      const existingLessons = await payload.find({
-        collection: 'lessons',
-        limit: 1,
-        overrideAccess: true,
-      })
-      const lessonId = existingLessons.docs[0]?.id
-      if (!lessonId) {
-        expect.fail('No lessons found in database')
-      }
+      const lesson = await createTestLesson('Product Item Lesson')
 
       const productItem = await payload.create({
         collection: 'product-items',
         data: {
           type: 'lesson',
-          lesson: lessonId,
+          lesson: lesson.id,
           isHighlighted: false,
         },
         user: admin as any,
@@ -826,17 +918,7 @@ describe.skipIf(!hasDatabaseUrl)('Products.items relationship', () => {
   it('queryProductBySlug should return lesson titles for items at depth 2', async () => {
     const admin = await getAdminUser()
 
-    // Find an existing lesson to reference
-    const existingLessons = await payload.find({
-      collection: 'lessons',
-      limit: 1,
-      overrideAccess: true,
-      depth: 1,
-    })
-    const lesson = existingLessons.docs[0]
-    if (!lesson) {
-      expect.fail('No lessons found in database')
-    }
+    const lesson = await createTestLesson('Lesson Title Depth Test Lesson')
 
     // Create a lesson-type ProductItem
     const lessonItem = await payload.create({
