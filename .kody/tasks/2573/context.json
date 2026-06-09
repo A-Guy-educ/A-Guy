@@ -1,0 +1,17 @@
+{
+  "taskId": "2573",
+  "taskType": "issue",
+  "target": "2573",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed Search component to initialize state from URL params via useSearchParams, preventing the useEffect from wiping the URL on mount when visiting /search?q=... directly",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/search/Component.tsx",
+    "tests/e2e/search-results-present.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/invalid.jsonl",
+  "startedAt": "2026-06-09T22:00:00Z",
+  "finishedAt": "2026-06-09T22:05:00Z"
+}
