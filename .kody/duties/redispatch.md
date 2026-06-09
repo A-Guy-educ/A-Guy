@@ -1,7 +1,7 @@
 ---
-disabled: false
-staff: kody
 every: 30m
+staff: kody
+disabled: true
 ---
 
 # redispatch

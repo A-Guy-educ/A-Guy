@@ -1,6 +1,7 @@
 ---
 every: manual
 staff: cto
+disabled: true
 ---
 
 # publish a release
