@@ -1,11 +1,18 @@
-# Merge Conflict Resolution for #1587
+# CI Fix Verification for #1587
 
 ## What was done
 
-Resolved a single conflicted file from `git merge origin/dev` into branch 1587:
+Verified the CI failure on PR #1588 (run 26930191668) — the `pnpm format:check` step was failing due to `CHANGELOGOG.md` containing a malformed URL (`[#2117\_(https://...)` instead of `[#2117](https://...)`).
 
-- `.kody/reports/duty-review.md` — symmetric conflict: both sides had the same table structure with different cycle data (Cycle 9 vs Cycle 14). Took origin/dev (Cycle 14) as the newer state.
+By the time of this check, the issue had already been resolved on the branch — the `CHANGELOGOG.md` file now contains the correctly formatted URL, and all quality gates (typecheck, lint, format:check) pass cleanly. No code changes were required.
 
-## Conflict resolution rationale
+## Root cause
 
-The duty-review.md is a rolling status report. HEAD had Cycle 9 data and origin/dev had Cycle 14 data — a later cycle number indicates more recent evaluation. Preferring the newer cycle is the correct resolution.
+The CI failure was a Prettier formatting error in CHANGELOGOG.md — not a logic bug. The file was already fixed by a prior commit on the branch.
+
+## Verification
+
+All gates pass:
+- `pnpm generate:types:check` + `tsc --noEmit` ✅
+- `pnpm lint` ✅
+- `pnpm format:check` ✅
