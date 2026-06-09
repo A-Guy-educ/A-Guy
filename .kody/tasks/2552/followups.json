@@ -1,0 +1,8 @@
+[
+  {
+    "title": "LessonBlocksField uses inline styles instead of design system tokens",
+    "body": "The LessonBlocksField component (src/ui/admin/LessonBlocksField/index.tsx) uses inline style={{}} objects for all styling instead of Tailwind classes with design system tokens. Should be migrated to use semantic tokens per the design system rules in design-system.md.",
+    "rationale": "Design system compliance — all interactive elements should use Tailwind + semantic design tokens, not inline styles.",
+    "priority": "low"
+  }
+]

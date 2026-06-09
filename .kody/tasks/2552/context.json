@@ -1,0 +1,18 @@
+{
+  "taskId": "2552",
+  "taskType": "issue",
+  "target": "2552",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added versions.drafts.autosave config to Lessons collection to enable autosave PATCH on block deletion",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/collections/Lessons.ts",
+    "src/payload-types.ts",
+    "tests/unit/collections/lessons-autosave-config.test.ts"
+  ],
+  "sessionLog": ".kody/sessions/gh-27200665539-1.jsonl",
+  "startedAt": "2026-06-09T10:43:50.533Z",
+  "finishedAt": "2026-06-09T10:52:00.000Z"
+}

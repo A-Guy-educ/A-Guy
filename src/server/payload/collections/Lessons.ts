@@ -223,6 +223,15 @@ export const Lessons: CollectionConfig = {
   // the variation pipeline (so users were getting instant 44-exercise clones
   // and thinking the AI flow was broken).
   disableDuplicate: true,
+  versions: {
+    drafts: {
+      autosave: {
+        interval: 100, // Match Posts/Pages for optimal live preview
+      },
+      schedulePublish: true,
+    },
+    maxPerDoc: 50,
+  },
   admin: {
     useAsTitle: 'title',
     listSearchableFields: ['chapter.course.courseLabel', 'chapter.course.title'],
