@@ -4,11 +4,11 @@
   "target": "PR #2500 / #2497-p3-admin-user-avatar-blocked-by-csp",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Resolved asymmetric conflict in csp-vercel-feedback-admin.int.spec.ts - took origin/dev's assertion and new test; HEAD's deletion of the expect was an incomplete refactor",
+  "reason": "resolved single conflicted file .kody/reports/duty-review.md — took origin/dev (Cycle 14) over PR's Cycle 12 for auto-generated duty report",
   "prUrl": null,
   "runUrl": null,
-  "filesTouched": ["tests/int/csp-vercel-feedback-admin.int.spec.ts"],
-  "sessionLog": ".kody/sessions/unknown.jsonl",
-  "startedAt": "2026-06-08T00:00:00.000Z",
-  "finishedAt": "2026-06-08T00:00:00.000Z"
+  "filesTouched": [".kody/reports/duty-review.md"],
+  "sessionLog": ".kody/runs/gh-27175373886-1/events.jsonl",
+  "startedAt": "2026-06-09T00:16:00Z",
+  "finishedAt": "2026-06-09T00:17:35Z"
 }
