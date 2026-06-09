@@ -175,7 +175,7 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
     const media = await payload.create({
       collection: 'media',
       data: {
-        filename: 'check-1-exe.pdf',
+        filename: `check-1-exe-${timestamp}.pdf`,
         mimeType: 'application/pdf',
         tenant: tenantId,
       } as any,
@@ -295,7 +295,7 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
       const otherMedia = await payload.create({
         collection: 'media',
         data: {
-          filename: 'other.pdf',
+          filename: `other-${Date.now()}.pdf`,
           mimeType: 'application/pdf',
           fileSize: 100,
           tenant: tenantId,
@@ -319,7 +319,7 @@ describe.skipIf(!hasDatabaseUrl)('V3 Conversion Pipeline', () => {
       const textMedia = await payload.create({
         collection: 'media',
         data: {
-          filename: 'test.txt',
+          filename: `test-${Date.now()}.txt`,
           mimeType: 'text/plain',
           fileSize: 100,
           tenant: tenantId,
