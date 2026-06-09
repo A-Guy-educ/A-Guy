@@ -1,16 +1,13 @@
 {
   "taskId": "2500",
   "taskType": "pr",
-  "target": "2497",
+  "target": "2497-p3-admin-user-avatar-blocked-by-csp",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Resolved both conflicted report files — took origin/dev for both duty-review.md (Cycle 16) and health-check.md",
+  "reason": "Resolved single conflicted file (.kody/reports/duty-review.md) — took origin/dev (Cycle 16, more recent) over HEAD (Cycle 12, stale).",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2500",
   "runUrl": null,
-  "filesTouched": [
-    ".kody/reports/duty-review.md",
-    ".kody/reports/health-check.md"
-  ],
+  "filesTouched": [".kody/reports/duty-review.md"],
   "sessionLog": ".kody/sessions/2500.jsonl",
   "startedAt": "2026-06-09T00:00:00Z",
   "finishedAt": "2026-06-09T00:00:00Z"
