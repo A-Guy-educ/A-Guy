@@ -1,0 +1,19 @@
+{
+  "taskId": "2576",
+  "taskType": "issue",
+  "target": "2576",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed lesson-duplications table relationship cells showing 'Loading...' by creating custom cell components that display cellData directly without making additional fetches",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/collections/LessonDuplications.ts",
+    "src/ui/admin/LessonDuplications/Cells/SourceLessonCell/index.tsx",
+    "src/ui/admin/LessonDuplications/Cells/OutputLessonCell/index.tsx",
+    "tests/unit/admin/lesson-duplications/relationship-cell.test.tsx"
+  ],
+  "sessionLog": ".kody/sessions/gh-27236093726-1-1.jsonl",
+  "startedAt": "2026-06-09T21:13:00Z",
+  "finishedAt": "2026-06-09T21:25:30Z"
+}
