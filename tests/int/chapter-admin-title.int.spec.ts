@@ -39,7 +39,7 @@ describe('Chapter adminTitle', () => {
   beforeAll(async () => {
     payload = await getPayload({ config })
     tenantId = await ensureDefaultTenant(payload)
-    timestamp = Date.now().toString().slice(0, 6)
+    timestamp = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
     // Create category (required for courses)
     const category = await payload.create({
@@ -102,6 +102,7 @@ describe('Chapter adminTitle', () => {
       collection: 'chapters',
       data: {
         title: 'Introduction',
+        slug: `introduction-${timestamp}-1`,
         chapterLabel: 'I',
         course: course1Id,
         order: 0,

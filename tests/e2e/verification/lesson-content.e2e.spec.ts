@@ -31,8 +31,9 @@ test.describe('Scenario #5 – Lesson Consumption', () => {
     await page.goto(data!.lessonUrl)
     await page.waitForLoadState('domcontentloaded')
 
-    const content = page.locator('main, [role="main"], section')
-    await expect(content.first()).toBeVisible({ timeout: 15_000 })
+    await expect(page.getByRole('heading', { name: 'Test Lesson' }).first()).toBeVisible({
+      timeout: 15_000,
+    })
   })
 })
 
