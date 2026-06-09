@@ -1,5 +1,1 @@
-Resolved merge conflict in `.kody/reports/duty-review.md`.
-
-HEAD (PR branch) had Cycle 9 data; origin/dev had Cycle 16 data (more recent). Took origin/dev version entirely as it's a rolling auto-generated report where newer cycles supersede older ones.
-
-No code, schema, or functional changes — only a static Kody duty report file.
+Resolved merge conflict in `.kody/reports/duty-review.md`. Single symmetric conflict — both sides updated the same rolling duty review table. HEAD had Cycle 9, origin/dev had Cycle 16. Took origin/dev since later cycles supersede earlier ones in this rolling report. No conflict markers remain. No code, schema, or functional changes.
