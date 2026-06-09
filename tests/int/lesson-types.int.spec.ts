@@ -176,6 +176,37 @@ describe('Lesson types', () => {
     expect(updated.type).toBe('exam')
   })
 
+  it('retrieves lesson type correctly by ID (admin edit form simulation)', async () => {
+    // Create a lesson with type='practice'
+    const lesson = await payload.create({
+      collection: 'lessons',
+      data: {
+        title: 'Practice Lesson For Edit',
+        chapter: chapterId,
+        type: 'practice',
+        order: 5,
+        status: 'published',
+        isActive: true,
+        tenant: tenantId,
+        locale: 'he',
+        accessType: 'inherit',
+        contentStatus: 'none',
+        contentStatusVisible: true,
+      },
+      draft: false,
+    })
+    lessonIds.push(lesson.id)
+
+    // Simulate what the admin edit form does: findByID to load the lesson
+    const retrieved = await payload.findByID({
+      collection: 'lessons',
+      id: lesson.id,
+    })
+
+    // The type field must be populated — blank in the edit form indicates a bug
+    expect(retrieved.type).toBe('practice')
+  })
+
   it('rejects invalid lesson types', async () => {
     await expect(
       payload.create({
