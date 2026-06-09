@@ -1,0 +1,14 @@
+[
+  {
+    "title": "E2E test could not run due to missing production build",
+    "body": "The new E2E test 'review screen does NOT render blank when duplicationId is invalid' could not be executed because the Next.js production build (.next/) was not available. Run 'pnpm build' and then re-run the E2E tests to verify the fix.",
+    "rationale": "The test was added but not validated against a running browser. The integration tests pass, suggesting the fix is sound, but full E2E validation is missing.",
+    "priority": "medium"
+  },
+  {
+    "title": "All admin pages using useParams() should normalize params.id",
+    "body": "Search for all pages/components that use useParams() and extract params.id directly as string. Every instance should normalize string[] and guard undefined: const rawId = params?.id; const id = Array.isArray(rawId) ? rawId[0] : rawId; if (!id) return <div>Invalid ID</div>. Only one useParams() call was found in the codebase (this page), but this pattern should be applied to any future admin pages.",
+    "rationale": "Next.js 15 Params type allows string | string[] | undefined for param values. Without normalization, any dynamic route page is potentially buggy.",
+    "priority": "low"
+  }
+]

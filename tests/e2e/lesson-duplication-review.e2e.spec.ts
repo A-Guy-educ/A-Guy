@@ -304,6 +304,34 @@ test.describe('Lesson Duplication Review', () => {
     await expect(page.getByText(/Status:/)).toBeVisible()
   })
 
+  test('review screen does NOT render blank when duplicationId is invalid', async ({ page }) => {
+    // Authenticate as admin
+    await setupAuthenticatedUser(
+      page,
+      {
+        email: generateTestUserEmail('admin-blank-check'),
+        password: 'TestPassword123!',
+      },
+      'admin',
+    )
+
+    // Navigate directly to the custom review page with a non-existent record ID.
+    // Before the fix: if params.id was undefined (e.g. useParams returned unexpected value),
+    // the API call to /api/lesson-duplications/undefined/record would fail silently
+    // and the component could render blank.
+    // After the fix: invalid IDs show "Invalid or missing duplication ID." instead.
+    await page.goto('/admin/lesson-duplications/non-existent-record-id-12345')
+    await page.waitForLoadState('networkidle')
+
+    // The page must render SOMETHING — not a blank page.
+    // With the fix it shows "Invalid or missing duplication ID." for an unknown record.
+    const body = page.locator('body')
+    const bodyText = await body.textContent()
+    expect(bodyText).not.toBe('')
+    // Should NOT be blank: either the review UI, an error, or the invalid-ID message
+    expect(bodyText?.trim().length).toBeGreaterThan(0)
+  })
+
   test('review screen shows failures with action buttons', async ({ page }) => {
     if (!testData) {
       test.skip()

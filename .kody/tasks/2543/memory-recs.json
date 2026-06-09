@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "useparams-returns-string-string-array-undefined",
+    "hook": "Next.js 15 useParams() returns string | string[] | undefined",
+    "body": "In Next.js 15, useParams() returns Params where Params = Record<string, ParamValue> and ParamValue = string | Array<string> | undefined. So params.id can be a string, string[], or undefined — never assume it's always a plain string. Always normalize: Array.isArray(rawId) ? rawId[0] : rawId, and guard for undefined.\n\n**Why:** params.id as string[] would break API URLs (e.g., fetch('/api/lesson-duplications/abc,def/record')), and undefined would hit /api/lesson-duplications/undefined/record causing 500/blank page.",
+    "why": "The lesson-duplications review screen at /admin/lesson-duplications/[id] was blank because params.id was assumed to be string but Next.js 15 Params type allows string | string[] | undefined. Without normalization, passing string[] to an API URL produces malformed paths.",
+    "confidence": 0.9
+  }
+]

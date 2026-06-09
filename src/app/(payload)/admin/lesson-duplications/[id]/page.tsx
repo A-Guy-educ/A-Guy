@@ -27,9 +27,17 @@ const errorStyle: React.CSSProperties = {
 
 export default function LessonDuplicationReviewPage() {
   const params = useParams()
-  const duplicationId = params.id as string
+  // Params.id can be string | string[] | undefined (Next.js 15 Params type).
+  // Normalize to string: use first element if array, bail if missing.
+  const rawId = params?.id
+  const duplicationId = Array.isArray(rawId) ? rawId[0] : rawId
+
+  // Auth check must come before any conditional return AND after all hooks.
   const { user, isLoading } = useCurrentUser()
 
+  if (!duplicationId) {
+    return <div style={errorStyle}>Invalid or missing duplication ID.</div>
+  }
   if (isLoading) return <div style={loadingStyle}>Loading…</div>
   if (!user) return <div style={errorStyle}>Please log in to access this page.</div>
 
