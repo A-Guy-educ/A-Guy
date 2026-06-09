@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "fetch-requests-in-hooks-need-timeouts",
+    "hook": "Fetch requests in useEffect hooks must have AbortController timeout",
+    "body": "Fetch requests in useEffect hooks (like useCurrentUser.fetchUser) can hang indefinitely if the server doesn't respond, causing isLoading to stay true forever and showing a loading spinner forever. Fix: Use AbortController with setTimeout to abort the request after a reasonable timeout (e.g., 30s).",
+    "why": "Issue #2571 manifested as /admin/chat stuck on 'Loading...' because the fetch to /api/users/me had no timeout. The same pattern was used in #2570 for RecentTransactionsWidget and MetricsProvider.",
+    "confidence": 0.95
+  }
+]

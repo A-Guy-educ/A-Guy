@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Add timeout UI feedback for admin chat page",
+    "body": "When the useCurrentUser fetch times out, the error is set to 'timeout' but the admin chat page at src/app/(payload)/admin/chat/page.tsx doesn't display the error state - it only checks isLoading and user. Consider adding error display when error.message === 'timeout' to show a user-friendly message like 'Failed to load. Please refresh the page.'",
+    "rationale": "The timeout error is now captured but not surfaced to the user - they would still see 'Loading...' if the user fetch times out",
+    "priority": "low"
+  }
+]

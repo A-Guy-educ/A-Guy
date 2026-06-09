@@ -18,11 +18,16 @@ export function useCurrentUser(): UseCurrentUserReturn {
   const fetchUser = useCallback(async () => {
     setIsLoading(true)
     setError(null)
+    const controller = new AbortController()
+    const TIMEOUT_MS = 30_000
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS)
     try {
       const response = await fetch('/api/users/me', {
         credentials: 'include',
         cache: 'no-store',
+        signal: controller.signal,
       })
+      clearTimeout(timeoutId)
       if (response.ok) {
         const data = await response.json()
         setUser(data.user || null)
@@ -30,9 +35,15 @@ export function useCurrentUser(): UseCurrentUserReturn {
         setUser(null)
       }
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch user'))
+      clearTimeout(timeoutId)
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError(new Error('timeout'))
+      } else {
+        setError(err instanceof Error ? err : new Error('Failed to fetch user'))
+      }
       setUser(null)
     } finally {
+      clearTimeout(timeoutId)
       setIsLoading(false)
     }
   }, [])

@@ -1,0 +1,17 @@
+{
+  "taskId": "2571",
+  "taskType": "issue",
+  "target": "2571",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed admin chat page stuck on Loading by adding 30s fetch timeout to useCurrentUser hook",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/client/hooks/useCurrentUser.ts",
+    "tests/unit/client/hooks/useCurrentUser-timeout.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/gh-27230739265-1-1.jsonl",
+  "startedAt": "2026-06-09T19:40:00Z",
+  "finishedAt": "2026-06-09T19:40:35Z"
+}
