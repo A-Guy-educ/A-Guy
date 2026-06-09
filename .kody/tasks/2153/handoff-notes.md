@@ -1,5 +1,3 @@
-Resolved a single asymmetric merge conflict in tests/unit/chat/use-notebook-chat-loading.spec.ts.
+Resolved merge conflict in .kody/reports/duty-review.md.
 
-The HEAD side (PR #2153) introduced a `startTime` variable in the first test that was never defined — it referenced `Date.now() - startTime` but `startTime` was never captured. The origin/dev side had correct assertions: `expect(mockGetConversation).toHaveBeenCalledOnce()` and `expect(setTimeoutSpy).not.toHaveBeenCalledWith(expect.any(Function), 100)`.
-
-Decision: took the origin/dev side. All 3 unit tests pass after resolution.
+Single symmetric conflict: both HEAD and origin/dev updated the same duty-review table with different cycles (Cycle 10 vs Cycle 16). Took the origin/dev side since it has newer cycle data and reflects the current state of duties after subsequent runs. No code changes, only a rolling report file.
