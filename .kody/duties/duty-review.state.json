@@ -1,16 +1,39 @@
 {
   "version": 1,
-  "rev": 60,
+  "rev": 61,
   "cursor": "reported",
   "data": {
     "cycle": 16,
-    "lastFiredAt": "2026-06-09T11:51:18.191Z",
+    "lastFiredAt": "2026-06-09T17:58:57.714Z",
     "lastOutcome": "completed",
-    "lastRunISO": "2026-06-09T11:48:54Z",
-    "nextEligibleISO": "2026-06-09T17:48:54Z",
+    "lastRunISO": "2026-06-09T17:58:34Z",
+    "nextEligibleISO": "2026-06-09T23:58:34Z",
     "reviewed": [
       "approval-gate",
-      "architecture-audit"
+      "architecture-audit",
+      "ceo-performance-review",
+      "cleanup-branches",
+      "clear-empty-goals",
+      "coverage-floor",
+      "dead-code-sweep",
+      "dependency-bump",
+      "design-review",
+      "dev-ci-health",
+      "docs-code",
+      "docs-readme",
+      "flaky-test-quarantine",
+      "health-check",
+      "job-gap-scan",
+      "pr-health-triage",
+      "publish-release",
+      "qa-sweep",
+      "qa-verify",
+      "qa",
+      "redispatch",
+      "security-audit",
+      "system-audit",
+      "task-memory-extractor",
+      "type-debt"
     ],
     "verdicts": {
       "approval-gate": {
@@ -114,7 +137,7 @@
         "verdict": "warn"
       }
     },
-    "lastDurationMs": 156823
+    "lastDurationMs": 111307
   },
   "done": false
 }
