@@ -1687,7 +1687,7 @@
 - #2247: docs-drift: Admin Components (#2115) ([#2337](https://github.com/A-Guy-educ/A-Guy/pull/2337)) — @kodyade[bot] · ✅ QA 2026-06-08
 - #2331: src/server/api/ — thin in-code documentation ([#2333](https://github.com/A-Guy-educ/A-Guy/pull/2333)) — @kodyade[bot] · ⚠️ QA 2026-06-09 (#2542)
 - #2291: [P1] Add autosave to LessonBlocksField delete operations ([#2307](https://github.com/A-Guy-educ/A-Guy/pull/2307)) — @kodyade[bot] · ⚠️ QA 2026-06-09 (#2548)
-- #2162: Doc gap: src/infra/utils/ — 6/27 modules carry @ai-summary ([#2164](https://github.com/A-Guy-educ/A-Guy/pull/2164)) — @kodyade[bot] · 🔄 QA (#2561)
+- #2162: Doc gap: src/infra/utils/ — 6/27 modules carry @ai-summary ([#2164](https://github.com/A-Guy-educ/A-Guy/pull/2164)) — @kodyade[bot] · ⚠️ QA 2026-06-09 (#2561)
 - chore(memory): Rescue orphaned knowledge from kody-memorize branches ([#1891](https://github.com/A-Guy-educ/A-Guy/pull/1891)) — @aguyaharonyair
 - #1563: feat: show app version in admin dashboard footer ([#1566](https://github.com/A-Guy-educ/A-Guy/pull/1566)) — @aguyaharonyair · ✅ QA 2026-06-09
 - fix(health-badge): Read 'version' field from /api/health response ([#2519](https://github.com/A-Guy-educ/A-Guy/pull/2519)) — @aguyshayb
