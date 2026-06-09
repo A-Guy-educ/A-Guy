@@ -1,0 +1,10 @@
+[
+  {
+    "type": "decision",
+    "name": "custom-admin-cell-for-relationship-fields",
+    "hook": "Custom admin cell for relationship fields — renders data directly without async fetch",
+    "body": "When a Payload admin list view shows 'Loading...' for relationship cells, the default RelationshipCell tries to async-fetch the related doc's useAsTitle field per row — which can fail silently. The fix is to add a custom Cell component on the field that renders directly from cellData/fieldData (populated by the list query's depth parameter).\n\nPattern used:\n```typescript\n// field in collection config\n{\n  name: 'sourceLesson',\n  type: 'relationship',\n  relationTo: 'lessons',\n  admin: {\n    components: {\n      Cell: '@/ui/admin/LessonDuplications/Cells/SourceLessonCell#SourceLessonCell',\n    },\n  },\n}\n```\n\nCell component receives cellData (the populated object) and fieldData (string ID) props — check both for backwards compat.",
+    "why": "The lesson-duplications list view at /admin/collections/lesson-duplications had sourceLesson and outputLesson cells stuck on 'Loading...'. The default RelationshipCell attempts async fetches per row that fail in this context. Custom cells bypass the async fetch entirely.",
+    "confidence": 0.9
+  }
+]

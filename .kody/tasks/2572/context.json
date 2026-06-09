@@ -1,0 +1,19 @@
+{
+  "taskId": "2572",
+  "taskType": "issue",
+  "target": "2572",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed relationship cells showing 'Loading...' in lesson-duplications admin list by adding custom SourceLessonCell and OutputLessonCell components that render directly from list query data.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/collections/LessonDuplications.ts",
+    "src/ui/admin/LessonDuplications/Cells/SourceLessonCell/index.tsx",
+    "src/ui/admin/LessonDuplications/Cells/OutputLessonCell/index.tsx",
+    "tests/int/lesson-duplications-list-relationship-cells.int.spec.ts"
+  ],
+  "sessionLog": null,
+  "startedAt": "2026-06-09T21:13:16Z",
+  "finishedAt": "2026-06-09T21:25:20Z"
+}
