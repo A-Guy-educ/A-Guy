@@ -1,9 +1,9 @@
 # Merge Conflict Resolution — #2493
 
-Resolved one conflict in `.kody/reports/duty-review.md`.
+Resolved two symmetric merge conflicts in auto-generated `.kody/reports/` files.
 
-**Conflict type:** Asymmetric — HEAD (PR branch) had older Cycle 12 data with missing cadences and mixed staff assignments; `origin/dev` had newer Cycle 14 data with all cadences filled and staff uniformly set to `cto`/`qa`.
+**duty-review.md**: HEAD had a "## Headline" banner + older Cycle 12 table; `origin/dev` had newer Cycle 16 table but no headline. Merged: kept HEAD's headline format, adopted `origin/dev`'s Cycle 16 table (more current data, normalized staff field to "staff").
 
-**Resolution:** Took `origin/dev` version. This is an automated duty-review report that gets regenerated; the dev branch had the more complete and current state.
+**health-check.md**: HEAD listed issue #1563 as failed + lower hour counts; `origin/dev` dropped #1563 (stale) with higher hour counts. Took `origin/dev`'s version — it represents the more recent refresh state.
 
-**Files touched:** `.kody/reports/duty-review.md` — conflict markers removed, content replaced with origin/dev version.
+No conflicts remain; files pass `pnpm format`.

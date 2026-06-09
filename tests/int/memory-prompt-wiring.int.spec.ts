@@ -14,6 +14,7 @@ import config from '@payload-config'
 import type { Payload, PayloadRequest } from 'payload'
 import { getPayload } from 'payload'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 // Skip tests if DATABASE_URL is not set
 const hasDatabaseUrl = !!process.env.DATABASE_URL
@@ -92,6 +93,10 @@ vi.mock('@/server/services/rate-limit', () => ({
 
 let payload: Payload
 const testUsers = new Map<string, string>() // email -> userId
+let testCategoryId: string | undefined
+let testCourseId: string | undefined
+let testChapterId: string | undefined
+let testLessonId: string | undefined
 let testExerciseId: string | undefined
 
 // Helper: Find system message
@@ -134,7 +139,8 @@ beforeAll(async () => {
   }
 
   vi.doMock('@/infra/llm/services/exercise-chat-service', () => ({
-    chatWithExerciseHelper: mockChatWithExerciseHelper,
+    chatWithExerciseHelper: (input: { composedPrompt?: ComposedPrompt; message: string }) =>
+      mockChatWithExerciseHelper(input),
   }))
 }, 60000)
 
@@ -191,77 +197,54 @@ beforeAll(async () => {
   payload = await getPayload({ config })
 
   // Create full hierarchy: category -> course -> chapter -> lesson -> exercise
-  // This is needed because agentChat resolves exerciseId -> lesson and
-  // fetchLessonContext calls payload.findByID on the lesson
-  const existingCategories = await payload.find({ collection: 'categories', limit: 1 })
-  let testCategoryId: string
-  if (existingCategories.docs.length > 0) {
-    testCategoryId = existingCategories.docs[0].id
-  } else {
-    const category = await payload.create({
-      collection: 'categories',
-      data: { title: 'Test Category', slug: `test-cat-mpw-${Date.now()}` } as any,
-    })
-    testCategoryId = category.id
-  }
+  // agentChat walks exercise -> lesson -> chapter -> course, so stale shared
+  // fixtures can break unrelated prompt wiring assertions.
+  const now = Date.now()
+  const category = await payload.create({
+    collection: 'categories',
+    data: { title: 'Memory Wiring Test Category', slug: `test-cat-mpw-${now}` } as any,
+  })
+  testCategoryId = category.id
 
-  const existingCourses = await payload.find({ collection: 'courses', limit: 1 })
-  let testCourseId: string
-  if (existingCourses.docs.length > 0) {
-    testCourseId = existingCourses.docs[0].id
-  } else {
-    const course = await payload.create({
-      collection: 'courses',
-      data: {
-        courseLabel: 'Test',
-        title: 'Memory Wiring Test Course',
-        slug: `test-course-mpw-${Date.now()}`,
-        order: 0,
-        status: 'published',
-        isActive: true,
-        categories: [testCategoryId],
-      } as any,
-    })
-    testCourseId = course.id
-  }
+  const course = await payload.create({
+    collection: 'courses',
+    data: {
+      courseLabel: 'Test',
+      title: 'Memory Wiring Test Course',
+      slug: `test-course-mpw-${now}`,
+      order: 0,
+      status: 'published',
+      isActive: true,
+      categories: [testCategoryId],
+    } as any,
+  })
+  testCourseId = course.id
 
-  const existingChapters = await payload.find({ collection: 'chapters', limit: 1 })
-  let testChapterId: string
-  if (existingChapters.docs.length > 0) {
-    testChapterId = existingChapters.docs[0].id
-  } else {
-    const chapter = await payload.create({
-      collection: 'chapters',
-      data: {
-        course: testCourseId,
-        title: 'Memory Wiring Test Chapter',
-        slug: `test-chapter-mpw-${Date.now()}`,
-        order: 0,
-        status: 'published',
-        isActive: true,
-      } as any,
-    })
-    testChapterId = chapter.id
-  }
+  const chapter = await payload.create({
+    collection: 'chapters',
+    data: {
+      course: testCourseId,
+      title: 'Memory Wiring Test Chapter',
+      slug: `test-chapter-mpw-${now}`,
+      order: 0,
+      status: 'published',
+      isActive: true,
+    } as any,
+  })
+  testChapterId = chapter.id
 
-  const existingLessons = await payload.find({ collection: 'lessons', limit: 1 })
-  let testLessonId: string
-  if (existingLessons.docs.length > 0) {
-    testLessonId = existingLessons.docs[0].id
-  } else {
-    const lesson = await payload.create({
-      collection: 'lessons',
-      data: {
-        chapter: testChapterId,
-        title: 'Memory Wiring Test Lesson',
-        slug: `test-lesson-mpw-${Date.now()}`,
-        order: 0,
-        status: 'published',
-        isActive: true,
-      } as any,
-    })
-    testLessonId = lesson.id
-  }
+  const lesson = await payload.create({
+    collection: 'lessons',
+    data: {
+      chapter: testChapterId,
+      title: 'Memory Wiring Test Lesson',
+      slug: `test-lesson-mpw-${now}`,
+      order: 0,
+      status: 'published',
+      isActive: true,
+    } as any,
+  })
+  testLessonId = lesson.id
 
   // Always create our own exercise with a guaranteed-valid lesson reference
   // (existing exercises may reference lessons that no longer exist)
@@ -269,7 +252,7 @@ beforeAll(async () => {
     collection: 'exercises',
     data: {
       title: 'Memory Wiring Test Exercise',
-      slug: `test-exercise-mpw-${Date.now()}`,
+      slug: `test-exercise-mpw-${now}`,
       lesson: testLessonId,
       order: 0,
       _status: 'published',
@@ -312,6 +295,22 @@ afterAll(async () => {
   // Delete test users
   for (const userId of testUsers.values()) {
     await payload.delete({ collection: 'users', id: userId }).catch(() => {})
+  }
+
+  if (testExerciseId) {
+    await payload.delete({ collection: 'exercises', id: testExerciseId }).catch(() => {})
+  }
+  if (testLessonId) {
+    await payload.delete({ collection: 'lessons', id: testLessonId }).catch(() => {})
+  }
+  if (testChapterId) {
+    await payload.delete({ collection: 'chapters', id: testChapterId }).catch(() => {})
+  }
+  if (testCourseId) {
+    await payload.delete({ collection: 'courses', id: testCourseId }).catch(() => {})
+  }
+  if (testCategoryId) {
+    await payload.delete({ collection: 'categories', id: testCategoryId }).catch(() => {})
   }
 
   // Close DB connection to prevent connection leaks

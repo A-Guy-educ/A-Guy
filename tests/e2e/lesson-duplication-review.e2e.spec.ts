@@ -15,15 +15,115 @@ import { getPayload, type Payload } from 'payload'
 import config from '@payload-config'
 import { cleanupTestUsers, generateTestUserEmail, setupAuthenticatedUser } from './helpers/auth'
 
+async function ensureDefaultTenant(payload: Payload): Promise<string> {
+  const existing = await payload.find({
+    collection: 'tenants',
+    where: { slug: { equals: 'default' } },
+    limit: 1,
+    overrideAccess: true,
+  })
+
+  if (existing.docs[0]) return existing.docs[0].id
+
+  const tenant = await payload.create({
+    collection: 'tenants',
+    data: { name: 'Default', slug: 'default', status: 'active' },
+    overrideAccess: true,
+  })
+
+  return tenant.id
+}
+
+async function createLessonHierarchy(payload: Payload) {
+  const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  const tenant = await ensureDefaultTenant(payload)
+  const category = await payload.create({
+    collection: 'categories',
+    data: {
+      title: `Duplication Review Category ${suffix}`,
+      slug: `dup-review-category-${suffix}`,
+      locale: 'he',
+    },
+    overrideAccess: true,
+  })
+  const course = await payload.create({
+    collection: 'courses',
+    data: {
+      courseLabel: `DUP-${suffix}`,
+      title: `Duplication Review Course ${suffix}`,
+      slug: `dup-review-course-${suffix}`,
+      description: 'Course fixture for lesson duplication review E2E tests',
+      locale: 'he',
+      status: 'published',
+      isActive: true,
+      order: 0,
+      categories: [category.id],
+      tenant,
+      pageAccessType: 'free',
+      accessType: 'free',
+      contentStatus: 'none',
+      contentStatusVisible: true,
+    },
+    overrideAccess: true,
+  })
+  const chapter = await payload.create({
+    collection: 'chapters',
+    data: {
+      course: course.id,
+      chapterLabel: '1',
+      slug: `dup-review-chapter-${suffix}`,
+      title: `Duplication Review Chapter ${suffix}`,
+      status: 'published',
+      isActive: true,
+      order: 0,
+      tenant,
+      locale: 'he',
+    },
+    overrideAccess: true,
+  })
+
+  return { categoryId: category.id, courseId: course.id, chapterId: chapter.id, tenant }
+}
+
 // Create a needs_review duplication record via local API for testing
-async function createNeedsReviewRecord(payload: Payload, sourceLessonId: string) {
+async function createNeedsReviewRecord(payload: Payload) {
+  const hierarchy = await createLessonHierarchy(payload)
+  const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  const sourceLesson = await payload.create({
+    collection: 'lessons',
+    data: {
+      chapter: hierarchy.chapterId,
+      slug: `dup-review-source-lesson-${suffix}`,
+      title: 'Test Source Lesson',
+      type: 'practice',
+      status: 'published',
+      isActive: true,
+      order: 0,
+      tenant: hierarchy.tenant,
+      locale: 'he',
+      accessType: 'inherit',
+      contentStatus: 'none',
+      contentStatusVisible: true,
+    },
+    overrideAccess: true,
+  })
+
   // Create output lesson
   const outputLesson = await payload.create({
     collection: 'lessons',
     data: {
+      chapter: hierarchy.chapterId,
+      slug: `dup-review-output-lesson-${suffix}`,
       title: 'Test Output Lesson',
       type: 'practice',
       status: 'draft',
+      isActive: true,
+      order: 1,
+      tenant: hierarchy.tenant,
+      locale: 'he',
+      accessType: 'inherit',
+      contentStatus: 'none',
+      contentStatusVisible: true,
     },
     draft: true,
     overrideAccess: true,
@@ -32,7 +132,7 @@ async function createNeedsReviewRecord(payload: Payload, sourceLessonId: string)
   // Create source exercise
   const sourceExercise = await payload.create({
     collection: 'exercises',
-    data: { title: 'Test Exercise', lesson: sourceLessonId },
+    data: { title: 'Test Exercise', lesson: sourceLesson.id },
     draft: true,
     overrideAccess: true,
   })
@@ -53,7 +153,7 @@ async function createNeedsReviewRecord(payload: Payload, sourceLessonId: string)
   const record = await payload.create({
     collection: 'lesson-duplications',
     data: {
-      sourceLesson: sourceLessonId,
+      sourceLesson: sourceLesson.id,
       level: 'medium',
       status: 'needs_review',
       outputLesson: outputLesson.id,
@@ -80,9 +180,13 @@ async function createNeedsReviewRecord(payload: Payload, sourceLessonId: string)
 
   return {
     recordId: record.id,
+    sourceLessonId: sourceLesson.id,
     outputLessonId: outputLesson.id,
     outputExerciseId: outputExercise.id,
     sourceExerciseId: sourceExercise.id,
+    chapterId: hierarchy.chapterId,
+    courseId: hierarchy.courseId,
+    categoryId: hierarchy.categoryId,
   }
 }
 
@@ -119,38 +223,54 @@ async function cleanupTestData(
       overrideAccess: true,
     })
     .catch(() => {})
+  await payload
+    .delete({
+      collection: 'lessons',
+      id: data.sourceLessonId,
+      overrideAccess: true,
+    })
+    .catch(() => {})
+  await payload
+    .delete({
+      collection: 'chapters',
+      id: data.chapterId,
+      overrideAccess: true,
+    })
+    .catch(() => {})
+  await payload
+    .delete({
+      collection: 'courses',
+      id: data.courseId,
+      overrideAccess: true,
+    })
+    .catch(() => {})
+  await payload
+    .delete({
+      collection: 'categories',
+      id: data.categoryId,
+      overrideAccess: true,
+    })
+    .catch(() => {})
 }
 
 test.describe('Lesson Duplication Review', () => {
   // Store test data for cleanup
   let testData: Awaited<ReturnType<typeof createNeedsReviewRecord>> | null = null
 
-  test.beforeAll(async () => {
-    // Create test data before any test runs
+  test.beforeEach(async () => {
     const payload = await getPayload({ config })
-
-    // Find or create a lesson to use as source
-    const lessons = await payload.find({
-      collection: 'lessons',
-      limit: 1,
-      depth: 0,
-      overrideAccess: true,
-    })
-
-    if (lessons.docs.length === 0) {
-      test.skip(true, 'No lessons available for testing')
-      return
-    }
-
-    const sourceLessonId = lessons.docs[0].id
-    testData = await createNeedsReviewRecord(payload, sourceLessonId)
+    testData = await createNeedsReviewRecord(payload)
   })
 
-  test.afterAll(async () => {
+  test.afterEach(async () => {
     if (testData) {
       const payload = await getPayload({ config })
       await cleanupTestData(payload, testData)
+      testData = null
     }
+  })
+
+  test.afterAll(async () => {
     await cleanupTestUsers()
   })
 
@@ -205,12 +325,12 @@ test.describe('Lesson Duplication Review', () => {
     await page.waitForLoadState('networkidle')
 
     // Should show the failure code
-    await expect(page.getByText('MISSING_QUESTION')).toBeVisible()
+    await expect(page.getByText('MISSING_QUESTION', { exact: true })).toBeVisible()
 
     // Should show the action buttons
-    await expect(page.getByRole('button', { name: 'Skip' })).toBeVisible()
-    await expect(page.getByRole('button', { name: /Regenerate/ })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Keep' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Skip', exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Regenerate', exact: true })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Keep', exact: true })).toBeVisible()
 
     // Should show sticky summary bar with failure count
     await expect(page.getByText(/failure.*remaining/)).toBeVisible()
@@ -237,7 +357,7 @@ test.describe('Lesson Duplication Review', () => {
     await page.waitForLoadState('networkidle')
 
     // Click the Skip button
-    await page.getByRole('button', { name: 'Skip' }).click()
+    await page.getByRole('button', { name: 'Skip', exact: true }).click()
 
     // Should show Apply Actions button
     await expect(page.getByRole('button', { name: 'Apply Actions' })).toBeVisible()
@@ -267,7 +387,7 @@ test.describe('Lesson Duplication Review', () => {
     await page.waitForLoadState('networkidle')
 
     // Click the Keep button
-    await page.getByRole('button', { name: 'Keep' }).click()
+    await page.getByRole('button', { name: 'Keep', exact: true }).click()
 
     // Click Apply Actions
     await page.getByRole('button', { name: 'Apply Actions' }).click()

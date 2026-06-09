@@ -8,7 +8,7 @@
 'use client'
 
 import { SYSTEM_EVENTS, systemEventBus } from '@/infra/system-events'
-import { createContext, useContext, useEffect, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { GA4Scripts } from '../adapters/ga4/scripts'
 import { MixpanelScripts } from '../adapters/mixpanel/scripts'
 import { UserIdentificationTracker } from '../components/UserIdentificationTracker'
@@ -39,6 +39,8 @@ interface AnalyticsProviderProps {
  * Handles script loading and initialization
  */
 export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
+  const [initialized, setInitialized] = useState(false)
+
   // Single initialization effect — runs once on mount, before child effects
   useEffect(() => {
     // Initialize capture array BEFORE subscriber fires any events.
@@ -62,6 +64,8 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
       sessionStorage.setItem(sessionStartedKey, 'true')
     }
 
+    setInitialized(true)
+
     return () => {
       // Clean up test exposure on unmount
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -82,7 +86,7 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
       <UserIdentificationTracker />
 
       {/* Track page views, session duration, and page abandonment */}
-      <AnalyticsHooks />
+      {initialized ? <AnalyticsHooks /> : null}
 
       {/* Render children */}
       {children}
