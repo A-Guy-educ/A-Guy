@@ -1,0 +1,17 @@
+{
+  "taskId": "2563",
+  "taskType": "issue",
+  "target": "2563",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed HTTP 500 in admin chat by wrapping generateChatCompletionWithTools call in try-catch with graceful fallback to regular chat path",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/server/payload/endpoints/agent/chat.ts",
+    "tests/int/admin-chat-500.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/gh-27211150093-1.jsonl",
+  "startedAt": "2026-06-09T14:05:00Z",
+  "finishedAt": "2026-06-09T14:26:00Z"
+}

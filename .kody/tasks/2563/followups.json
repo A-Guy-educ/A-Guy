@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Add admin chat integration test with real MCP mock for the tool-calling path",
+    "body": "The test file tests/int/admin-chat-500.int.spec.ts mocks generateChatCompletionWithTools to throw. A complementary test should mock it to return a successful tool-call result to verify the tool-calling path works end-to-end. This ensures the full MCP tool-calling flow (listTools → generateChatCompletionWithTools → persist response) is tested.",
+    "rationale": "The current test only covers the fallback path (when tool-calling fails). The happy path of tool-calling succeeding is not tested.",
+    "priority": "low"
+  },
+  {
+    "title": "Consider adding try-catch to toolExecutor in handleAdminModeChat",
+    "body": "The toolExecutor callback in generateChatCompletionWithTools (line 431-443) already has a try-catch, but if the error thrown inside it (e.g., from mcpClient.callTool) propagates up through the genkit retry logic, it might not be caught by the outer try-catch. Verify that tool execution failures are handled gracefully.",
+    "rationale": "Individual tool failures are caught and return an error string, but an unhandled exception in the executor could still bubble up as 500.",
+    "priority": "low"
+  }
+]

@@ -1,0 +1,18 @@
+[
+  {
+    "type": "lesson",
+    "name": "llm-call-failure-needs-try-catch",
+    "hook": "LLM tool-calling path needs try-catch with fallback",
+    "body": "When the tool-calling path (generateChatCompletionWithTools) fails (API error, model not found, quota exceeded), it throws unhandled and becomes HTTP 500. The regular chat path (chatWithExerciseHelper) already handles this with an `if (!result.success)` check. The fix: wrap the tool-calling block in try-catch and fall through to the existing fallback path.\n\nWhy: Any LLM API call can fail transiently. The code must not surface these as 500s when a graceful response (or fallback) is possible.\n\nHow to apply: In handleAdminModeChat (chat.ts lines 413-485), any `provider.generateChatCompletionWithTools` call needs a surrounding try-catch that falls through to the regular chat fallback.",
+    "why": "This bug appeared as HTTP 500 on admin chat submit when the MCP plugin returned tools AND the LLM provider was unavailable or misconfigured. The same pattern would affect any tool-calling LLM call.",
+    "confidence": 0.95
+  },
+  {
+    "type": "lesson",
+    "name": "admin-chat-has-two-llm-paths",
+    "hook": "Admin chat has tool-calling and fallback LLM paths",
+    "body": "handleAdminModeChat has two distinct LLM paths: (1) tool-calling path using generateChatCompletionWithTools when tools.length > 0, and (2) fallback path using chatWithExerciseHelper. The fallback already handles errors correctly; the tool-calling path did not.\n\nWhy: Both paths can fail, but only the fallback was protected. When MCP tools are returned, the tool-calling path was taken without error handling.\n\nHow to apply: When adding new LLM call paths in admin chat, both must handle failures gracefully.",
+    "why": "Without understanding the two-path architecture, a future developer might add a third path or modify one path without checking the other.",
+    "confidence": 0.9
+  }
+]

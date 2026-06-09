@@ -414,74 +414,83 @@ Examples of when to answer directly (NO tools needed):
   if (tools.length > 0) {
     reqLogger.info({ toolCount: tools.length }, 'Using tool calling for admin chat')
 
-    // Get provider from factory (respects LLM_PROVIDER env var)
-    // Use detectBestProvider to get the actual provider type based on availability
-    const providerType = await detectBestProvider(req.payload)
-    const provider = await getLLMProvider(req.payload)
-    const modelConfig = await getProviderModelConfig(providerType, 'EXERCISE_CHAT')
-
-    const modelCallStart = Date.now()
-    const result = await provider.generateChatCompletionWithTools(
-      {
-        system: systemPrompt,
-        messages,
-        model: modelConfig,
-        acknowledgment: validated.acknowledgment || 'Understood.',
-        tools,
-        toolExecutor: async (toolName: string, args: Record<string, unknown>) => {
-          reqLogger.debug({ toolName, args }, 'Executing MCP tool')
-          try {
-            const toolResult = await mcpClient.callTool(toolName, args, authHeaders)
-            const content = toolResult.content
-            if (Array.isArray(content)) {
-              return content.map((c) => (c as { text?: string }).text).join('\n')
-            }
-            return JSON.stringify(content)
-          } catch (error) {
-            reqLogger.error({ err: error, toolName, args }, 'Tool execution failed')
-            return `Error executing ${toolName}: ${error instanceof Error ? error.message : 'Unknown error'}`
-          }
-        },
-      },
-      req.payload,
-    )
-    const modelLatencyMs = Date.now() - modelCallStart
-
-    reqLogger.info(
-      { modelLatencyMs, toolCalls: result.toolCalls?.length },
-      'Admin chat with tool calling completed',
-    )
-
-    // Persist assistant response
-    const assistantMessage = {
-      role: 'assistant' as const,
-      content: result.text || '',
-      timestamp: new Date().toISOString(),
-    }
-
-    const updatedMessages = [...trimMessagesForUpdate(allMessages), assistantMessage]
-
     try {
-      await req.payload.update({
-        collection: 'conversations',
-        id: conversationId,
-        data: {
-          messages: updatedMessages,
-          lastMessageAt: new Date().toISOString(),
-        },
-        user: req.user,
-        overrideAccess: false,
-      })
-    } catch (updateError) {
-      reqLogger.warn({ err: updateError, conversationId }, 'Failed to persist admin response')
-    }
+      // Get provider from factory (respects LLM_PROVIDER env var)
+      // Use detectBestProvider to get the actual provider type based on availability
+      const providerType = await detectBestProvider(req.payload)
+      const provider = await getLLMProvider(req.payload)
+      const modelConfig = await getProviderModelConfig(providerType, 'EXERCISE_CHAT')
 
-    return Response.json({
-      success: true,
-      message: result.text,
-      conversationId,
-      contextKey,
-    })
+      const modelCallStart = Date.now()
+      const result = await provider.generateChatCompletionWithTools(
+        {
+          system: systemPrompt,
+          messages,
+          model: modelConfig,
+          acknowledgment: validated.acknowledgment || 'Understood.',
+          tools,
+          toolExecutor: async (toolName: string, args: Record<string, unknown>) => {
+            reqLogger.debug({ toolName, args }, 'Executing MCP tool')
+            try {
+              const toolResult = await mcpClient.callTool(toolName, args, authHeaders)
+              const content = toolResult.content
+              if (Array.isArray(content)) {
+                return content.map((c) => (c as { text?: string }).text).join('\n')
+              }
+              return JSON.stringify(content)
+            } catch (error) {
+              reqLogger.error({ err: error, toolName, args }, 'Tool execution failed')
+              return `Error executing ${toolName}: ${error instanceof Error ? error.message : 'Unknown error'}`
+            }
+          },
+        },
+        req.payload,
+      )
+      const modelLatencyMs = Date.now() - modelCallStart
+
+      reqLogger.info(
+        { modelLatencyMs, toolCalls: result.toolCalls?.length },
+        'Admin chat with tool calling completed',
+      )
+
+      // Persist assistant response
+      const assistantMessage = {
+        role: 'assistant' as const,
+        content: result.text || '',
+        timestamp: new Date().toISOString(),
+      }
+
+      const updatedMessages = [...trimMessagesForUpdate(allMessages), assistantMessage]
+
+      try {
+        await req.payload.update({
+          collection: 'conversations',
+          id: conversationId,
+          data: {
+            messages: updatedMessages,
+            lastMessageAt: new Date().toISOString(),
+          },
+          user: req.user,
+          overrideAccess: false,
+        })
+      } catch (updateError) {
+        reqLogger.warn({ err: updateError, conversationId }, 'Failed to persist admin response')
+      }
+
+      return Response.json({
+        success: true,
+        message: result.text,
+        conversationId,
+        contextKey,
+      })
+    } catch (llmError) {
+      // LLM call failed (API error, model not found, timeout, etc.)
+      // Fall through to the fallback path below for graceful degradation
+      reqLogger.error(
+        { err: llmError },
+        'Tool-calling LLM call failed, falling back to regular chat',
+      )
+    }
   }
 
   // Fallback: No tools available, use regular chat.
