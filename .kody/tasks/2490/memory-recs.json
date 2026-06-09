@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "type": "lesson",
+    "name": "csp-wildcard-subdomains-vs-exact",
+    "hook": "CSP wildcard subdomains don't match exact subdomains — add both",
+    "body": "In Content Security Policy, `*.example.com` (wildcard subdomain) does NOT match `www.example.com` (specific subdomain). They are distinct entries in the source list. Gravatar avatars are loaded from `www.gravatar.com`, so both `*.gravatar.com` AND `www.gravatar.com` must be in img-src for admin routes.\n\nFix: Add both the wildcard and the specific subdomain to img-src — e.g. `*.gravatar.com www.gravatar.com`.",
+    "why": "The admin CSP had `*.gravatar.com` but test expected `www.gravatar.com`. The wildcard only matches subdomains like `anything.gravatar.com`, not `www` exactly.",
+    "confidence": 0.95
+  }
+]
