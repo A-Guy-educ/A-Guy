@@ -1,0 +1,9 @@
+[
+  {
+    "type": "lesson",
+    "name": "fetch-requests-in-hooks-need-timeouts",
+    "hook": "Fetch hooks without timeouts can hang forever",
+    "body": "Any useEffect hook that makes a fetch request can hang indefinitely if the server doesn't respond. This causes isLoading to stay true forever. Fix: Use AbortController with a setTimeout to abort the request after a reasonable timeout (e.g., 15s). This is already documented in memory but the useCurrentUser hook was missing it.\n\n**Why:** Bug #2579 manifested as the /admin/chat page showing 'Loading...' forever because useCurrentUser's fetch to /api/users/me had no timeout.",
+    "confidence": 0.95
+  }
+]
