@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "rev": 393,
-  "cursor": "redispatch-2026-06-09T02:25:10Z",
+  "rev": 394,
+  "cursor": "redispatch-2026-06-09T03:59:21Z",
   "data": {
     "dryRunLog": [
       {
@@ -74,25 +74,25 @@
         "issueNumber": 2138,
         "action": "resume",
         "reason": "core.status=running, history age >40min (2026-05-27T11:31:24.959Z), no blockers",
-        "plannedAt": "2026-06-09T02:25:10Z"
+        "plannedAt": "2026-06-09T03:59:21Z"
       },
       {
         "issueNumber": 2130,
         "action": "resume",
         "reason": "core.status=running, history age >40min (2026-05-27T07:50:53.680Z), no blockers",
-        "plannedAt": "2026-06-09T02:25:10Z"
+        "plannedAt": "2026-06-09T03:59:21Z"
       },
       {
         "issueNumber": 1536,
         "action": "resume",
         "reason": "core.status=running, history age >40min (2026-05-12T08:13:21.749Z), no blockers",
-        "plannedAt": "2026-06-09T02:25:10Z"
+        "plannedAt": "2026-06-09T03:59:21Z"
       }
     ],
-    "perIssue": {},
-    "lastFiredAt": "2026-06-09T02:26:24.972Z",
+    "lastFiredAt": "2026-06-09T04:00:27.363Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 84067
+    "lastDurationMs": 71345,
+    "perIssue": {}
   },
   "done": false
 }
