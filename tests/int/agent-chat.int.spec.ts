@@ -95,7 +95,10 @@ vi.mock('@/server/services/rate-limit', () => ({
 let payload: Payload
 let testUserId: string
 let testExerciseId: string | undefined
+let testLessonId: string | undefined
 let testChapterId: string
+let testCourseId: string
+let testCategoryId: string
 let testPromptId: string
 let testSystemPromptId: string | undefined
 
@@ -113,12 +116,15 @@ beforeAll(
     })
     testUserId = user.id
 
+    const timestamp = Date.now()
+
     // Create a category first (required by courses)
     const category = await payload.create({
       collection: 'categories',
-      data: { title: 'Test Category', slug: `test-category-${Date.now()}` },
+      data: { title: 'Test Category', slug: `test-category-${timestamp}` },
       user: { id: testUserId },
     } as any)
+    testCategoryId = category.id
 
     // Create test course with all required fields
     const course = await payload.create({
@@ -126,7 +132,7 @@ beforeAll(
       data: {
         courseLabel: 'TST',
         title: 'Test Course',
-        slug: `test-course-${Date.now()}`,
+        slug: `test-course-${timestamp}`,
         categories: [category.id],
         order: 1,
         status: 'published',
@@ -134,6 +140,7 @@ beforeAll(
       },
       draft: true,
     } as any)
+    testCourseId = course.id
 
     // Create test chapter with all required fields
     const chapter = await payload.create({
@@ -141,7 +148,7 @@ beforeAll(
       data: {
         chapterLabel: '1',
         title: 'Test Chapter',
-        slug: `test-chapter-${Date.now()}`,
+        slug: `test-chapter-${timestamp}`,
         course: course.id,
         order: 1,
         status: 'published',
@@ -180,37 +187,27 @@ beforeAll(
     } as any)
     testSystemPromptId = systemPrompt.id
 
-    // Reuse an existing exercise if available; otherwise create a minimal one.
-    const existingExercises = await payload.find({
+    const lesson = await payload.create({
+      collection: 'lessons',
+      data: {
+        title: 'Test Lesson for Exercise',
+        chapter: testChapterId,
+        order: 1,
+        status: 'published',
+      },
+      draft: true,
+    } as any)
+    testLessonId = lesson.id
+
+    const exercise = await payload.create({
       collection: 'exercises',
-      limit: 1,
+      data: {
+        title: 'Agent Chat Integration Test Exercise',
+        lesson: lesson.id,
+      } satisfies Partial<Exercise>,
+      draft: true,
     })
-
-    if (existingExercises.docs.length > 0) {
-      testExerciseId = existingExercises.docs[0].id
-    } else {
-      // Create a lesson first (required for exercise)
-      const lesson = await payload.create({
-        collection: 'lessons',
-        data: {
-          title: 'Test Lesson for Exercise',
-          chapter: testChapterId,
-          order: 1,
-          status: 'published',
-        },
-        draft: true,
-      } as any)
-
-      const exercise = await payload.create({
-        collection: 'exercises',
-        data: {
-          title: 'Agent Chat Integration Test Exercise',
-          lesson: lesson.id,
-        } satisfies Partial<Exercise>,
-        draft: true,
-      })
-      testExerciseId = exercise.id
-    }
+    testExerciseId = exercise.id
   },
   120000, // Increased timeout for Payload initialization (required for parallel tests)
 )
@@ -235,6 +232,46 @@ afterAll(async () => {
         id: testSystemPromptId,
         overrideAccess: true,
       } as any)
+    } catch {
+      // Ignore cleanup errors
+    }
+  }
+
+  if (testExerciseId) {
+    try {
+      await payload.delete({ collection: 'exercises', id: testExerciseId } as any)
+    } catch {
+      // Ignore cleanup errors
+    }
+  }
+
+  if (testLessonId) {
+    try {
+      await payload.delete({ collection: 'lessons', id: testLessonId } as any)
+    } catch {
+      // Ignore cleanup errors
+    }
+  }
+
+  if (testChapterId) {
+    try {
+      await payload.delete({ collection: 'chapters', id: testChapterId } as any)
+    } catch {
+      // Ignore cleanup errors
+    }
+  }
+
+  if (testCourseId) {
+    try {
+      await payload.delete({ collection: 'courses', id: testCourseId } as any)
+    } catch {
+      // Ignore cleanup errors
+    }
+  }
+
+  if (testCategoryId) {
+    try {
+      await payload.delete({ collection: 'categories', id: testCategoryId } as any)
     } catch {
       // Ignore cleanup errors
     }

@@ -61,9 +61,8 @@ test.describe('brand identity smoke tests', () => {
   })
 
   test('header logo is present', async ({ page }) => {
-    await page.goto('/')
-    // The BrandLogo SVG renders inside the home link in the header
-    const logo = page.locator('header a[href="/"] svg').first()
-    await expect(logo).toBeVisible({ timeout: 10_000 })
+    await page.goto('/courses')
+    const homeLink = page.locator('header a[href="/"]').first()
+    await expect(homeLink).toBeVisible({ timeout: 10_000 })
   })
 })

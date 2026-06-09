@@ -8,6 +8,7 @@ import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { getClientSideURL } from '@/infra/utils/getURL'
+import { cn } from '@/infra/utils/ui'
 
 const collectionLabels = {
   pages: {
@@ -41,12 +42,8 @@ export const AdminBar: React.FC<{
     setShow(Boolean(user?.id))
   }, [])
 
-  if (!show) {
-    return null
-  }
-
   return (
-    <div className="py-2 bg-foreground text-background">
+    <div className={cn('py-2 bg-foreground text-background', show ? 'hidden sm:block' : 'hidden')}>
       <div className="container">
         <PayloadAdminBar
           {...adminBarProps}

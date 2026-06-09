@@ -6,8 +6,8 @@ Resolved merge conflict in `.kody/reports/duty-review.md` — the only conflicte
 
 ## Conflict Resolution
 
-The file is a rolling duty-status report. HEAD (PR) had Cycle 12 with stale staff assignments and missing cadences; `origin/dev` had Cycle 14 with updated values. Since this is a report that snapshots current state, the newer Cycle 14 data from `origin/dev` was taken in full.
+The file is a rolling duty-status report. HEAD (PR branch) had Cycle 12 with older staff role labels (cto, kody, qa, etc.) and some missing cadence values; `origin/dev` had Cycle 16 with normalized "staff" labels and complete cadence data. Since Cycle 16 is newer, origin/dev's content was preserved in full.
 
 ## Files Changed
 
-- `.kody/reports/duty-review.md` — conflict markers removed, `origin/dev` content preserved (Cycle 14 roster)
+- `.kody/reports/duty-review.md` — conflict markers removed, origin/dev content preserved (Cycle 16 roster)
