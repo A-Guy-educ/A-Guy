@@ -14,7 +14,6 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
-import React from 'react'
 import { ChatRole } from '@/infra/llm/chat-message-role'
 
 // Mock requestAnimationFrame to run immediately (not affected by jsdom)
@@ -109,7 +108,7 @@ describe('useNotebookChat loading behavior timing', () => {
   })
 
   describe('Bug fix: #1568 Loading spinner disappears immediately after fast API response', () => {
-    it('should complete loading in under 50ms when API responds instantly (fixes #1568)', async () => {
+    it('should complete loading without the old artificial delay when API responds instantly', async () => {
       // Setup: API returns instantly with no conversation
       mockGetConversation.mockResolvedValue({
         success: true,
@@ -118,9 +117,8 @@ describe('useNotebookChat loading behavior timing', () => {
         contextKey: 'users:test-user',
       })
 
+      const setTimeoutSpy = vi.spyOn(global, 'setTimeout')
       const { useNotebookChat } = await import('@/ui/web/chat/hooks/useNotebookChat')
-
-      const startTime = Date.now()
 
       const { result } = renderHook(() =>
         useNotebookChat({
@@ -149,12 +147,8 @@ describe('useNotebookChat loading behavior timing', () => {
         { timeout: 5000 },
       )
 
-      const elapsed = Date.now() - startTime
-
-      // FIXED: Without the 100ms artificial delay, loading completes quickly.
-      // The 100ms threshold accounts for jsdom test environment overhead
-      // (React scheduling, effects, state batching) vs a real browser.
-      expect(elapsed).toBeLessThan(100)
+      expect(mockGetConversation).toHaveBeenCalledOnce()
+      expect(setTimeoutSpy).not.toHaveBeenCalledWith(expect.any(Function), 100)
     })
 
     it('should transition isLoadingHistory to false when API returns with no conversation', async () => {

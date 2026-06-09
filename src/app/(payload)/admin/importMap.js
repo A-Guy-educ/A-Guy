@@ -21,6 +21,7 @@ import { CouponUsageCell as CouponUsageCell_5f0f323a3410f2629a0fb9e3baa22f67 } f
 import { CouponExpiresCell as CouponExpiresCell_77867c52198465ed20e956268b374e85 } from '@/ui/admin/Coupons/Cells/ExpiresCell'
 import { CouponDiscountDisplayCell as CouponDiscountDisplayCell_b9a37e60437ed49cc5c3bcf13cffe01b } from '@/ui/admin/Coupons/Cells/DiscountDisplayCell'
 import { CouponsListView as CouponsListView_4c2bd615af163e22ea57e98b586263d9 } from '@/ui/admin/Coupons/ListView'
+import { CategoriesCell as CategoriesCell_8505e99b28012dd821c3bbf5d4c936d8 } from '@/ui/admin/Courses/Cells/CategoriesCell'
 import { CourseLessonsSorter as CourseLessonsSorter_219effcec2d3303f5f77bc687e0138e9 } from '@/ui/admin/CourseLessonsSorter'
 import { TranslateCourseAction as TranslateCourseAction_5e03fe73ee4379dfd96d492849856d43 } from '@/ui/admin/TranslationButton'
 import { CourseCascadeDelete as CourseCascadeDelete_8b707dd02fbf8886630a64bffcae6998 } from '@/ui/admin/CascadeDeleteButton'
@@ -59,9 +60,9 @@ import { LinkToDoc as LinkToDoc_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloa
 import { ReindexButton as ReindexButton_aead06e4cbf6b2620c5c51c9ab283634 } from '@payloadcms/plugin-search/client'
 import { RowLabel as RowLabel_49a0f2da415e33c790acf24cb6dd5091 } from '@/ui/admin/Header'
 import { RowLabel as RowLabel_4ed9de7504772fe9568f4f8054c5cb47 } from '@/ui/admin/Footer'
+import { default as default_759821dbe781e78024abfaf95f6442c4 } from '@/ui/admin/VersionInfo'
 import { default as default_e7752c936f7e855267a963c057c607b8 } from '@/ui/admin/UserEmail'
 import { default as default_651b6549ba90964af4bff3f3f8153ba6 } from '@/ui/admin/ConversionTracking/DashboardWidgets'
-import { default as default_759821dbe781e78024abfaf95f6442c4 } from '@/ui/admin/VersionInfo'
 import { default as default_e8db4fbd97550d4d717940b5cf0234f3 } from '@/ui/admin/BeforeLogin'
 import { default as default_7545204935b55fcf02b3be70dde90fc1 } from '@/ui/admin/PdfConversion/SidebarLink'
 import { default as default_1b2cd3c8450eece915504fde397ab5c7 } from '@/ui/admin/LessonDuplicationReview/SidebarLink'
@@ -92,6 +93,7 @@ export const importMap = {
   "@/ui/admin/Coupons/Cells/ExpiresCell#CouponExpiresCell": CouponExpiresCell_77867c52198465ed20e956268b374e85,
   "@/ui/admin/Coupons/Cells/DiscountDisplayCell#CouponDiscountDisplayCell": CouponDiscountDisplayCell_b9a37e60437ed49cc5c3bcf13cffe01b,
   "@/ui/admin/Coupons/ListView#CouponsListView": CouponsListView_4c2bd615af163e22ea57e98b586263d9,
+  "@/ui/admin/Courses/Cells/CategoriesCell#CategoriesCell": CategoriesCell_8505e99b28012dd821c3bbf5d4c936d8,
   "@/ui/admin/CourseLessonsSorter#CourseLessonsSorter": CourseLessonsSorter_219effcec2d3303f5f77bc687e0138e9,
   "@/ui/admin/TranslationButton#TranslateCourseAction": TranslateCourseAction_5e03fe73ee4379dfd96d492849856d43,
   "@/ui/admin/CascadeDeleteButton#CourseCascadeDelete": CourseCascadeDelete_8b707dd02fbf8886630a64bffcae6998,
@@ -130,9 +132,9 @@ export const importMap = {
   "@payloadcms/plugin-search/client#ReindexButton": ReindexButton_aead06e4cbf6b2620c5c51c9ab283634,
   "@/ui/admin/Header#RowLabel": RowLabel_49a0f2da415e33c790acf24cb6dd5091,
   "@/ui/admin/Footer#RowLabel": RowLabel_4ed9de7504772fe9568f4f8054c5cb47,
+  "@/ui/admin/VersionInfo#default": default_759821dbe781e78024abfaf95f6442c4,
   "@/ui/admin/UserEmail#default": default_e7752c936f7e855267a963c057c607b8,
   "@/ui/admin/ConversionTracking/DashboardWidgets#default": default_651b6549ba90964af4bff3f3f8153ba6,
-  "@/ui/admin/VersionInfo#default": default_759821dbe781e78024abfaf95f6442c4,
   "@/ui/admin/BeforeLogin#default": default_e8db4fbd97550d4d717940b5cf0234f3,
   "@/ui/admin/PdfConversion/SidebarLink#default": default_7545204935b55fcf02b3be70dde90fc1,
   "@/ui/admin/LessonDuplicationReview/SidebarLink#default": default_1b2cd3c8450eece915504fde397ab5c7,
