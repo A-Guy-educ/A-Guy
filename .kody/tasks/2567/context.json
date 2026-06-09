@@ -1,0 +1,17 @@
+{
+  "taskId": "2567",
+  "taskType": "issue",
+  "target": "2567",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed health endpoint version by reading package.json directly instead of process.env.npm_package_version",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/health/route.ts",
+    "tests/int/health.api.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/gh-27223019977-1-1.jsonl",
+  "startedAt": "2026-06-09T17:14:18Z",
+  "finishedAt": "2026-06-09T17:20:45Z"
+}

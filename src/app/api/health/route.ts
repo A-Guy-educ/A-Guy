@@ -6,6 +6,11 @@ import { getPoolStats, type PoolStats } from '@/infra/db/pool-stats'
 
 export const dynamic = 'force-dynamic'
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const packageJson: { version?: string } = require('../../../../package.json') as {
+  version?: string
+}
+
 interface HealthResponse {
   ok: boolean
   checks: {
@@ -41,7 +46,7 @@ export async function GET(): Promise<
   }
 
   const ok = checks.database
-  const version = process.env.npm_package_version || 'unknown'
+  const version = packageJson.version || 'unknown'
   const gitSha = process.env.GIT_SHA || 'unknown'
   const timestamp = new Date().toISOString()
 

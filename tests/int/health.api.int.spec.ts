@@ -5,6 +5,11 @@ import { describe, expect, it } from 'vitest'
 const dbUrl = process.env.DATABASE_URL || ''
 const isAtlasUrl = dbUrl.includes('mongodb+srv://') || dbUrl.includes('.mongodb.net')
 
+// Package.json version — used to assert the health endpoint returns the real version, not 'unknown'
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const packageJson: { version?: string } = require('../../package.json') as { version?: string }
+const EXPECTED_VERSION = packageJson.version || 'unknown'
+
 // Skip tests if DATABASE_URL is set to Atlas (these tests need testcontainers, not Atlas)
 describe.skipIf(isAtlasUrl)('GET /api/health', () => {
   it('returns 200 on success', async () => {
@@ -56,5 +61,13 @@ describe.skipIf(isAtlasUrl)('GET /api/health', () => {
 
     expect(() => new Date(data.timestamp)).not.toThrow()
     expect(new Date(data.timestamp)).toBeInstanceOf(Date)
+  })
+
+  it('returns the actual app version from package.json, not unknown', async () => {
+    const response = await GET()
+    const data = (await response.json()) as { version: string }
+
+    expect(data.version).not.toBe('unknown')
+    expect(data.version).toBe(EXPECTED_VERSION)
   })
 })
