@@ -1677,6 +1677,7 @@
 - start interactive session interactive-1778075175838-vd0im6 (1b6229b27)
 ## [Unreleased]
 
+- #2387: [P2] Verify Stripe webhook endpoint is receiving events ([#2414](https://github.com/A-Guy-educ/A-Guy/pull/2414)) — @kodyade[bot]
 - fix(admin): Add CategoriesCell to render Courses category names in list ([#2550](https://github.com/A-Guy-educ/A-Guy/pull/2550)) — @aguyshayb
 - #2361: [P1] Lesson Type field is blank in edit form ([#2365](https://github.com/A-Guy-educ/A-Guy/pull/2365)) — @kodyade[bot]
 - #2250: docs-drift: Exercises (#2154) ([#2341](https://github.com/A-Guy-educ/A-Guy/pull/2341)) — @kodyade[bot] · ⚠️ QA 2026-06-08 (#2527)
