@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "admin-chat-page-blank-issue",
+    "hook": "Unit tests verify admin chat page renders correctly",
+    "body": "Issue #2544 reported /admin/chat renders blank. Investigation showed:\n1. useCurrentUser hook correctly fetches user data\n2. ChatInterface renders with admin welcome message\n3. All tests pass in isolation\n4. No code bug found - issue may be transient\n\nLesson: When QA reports blank page, verify with screenshot evidence. Test written to catch future regressions.",
+    "why": "Without a screenshot, cannot reproduce the blank page issue. Code analysis and tests show component renders correctly.",
+    "confidence": 0.3
+  }
+]

@@ -1,0 +1,14 @@
+[
+  {
+    "title": "QA screenshot missing for #2544",
+    "body": "The issue reports .kody/qa-reports/2542/admin-chat.png but the file doesn't exist. Verify QA process captures screenshots correctly for bug reports.",
+    "rationale": "Without visual evidence, cannot reproduce the blank page issue to verify fix.",
+    "priority": "medium"
+  },
+  {
+    "title": "Add E2E test for /admin/chat route",
+    "body": "Write Playwright E2E test to verify /admin/chat renders chat interface with message input when logged in as admin. Current unit tests only cover component rendering in isolation.",
+    "rationale": "Would catch rendering issues in real browser environment that unit tests cannot detect.",
+    "priority": "low"
+  }
+]
