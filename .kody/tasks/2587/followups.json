@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Admin UI blank type field may be a separate issue",
+    "body": "The afterRead hook correctly fixes null type (verified by tests). If the admin UI still shows a blank type field, it may be a Payload admin rendering issue separate from the hook logic. Check if the admin form loads documents via the same hook-wrapped API path that the integration tests use.",
+    "rationale": "Tests prove the afterRead hook works correctly. The admin UI blank field may be a separate rendering issue.",
+    "priority": "low"
+  }
+]
