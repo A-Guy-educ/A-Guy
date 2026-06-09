@@ -4,11 +4,11 @@
   "target": "2492-srcinfrautils-thin-in-code-documentation",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Both conflicts resolved: duty-review.md merged cycle-16 table with headline from HEAD; health-check.md took origin/dev (more current, stale #1563 removed)",
+  "reason": "Single file conflict in .kody/reports/duty-review.md — took origin/dev (Cycle 16, most recent state); PR changes are unrelated to this file",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2493",
   "runUrl": null,
-  "filesTouched": [".kody/reports/duty-review.md", ".kody/reports/health-check.md"],
+  "filesTouched": [".kody/reports/duty-review.md"],
   "sessionLog": null,
   "startedAt": "2026-06-09T00:00:00.000Z",
-  "finishedAt": "2026-06-09T00:00:30.000Z"
+  "finishedAt": "2026-06-09T00:00:00.000Z"
 }
