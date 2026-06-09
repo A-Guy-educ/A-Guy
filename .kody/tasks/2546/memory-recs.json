@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "fetch-in-useEffect-always-needs-timeout",
+    "hook": "All fetch calls in useEffect need AbortController timeout",
+    "body": "Any `fetch` call inside a `useEffect` hook must use `AbortController` with a `setTimeout` timeout (e.g. 10s). Without it, if the server doesn't respond, `loading` state persists forever with no user feedback. Pattern:\n\n```typescript\nconst controller = new AbortController()\nconst timeoutId = setTimeout(() => controller.abort(), 10_000)\ntry {\n  const res = await fetch(url, { signal: controller.signal })\n  clearTimeout(timeoutId)\n  // ...\n} catch (err) {\n  if (err instanceof Error && err.name === 'AbortError') {\n    setError('Request timed out. Please try again.')\n  }\n}\n```\n\n**Why:** Issue #1822 was the same bug in a different file (InlineExerciseEditor). This is a recurring pattern - every fetch in useEffect needs this protection.",
+    "why": "Same bug as #1822 (InlineExerciseEditor fetch timeout) reappeared in MetricsProvider. All fetch calls in useEffect need timeout protection to prevent indefinite loading states.",
+    "confidence": 0.95
+  }
+]
