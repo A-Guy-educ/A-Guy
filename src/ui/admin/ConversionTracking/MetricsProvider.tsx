@@ -4,6 +4,8 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 
 import type { DashboardMetricsResponse, Period } from '@/app/api/admin/dashboard-metrics/route'
 
+const FETCH_TIMEOUT_MS = 15_000
+
 interface MetricsContextValue {
   data: DashboardMetricsResponse | null
   loading: boolean
@@ -29,12 +31,17 @@ const MetricsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) 
   const [period, setPeriod] = useState<Period>('month')
 
   const fetchMetrics = useCallback(async () => {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+
     setLoading(true)
     setError(null)
     try {
       const res = await fetch(`/api/admin/dashboard-metrics?period=${period}`, {
         credentials: 'include',
+        signal: controller.signal,
       })
+      clearTimeout(timeoutId)
       if (!res.ok) {
         if (res.status === 403) {
           setError('admin-only')
@@ -45,6 +52,11 @@ const MetricsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) 
       const json = (await res.json()) as DashboardMetricsResponse
       setData(json)
     } catch (err) {
+      clearTimeout(timeoutId)
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('Request timed out')
+        return
+      }
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
       setLoading(false)

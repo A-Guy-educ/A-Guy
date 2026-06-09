@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "fetch-always-needs-timeout",
+    "hook": "Always add AbortController timeout to fetch calls in React components",
+    "body": "Without a timeout, a hanging fetch prevents the `finally` block from running, leaving `loading` state stuck at `true` forever. Always wrap fetch with `AbortController` and a `setTimeout` that calls `controller.abort()` after a reasonable timeout (e.g., 15s).",
+    "why": "The MetricsProvider fetch had no timeout. When the API route hung, the `finally` block never ran and widgets showed 'Loading...' forever. This bug had multiple failed fix attempts (commits 6b527f1a8, b1b7df6a7, etc.) that were never merged.",
+    "confidence": 0.95
+  }
+]

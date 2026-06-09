@@ -1,0 +1,8 @@
+[
+  {
+    "title": "RecentTransactionsWidget does separate direct fetch instead of using MetricsProvider",
+    "body": "The RecentTransactionsWidget fetches from `/api/transactions` directly instead of using MetricsProvider data. This means it can't share the admin auth context and does its own auth check. Git history shows attempts (commits 0e771816b, 124b8dc54) to route it through MetricsProvider were made but not fully completed. Consider integrating it into MetricsProvider or the dashboard-metrics API.",
+    "rationale": "Reduces redundant API calls and ensures consistent auth/error handling across all dashboard widgets.",
+    "priority": "low"
+  }
+]

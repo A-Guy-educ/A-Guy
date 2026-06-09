@@ -49,6 +49,8 @@ interface TransactionsResponse {
   docs: Transaction[]
 }
 
+const FETCH_TIMEOUT_MS = 15_000
+
 const panelStyle: CSSProperties = {
   padding: 20,
   backgroundColor: 'var(--theme-elevation-50)',
@@ -89,12 +91,17 @@ const RecentTransactionsWidget: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
 
   const fetchTransactions = useCallback(async () => {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
+
     setLoading(true)
     setError(null)
     try {
       const res = await fetch('/api/transactions?limit=5&sort=-createdAt&depth=2', {
         credentials: 'include',
+        signal: controller.signal,
       })
+      clearTimeout(timeoutId)
       if (!res.ok) {
         if (res.status === 403) {
           setError('admin-only')
@@ -105,6 +112,11 @@ const RecentTransactionsWidget: React.FC = () => {
       const json = (await res.json()) as TransactionsResponse
       setTransactions(json.docs ?? [])
     } catch (err) {
+      clearTimeout(timeoutId)
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('Request timed out')
+        return
+      }
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
       setLoading(false)
