@@ -2,8 +2,7 @@ import { test, expect } from '@playwright/test'
 
 test.describe('Version Footer', () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to the homepage where footer is visible
-    await page.goto('http://localhost:3000')
+    await page.goto('/courses')
     // Wait for the page to fully load
     await page.waitForLoadState('networkidle')
   })
@@ -14,9 +13,9 @@ test.describe('Version Footer', () => {
     await expect(footer).toBeVisible()
 
     // The version is displayed with subtle styling - look for vX.Y.Z pattern
-    // The version span has classes: text-xs text-muted-foreground/70
+    // The version span has classes: text-body-xs text-muted-foreground/70
     const versionElement = page
-      .locator('footer span.text-xs')
+      .locator('footer span.text-body-xs')
       .filter({ hasText: /^v\d+\.\d+\.\d+$/ })
     await expect(versionElement).toBeVisible()
 
@@ -35,13 +34,13 @@ test.describe('Version Footer', () => {
 
     // Check that the version element has subtle styling classes
     const versionElement = page
-      .locator('footer span.text-xs')
+      .locator('footer span.text-body-xs')
       .filter({ hasText: /^v\d+\.\d+\.\d+$/ })
     await expect(versionElement).toBeVisible()
 
     // Verify the subtle styling classes are present
     const classAttribute = await versionElement.getAttribute('class')
-    expect(classAttribute).toContain('text-xs')
+    expect(classAttribute).toContain('text-body-xs')
     expect(classAttribute).toContain('text-muted-foreground')
   })
 
@@ -55,13 +54,13 @@ test.describe('Version Footer', () => {
   test('version is consistent across pages', async ({ page }) => {
     // Get version from homepage footer - find span with vX.Y.Z pattern
     const versionElement = page
-      .locator('footer span.text-xs')
+      .locator('footer span.text-body-xs')
       .filter({ hasText: /^v\d+\.\d+\.\d+$/ })
     const versionText = await versionElement.textContent()
     expect(versionText).toMatch(/^v\d+\.\d+\.\d+$/)
 
     // Navigate to a different page and verify version is the same
-    await page.goto('http://localhost:3000/courses')
+    await page.goto('/courses')
     await page.waitForLoadState('networkidle')
 
     const versionOnCourses = await versionElement.textContent()
@@ -82,7 +81,7 @@ test.describe('Version Footer', () => {
 
     // Try to find a lesson link if available, otherwise test homepage footer
     const versionElement = page
-      .locator('footer span.text-xs')
+      .locator('footer span.text-body-xs')
       .filter({ hasText: /^v\d+\.\d+\.\d+$/ })
 
     // Check if version element exists in footer
@@ -102,7 +101,7 @@ test.describe('Version Footer', () => {
     // The version should be in semantic versioning format (X.Y.Z)
     // This ensures it matches the version in package.json
     const versionElement = page
-      .locator('footer span.text-xs')
+      .locator('footer span.text-body-xs')
       .filter({ hasText: /^v\d+\.\d+\.\d+$/ })
     await expect(versionElement).toBeVisible()
 

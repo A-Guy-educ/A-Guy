@@ -1,14 +1,17 @@
 {
   "taskId": "2474",
   "taskType": "pr",
-  "target": "2474",
+  "target": "2462-p3-admin-dashboard-widgets-not-rendered-on-page-lo",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Single file conflict resolved; took origin/dev (Cycle 14) header and staff/cadence values for overlapping duties, preserved unique rows from both sides.",
-  "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2474",
+  "reason": "Resolved 2 conflicts in .kody/reports/ files — both are auto-generated kody duty reports; took origin/dev (newer cycle) for each.",
+  "prUrl": null,
   "runUrl": null,
-  "filesTouched": [".kody/reports/duty-review.md"],
-  "sessionLog": ".kody/sessions/gh-27174021236-1-1.jsonl",
-  "startedAt": "2026-06-08T00:00:00.000Z",
-  "finishedAt": "2026-06-08T00:00:30.000Z"
+  "filesTouched": [
+    ".kody/reports/duty-review.md",
+    ".kody/reports/health-check.md"
+  ],
+  "sessionLog": ".kody/sessions/live-1778094052511-fr9jfi.jsonl",
+  "startedAt": "2026-06-09T09:34:29Z",
+  "finishedAt": "2026-06-09T09:34:35Z"
 }
