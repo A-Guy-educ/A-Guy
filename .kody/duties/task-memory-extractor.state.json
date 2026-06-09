@@ -1,16 +1,16 @@
 {
   "version": 1,
-  "rev": 349,
+  "rev": 350,
   "cursor": "idle",
   "data": {
-    "current_tick": "2026-06-09T06:30:00.000Z",
-    "current_tick_ran": "2026-06-09T06:30:26.000Z",
+    "current_tick": "2026-06-09T09:00:00.000Z",
+    "current_tick_ran": "2026-06-09T08:59:54.000Z",
     "current_tick_result": "success",
     "current_tick_summary": "82 tasks seen, 64 already extracted, 0 new high-confidence writes — remaining recs are medium/low confidence and left in task files.",
-    "lastFiredAt": "2026-06-09T08:16:11.352Z",
+    "lastFiredAt": "2026-06-09T09:43:13.089Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 36859,
-    "last_tick": "2026-06-09T05:00:00.000Z",
+    "lastDurationMs": 24804,
+    "last_tick": "2026-06-09T06:30:00.000Z",
     "tasks_processed": 116,
     "tasks_seen": 82,
     "session": {
