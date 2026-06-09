@@ -1,18 +1,18 @@
 {
   "version": 1,
-  "rev": 350,
+  "rev": 351,
   "cursor": "idle",
   "data": {
-    "current_tick": "2026-06-09T09:00:00.000Z",
-    "current_tick_ran": "2026-06-09T08:59:54.000Z",
+    "current_tick": "2026-06-09T10:00:00.000Z",
+    "current_tick_ran": "2026-06-09T09:59:47.000Z",
     "current_tick_result": "success",
-    "current_tick_summary": "82 tasks seen, 64 already extracted, 0 new high-confidence writes — remaining recs are medium/low confidence and left in task files.",
-    "lastFiredAt": "2026-06-09T09:43:13.089Z",
+    "current_tick_summary": "85 tasks seen, 64 already extracted, 1 new high-confidence write (webhook-investigation-no-code-bug.md). Git push rejected — remote ahead, no commit made.",
+    "lastFiredAt": "2026-06-09T10:53:15.350Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 24804,
-    "last_tick": "2026-06-09T06:30:00.000Z",
-    "tasks_processed": 116,
-    "tasks_seen": 82,
+    "lastDurationMs": 26848,
+    "last_tick": "2026-06-09T09:00:00.000Z",
+    "tasks_processed": 117,
+    "tasks_seen": 85,
     "session": {
       "memory_files_written": [
         "jsx-in-ts-causes-ts1005-error.md",
@@ -24,12 +24,13 @@
         "coupon-fixed-discount-unit-conversion.md",
         "afterread-hook-siblingdata-vs-value.md",
         "overrideAccess-true-does-not-bypass-hooks.md",
-        "payload-types-stale-after-collection-removal.md"
+        "payload-types-stale-after-collection-removal.md",
+        "webhook-investigation-no-code-bug.md"
       ],
-      "push_state": "success",
+      "push_state": "failed",
       "started": "2026-05-27T17:44:47.000Z",
-      "tasks_processed_this_session": 128,
-      "tasks_seen_this_session": 82
+      "tasks_processed_this_session": 129,
+      "tasks_seen_this_session": 85
     }
   },
   "done": false
