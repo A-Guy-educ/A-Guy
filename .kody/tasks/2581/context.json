@@ -1,0 +1,17 @@
+{
+  "taskId": "2581",
+  "taskType": "issue",
+  "target": "2581",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed Search component to initialize state from URL query params, preventing results region from being cleared on mount.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/web/search/Component.tsx",
+    "tests/e2e/verification/catalog-navigation.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/gh-27238308989-1.jsonl",
+  "startedAt": "2026-06-09T21:56:00Z",
+  "finishedAt": "2026-06-09T22:08:00Z"
+}

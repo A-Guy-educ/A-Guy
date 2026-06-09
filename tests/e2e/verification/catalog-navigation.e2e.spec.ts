@@ -24,6 +24,30 @@ test.describe('Scenario #3 – Site-wide Search', () => {
     )
     await expect(searchInput.first()).toBeVisible({ timeout: 10_000 })
   })
+
+  test('results section appears when navigating to /search?q=query', async ({ page }) => {
+    await loginAsStudent(page)
+
+    // Navigate directly to search URL with query parameter
+    await page.goto('/search?q=algebra')
+    await page.waitForLoadState('domcontentloaded')
+    // Wait for potential client-side navigation that could clear the query
+    await page.waitForTimeout(500)
+
+    // Search input should be visible
+    const searchInput = page.locator('input[id="search"]')
+    await expect(searchInput).toBeVisible({ timeout: 10_000 })
+
+    // Results section should be present (either results or "no results" message)
+    const resultsRegion = page.locator('h2:has-text("Courses & Lessons")').first()
+    const noResultsMsg = page.locator('text=/no results found/i').first()
+    const collectionArchive = page.locator('[class*="CollectionArchive"]').first()
+    const hasResults =
+      (await resultsRegion.isVisible().catch(() => false)) ||
+      (await noResultsMsg.isVisible().catch(() => false)) ||
+      (await collectionArchive.isVisible().catch(() => false))
+    expect(hasResults).toBeTruthy()
+  })
 })
 
 test.describe('Scenario #4 – Catalog Navigation', () => {

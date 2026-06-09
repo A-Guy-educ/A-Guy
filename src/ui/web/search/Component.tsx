@@ -3,10 +3,11 @@ import { Input } from '@/ui/web/components/input'
 import { Label } from '@/ui/web/components/label'
 import React, { useState, useEffect } from 'react'
 import { useDebounce } from '@/client/hooks/useDebounce'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 export const Search: React.FC = () => {
-  const [value, setValue] = useState('')
+  const searchParams = useSearchParams()
+  const [value, setValue] = useState(searchParams.get('q') ?? '')
   const router = useRouter()
 
   const debouncedValue = useDebounce(value)
@@ -27,6 +28,7 @@ export const Search: React.FC = () => {
         </Label>
         <Input
           id="search"
+          value={value}
           onChange={(event) => {
             setValue(event.target.value)
           }}
