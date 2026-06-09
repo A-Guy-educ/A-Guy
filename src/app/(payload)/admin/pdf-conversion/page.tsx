@@ -11,7 +11,9 @@
 'use client'
 
 import { useCurrentUser } from '@/client/hooks/useCurrentUser'
+import enMessages from '@/i18n/en.json'
 import { PdfConversionPage } from '@/ui/admin/PdfConversion/PdfConversionPage'
+import { I18nProvider } from '@/ui/web/providers/I18n'
 
 const loadingStyle: React.CSSProperties = {
   padding: 20,
@@ -43,5 +45,11 @@ export default function AdminPdfConversionPage() {
     return <div style={errorStyle}>Admin access required</div>
   }
 
-  return <PdfConversionPage />
+  return (
+    <I18nProvider locale="en" messages={enMessages}>
+      <div style={{ height: 'calc(100vh - 64px)' }}>
+        <PdfConversionPage />
+      </div>
+    </I18nProvider>
+  )
 }
