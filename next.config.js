@@ -160,28 +160,37 @@ const nextConfig = {
       ]
     }
 
-    // Redirect node: protocol imports to an empty stub. These protocols are Node.js
-    // built-ins that cannot run in browser environments. By aliasing them to a stub,
-    // any package that webpack still analyzes (due to tree-shaking or incomplete
-    // externals) will get an empty module instead of throwing UnhandledSchemeError.
-    // The stub returns null so that any runtime access fails safely.
-    //
-    // Note: resolve.alias alone cannot intercept node: protocol imports — webpack 5's
-    // scheme handler runs before alias resolution. We use resolve.fallback (FallbackPlugin)
-    // which is checked during scheme resolution, providing a fallback value when the
-    // scheme handler would otherwise throw UnhandledSchemeError.
+    // Redirect node: protocol imports to an empty stub for specific modules that
+    // may be referenced by dependencies not covered by externals. Using individual
+    // fallback entries (crypto, stream, etc.) rather than a broad "node" key
+    // avoids webpack 5 glob-matching issues that can cause ./src resolution errors.
     const stubPath = path.resolve(process.cwd(), 'src/server/utils/empty-stub.js')
     webpackConfig.resolve.alias = {
       ...webpackConfig.resolve.alias,
       '\\.node$': stubPath,
     }
-    // FallbackPlugin is checked during scheme resolution and provides a fallback value
-    // when the normal scheme handler would throw UnhandledSchemeError. The key must match
-    // the module name (e.g., "node" for "node:fs"), and the fallback value is returned
-    // directly without further resolution.
     webpackConfig.resolve.fallback = {
       ...webpackConfig.resolve.fallback,
-      node: stubPath,
+      // Individual module fallbacks — key is the module name, not the scheme
+      // e.g., "crypto" handles "node:crypto", "stream" handles "node:stream", etc.
+      // Using explicit keys instead of "node" avoids webpack 5 prefix-matching issues.
+      crypto: stubPath,
+      stream: stubPath,
+      util: stubPath,
+      assert: stubPath,
+      path: stubPath,
+      os: stubPath,
+      zlib: stubPath,
+      events: stubPath,
+      constant: stubPath,
+      fs: stubPath,
+      http: stubPath,
+      https: stubPath,
+      net: stubPath,
+      tls: stubPath,
+      dns: stubPath,
+      process: stubPath,
+      perf_hooks: stubPath,
     }
   },
   reactStrictMode: true,
