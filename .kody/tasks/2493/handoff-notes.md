@@ -1,3 +1,1 @@
-# Merge Conflict Resolution — #2493
-
-Single conflict in `.kody/reports/duty-review.md`. HEAD had Cycle 12 table with "## Headline" banner; `origin/dev` had newer Cycle 16 table without a headline. Took `origin/dev`'s version — it represents the most recent duty review cycle and the PR's focus (thin in-code documentation for src/infra/utils) is unrelated to this operational report. No other conflicts.
+Resolved the single conflict in `.kody/reports/duty-review.md` — an asymmetric merge where origin/dev (Cycle 16) was newer and more complete than HEAD (Cycle 12). Took the dev side (Cycle 16) as base since it has filled-in cadences and staff assignments vs HEAD's many `?` placeholders. This is a generated duty-status report; the PR side had stale data. No quality issues introduced.
