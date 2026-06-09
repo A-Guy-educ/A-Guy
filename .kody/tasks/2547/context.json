@@ -1,0 +1,17 @@
+{
+  "taskId": "2547",
+  "taskType": "issue",
+  "target": "2547",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added generateMetadata to /start page so it has explicit title instead of inheriting from layout, fixing the stale title issue after redirect",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/(frontend)/start/page.tsx",
+    "tests/e2e/ask-page-redirect-title.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/invalid.jsonl",
+  "startedAt": "2026-06-09T12:00:00.000Z",
+  "finishedAt": "2026-06-09T12:05:00.000Z"
+}
