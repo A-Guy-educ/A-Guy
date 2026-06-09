@@ -4,11 +4,11 @@
   "target": "PR #1524 — goal-add-per-user-chat-memory-recall-ui",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "TypeScript error: 'h' declared via vi.hoisted() at module scope was not recognized by tsc. Fixed by adding explicit type annotation const h: { vgCallCount: number }.",
+  "reason": "Resolved asymmetric merge conflict in .kody/reports/duty-review.md — took origin/dev (Cycle 16) over HEAD (Cycle 12) since dev has newer cycle data and more complete staff/cadence info",
   "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/1524",
-  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/27160639653",
-  "filesTouched": ["tests/int/lesson-duplication-orchestrator.int.spec.ts"],
-  "sessionLog": null,
-  "startedAt": "2026-06-09T00:00:00Z",
-  "finishedAt": "2026-06-09T00:00:00Z"
+  "runUrl": null,
+  "filesTouched": [".kody/reports/duty-review.md"],
+  "sessionLog": ".kody/sessions/gh-27225645489-1-1.jsonl",
+  "startedAt": "2026-06-09T18:02:00Z",
+  "finishedAt": "2026-06-09T18:03:00Z"
 }

@@ -3,12 +3,11 @@ name: Media Expiry Cleanup
 # This workflow cleans up expired ephemeral media files
 # Used for chat attachments that have a 30-day retention policy
 #
-# Required GitHub Secrets (set in repo Settings > Secrets > Actions):
+# Required GitHub Variables (set in repo Settings > Variables > Actions):
 # - CRON_ENDPOINT: Base URL of the deployed application (e.g., https://your-app.vercel.app)
-# - CRON_SECRET: Secret token for authenticating cron requests (must match CRON_SECRET env var)
 #
-# Note: Application config should use Config_entries in the admin panel.
-# GitHub secrets are only for values needed by external CI/CD workflows.
+# Required GitHub Secrets (set in repo Settings > Secrets > Actions):
+# - CRON_SECRET: Secret token for authenticating cron requests (must match CRON_SECRET env var)
 
 on:
   schedule:
@@ -21,13 +20,14 @@ jobs:
   cleanup:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    environment:
-      name: production
+    env:
+      CRON_ENDPOINT: ${{ vars.CRON_ENDPOINT }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
     steps:
       - name: Call cleanup endpoint
         run: |
           if [ -z "$CRON_ENDPOINT" ]; then
-            echo "Error: CRON_ENDPOINT secret is not set. Please configure it in GitHub Actions environment secrets."
+            echo "Error: CRON_ENDPOINT variable is not set. Please configure it in GitHub Actions repository variables."
             exit 1
           fi
 
@@ -48,6 +48,3 @@ jobs:
           fi
 
           echo "Cleanup completed successfully"
-        env:
-          CRON_ENDPOINT: ${{ secrets.CRON_ENDPOINT }}
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}

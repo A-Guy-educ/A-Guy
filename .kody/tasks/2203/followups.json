@@ -1,1 +1,8 @@
-[]
+[
+  {
+    "title": "Set CRON_ENDPOINT as a GitHub repository variable",
+    "body": "Add CRON_ENDPOINT as a repository variable in GitHub Settings > Variables > Actions. It should point to the production app URL (e.g., the Vercel deployment URL).",
+    "rationale": "The workflow guard check still exits with code 1 if CRON_ENDPOINT is unset. Once the code fix is merged, the repository variable must be configured for the workflow to succeed.",
+    "priority": "high"
+  }
+]

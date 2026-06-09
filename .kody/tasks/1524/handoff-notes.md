@@ -1,20 +1,15 @@
-## CI Fix: TypeScript error — Cannot find name 'h'
+## Merge Conflict Resolution — .kody/reports/duty-review.md
 
-### Root Cause
-`tests/int/lesson-duplication-orchestrator.int.spec.ts` declares `const h = vi.hoisted(() => ({ vgCallCount: 0 }))` at module scope. In CI's `tsc --noEmit` run, TypeScript could not resolve `h` at usage sites inside `beforeAll` and test bodies, producing errors at lines 172, 330, 367.
+### What
+Single asymmetric conflict in `.kody/reports/duty-review.md` during `git merge origin/dev` into `goal-add-per-user-chat-memory-recall-ui`.
 
-### Fix
-Added explicit type annotation so TypeScript recognizes the hoisted variable at module scope:
-```typescript
-// Before
-const h = vi.hoisted(() => ({ vgCallCount: 0 }))
-// After
-const h: { vgCallCount: number } = vi.hoisted(() => ({ vgCallCount: 0 }))
-```
+### Conflict Analysis
+- **HEAD (PR branch)**: Cycle 12 — 1 healthy, 14 broken, 10 warn. Staff assignments used older labels (cto, kody, qa, tech-writer, ux-designer) with `?` cadences on many duties.
+- **origin/dev**: Cycle 16 — 1 healthy, 10 warn, 14 broken. Updated staff assignments (ceo, cto, coo, qa) with explicit cadence values (1h, 1d, 7d, 14d, 30d).
+
+### Resolution
+Took `origin/dev` version. Rationale: Cycle 16 is newer than Cycle 12, and the dev branch has more complete/accurate duty roster data with explicit cadence values rather than `?` placeholders.
 
 ### Verification
-- `tsc --noEmit`: pass (no output)
-- `mcp__kody-verify__verify`: ok=true, all gates pass
-
-### Status
-Fixed on branch `goal-add-per-user-chat-memory-recall-ui`. Ready for CI re-run.
+- `grep '<<<<<<\|======\|>>>>>>' .kody/reports/duty-review.md` — no conflict markers remain
+- File is valid markdown with intact table structure
