@@ -3,7 +3,7 @@
     "type": "decision",
     "name": "cron-endpoint-is-not-a-secret",
     "hook": "CRON_ENDPOINT is a URL, not a secret — use vars not secrets",
-    "body": "URLs should be stored as GitHub Actions repository variables (vars), not secrets. Secrets are for sensitive values like tokens and keys. This avoids requiring environment-locked workflow configuration for non-sensitive values.\n\n**Why:** The media-cleanup workflow used `secrets.CRON_ENDPOINT` with `environment: production`, requiring environment-scoped secrets that were not configured. The companion workflow exercise-conversion-runner.yml already used `vars.PREVIEW_URL` for its URL, proving the correct pattern.\n**How to apply:** When adding a URL/base URL to a GitHub Actions workflow, use `${{ vars.VARIABLE_NAME }}` (repository variable), not `${{ secrets.VARIABLE_NAME }}`.",
+    "body": "URLs should be stored as GitHub Actions repository variables (vars), not secrets. Secrets are for sensitive values like tokens and keys. This avoids requiring environment-locked workflow configuration for non-sensitive values.\n\n**Why:** The media-cleanup workflow used `secrets.CRON_ENDPOINT` with `environment: production`, requiring environment-scoped secrets that were not configured. The companion workflow exercise-conversion-runner.yml already used `vars.PREVIEW_URL` for its URL, establishing the correct pattern.\n**How to apply:** When adding a URL/base URL to a GitHub Actions workflow, use `${{ vars.VARIABLE_NAME }}` (repository variable), not `${{ secrets.VARIABLE_NAME }}`.",
     "why": "Prevents CI failures when environment-scoped secrets are missing, and correctly separates sensitive from non-sensitive config.",
     "confidence": 0.95
   }

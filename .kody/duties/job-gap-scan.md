@@ -1,6 +1,7 @@
 ---
 staff: ceo
 mentions: aguyaharonyair
+disabled: true
 ---
 
 # job-gap-scan
