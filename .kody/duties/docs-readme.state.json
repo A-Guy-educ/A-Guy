@@ -1,14 +1,14 @@
 {
   "version": 1,
-  "rev": 13,
+  "rev": 14,
   "cursor": "idle",
   "data": {
-    "disabledReason": "dispatch verb 'chore --issue' not found in engine README — available issue verb is 'run --issue <N>'. Job body inbox format (line 96) must be corrected to use 'run --issue' instead of 'chore --issue' before enabling.",
-    "lastCheckedMergedAt": "2026-06-03T08:35:32Z",
-    "nextEligibleISO": "2026-06-08T12:00:00Z",
-    "lastFiredAt": "2026-06-08T02:26:17.340Z",
+    "disabledReason": "inbox kody-cmd uses 'chore --issue' which is phantom — engine has 'run --issue <N>'. Line 96 of duty file still shows 'chore --issue'. Fix before relying on approve/dispatch.",
+    "lastCheckedMergedAt": "2026-06-08T13:02:41Z",
+    "nextEligibleISO": "2026-06-10T13:02:41Z",
+    "lastFiredAt": "2026-06-09T03:55:21.545Z",
     "lastOutcome": "completed",
-    "lastDurationMs": 63850
+    "lastDurationMs": 193870
   },
   "done": false
 }
