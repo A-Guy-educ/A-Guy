@@ -130,8 +130,9 @@ test.describe('Scenario #18 – Mobile Usability', () => {
       await page.goto(data!.lessonUrl)
       await page.waitForLoadState('domcontentloaded')
 
-      const content = page.locator('main, section, [role="main"]')
-      await expect(content.first()).toBeVisible({ timeout: 15_000 })
+      await expect(page.getByRole('heading', { name: 'Test Lesson' }).first()).toBeVisible({
+        timeout: 15_000,
+      })
 
       const bodyWidth = await page.evaluate(() => document.body.scrollWidth)
       const viewportWidth = await page.evaluate(() => window.innerWidth)
