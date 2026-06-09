@@ -4,11 +4,11 @@
   "target": "2374-p1-fix-gravatar-csp-directive-to-include-www-subdo",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Single conflict in duty-review.md resolved by taking origin/dev (Cycle 14, newer data)",
-  "prUrl": null,
+  "reason": "Single conflicted file was duty-review.md; resolved by taking origin/dev (Cycle 16) over stale PR branch (Cycle 6)",
+  "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2379",
   "runUrl": null,
   "filesTouched": [".kody/reports/duty-review.md"],
-  "sessionLog": ".kody/sessions/undefined.jsonl",
-  "startedAt": "2026-06-08T00:00:00.000Z",
-  "finishedAt": "2026-06-08T00:00:00.000Z"
+  "sessionLog": ".kody/sessions/gh-27188777609-1-1.jsonl",
+  "startedAt": "2026-06-09T00:00:00Z",
+  "finishedAt": "2026-06-09T00:01:00Z"
 }

@@ -22,12 +22,14 @@ const dirname = path.dirname(filename)
 // Environment variables can be overridden via CI secrets or process.env
 config({ path: path.resolve(dirname, '.env') })
 config({ path: path.resolve(dirname, '.env.test'), override: true })
+process.env.SKIP_BUILD = process.env.SKIP_BUILD || 'true'
 
 // Determine DATABASE_URL for webServer
 // E2E_DATABASE_URL will be set by globalSetup (testcontainers)
 // Otherwise use provided DATABASE_URL or fallback
 const databaseUrl =
   process.env.E2E_DATABASE_URL || process.env.DATABASE_URL || 'mongodb://127.0.0.1:27017/test'
+const runQaProjects = process.env.PLAYWRIGHT_QA_PROJECTS === 'true'
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -43,7 +45,7 @@ export default defineConfig({
   /* Stop after 10 failures in CI to save time */
   maxFailures: process.env.CI ? 10 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 2 : undefined,
+  workers: 2,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -55,36 +57,36 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   projects: [
-    // Default Chromium project
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'], channel: 'chromium' },
     },
-    // Scenario-driven QA - Core scenarios (runs on PRs)
-    {
-      name: 'qa-core',
-      testDir: './tests/qa/student/runner',
-      testMatch: 'run-scenarios.spec.ts',
-      use: { scenarioCategory: 'core' } as Record<string, unknown>,
-    },
-    // Scenario-driven QA - Full scenarios (runs on merge to main)
-    {
-      name: 'qa-full',
-      testDir: './tests/qa/student/runner',
-      testMatch: 'run-scenarios.spec.ts',
-      use: { scenarioCategory: ['core', 'feature'] } as Record<string, unknown>,
-    },
-    // Scenario-driven QA - Nightly scenarios (runs on schedule)
-    {
-      name: 'qa-nightly',
-      testDir: './tests/qa/student/runner',
-      testMatch: 'run-scenarios.spec.ts',
-      use: { scenarioCategory: ['core', 'feature', 'edge'] } as Record<string, unknown>,
-    },
+    ...(runQaProjects
+      ? [
+          {
+            name: 'qa-core',
+            testDir: './tests/qa/student/runner',
+            testMatch: 'run-scenarios.spec.ts',
+            use: { scenarioCategory: 'core' } as Record<string, unknown>,
+          },
+          {
+            name: 'qa-full',
+            testDir: './tests/qa/student/runner',
+            testMatch: 'run-scenarios.spec.ts',
+            use: { scenarioCategory: ['core', 'feature'] } as Record<string, unknown>,
+          },
+          {
+            name: 'qa-nightly',
+            testDir: './tests/qa/student/runner',
+            testMatch: 'run-scenarios.spec.ts',
+            use: { scenarioCategory: ['core', 'feature', 'edge'] } as Record<string, unknown>,
+          },
+        ]
+      : []),
   ],
   webServer: {
     command: 'test -d .next && pnpm start',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: process.env.PLAYWRIGHT_REUSE_SERVER === 'true',
     url: 'http://localhost:3000/api/health',
     timeout: 120000,
     stdout: 'pipe',

@@ -45,6 +45,15 @@ export async function createTestUser(
   })
 
   if (existing.docs.length > 0) {
+    if (existing.docs[0].role !== role) {
+      await payload.update({
+        collection: 'users',
+        id: existing.docs[0].id,
+        data: { role },
+        overrideAccess: true,
+      })
+    }
+
     const existingUser = {
       ...user,
       id: existing.docs[0].id,
@@ -59,7 +68,7 @@ export async function createTestUser(
   // Create new user
   // Payload automatically hashes passwords when creating via Local API
   // Add name field (required by some hooks)
-  const created = await payload.create({
+  let created = await payload.create({
     collection: 'users',
     data: {
       name: user.email.split('@')[0] || 'Test User', // Extract name from email
@@ -68,6 +77,15 @@ export async function createTestUser(
       role,
     },
   })
+
+  if (created.role !== role) {
+    created = await payload.update({
+      collection: 'users',
+      id: created.id,
+      data: { role },
+      overrideAccess: true,
+    })
+  }
 
   // Register for cleanup
   if (created.id) {
