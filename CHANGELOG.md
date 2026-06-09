@@ -1688,9 +1688,9 @@
 - #2331: src/server/api/ — thin in-code documentation ([#2333](https://github.com/A-Guy-educ/A-Guy/pull/2333)) — @kodyade[bot] · ⚠️ QA 2026-06-09 (#2542)
 - #2291: [P1] Add autosave to LessonBlocksField delete operations ([#2307](https://github.com/A-Guy-educ/A-Guy/pull/2307)) — @kodyade[bot] · ⚠️ QA 2026-06-09 (#2548)
 - #2162: Doc gap: src/infra/utils/ — 6/27 modules carry @ai-summary ([#2164](https://github.com/A-Guy-educ/A-Guy/pull/2164)) — @kodyade[bot] · ⚠️ QA 2026-06-09 (#2561)
-- chore(memory): Rescue orphaned knowledge from kody-memorize branches ([#1891](https://github.com/A-Guy-educ/A-Guy/pull/1891)) — @aguyaharonyair
+- chore(memory): Rescue orphaned knowledge from kody-memorize branches ([#1891](https://github.com/A-Guy-educ/A-Guy/pull/1891)) — @aguyaharonyair · 🔄 QA (#2568)
 - #1563: feat: show app version in admin dashboard footer ([#1566](https://github.com/A-Guy-educ/A-Guy/pull/1566)) — @aguyaharonyair · ✅ QA 2026-06-09
-- fix(health-badge): Read 'version' field from /api/health response ([#2519](https://github.com/A-Guy-educ/A-Guy/pull/2519)) — @aguyshayb · 🔄 QA (#2565)
+- fix(health-badge): Read 'version' field from /api/health response ([#2519](https://github.com/A-Guy-educ/A-Guy/pull/2519)) — @aguyshayb · ⚠️ QA 2026-06-09 (#2565)
 - #1783: [P1] Recent Transactions widget shows HTTP 404 error ([#1806](https://github.com/A-Guy-educ/A-Guy/pull/1806)) — @aguyaharonyair · ⚠️ QA 2026-06-08 (#2522)
 - #1568: bug: /admin/chat shows 'Loading conversation...' spinner for ~3s… ([#1573](https://github.com/A-Guy-educ/A-Guy/pull/1573)) — @aguyaharonyair · ⚠️ QA 2026-06-08 (#2518)
 - #1570: feat: show per-message timestamp in admin chat ([#1574](https://github.com/A-Guy-educ/A-Guy/pull/1574)) — @aguyaharonyair · ✅ QA 2026-06-07
