@@ -2,6 +2,7 @@
 every: 1d
 staff: qa
 mentions: aguyaharonyair
+disabled: true
 ---
 
 # QA Sweep

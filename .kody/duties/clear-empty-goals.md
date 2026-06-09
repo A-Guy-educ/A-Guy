@@ -1,6 +1,7 @@
 ---
 every: 1d
 mentions: aguyaharonyair
+disabled: true
 ---
 
 # Clear Empty Goals

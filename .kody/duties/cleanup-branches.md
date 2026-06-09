@@ -2,6 +2,7 @@
 every: manual
 staff: coo
 mentions: aguyaharonyair
+disabled: true
 ---
 
 # clean up branches
