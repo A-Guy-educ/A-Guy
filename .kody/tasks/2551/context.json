@@ -1,0 +1,17 @@
+{
+  "taskId": "2551",
+  "taskType": "issue",
+  "target": "2551",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Added window.confirm guard to deleteBlock in LessonBlocksField — bug reproduced by E2E test, verified by quality gates",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/LessonBlocksField/index.tsx",
+    "tests/e2e/lesson-blocks-field-delete-confirm.e2e.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/gh-27196810949-1.jsonl",
+  "startedAt": "2026-06-09T09:30:00Z",
+  "finishedAt": "2026-06-09T09:35:00Z"
+}
