@@ -1,15 +1,17 @@
 {
   "version": 1,
-  "rev": 58,
+  "rev": 59,
   "cursor": "reported",
   "data": {
-    "cycle": 15,
-    "lastRunISO": "2026-06-08T22:18:18Z",
-    "nextEligibleISO": "2026-06-09T04:18:18Z",
-    "reviewed": [],
+    "cycle": 16,
+    "lastRunISO": "2026-06-09T05:19:50Z",
+    "nextEligibleISO": "2026-06-09T11:19:50Z",
+    "reviewed": [
+      "approval-gate"
+    ],
     "verdicts": {
       "approval-gate": {
-        "note": "state contract documented but never produced; kody-job-next-state block not emitted by any procedure step; state file never created (0 commits, 404); cadence guard relies on external engine with no evidence it fires every 15m",
+        "note": "kody-job-next-state block now present in body, but state file still never created (0 commits to state path, 404)",
         "verdict": "broken"
       },
       "architecture-audit": {
@@ -109,8 +111,8 @@
         "verdict": "warn"
       }
     },
-    "lastDurationMs": 130330,
-    "lastFiredAt": "2026-06-08T22:20:15.799Z",
+    "lastDurationMs": 273611,
+    "lastFiredAt": "2026-06-09T05:20:14.280Z",
     "lastOutcome": "completed"
   },
   "done": false
