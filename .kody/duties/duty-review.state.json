@@ -1,13 +1,16 @@
 {
   "version": 1,
-  "rev": 59,
+  "rev": 60,
   "cursor": "reported",
   "data": {
     "cycle": 16,
-    "lastRunISO": "2026-06-09T05:19:50Z",
-    "nextEligibleISO": "2026-06-09T11:19:50Z",
+    "lastFiredAt": "2026-06-09T11:51:18.191Z",
+    "lastOutcome": "completed",
+    "lastRunISO": "2026-06-09T11:48:54Z",
+    "nextEligibleISO": "2026-06-09T17:48:54Z",
     "reviewed": [
-      "approval-gate"
+      "approval-gate",
+      "architecture-audit"
     ],
     "verdicts": {
       "approval-gate": {
@@ -15,7 +18,7 @@
         "verdict": "broken"
       },
       "architecture-audit": {
-        "note": "script never existed (404); body references deprecated .kody/jobs/ path; no kody-job-next-state block; disabled=true design review only",
+        "note": "script never implemented (404); body references deprecated .kody/jobs/ path; no kody-job-next-state block in procedure",
         "verdict": "broken"
       },
       "ceo-performance-review": {
@@ -59,7 +62,7 @@
         "verdict": "warn"
       },
       "flaky-test-quarantine": {
-        "note": "no kody-job-next-state block; state never created; disabled=true so idle by design",
+        "note": "no kody-job-next-state block; disabled=true so idle by design",
         "verdict": "warn"
       },
       "health-check": {
@@ -75,7 +78,7 @@
         "verdict": "warn"
       },
       "publish-release": {
-        "note": "(disabled) no kody-job-next-state block; disabled=true design review only",
+        "note": "no kody-job-next-state block; disabled=true so idle by design",
         "verdict": "warn"
       },
       "qa-sweep": {
@@ -95,7 +98,7 @@
         "verdict": "warn"
       },
       "security-audit": {
-        "note": "(disabled) no kody-job-next-state block; disabled=true design review only",
+        "note": "no kody-job-next-state block; disabled=true so idle by design",
         "verdict": "warn"
       },
       "system-audit": {
@@ -111,9 +114,7 @@
         "verdict": "warn"
       }
     },
-    "lastDurationMs": 273611,
-    "lastFiredAt": "2026-06-09T05:20:14.280Z",
-    "lastOutcome": "completed"
+    "lastDurationMs": 156823
   },
   "done": false
 }
