@@ -1,0 +1,10 @@
+[
+  {
+    "type": "lesson",
+    "name": "fetch-without-timeout-hangs-forever",
+    "hook": "Fetch without timeout in useEffect can hang indefinitely",
+    "body": "When a fetch request is made in a useEffect hook (like MetricsProvider's fetchMetrics), it can hang indefinitely if the server doesn't respond. This causes isLoading to stay true forever, showing a loading spinner forever.\n\nFix: Use AbortController with a setTimeout to abort the request after a reasonable timeout (e.g., 15s).\n\nWhy: This bug (#2574) manifested as the /admin dashboard showing 'Loading revenue & transactions...', 'Loading top products...' etc. forever because the metrics fetch to /api/admin/dashboard-metrics had no timeout.",
+    "why": "This pattern (fetch + useEffect + loading state) without timeout is a common bug that manifests silently. Any component that fetches data in useEffect and has a loading state should have a timeout.",
+    "confidence": 0.95
+  }
+]

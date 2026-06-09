@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Add timeout to other MetricsProvider fetches (if any)",
+    "body": "If MetricsProvider gains additional fetch calls (e.g., for different endpoints), ensure they also use the AbortController+timeout pattern.",
+    "rationale": "Consistency — the same bug pattern could reappear in new fetch calls",
+    "priority": "low"
+  },
+  {
+    "title": "Consider generic fetchWithTimeout utility",
+    "body": "A shared fetchWithTimeout utility in a utils file could be reused across the codebase for all fetch calls that need timeout protection.",
+    "rationale": "Reuse — other components may need the same timeout pattern",
+    "priority": "low"
+  }
+]

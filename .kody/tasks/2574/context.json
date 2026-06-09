@@ -1,0 +1,17 @@
+{
+  "taskId": "2574",
+  "taskType": "issue",
+  "target": "2574",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Fixed MetricsProvider with AbortController timeout; added unit test; all quality gates green",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/ui/admin/ConversionTracking/MetricsProvider.tsx",
+    "tests/unit/admin/metrics-provider-timeout.test.ts"
+  ],
+  "sessionLog": ".kody/sessions/invalid",
+  "startedAt": "2026-06-09T19:40:00Z",
+  "finishedAt": "2026-06-09T19:47:55Z"
+}
