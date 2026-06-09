@@ -1679,7 +1679,7 @@
 
 - #2387: [P2] Verify Stripe webhook endpoint is receiving events ([#2414](https://github.com/A-Guy-educ/A-Guy/pull/2414)) — @kodyade[bot]
 - fix(admin): Add CategoriesCell to render Courses category names in list ([#2550](https://github.com/A-Guy-educ/A-Guy/pull/2550)) — @aguyshayb
-- #2361: [P1] Lesson Type field is blank in edit form ([#2365](https://github.com/A-Guy-educ/A-Guy/pull/2365)) — @kodyade[bot]
+- #2361: [P1] Lesson Type field is blank in edit form ([#2365](https://github.com/A-Guy-educ/A-Guy/pull/2365)) — @kodyade[bot] · 🔄 QA (#2583)
 - #2250: docs-drift: Exercises (#2154) ([#2341](https://github.com/A-Guy-educ/A-Guy/pull/2341)) — @kodyade[bot] · ⚠️ QA 2026-06-08 (#2527)
 - #2248: docs-drift: Block Rendering (#2116) ([#2340](https://github.com/A-Guy-educ/A-Guy/pull/2340)) — @kodyade[bot] · ⚠️ QA 2026-06-08 (#2530)
 - #2246: docs-drift: Admin Components (#2108) ([#2339](https://github.com/A-Guy-educ/A-Guy/pull/2339)) — @kodyade[bot] · ✅ QA 2026-06-08
