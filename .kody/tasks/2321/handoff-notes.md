@@ -1,8 +1,1 @@
-# Merge Conflict Resolution — PR #2321
-
-Resolved a single conflict in `.kody/reports/duty-review.md`.
-
-**Conflict:** HEAD (Cycle 11, 0 healthy) vs origin/dev (Cycle 16, 1 healthy).
-**Resolution:** Took origin/dev — the dev branch had the newer duty review cycle data.
-
-No conflict markers remain. The staged file is ready for the wrapper to commit.
+Resolved the single conflicted file `.kody/reports/duty-review.md`. The conflict was between two cycles (Cycle 11 on HEAD vs Cycle 16 on origin/dev) of the same rolling duty review report. Took the origin/dev version as it is newer and more complete (has staff assignments filled in, more accurate cadence/health data). The PR branch's cycle was stale. No functional code changes were involved.

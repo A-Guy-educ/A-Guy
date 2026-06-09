@@ -4,11 +4,11 @@
   "target": "2297-p3-admin-footer-shows-unversioned-vdev-label",
   "outcome": "success",
   "exitCode": 0,
-  "reason": "Single conflict in .kody/reports/duty-review.md resolved by taking origin/dev (Cycle 16) over HEAD (Cycle 11)",
-  "prUrl": null,
-  "runUrl": null,
+  "reason": "Single file conflict in .kody/reports/duty-review.md resolved by taking origin/dev (Cycle 16)",
+  "prUrl": "https://github.com/A-Guy-educ/A-Guy/pull/2321",
+  "runUrl": "https://github.com/A-Guy-educ/A-Guy/actions/runs/gh-27225655112-1",
   "filesTouched": [".kody/reports/duty-review.md"],
-  "sessionLog": ".kody/sessions/gh-27185638278-1.jsonl",
-  "startedAt": "2026-06-09T00:00:00Z",
-  "finishedAt": "2026-06-09T00:00:00Z"
+  "sessionLog": ".kody/sessions/9ec3f4a9-4498-434e-8425-c86f41fc99ee.jsonl",
+  "startedAt": "2026-06-09T18:02:24.220Z",
+  "finishedAt": "2026-06-09T18:03:00.000Z"
 }
