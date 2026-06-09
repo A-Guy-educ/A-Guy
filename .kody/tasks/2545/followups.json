@@ -1,0 +1,14 @@
+[
+  {
+    "title": "QA verification of the fix",
+    "body": "The fix was applied based on pattern analysis (comparing with working chat page). Unit tests pass, but QA should verify the actual /admin/pdf-conversion route renders correctly in a real browser with full admin theme styling.",
+    "rationale": "The QA report for issue #2545 showed a completely white/blank page. The fix addresses the I18nProvider and height issues, but needs real browser verification.",
+    "priority": "high"
+  },
+  {
+    "title": "Investigate why unit tests passed before fix",
+    "body": "The unit tests for the PDF conversion page were passing BEFORE the I18nProvider fix was applied. This suggests the test environment (jsdom) may not fully reproduce the blank page condition. Consider if the tests need to be more thorough or if the blank page is environment-specific.",
+    "rationale": "If unit tests pass before and after a fix, the fix may not be correctly targeted. The jsdom test environment may not capture the same rendering behavior as a real browser.",
+    "priority": "medium"
+  }
+]

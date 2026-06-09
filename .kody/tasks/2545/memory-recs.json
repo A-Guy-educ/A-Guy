@@ -1,0 +1,18 @@
+[
+  {
+    "type": "decision",
+    "name": "admin-pages-need-i18nprovider",
+    "hook": "Admin pages using useTranslations or client components should wrap content in I18nProvider",
+    "body": "Admin pages in src/app/(payload)/admin/ that render client-side content should wrap their content in I18nProvider, similar to the chat page pattern. This ensures proper i18n context even if child components don't directly use translation hooks.",
+    "why": "The PDF conversion page was rendering blank until I added I18nProvider, even though the components themselves don't use translation hooks. The admin layout doesn't provide I18nProvider for page content directly.",
+    "confidence": 0.8
+  },
+  {
+    "type": "preference",
+    "name": "explicit-height-for-admin-pages",
+    "hook": "Admin pages should set explicit height to prevent blank rendering",
+    "body": "Admin pages that render full-height content should set explicit height style (e.g., height: calc(100vh - 64px)) on a container div to ensure proper layout. This matches the pattern used in the chat page.",
+    "why": "Without explicit height, some admin pages may render with zero height in certain conditions, showing a blank page even when the admin layout is loading correctly.",
+    "confidence": 0.6
+  }
+]
