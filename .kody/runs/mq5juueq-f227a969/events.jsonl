@@ -1,0 +1,2 @@
+{"ts":"2026-06-08T18:33:53.522Z","runId":"mq5juueq-f227a969","executable":"aguy-payments-products","kind":"stage_start"}
+{"ts":"2026-06-08T18:33:53.523Z","runId":"mq5juueq-f227a969","executable":"aguy-payments-products","kind":"stage_end","durationMs":1,"outcome":"failed","meta":{"exitCode":64,"reason":"--issue must be an integer"}}

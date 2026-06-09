@@ -1,0 +1,60 @@
+{
+  "name": "aguy-tests-qa",
+  "role": "primitive",
+  "describe": "Implement the tests/QA slice only: e2e tests, integration tests, unit tests, QA scenarios, visual checks, and verification coverage for a parent task.",
+  "inputs": [
+    {
+      "name": "issue",
+      "flag": "--issue",
+      "type": "int",
+      "required": true,
+      "describe": "GitHub issue number to implement."
+    },
+    {
+      "name": "base",
+      "flag": "--base",
+      "type": "string",
+      "required": false,
+      "describe": "Optional base branch override."
+    }
+  ],
+  "claudeCode": {
+    "model": "inherit",
+    "permissionMode": "acceptEdits",
+    "maxTurns": null,
+    "maxTurnTimeoutSec": 1200,
+    "systemPromptAppend": null,
+    "cacheable": true,
+    "enableVerifyTool": true,
+    "verifyAttempts": 4,
+    "tools": ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "mcp__kody-verify"],
+    "hooks": ["block-git"],
+    "skills": [],
+    "commands": [],
+    "subagents": [],
+    "plugins": [],
+    "mcpServers": []
+  },
+  "cliTools": [],
+  "lifecycle": "pr-branch",
+  "lifecycleConfig": {
+    "label": {
+      "name": "kody:running",
+      "color": "fbca04",
+      "description": "kody: implementing the tests QA slice"
+    },
+    "context": "task",
+    "sync": false,
+    "verify": true,
+    "advance": false,
+    "mirrorState": true,
+    "finalize": true
+  },
+  "scripts": {
+    "preflight": [{ "script": "runFlow" }],
+    "postflight": []
+  },
+  "output": {
+    "actionTypes": ["AGUY_TESTS_QA_COMPLETED", "AGUY_TESTS_QA_FAILED", "AGENT_NOT_RUN"]
+  }
+}

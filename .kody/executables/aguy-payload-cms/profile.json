@@ -1,0 +1,60 @@
+{
+  "name": "aguy-payload-cms",
+  "role": "primitive",
+  "describe": "Implement the Payload CMS slice only: Payload config, collections, fields, hooks, access rules, jobs, endpoints, migrations, and generated type/import-map impacts.",
+  "inputs": [
+    {
+      "name": "issue",
+      "flag": "--issue",
+      "type": "int",
+      "required": true,
+      "describe": "GitHub issue number to implement."
+    },
+    {
+      "name": "base",
+      "flag": "--base",
+      "type": "string",
+      "required": false,
+      "describe": "Optional base branch override."
+    }
+  ],
+  "claudeCode": {
+    "model": "inherit",
+    "permissionMode": "acceptEdits",
+    "maxTurns": null,
+    "maxTurnTimeoutSec": 1200,
+    "systemPromptAppend": null,
+    "cacheable": true,
+    "enableVerifyTool": true,
+    "verifyAttempts": 4,
+    "tools": ["Read", "Write", "Edit", "Bash", "Grep", "Glob", "mcp__kody-verify"],
+    "hooks": ["block-git"],
+    "skills": [],
+    "commands": [],
+    "subagents": [],
+    "plugins": [],
+    "mcpServers": []
+  },
+  "cliTools": [],
+  "lifecycle": "pr-branch",
+  "lifecycleConfig": {
+    "label": {
+      "name": "kody:running",
+      "color": "fbca04",
+      "description": "kody: implementing the Payload CMS slice"
+    },
+    "context": "task",
+    "sync": false,
+    "verify": true,
+    "advance": false,
+    "mirrorState": true,
+    "finalize": true
+  },
+  "scripts": {
+    "preflight": [{ "script": "runFlow" }],
+    "postflight": []
+  },
+  "output": {
+    "actionTypes": ["AGUY_PAYLOAD_CMS_COMPLETED", "AGUY_PAYLOAD_CMS_FAILED", "AGENT_NOT_RUN"]
+  }
+}

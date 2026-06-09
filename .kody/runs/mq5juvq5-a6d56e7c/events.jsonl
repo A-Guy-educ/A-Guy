@@ -1,0 +1,2 @@
+{"ts":"2026-06-08T18:33:55.229Z","runId":"mq5juvq5-a6d56e7c","executable":"aguy-tests-qa","kind":"stage_start"}
+{"ts":"2026-06-08T18:33:55.231Z","runId":"mq5juvq5-a6d56e7c","executable":"aguy-tests-qa","kind":"stage_end","durationMs":2,"outcome":"failed","meta":{"exitCode":64,"reason":"--issue must be an integer"}}

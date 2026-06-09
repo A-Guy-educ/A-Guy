@@ -1,0 +1,2 @@
+{"ts":"2026-06-08T18:33:51.790Z","runId":"mq5jut2m-f9105519","executable":"aguy-infra-shared","kind":"stage_start"}
+{"ts":"2026-06-08T18:33:51.792Z","runId":"mq5jut2m-f9105519","executable":"aguy-infra-shared","kind":"stage_end","durationMs":2,"outcome":"failed","meta":{"exitCode":64,"reason":"--issue must be an integer"}}

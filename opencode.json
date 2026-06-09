@@ -11,15 +11,15 @@
   },
   "agent": {
     "build": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "model": "minimax-coding-plan/MiniMax-M3",
       "description": "Building features, refactoring, implementing changes"
     },
     "plan": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "model": "minimax-coding-plan/MiniMax-M3",
       "description": "Planning tasks, architecture design, complex problem solving"
     },
     "architect": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "model": "minimax-coding-plan/MiniMax-M3",
       "description": "Planning tasks, architecture design, complex problem solving"
     },
     "clarify": {
@@ -27,27 +27,27 @@
       "description": "Collects operator questions and answers"
     },
     "taskify": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "model": "minimax-coding-plan/MiniMax-M3",
       "description": "Converts free-text tasks into structured task.json for pipeline routing"
     },
     "gap": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "model": "minimax-coding-plan/MiniMax-M3",
       "description": "Analyzes spec.md for gaps, missing info, and inconsistencies"
     },
     "plan-gap": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "model": "minimax-coding-plan/MiniMax-M3",
       "description": "Analyzes plan for gaps vs spec and codebase, auto-revises plan"
     },
     "autofix": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "model": "minimax-coding-plan/MiniMax-M3",
       "description": "Automatically fixes lint, type, and format errors from verify stage"
     },
     "verify": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "model": "minimax-coding-plan/MiniMax-M3",
       "description": "Runs tests, validates implementation passes all gates"
     },
     "test": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "model": "minimax-coding-plan/MiniMax-M3",
       "description": "Writes E2E and integration tests using Playwright"
     },
     "advisor": {
@@ -55,11 +55,11 @@
       "description": "Code review, suggestions, best practices"
     },
     "pr": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "model": "minimax-coding-plan/MiniMax-M3",
       "description": "Creates branch, commits changes, opens pull request"
     },
     "cody-expert": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "model": "minimax-coding-plan/MiniMax-M3",
       "description": "Cody pipeline expert - understands pipeline execution, debugging, adding new stages",
       "instructions": [".opencode/docs/PIPELINE.md"]
     },
@@ -68,11 +68,11 @@
       "description": "Orchestrates build and test-writer agents in parallel, handles retries and verification"
     },
     "test-writer": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "model": "minimax-coding-plan/MiniMax-M3",
       "description": "TDD test writer - writes failing tests before implementation"
     },
     "browser": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "model": "minimax-coding-plan/MiniMax-M3",
       "description": "Browser agent - navigates A-Guy platform, inspects pages, answers UI questions. Uses Chrome DevTools MCP locally, Playwright MCP in CI.",
       "instructions": ["scripts/browser-agent/AGENT.md"]
     },
@@ -81,15 +81,15 @@
       "description": "Architect-level code review of generated code for quality, security, and correctness"
     },
     "fix": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "model": "minimax-coding-plan/MiniMax-M3",
       "description": "Targeted fixes for issues found by review or verify stages"
     },
     "reflect": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "model": "minimax-coding-plan/MiniMax-M3",
       "description": "Post-task reflection - extracts patterns, updates knowledge base, creates skills when patterns repeat"
     },
     "e2e-test-writer": {
-      "model": "minimax-coding-plan/MiniMax-M2.7-highspeed",
+      "model": "minimax-coding-plan/MiniMax-M3",
       "description": "Writes Playwright E2E tests for UI changes. Tests committed but NOT run in pipeline — CI runs them on PR."
     }
   },
