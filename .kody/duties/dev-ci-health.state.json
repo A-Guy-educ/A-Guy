@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "rev": 219,
+  "rev": 220,
   "cursor": "idle",
   "data": {
-    "lastFiredAt": "2026-06-09T19:33:30.092Z",
+    "lastFiredAt": "2026-06-09T20:28:06.509Z",
     "lastOutcome": "completed",
     "lastIssue": 2349,
-    "lastDurationMs": 18977
+    "lastDurationMs": 22430
   },
   "done": false
 }
