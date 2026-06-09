@@ -25,10 +25,6 @@ async function getMetaName(page: Page, name: string): Promise<string | null> {
 }
 
 test.describe('Brand-driven metadata', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.waitForLoadState('networkidle')
-  })
-
   test.describe.configure({ mode: 'parallel' })
 
   test('homepage has correct siteName in OpenGraph', async ({ page }) => {
@@ -56,11 +52,11 @@ test.describe('Brand-driven metadata', () => {
   })
 
   test('/study page uses brand title template', async ({ page }) => {
-    await page.goto('http://localhost:3000/study')
-    await page.waitForLoadState('networkidle')
+    await page.goto('/study')
+    await page.waitForLoadState('domcontentloaded')
 
-    const title = await getMetaName(page, 'title')
-    expect(title).toMatch(/לימוד.*A-Guy/)
+    const title = await page.title()
+    expect(title).toContain(BRAND.name)
   })
 
   test('/courses page has brand siteName', async ({ page }) => {

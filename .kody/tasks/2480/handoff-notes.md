@@ -1,16 +1,16 @@
 # Merge Conflict Resolution — PR #2480
 
-Resolved two conflicted files in `.kody/` — both are operational/report files, not source code.
+Resolved two conflicted files in `.kody/reports/`.
 
 ## Files resolved
 
-- `.kody/reports/duty-review.md`: HEAD (Cycle 9) vs origin/dev (Cycle 12). Took origin/dev — Cycle 12 is current.
-- `.kody/last-run.jsonl`: HEAD (older session log) vs origin/dev (newer session log from 2026-06-08). Took origin/dev — most recent session is authoritative for operational logs.
+- `.kody/reports/duty-review.md`: HEAD (Cycle 9) vs origin/dev (Cycle 16). Took origin/dev — more recent cycle number and updated hour counts throughout.
+- `.kody/reports/health-check.md`: HEAD (585h/425h/428h/977h) vs origin/dev (684h/526h/1076h). Took origin/dev — stale issue #1563 dropped from dev side, more recent hour counts. origin/dev is the current state.
 
 ## Approach
 
-Both conflicted files are operational artifacts (session logs and duty reports). The more recent version from origin/dev is the correct resolution. Used `git checkout --theirs` then `git add` to mark resolved.
+Both files are auto-generated operational reports. origin/dev had the more recent state in both cases. Used Write tool to replace conflict markers with origin/dev content.
 
 ## Result
 
-Both files staged as resolved (`M` status). No source code changes.
+No conflict markers remain. No source code files touched.

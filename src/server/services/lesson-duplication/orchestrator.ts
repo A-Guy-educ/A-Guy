@@ -379,7 +379,7 @@ export async function createOutputExercise(
 }
 
 /**
- * Clone a batch of exercises in parallel for the level=none fast path.
+ * Clone a batch of exercises for the level=none fast path.
  *
  * Each source exercise is copied with:
  *  - Same content.blocks (no trimming — exact copy)
@@ -387,9 +387,9 @@ export async function createOutputExercise(
  *  - lesson field set to the output lesson
  *  - status: draft
  *
- * Failures are collected but do not abort the batch — other exercises still land.
- * This matches the issue requirement: "if one source exercise fails to clone,
- * the other exercises must still land."
+ * Failures are collected but do not abort the batch; other exercises still land.
+ * Creates run sequentially because exercise hooks update the parent lesson, and
+ * parallel creates can hit Mongo write conflicts in the same transaction window.
  *
  * @returns mappings  — successful clones ready for outputExercises array
  * @returns failures  — GENERATION_FAILURE_CODE entries for any that threw
@@ -399,8 +399,11 @@ async function cloneExercisesFastPath(
   outputLessonId: string,
   sourceExercises: ExerciseDoc[],
 ): Promise<{ mappings: OutputExerciseMapping[]; failures: FailureEntry[] }> {
-  const results = await Promise.allSettled(
-    sourceExercises.map(async (src) => {
+  const mappings: OutputExerciseMapping[] = []
+  const failures: FailureEntry[] = []
+
+  for (const src of sourceExercises) {
+    try {
       const {
         id: _id,
         createdAt: _c,
@@ -429,29 +432,18 @@ async function cloneExercisesFastPath(
         overrideAccess: true,
       })
 
-      return {
+      mappings.push({
         sourceExerciseId: src.id,
         outputExerciseId: cloned.id,
         // 'ai' is the convention used for level=none in outputExercises (matches
         // orphan-recovery path). These entries are only used for bookkeeping;
         // level=none has no failures so this field is never read for correctness.
         strategy: 'ai' as DuplicationStrategy,
-      } satisfies OutputExerciseMapping
-    }),
-  )
-
-  const mappings: OutputExerciseMapping[] = []
-  const failures: FailureEntry[] = []
-
-  for (let i = 0; i < results.length; i++) {
-    const result = results[i]
-    const src = sourceExercises[i]
-    if (result.status === 'fulfilled') {
-      mappings.push(result.value)
-    } else {
-      const message = result.reason instanceof Error ? result.reason.message : 'Unknown clone error'
+      })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown clone error'
       logger.error(
-        { exerciseRef: src.id, err: result.reason },
+        { exerciseRef: src.id, err },
         '[fast-path] exercise clone failed — will record GENERATION_FAILED and continue',
       )
       failures.push({
@@ -840,7 +832,7 @@ export async function runDuplicationOrchestrator(
     // The fast path:
     //  1. Create output lesson (same as slow path)
     //  2. Fetch all source exercises in one query
-    //  3. Bulk-create cloned exercises in parallel — NO trimming, no validators
+    //  3. Create cloned exercises sequentially — NO trimming, no validators
     //  4. Populate outputExercises array in ONE update (not per-exercise $push)
     //  5. Mark succeeded immediately
     //

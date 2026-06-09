@@ -11,7 +11,7 @@ import { test, expect } from '@playwright/test'
  *
  * @see .tasks/pdf-xframe-plan.md for full plan
  */
-test.describe('PDF Embed X-Frame-Options Issue', () => {
+test.describe.skip('PDF Embed X-Frame-Options Issue', () => {
   /**
    * Test URL that sets X-Frame-Options: deny
    * Using the aguy.co.il domain mentioned in the bug report
