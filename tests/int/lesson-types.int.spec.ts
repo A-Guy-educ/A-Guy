@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { getPayload, type Payload } from 'payload'
-import config from '@payload-config'
+import type { Payload } from 'payload'
+import { getSharedPayload } from '../setup/shared-payload'
 import { getDefaultTenantSlug } from '@/server/repos/tenant/get-default-tenant'
 
 async function ensureDefaultTenant(payload: Payload): Promise<string> {
@@ -34,7 +34,7 @@ describe('Lesson types', () => {
   const lessonIds: string[] = []
 
   beforeAll(async () => {
-    payload = await getPayload({ config })
+    payload = await getSharedPayload()
     tenantId = await ensureDefaultTenant(payload)
     const timestamp = Date.now()
     const category = await payload.create({
@@ -130,6 +130,7 @@ describe('Lesson types', () => {
   })
 
   it('defaults to learning when type is omitted', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const lesson = await payload.create({
       collection: 'lessons',
       data: {
@@ -139,7 +140,6 @@ describe('Lesson types', () => {
         status: 'published',
         isActive: true,
         tenant: tenantId,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- intentionally omitting 'type' to test default
         contentStatus: 'none',
         contentStatusVisible: true,
       } as any,
@@ -147,6 +147,47 @@ describe('Lesson types', () => {
     })
     lessonIds.push(lesson.id)
     expect(lesson.type).toBe('learning')
+  })
+
+  it('afterRead hook fixes legacy lessons with null type (admin edit form simulation)', async () => {
+    // Simulate a legacy lesson that has type=null in the database (created before the type field was added).
+    // We create a lesson without type, then directly update the database to set type=null,
+    // bypassing the beforeChange hook that would normally fix it.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const lesson = await payload.create({
+      collection: 'lessons',
+      data: {
+        title: 'Legacy Lesson For Type Fix',
+        chapter: chapterId,
+        order: 6,
+        status: 'published',
+        isActive: true,
+        tenant: tenantId,
+        locale: 'he',
+        accessType: 'inherit',
+        contentStatus: 'none',
+        contentStatusVisible: true,
+      } as any,
+      draft: false,
+    })
+    lessonIds.push(lesson.id)
+
+    // Directly update the database to set type=null (simulating a legacy lesson)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (payload.db as any).updateOne({
+      collection: 'lessons',
+      where: { id: { equals: lesson.id } },
+      data: { type: null },
+    })
+
+    // Now read the lesson back — the afterRead hook should fix the null type
+    const retrieved = await payload.findByID({
+      collection: 'lessons',
+      id: lesson.id,
+    })
+
+    // The afterRead hook must fix null type to 'learning' — blank in the edit form indicates the bug
+    expect(retrieved.type).toBe('learning')
   })
 
   it('allows updating the lesson type', async () => {
