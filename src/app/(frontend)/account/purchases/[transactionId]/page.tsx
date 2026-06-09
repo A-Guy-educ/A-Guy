@@ -16,6 +16,7 @@ import { getMeUser } from '@/infra/utils/getMeUser'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import type { Metadata } from 'next'
+import type { Transaction } from '@/payload-types'
 import { TransactionDetailContent } from './TransactionDetailContent'
 import type { TransactionDetailData, EntitlementInfo } from './TransactionDetailContent'
 
@@ -57,21 +58,35 @@ export default async function TransactionDetailPage({ params: paramsPromise }: P
   let entitlements: EntitlementInfo = { lessons: [], features: [] }
   let fetchError = false
 
+  // Fetch the transaction
+  let tx: Transaction | null = null
   try {
-    const tx = await payload.findByID({
+    tx = await payload.findByID({
       collection: 'transactions',
       id: transactionId,
-      depth: 0,
+      depth: 1,
       overrideAccess: true,
     })
+  } catch (err) {
+    if (err instanceof Error && (err.name === 'NotFound' || err.message.includes('Not Found'))) {
+      notFound()
+    }
+    fetchError = true
+  }
 
+  if (!tx) {
+    // Transaction not found or fetch failed
+    if (!fetchError) {
+      notFound()
+    }
+  } else {
     // Server-side authorization: ensure the transaction belongs to the current user
     const transactionUserId = typeof tx.user === 'string' ? tx.user : tx.user?.id
     if (transactionUserId !== user.id) {
       notFound()
     }
 
-    // Extract product info if populated
+    // Extract product info (populated via depth: 1)
     if (typeof tx.product === 'object' && tx.product !== null) {
       productName = (tx.product as { name?: string }).name ?? null
       productSlug = (tx.product as { slug?: string }).slug ?? null
@@ -101,67 +116,67 @@ export default async function TransactionDetailPage({ params: paramsPromise }: P
 
     // If transaction succeeded, fetch entitlements granted by this transaction
     if (tx.status === 'succeeded') {
-      // Fetch the user to get their entitlements
-      const userDoc = await payload.findByID({
-        collection: 'users',
-        id: user.id,
-        depth: 0,
-        overrideAccess: true,
-        select: { courseEntitlements: true, featureEntitlements: true },
-      })
-
-      const courseEnts =
-        (
-          userDoc as {
-            courseEntitlements?: Array<{
-              course: string
-              grantMethod: string
-              grantedAt: string | null
-              transactionId: string | null
-            }>
-          }
-        ).courseEntitlements ?? []
-
-      const featureEnts =
-        (
-          userDoc as {
-            featureEntitlements?: Array<{
-              key: string
-              grantedAt: string | null
-              transactionId: string | null
-            }>
-          }
-        ).featureEntitlements ?? []
-
-      // Filter entitlements by transactionId
-      const lessonEntitlements = courseEnts.filter((e) => e.transactionId === tx.id)
-      const featureEntitlements = featureEnts.filter((e) => e.transactionId === tx.id)
-
-      // Fetch lesson/course titles for the entitlements
-      if (lessonEntitlements.length > 0) {
-        const lessonIds = lessonEntitlements.map((e) => e.course)
-        const lessons = await payload.find({
-          collection: 'courses',
-          where: { id: { in: lessonIds } },
+      try {
+        // Fetch the user to get their entitlements
+        const userDoc = await payload.findByID({
+          collection: 'users',
+          id: user.id,
           depth: 0,
-          limit: 100,
           overrideAccess: true,
+          select: { courseEntitlements: true, featureEntitlements: true },
         })
-        entitlements.lessons = lessons.docs.map((c) => ({
-          id: c.id,
-          title: (c as { title?: string }).title ?? 'Untitled',
-        }))
-      }
 
-      entitlements.features = featureEntitlements.map((e) => ({
-        key: e.key,
-      }))
+        const courseEnts =
+          (
+            userDoc as {
+              courseEntitlements?: Array<{
+                course: string
+                grantMethod: string
+                grantedAt: string | null
+                transactionId: string | null
+              }>
+            }
+          ).courseEntitlements ?? []
+
+        const featureEnts =
+          (
+            userDoc as {
+              featureEntitlements?: Array<{
+                key: string
+                grantedAt: string | null
+                transactionId: string | null
+              }>
+            }
+          ).featureEntitlements ?? []
+
+        // Filter entitlements by transactionId
+        const lessonEntitlements = courseEnts.filter((e) => e.transactionId === tx.id)
+        const featureEntitlements = featureEnts.filter((e) => e.transactionId === tx.id)
+
+        // Fetch lesson/course titles for the entitlements
+        if (lessonEntitlements.length > 0) {
+          const lessonIds = lessonEntitlements.map((e) => e.course)
+          const lessons = await payload.find({
+            collection: 'courses',
+            where: { id: { in: lessonIds } },
+            depth: 0,
+            limit: 100,
+            overrideAccess: true,
+          })
+          entitlements.lessons = lessons.docs.map((c) => ({
+            id: c.id,
+            title: (c as { title?: string }).title ?? 'Untitled',
+          }))
+        }
+
+        entitlements.features = featureEntitlements.map((e) => ({
+          key: e.key,
+        }))
+      } catch {
+        // Entitlements fetch failed - continue without entitlements
+        // This is non-critical, transaction itself is still shown
+      }
     }
-  } catch (err) {
-    if (err instanceof Error && (err.name === 'NotFound' || err.message.includes('Not Found'))) {
-      notFound()
-    }
-    fetchError = true
   }
 
   return (
