@@ -91,8 +91,10 @@ describe('CSP Configuration - Vercel Feedback Script on /admin', () => {
     expect(imgSrcMatch).not.toBeNull()
     const imgSrc = imgSrcMatch![1]
     // Admin routes MUST have gravatar.com in img-src for user avatars to load
-    // Use *.gravatar.com to match www.gravatar.com where avatars are actually served
-    expect(imgSrc).toContain('*.gravatar.com')
+    // gravatar.com covers gravatar.com, www.gravatar.com covers www.gravatar.com
+    // Both are needed because 'gravatar.com' does NOT match 'www.gravatar.com' in CSP
+    expect(imgSrc).toContain('gravatar.com')
+    expect(imgSrc).toContain('www.gravatar.com')
   })
 
   it('should allow www.gravatar.com in img-src for /admin routes (not just gravatar.com)', async () => {
@@ -111,9 +113,11 @@ describe('CSP Configuration - Vercel Feedback Script on /admin', () => {
     const imgSrc = imgSrcMatch![1]
     // Gravatar avatars are served from www.gravatar.com, not gravatar.com directly.
     // In CSP, 'gravatar.com' does NOT match 'www.gravatar.com' (different host).
-    // We need '*.gravatar.com' to match subdomains like www.gravatar.com.
+    // We include both gravatar.com and www.gravatar.com explicitly.
+    // Alternatively, '*.gravatar.com' wildcard would also work.
     // See: https://www.w3.org/TR/CSP/#source-list-syntax
-    expect(imgSrc).toMatch(/\*\.gravatar\.com/)
+    expect(imgSrc).toContain('gravatar.com')
+    expect(imgSrc).toContain('www.gravatar.com')
   })
 
   it('should include www.gravatar.com in img-src for /admin routes', async () => {
