@@ -23,6 +23,6 @@ PR #1590 expanded the metrics with time-window breakdowns:
 
 ## Related
 
-- [Lesson Duplication Service](lesson-duplication.md) — separate service with its own metrics
+- [Lesson Duplication Service](./lesson-duplication.md) — separate service with its own metrics
 - `src/app/api/admin/dashboard-metrics/route.ts` — implementation
 - `src/server/payload/collections/UserStats.ts` — schema
