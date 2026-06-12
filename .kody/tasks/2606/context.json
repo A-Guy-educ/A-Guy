@@ -1,0 +1,14 @@
+{
+  "taskId": "2606",
+  "taskType": "pr",
+  "target": "2605",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Updated docs/kody-smoke-test.md line per review feedback: added 'and fix command' and lowercased 'duty'",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": ["docs/kody-smoke-test.md"],
+  "sessionLog": null,
+  "startedAt": "2026-06-12T00:00:00Z",
+  "finishedAt": "2026-06-12T00:02:00Z"
+}

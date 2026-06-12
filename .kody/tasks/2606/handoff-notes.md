@@ -1,0 +1,1 @@
+Task #2606: Applied review feedback to docs/kody-smoke-test.md. Changed the line from "Duty execution path verified on 2026-06-12." to "duty execution path and fix command verified on 2026-06-12." — lowercased "duty" and added "and fix command" as requested.
