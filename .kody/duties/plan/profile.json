@@ -1,0 +1,6 @@
+{
+  "name": "plan",
+  "action": "plan",
+  "executable": "plan",
+  "describe": "Research an issue and post a concrete implementation plan."
+}

@@ -1,0 +1,6 @@
+{
+  "name": "spec",
+  "action": "spec",
+  "executable": "spec",
+  "describe": "Research and plan a spec or design issue."
+}

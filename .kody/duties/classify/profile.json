@@ -1,0 +1,6 @@
+{
+  "name": "classify",
+  "action": "classify",
+  "executable": "classify",
+  "describe": "Classify an issue and dispatch it to the matching work duty."
+}

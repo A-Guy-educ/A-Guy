@@ -1,0 +1,6 @@
+{
+  "name": "feature",
+  "action": "feature",
+  "executable": "feature",
+  "describe": "Implement a feature or refactor issue end-to-end."
+}

@@ -1,0 +1,6 @@
+{
+  "name": "bug",
+  "action": "bug",
+  "executable": "bug",
+  "describe": "Fix a bug or enhancement issue end-to-end."
+}

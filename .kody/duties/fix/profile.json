@@ -1,0 +1,6 @@
+{
+  "name": "fix",
+  "action": "fix",
+  "executable": "fix",
+  "describe": "Apply requested feedback to an existing pull request."
+}

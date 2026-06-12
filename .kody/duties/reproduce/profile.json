@@ -1,0 +1,6 @@
+{
+  "name": "reproduce",
+  "action": "reproduce",
+  "executable": "reproduce",
+  "describe": "Create a failing test that reproduces a bug."
+}
