@@ -1,0 +1,1 @@
+Created docs/kody-command-feature-smoke.md per issue #2607. Single-line smoke confirmation file for the @kody feature command run on 2026-06-12. No code changes, no tests needed — this is a smoke test artifact.
