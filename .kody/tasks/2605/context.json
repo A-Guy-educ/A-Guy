@@ -1,0 +1,14 @@
+{
+  "taskId": "2605",
+  "taskType": "issue",
+  "target": "2605",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Created docs/kody-smoke-test.md with single line confirming duty execution on 2026-06-12",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": ["docs/kody-smoke-test.md"],
+  "sessionLog": ".kody/sessions/gh-27426109873-1.jsonl",
+  "startedAt": "2026-06-12T00:00:00Z",
+  "finishedAt": "2026-06-12T00:01:00Z"
+}
