@@ -1,0 +1,20 @@
+{
+  "taskId": "2619",
+  "taskType": "feature",
+  "target": "2619",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "All files implemented: dashboard-metrics route, NeedsAttentionWidget, strings, DashboardWidgets registration, and integration test. Quality gates passed.",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": [
+    "src/app/api/admin/dashboard-metrics/route.ts",
+    "src/ui/admin/ConversionTracking/NeedsAttentionWidget.tsx",
+    "src/ui/admin/ConversionTracking/strings.ts",
+    "src/ui/admin/ConversionTracking/DashboardWidgets.tsx",
+    "tests/int/admin-dashboard-payment-attention.int.spec.ts"
+  ],
+  "sessionLog": ".kody/sessions/gh-27496443868-1-2.jsonl",
+  "startedAt": "2026-06-14T10:50:23.270Z",
+  "finishedAt": "2026-06-14T11:05:00.000Z"
+}

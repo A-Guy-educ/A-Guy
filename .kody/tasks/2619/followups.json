@@ -1,0 +1,8 @@
+[
+  {
+    "title": "Add afterAll cleanup to admin-dashboard-payment-attention test",
+    "body": "The integration test creates products, users, transactions, and webhook-events but does not clean them up in afterAll. Add deletion for each seeded resource, following the pattern of other admin-dashboard tests which also skip cleanup.",
+    "rationale": "Test isolation: leftover documents could affect subsequent test runs.",
+    "priority": "low"
+  }
+]

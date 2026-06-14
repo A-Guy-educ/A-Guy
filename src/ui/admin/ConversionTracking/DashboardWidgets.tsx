@@ -10,12 +10,14 @@ import ContentCountsWidget from './ContentCountsWidget'
 import DashboardHeader from './DashboardHeader'
 import EngagementWidget from './EngagementWidget'
 import MetricsProvider from './MetricsProvider'
+import NeedsAttentionWidget from './NeedsAttentionWidget'
 import UserMetricsWidget from './UserMetricsWidget'
 
 const DashboardWidgets: React.FC = () => {
   return (
     <MetricsProvider>
       <DashboardHeader />
+      <NeedsAttentionWidget />
       <RevenueWidget />
       <TopProductsWidget />
       <CourseEnrollmentsWidget />
