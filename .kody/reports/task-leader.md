@@ -1,11 +1,9 @@
 # Task Leader Report
 
-**Status:** BLOCKED — skill not provisioned
+**Status:** BLOCKED — SKALL not provisioned
 
-**Blocker:** SKILL.md missing at `.kody/executables/task-leader/skills/task-leader-rules/SKILL.md`
+**Blocker:** SKILL.MD missing at `.+/kody/executables/task-leader/skills/task-leader-rules/SKILL.MD`
 
-**Last tick:** 2026-06-18T14:34:34.347Z
-**Report SHA:** 33479c0d5511d3277869cc0586c20b70a17b509d
+**Task Leader cannot execute —the required skill file does not exist at the prescribed path.
 
-Task leader cannot execute — the required skill file does not exist at the prescribed path.
-
+**Awaiting —A guy admin needs to provision the task-leader executable or add the KALL.MD at the expected location.
