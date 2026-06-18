@@ -4,7 +4,7 @@
 
 **Blocker:** `.kody/executables/task-leader/skills/task-leader-rules/SKILL.md` does not exist. The task-leader duty body requires this file for the 6-step method, PR gates, and output format.
 
-**Checked at:** 2026-06-18T13:31:27Z
+**Checked at:** 2026-06-18T14:32:00Z
 
 **Previous blocker fired at:** 2026-06-18T12:14:17.743Z (still unresolved)
 
