@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "rev": 1,
+  "cursor": "seed",
+  "data": {
+    "lastFiredAt": "2026-06-18T04:10:49.289Z",
+    "lastOutcome": "completed",
+    "lastDurationMs": 71482
+  },
+  "done": false
+}
