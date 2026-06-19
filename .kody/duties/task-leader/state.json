@@ -1,14 +1,14 @@
 {
   "version": 1,
-  "rev": 25,
+  "rev": 26,
   "cursor": "blocked-missing-skill",
   "data": {
     "blocker": "SKILL.md missing at .kody/executables/task-leader/skills/task-leader-rules/SKILL.md — task-leader executable not provisioned",
-    "lastFiredAt": "2026-06-19T11:33:52.045Z",
+    "lastFiredAt": "2026-06-19T12:59:13.264Z",
     "lastOutcome": "completed",
-    "reportSha": "4fd969a27f9d3533e349f7fa2336e19239c70eee",
+    "reportSha": "416713b904a651e97fa93ea9490a1ffe1ac86479",
     "reportUrl": "https://github.com/A-Guy-educ/A-Guy/blob/dev/.kody/reports/task-leader.md",
-    "lastDurationMs": 41195
+    "lastDurationMs": 92163
   },
   "done": false
 }
