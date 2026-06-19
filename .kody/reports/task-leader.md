@@ -1,7 +1,9 @@
-## task-leader status
+# Task Leader Report
 
-**Blocked**: SKILL.md missing at `.kody/executables/task-leader/skills/task-leader-rules/SKILL.md` — task-leader executable not provisioned.
+**Status:** BLOCKED — executable not provisioned
 
-The task-leader executable directory does not exist in `.kody/executables/`. The duty cannot run without its rules file.
+**Blocker:** SKILL.md missing at `.kody/executables/task-leader/skills/task-leader-rules/SKILL.md`. The entire task-leader executable directory is absent. The duty cannot run without this file.
 
-Last checked: 2026-06-19T00:05:00Z
+**Tick:** 2026-06-19T02:42:47Z UTC
+
+**Action required:** Provision the task-leader executable by adding the missing SKILL.md and directory structure.
