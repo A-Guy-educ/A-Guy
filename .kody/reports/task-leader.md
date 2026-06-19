@@ -6,6 +6,7 @@
 - **Path:** `.kody/executables/task-leader/skills/task-leader-rules/SKILL.md`
 - **Status:** Directory does not exist — executable not installed
 - **Impact:** task-leader cannot execute its 6-step method, PR gates, or report format
+- **Last checked:** 2026-06-19T10:07:00Z
 
 ## Required action
 
