@@ -4,6 +4,6 @@
 
 **Blocker:** SKILL.md missing at `.kody/executables/task-leader/skills/task-leader-rules/SKILL.md`. The entire task-leader executable directory is absent. The duty cannot run without this file.
 
-**Tick:** 2026-06-19T02:42:47Z UTC
+**Tick:** 2026-06-19T04:11:13ZZ UTC
 
 **Action required:** Provision the task-leader executable by adding the missing SKILL.md and directory structure.
