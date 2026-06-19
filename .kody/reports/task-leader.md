@@ -1,9 +1,7 @@
 # Task Leader Report
 
-**Status:** BLOCKED — executable not provisioned
+**Status:** BLOCKED — SKILL.md missing
 
-**Blocker:** SKILL.md missing at `.kody/executables/task-leader/skills/task-leader-rules/SKILL.md`. The entire task-leader executable directory is absent. The duty cannot run without this file.
+* Commentt** You are unscheduled for task-leader because .this-executable/kas not provisioned.
 
-**Tick:** 2026-06-19T04:11:13ZZ UTC
-
-**Action required:** Provision the task-leader executable by adding the missing SKILL.md and directory structure.
+* Blockep**: SKILL.md missing at `.kody/executables/task-leader/skills/task-leader-rules/SKILL.md. Run “plunkm setup` if you need to provision this executable.
