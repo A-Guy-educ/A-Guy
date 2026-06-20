@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "rev": 53,
+  "rev": 54,
   "cursor": "blocked-missing-skill",
   "data": {
     "blocker": "SKILL.md missing at .kody/executables/task-leader/skills/task-leader-rules/SKILL.md — task-leader executable not provisioned",
-    "lastFiredAt": "2026-06-20T12:55:41.824Z",
+    "lastFiredAt": "2026-06-20T13:36:27.703Z",
     "lastOutcome": "completed",
     "openPRs": {
       "#2621": {
@@ -20,7 +20,7 @@
         "reviews": "none"
       },
       "#2613": {
-        "ci": "FAILING (kody workflow)",
+        "ci": "FAIL (run step)",
         "reviews": "none"
       },
       "#2606": {
@@ -28,13 +28,13 @@
         "reviews": "none"
       },
       "#2603": {
-        "ci": "partial (no CI checks)",
+        "ci": "partial (no Build/IntTests)",
         "reviews": "none"
       }
     },
-    "reportSha": "5ed92e25138c9d51d498cec30894b1fbbd591d1e",
+    "reportSha": "5ab22959650d1aa3f1fb57454562d2cb54bf030f",
     "reportUrl": "https://github.com/A-Guy-educ/A-Guy/blob/dev/.kody/reports/task-leader.md",
-    "lastDurationMs": 85875
+    "lastDurationMs": 98783
   },
   "done": false
 }
