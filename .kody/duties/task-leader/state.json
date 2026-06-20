@@ -1,10 +1,10 @@
 {
   "version": 1,
-  "rev": 56,
+  "rev": 57,
   "cursor": "blocked-missing-skill",
   "data": {
     "blocker": "SKILL.md missing at .kody/executables/task-leader/skills/task-leader-rules/SKILL.md — executable path does not exist. Duty not provisioned.",
-    "lastFiredAt": "2026-06-20T15:18:07.422Z",
+    "lastFiredAt": "2026-06-20T15:56:36.406Z",
     "lastOutcome": "completed",
     "openPRs": {
       "#2621": {
@@ -22,20 +22,20 @@
       "#2613": {
         "ci": "FAIL",
         "reviews": "none",
-        "failureReason": "docker push to fly.io failed: app repository not found; also missing task-artifacts files"
+        "failureReason": "kody workflow: docker push to fly.io failed (app repository not found); also missing task-artifacts files"
       },
       "#2606": {
         "ci": "pass",
         "reviews": "none"
       },
       "#2603": {
-        "ci": "partial (no Build/IntTests)",
+        "ci": "partial (CodeQL+Vercel only)",
         "reviews": "none"
       }
     },
-    "reportSha": "9462bcc2ac15e3a20c6b79f36a119dcd87865548",
+    "reportSha": "93ce15590903dd2cdcc2de706309a75e00981881",
     "reportUrl": "https://github.com/A-Guy-educ/A-Guy/blob/dev/.kody/reports/task-leader.md",
-    "lastDurationMs": 92134
+    "lastDurationMs": 72480
   },
   "done": false
 }
