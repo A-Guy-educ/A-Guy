@@ -6,18 +6,18 @@
 - **Path:** `.kody/executables/task-leader/skills/task-leader-rules/SKILL.md`
 - **Status:** Directory does not exist — executable not installed
 - **Impact:** task-leader cannot execute its 6-step method, PR gates, or report format
-- **Last checked:** 2026-06-19T22:49:30Z
+- **Last checked:** 2026-06-20T00:50:00Z
 
 ### Pipeline snapshot (no rules file — actions deferred)
 
 - **Open PRs:** 6 total
-  - PR #2621: feat(admin): Payment dashboard widget — 0 reviews
+  - PR #2621: feat(admin): Payment "Needs Attention" dashboard widget — 0 reviews
   - PR #2616: [live-kody] document Kody task automation — 0 reviews
   - PR #2614: Kody command smoke: bug — 0 reviews
   - PR #2613: Kody command smoke: feature — 0 reviews
   - PR #2606: Kody smoke test: verify duty execution — 0 reviews
   - PR #2603: chore(docs): fix broken internal links — 0 reviews
-- **Release:** None active
+- **Release:** v0.25.10 (latest), v0.25.9, v0.25.8
 
 ### Required action
 
