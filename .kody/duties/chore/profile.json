@@ -1,6 +1,0 @@
-{
-  "name": "chore",
-  "action": "chore",
-  "executable": "chore",
-  "describe": "Make a small maintenance, docs, or dependency change."
-}

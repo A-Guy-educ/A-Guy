@@ -1,6 +1,0 @@
-{
-  "name": "review",
-  "action": "review",
-  "executable": "review",
-  "describe": "Review an open pull request and post findings."
-}

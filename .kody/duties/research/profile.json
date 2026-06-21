@@ -1,6 +1,0 @@
-{
-  "name": "research",
-  "action": "research",
-  "executable": "research",
-  "describe": "Research an issue and post findings."
-}

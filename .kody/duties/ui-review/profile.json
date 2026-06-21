@@ -1,6 +1,0 @@
-{
-  "name": "ui-review",
-  "action": "ui-review",
-  "executable": "ui-review",
-  "describe": "Review an open pull request's UI and UX."
-}

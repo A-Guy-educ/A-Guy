@@ -1,6 +1,0 @@
-{
-  "name": "qa-engineer",
-  "action": "qa-engineer",
-  "executable": "qa-engineer",
-  "describe": "Run a read-only QA pass and report findings."
-}
