@@ -42,8 +42,8 @@ on:
         description: 'Dashboard event ingest URL with inline ?token=... (chat mode)'
         type: string
         default: ''
-      executable:
-        description: 'Stage to run for issue_number (default: run). goal-tick sets classify.'
+      capability:
+        description: 'Capability action to run for issue_number (default: run). goal-tick sets classify.'
         type: string
         default: ''
       base:
