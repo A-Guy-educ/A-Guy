@@ -1,5 +1,0 @@
-{"type":"meta","mode":"interactive","createdAt":"2026-05-13T05:11:15.545Z","idleExitMs":300000,"hardCapMs":1800000}
-{"role":"user","content":"hi","timestamp":"2026-05-13T05:12:23.726Z","toolCalls":[]}
-{"role":"assistant","content":"Hi there! How can I help you today?","timestamp":"2026-05-13T05:13:01.003Z","toolCalls":[]}
-{"role":"user","content":"Which environment are you running on? What is the setup and settings?","timestamp":"2026-05-13T05:13:29.532Z","toolCalls":[]}
-{"role":"assistant","content":"I am running in a Linux environment with an unknown shell, on OS Version Linux 6.12.84-fly. My primary working directory is `/workspace/repo`, which is a git repository. I am powered by the model `gemini-2.5-flash`.\n\nThe current git branch is `main`, and the git user is `Kody Bot`. There's one modified file: `.kody/last-run.jsonl`.","timestamp":"2026-05-13T05:13:37.606Z","toolCalls":[]}

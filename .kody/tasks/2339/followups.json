@@ -1,8 +1,0 @@
-[
-  {
-    "title": "BreadcrumbField components listed in docs don't exist in codebase",
-    "body": "docs/admin-components/README.md references ChapterBreadcrumbField and LessonBreadcrumbField at src/ui/admin/ChapterBreadcrumbField/ and src/ui/admin/LessonBreadcrumbField/, but these directories do not exist in the codebase. Either implement them or remove the documentation entries.",
-    "rationale": "Documentation references components that don't exist — either the docs are stale or the components were planned but never built.",
-    "priority": "low"
-  }
-]

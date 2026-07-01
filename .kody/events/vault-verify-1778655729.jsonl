@@ -1,2 +1,0 @@
-{"event":"chat.ready","payload":{"sessionId":"vault-verify-1778655729","startedAt":"2026-05-13T07:03:04.291Z","idleExitMs":300000,"hardCapMs":1800000},"runId":"chat-vault-verify-1778655729-ready","emittedAt":"2026-05-13T07:03:04.307Z"}
-{"event":"chat.exit","payload":{"sessionId":"vault-verify-1778655729","reason":"idle-timeout","turnsCompleted":0,"endedAt":"2026-05-13T07:08:09.802Z"},"runId":"chat-vault-verify-1778655729-exit","emittedAt":"2026-05-13T07:08:09.802Z"}

@@ -75,24 +75,9 @@ shay-tassk/
 # LaTeX example files (local only)
 latex_examples/
 
-# kody graph transient artifacts (do not commit)
-.kody/graph/.graph-lock
-.kody/graph/.graph-lock.lock/
-.kody/graph/*.bak
-.kody/graph/*.tmp.*
-.kody/graph/episodes/*.bak
-.kody/graph/episodes/*.tmp.*
-
-# kody mission state — durable across runs via the local-file backend's
-# Actions cache snapshot (see kody.config.json missions.stateBackend).
-# Tracked-file commits would re-introduce the churn this design eliminates.
-.kody/missions/*.state.json
-
-# kody job state is durable via the contents-api backend (see
-# kody.config.json jobs.stateBackend) — the engine commits <slug>.state.json
-# through the GitHub Contents API, so these files are tracked, not ignored.
+# Kody runtime/state and authored model assets live in configured kody-state repo.
+.kody/
 
 # kody qa-engineer artifacts — ad-hoc screenshots, snapshots, console logs.
 # The Playwright MCP server writes its own working dir at the repo root.
-.kody/qa-reports/
 .playwright-mcp/

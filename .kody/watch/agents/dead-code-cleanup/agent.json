@@ -1,5 +1,0 @@
-{
-  "name": "dead-code-cleanup",
-  "description": "Scans for unused exports, dead files, and unreachable code",
-  "cron": "0 9 * * 1"
-}

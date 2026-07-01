@@ -1,8 +1,0 @@
-[
-  {
-    "title": "Add inline editing for contentPageRef blocks",
-    "body": "LessonBlocksField still navigates away to /admin/collections/content-pages/:id when editing a contentPageRef block. PR #2108 only implemented inline editing for exerciseRef blocks. A future PR could extend InlineExerciseEditor to handle content page blocks inline.",
-    "rationale": "Users editing lessons must leave the lesson page to edit content pages, breaking their flow.",
-    "priority": "low"
-  }
-]

@@ -1,8 +1,0 @@
-[
-  {
-    "title": "Add browser beforeunload confirmation for unsaved changes",
-    "body": "Issue requires: 'If user tries to navigate away with unsaved changes → show browser confirmation'. The ExerciseContentEditor already has hasUnsavedChanges state but doesn't wire up beforeunload event. Should add a useEffect that calls window.onbeforeunload when hasUnsavedChanges is true.",
-    "rationale": "Part of the original issue acceptance criteria that wasn't fully implemented",
-    "priority": "medium"
-  }
-]

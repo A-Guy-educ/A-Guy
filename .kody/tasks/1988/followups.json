@@ -1,8 +1,0 @@
-[
-  {
-    "title": "Backfill couponConsumedAt for existing transactions with consumed coupons",
-    "body": "The issue notes existing transactions with consumed coupons have no couponConsumedAt set. The fix accepts a small re-increment risk during rollout window. A future backfill job could check for an existing coupon-usages row before re-incrementing to avoid double-counting on the first post-fix retry.",
-    "rationale": "Without backfill, a retried webhook for a pre-existing consumed coupon could double-increment usesCount if the coupon-usages row check isn't added.",
-    "priority": "low"
-  }
-]

@@ -1,8 +1,0 @@
-[
-  {
-    "title": "Verify existing admin-bar-mobile-visibility.e2e.spec.ts still passes after fix",
-    "body": "The mobile-visibility test checks authenticated mobile users — verify it still passes (the fix doesn't change mobile behavior, but a regression test is worth confirming).",
-    "rationale": "The existing E2E test validates admin bar mobile/desktop visibility for authenticated users.",
-    "priority": "low"
-  }
-]

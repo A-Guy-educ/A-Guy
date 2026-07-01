@@ -26,14 +26,8 @@
     "e2eCommand": "npx tsx scripts/release-e2e-gate.ts",
     "timeoutMs": 1800000
   },
-  "missions": {
-    "stateBackend": "local-file"
-  },
   "jobs": {
     "stateBackend": "contents-api"
-  },
-  "executables": {
-    "default": "run"
   },
   "defaultExecutable": "classify",
   "defaultPrExecutable": "fix",

@@ -1,1 +1,0 @@
-This is a smoke test verifying that all four per-task artifact files are written correctly to .kody/tasks/<session-id>/ following the contract. The session was a live test of the per-task artifacts system after the chat-cli commit fix in 0.4.100. No actual implementation work was performed.

@@ -1,5 +1,0 @@
-{
-  "name": "todo-scanner",
-  "description": "Scans source code for TODO, FIXME, and HACK comments and creates tracking issues",
-  "cron": "0 */6 * * *"
-}

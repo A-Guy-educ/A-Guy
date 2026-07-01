@@ -1,8 +1,0 @@
-[
-  {
-    "title": "Investigate persistent GitHub Actions runner authentication failures",
-    "body": "The git fetch in actions/checkout@v4 is failing with 'could not read Username for https://github.com: terminal prompts disabled' on the ubuntu-latest runner for PR #1749. This appears to be a runner-side GITHUB_TOKEN propagation issue, not a code or workflow config problem. If this recurs, check GitHub Actions status page and consider using a different runner (e.g., explicit `runs-on: [ubuntu-latest-4-cores]`).",
-    "rationale": "Infrastructure failures that masquerade as CI failures waste investigation time. A documented follow-up helps the next engineer avoid re-investigating.",
-    "priority": "low"
-  }
-]

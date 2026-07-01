@@ -1,2 +1,0 @@
-{"event":"chat.ready","payload":{"sessionId":"fallback-test-1779796129","startedAt":"2026-05-26T11:52:13.992Z","idleExitMs":300000,"hardCapMs":1800000},"runId":"chat-fallback-test-1779796129-ready","emittedAt":"2026-05-26T11:52:14.005Z"}
-{"event":"chat.exit","payload":{"sessionId":"fallback-test-1779796129","reason":"idle-timeout","turnsCompleted":0,"endedAt":"2026-05-26T11:57:19.846Z"},"runId":"chat-fallback-test-1779796129-exit","emittedAt":"2026-05-26T11:57:19.846Z"}

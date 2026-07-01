@@ -1,8 +1,0 @@
-[
-  {
-    "title": "Update existing PAYMENT.CAPTURE.REFUNDED test to use captureId field",
-    "body": "The existing test 'PAYMENT.CAPTURE.REFUNDED should update transaction to refunded' at tests/int/payment-webhook-entitlements.int.spec.ts:1408 creates a transaction with providerTransactionId set to the capture ID value. This relies on the legacy fallback. Update the test to use the captureId field (matching the new behavior): providerTransactionId=orderId, captureId=captureId. The fallback handles legacy transactions.",
-    "rationale": "The test documents legacy behavior but should be updated to reflect the post-fix expected behavior.",
-    "priority": "low"
-  }
-]

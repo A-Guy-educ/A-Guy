@@ -1,8 +1,0 @@
-[
-  {
-    "title": "PayPal button color is orange-yellow (warning token), not PayPal yellow",
-    "body": "The PayPal button uses bg-warning/text-warning-foreground which is hsl(38, 92%, 50%) = orange-yellow. True PayPal yellow is #FFC439. Could add a --paypal CSS variable and bg-paypal token to globals.css and tailwind.config.mjs for accurate brand colors.",
-    "rationale": "Design system accuracy — current choice is visually distinct but not on-brand",
-    "priority": "low"
-  }
-]
