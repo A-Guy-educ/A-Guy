@@ -15,7 +15,7 @@
     "operators": ["aguyaharonyair"]
   },
   "agent": {
-    "model": "minimax/MiniMax-M2.7-highspeed"
+    "model": "minimax/MiniMax-M3"
   },
   "qa": {
     "fallbackUrl": "https://dev.aguy.co.il"
