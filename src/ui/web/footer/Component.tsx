@@ -38,6 +38,7 @@ export async function Footer() {
   const version = await getVersion()
   const systemLocale = await getSystemLocale()
   const navItems = getNavItemsForLocale(footerData, systemLocale)
+  const termsText = footerData?.termsText?.trim()
 
   return (
     <footer className="mt-auto border-t border-border bg-footer text-card-foreground relative z-0">
@@ -65,6 +66,17 @@ export async function Footer() {
           <ThemeSelector />
         </div>
       </div>
+      {termsText ? (
+        <div className="container pb-3 -mt-1">
+          <p
+            dir="rtl"
+            lang="he"
+            className="text-center text-body-xs text-muted-foreground/80 whitespace-pre-line"
+          >
+            {termsText}
+          </p>
+        </div>
+      ) : null}
     </footer>
   )
 }

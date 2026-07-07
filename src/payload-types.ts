@@ -5074,6 +5074,10 @@ export interface Header {
 export interface Footer {
   id: string;
   /**
+   * Hebrew legal/terms text shown below navigation in the footer (small font).
+   */
+  termsText?: string | null;
+  /**
    * Navigation items per system language
    */
   variants?:
@@ -5137,6 +5141,7 @@ export interface HeaderSelect<T extends boolean = true> {
  * via the `definition` "footer_select".
  */
 export interface FooterSelect<T extends boolean = true> {
+  termsText?: T;
   variants?:
     | T
     | {
