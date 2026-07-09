@@ -215,14 +215,33 @@ function getAllMarkdownFiles(dir: string) {
   const out: string[] = []
   const stack = [dir]
 
+  // Directories to skip (relative to repo root, or simple name match)
+  const SKIP_NAMES = new Set([
+    'node_modules',
+    '.git',
+    '.next',
+    'dist',
+    'build',
+    'coverage',
+    '.tasks',
+  ])
+
+  // Path prefixes (relative to repo root) to skip
+  const SKIP_PATH_PREFIXES = ['docs/plans', '.claude/agents', '.ai-docs']
+
   while (stack.length) {
     const cur = stack.pop()!
     const entries = fs.readdirSync(cur, { withFileTypes: true })
 
     for (const e of entries) {
       if (e.isDirectory()) {
-        if (['node_modules', '.git', '.next', 'dist', 'build', 'coverage'].includes(e.name))
+        if (SKIP_NAMES.has(e.name)) continue
+
+        const relPath = path.relative(REPO_ROOT, path.join(cur, e.name))
+        if (SKIP_PATH_PREFIXES.some((p) => relPath === p || relPath.startsWith(p + path.sep))) {
           continue
+        }
+
         stack.push(path.join(cur, e.name))
         continue
       }
