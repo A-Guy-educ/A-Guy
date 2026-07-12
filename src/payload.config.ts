@@ -19,6 +19,7 @@ import { ContentPages } from '@/server/payload/collections/ContentPages'
 import { ContextExtractions } from '@/server/payload/collections/ContextExtractions'
 import { Conversations } from '@/server/payload/collections/Conversations'
 import { Courses } from '@/server/payload/collections/Courses'
+import { CourseSelections } from '@/server/payload/collections/CourseSelections'
 import { ExerciseAssets } from '@/server/payload/collections/ExerciseAssets'
 import { EnrollmentProgress } from '@/server/payload/collections/EnrollmentProgress'
 import { Enrollments } from '@/server/payload/collections/Enrollments'
@@ -195,6 +196,7 @@ export default buildConfig({
     ConfigAuditLogs,
     Conversations,
     CouponUsages,
+    CourseSelections,
     Coupons,
     GuestSessions,
     MemoryItems,

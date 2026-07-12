@@ -75,6 +75,7 @@ export interface Config {
     config_audit_logs: ConfigAuditLog;
     conversations: Conversation;
     'coupon-usages': CouponUsage;
+    'course-selections': CourseSelection;
     coupons: Coupon;
     'guest-sessions': GuestSession;
     memory_items: MemoryItem;
@@ -130,6 +131,7 @@ export interface Config {
     config_audit_logs: ConfigAuditLogsSelect<false> | ConfigAuditLogsSelect<true>;
     conversations: ConversationsSelect<false> | ConversationsSelect<true>;
     'coupon-usages': CouponUsagesSelect<false> | CouponUsagesSelect<true>;
+    'course-selections': CourseSelectionsSelect<false> | CourseSelectionsSelect<true>;
     coupons: CouponsSelect<false> | CouponsSelect<true>;
     'guest-sessions': GuestSessionsSelect<false> | GuestSessionsSelect<true>;
     memory_items: MemoryItemsSelect<false> | MemoryItemsSelect<true>;
@@ -2011,6 +2013,45 @@ export interface Transaction {
   createdAt: string;
 }
 /**
+ * Append-only event log of course selections (start page, homepage greeting, course card)
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "course-selections".
+ */
+export interface CourseSelection {
+  id: string;
+  /**
+   * The course the user selected
+   */
+  course: string | Course;
+  /**
+   * Authenticated user (null for anonymous selections)
+   */
+  user?: (string | null) | User;
+  /**
+   * Opaque client-generated ID for anonymous users — lets us count unique guests without an account
+   */
+  guestId?: string | null;
+  /**
+   * Mirrors the grade level the web app stores in LocalUserProfile
+   */
+  gradeLevel?: string | null;
+  /**
+   * Where in the web app the selection was made
+   */
+  source: 'start-page' | 'homepage-greeting' | 'course-card' | 'other';
+  /**
+   * SHA-256 of the User-Agent header (computed server-side)
+   */
+  userAgentHash?: string | null;
+  /**
+   * SHA-256 of the request IP (computed server-side)
+   */
+  ipHash?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Long-term memory items for AI chat context
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3390,6 +3431,10 @@ export interface PayloadLockedDocument {
         value: string | CouponUsage;
       } | null)
     | ({
+        relationTo: 'course-selections';
+        value: string | CourseSelection;
+      } | null)
+    | ({
         relationTo: 'coupons';
         value: string | Coupon;
       } | null)
@@ -3854,6 +3899,21 @@ export interface CouponUsagesSelect<T extends boolean = true> {
   user?: T;
   usedAt?: T;
   createdBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "course-selections_select".
+ */
+export interface CourseSelectionsSelect<T extends boolean = true> {
+  course?: T;
+  user?: T;
+  guestId?: T;
+  gradeLevel?: T;
+  source?: T;
+  userAgentHash?: T;
+  ipHash?: T;
   updatedAt?: T;
   createdAt?: T;
 }
