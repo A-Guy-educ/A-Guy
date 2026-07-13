@@ -47,6 +47,13 @@ export const boxShadow = {
   modal: '0 10px 25px -5px rgb(0 0 0 / 0.15)',
   dropdown: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -1px rgb(0 0 0 / 0.06)',
   'focus-ring': '0 0 0 3px hsl(var(--ring) / 0.5)',
+
+  // Lesson timeline accents — resolve through semantic colors so light/dark themes adapt
+  'lesson-active':
+    '0 0 0 1px hsl(var(--primary) / 0.35), 0 8px 28px -8px hsl(var(--primary) / 0.35), inset 0 0 12px hsl(var(--primary) / 0.05)',
+  'lesson-completed':
+    '0 0 0 1px hsl(var(--success) / 0.18), 0 6px 18px -10px hsl(var(--success) / 0.45)',
+  'lesson-locked': '0 0 0 1px hsl(var(--border) / 0.6)',
 }
 
 /**
