@@ -1677,6 +1677,7 @@
 - start interactive session interactive-1778075175838-vd0im6 (1b6229b27)
 ## [Unreleased]
 
+- fix: refresh Kody workflow launcher ([#2679](https://github.com/A-Guy-educ/A-Guy/pull/2679)) — @aguyaharonyair
 - #2662: Redesign course lessons view — chapter accordions, timeline trac… ([#2663](https://github.com/A-Guy-educ/A-Guy/pull/2663)) — @kodyade[bot]
 - #2387: [P2] Verify Stripe webhook endpoint is receiving events ([#2414](https://github.com/A-Guy-educ/A-Guy/pull/2414)) — @kodyade[bot]
 - fix(admin): Add CategoriesCell to render Courses category names in list ([#2550](https://github.com/A-Guy-educ/A-Guy/pull/2550)) — @aguyshayb
