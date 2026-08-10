@@ -113,7 +113,7 @@
     "@google/generative-ai": "^0.24.1",
     "@kody-ade/engine": "^0.7.0",
     "@modelcontextprotocol/sdk": "^1.27.1",
-    "@napi-rs/canvas": "^0.1.89",
+    "@napi-rs/canvas": "^1.0.3",
     "@payloadcms/admin-bar": "3.73.0",
     "@payloadcms/db-mongodb": "3.73.0",
     "@payloadcms/live-preview-react": "3.73.0",
