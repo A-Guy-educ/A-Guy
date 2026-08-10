@@ -158,7 +158,7 @@
     "lucide-react": "^0.562.0",
     "mathjs": "^13.2.3",
     "mathlive": "^0.108.3",
-    "mongodb": "^6.12.0",
+    "mongodb": "^7.5.0",
     "nanoid": "^5.0.0",
     "next": "15.5.9",
     "next-sitemap": "^4.2.3",
