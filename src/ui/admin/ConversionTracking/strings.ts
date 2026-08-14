@@ -76,6 +76,14 @@ interface Strings {
   date: string
   viewAll: string
   refundRate: string
+
+  // Needs Attention widget
+  needsAttention: string
+  allClear: string
+  stuckGrants: string
+  stuckReceipts: string
+  partialRefunds: string
+  stuckWebhooks: string
 }
 
 const EN: Strings = {
@@ -152,6 +160,14 @@ const EN: Strings = {
   date: 'Date',
   viewAll: 'View all',
   refundRate: 'Refund Rate',
+
+  // Needs Attention widget
+  needsAttention: 'Needs Attention',
+  allClear: 'All clear',
+  stuckGrants: 'Stuck Grants',
+  stuckReceipts: 'Stuck Receipts',
+  partialRefunds: 'Partial Refunds',
+  stuckWebhooks: 'Stuck Webhooks',
 }
 
 const HE: Strings = {
@@ -227,6 +243,14 @@ const HE: Strings = {
   date: 'תאריך',
   viewAll: 'הצג הכל',
   refundRate: 'שיעור החזר',
+
+  // Needs Attention widget
+  needsAttention: 'זקוק לתשומת לב',
+  allClear: 'הכל בסדר',
+  stuckGrants: 'זכאות תקועה',
+  stuckReceipts: 'קבלות תקועות',
+  partialRefunds: 'החזרים חלקיים',
+  stuckWebhooks: 'Webhook תקוע',
 }
 
 export function getStrings(lang: string): Strings {

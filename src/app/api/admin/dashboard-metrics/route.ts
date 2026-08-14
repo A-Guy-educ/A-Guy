@@ -154,12 +154,20 @@ interface RevenueMetrics {
   topProducts: TopProduct[]
 }
 
+interface PaymentAttentionMetrics {
+  stuckGrants: number // status=succeeded AND entitlementsGrantedAt=null
+  stuckReceipts: number // status=succeeded AND emailSentAt=null AND createdAt < 5min ago
+  partialRefunds: number // status=succeeded AND refundedAmount > 0
+  stuckWebhooks: number // processed=false AND receivedAt < 15min ago
+}
+
 export interface DashboardMetricsResponse {
   period: Period
   userMetrics: UserMetrics
   contentCounts: ContentCounts
   engagement: EngagementMetrics
   revenueMetrics: RevenueMetrics
+  paymentAttentionMetrics: PaymentAttentionMetrics
 }
 
 function startOfDay(date: Date): Date {
@@ -296,6 +304,10 @@ export async function GET(req: Request) {
     returningUsersResult,
     totalUsersInPeriod,
     allTransactions,
+    stuckGrantsResult,
+    stuckReceiptsResult,
+    partialRefundsResult,
+    stuckWebhooksResult,
   ] = await Promise.all([
     // Active users today/yesterday
     payload.find({
@@ -563,6 +575,57 @@ export async function GET(req: Request) {
           totalPages: number
         }>,
     ),
+    // Payment attention metrics — stuck grants (succeeded but no entitlements granted)
+    payload.find({
+      collection: 'transactions',
+      where: {
+        and: [{ status: { equals: 'succeeded' } }, { entitlementsGrantedAt: { exists: false } }],
+      },
+      limit: 0,
+      overrideAccess: true,
+    }),
+    // Payment attention metrics — stuck receipts (succeeded but no email sent, 5-min grace window)
+    payload.find({
+      collection: 'transactions',
+      where: {
+        and: [
+          { status: { equals: 'succeeded' } },
+          { emailSentAt: { exists: false } },
+          {
+            createdAt: {
+              less_than: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+            },
+          },
+        ],
+      },
+      limit: 0,
+      overrideAccess: true,
+    }),
+    // Payment attention metrics — partial refunds (succeeded with refundedAmount > 0)
+    payload.find({
+      collection: 'transactions',
+      where: {
+        and: [{ status: { equals: 'succeeded' } }, { refundedAmount: { greater_than: 0 } }],
+      },
+      limit: 0,
+      overrideAccess: true,
+    }),
+    // Payment attention metrics — stuck webhooks (processed=false, older than 15 min)
+    payload.find({
+      collection: 'webhook-events',
+      where: {
+        and: [
+          { processed: { equals: false } },
+          {
+            receivedAt: {
+              less_than: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+            },
+          },
+        ],
+      },
+      limit: 0,
+      overrideAccess: true,
+    }),
   ])
 
   // Calculate avg time spent (allUserStats is already a flat array from findAll)
@@ -784,6 +847,12 @@ export async function GET(req: Request) {
       transactionCount: revenueTransactionCount,
       successRate,
       topProducts,
+    },
+    paymentAttentionMetrics: {
+      stuckGrants: stuckGrantsResult.totalDocs,
+      stuckReceipts: stuckReceiptsResult.totalDocs,
+      partialRefunds: partialRefundsResult.totalDocs,
+      stuckWebhooks: stuckWebhooksResult.totalDocs,
     },
   }
 
