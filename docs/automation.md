@@ -7,6 +7,7 @@ This project includes comprehensive automation to streamline development, testin
 - [Setup Automation](#setup-automation)
 - [Development Automation](#development-automation)
 - [CI/CD Automation](#cicd-automation)
+- [Kody task automation](#kody-task-automation)
 - [Vercel Preview Automation](#vercel-preview-automation)
 - [Code Quality Automation](#code-quality-automation)
 - [Database Automation](#database-automation)
@@ -203,6 +204,12 @@ Automated merge from `dev` to `main` branch.
 - Smart conflict resolution for lock files
 - Automated commit with `[skip ci]`
 - Preserves commit history
+
+---
+
+#### 3. **Kody task automation** (`.github/workflows/kody.yml`)
+
+Tasks can be started from issue comments with `@kody feature` and are handled by the `kody` GitHub Actions workflow.
 
 ---
 

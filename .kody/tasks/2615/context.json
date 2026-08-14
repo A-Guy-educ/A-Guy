@@ -1,0 +1,14 @@
+{
+  "taskId": "2615",
+  "taskType": "issue",
+  "target": "2615",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Docs-only change: added Kody task automation subsection to docs/automation.md",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": ["docs/automation.md"],
+  "sessionLog": ".kody/runs/gh-27439116274-1/events.jsonl",
+  "startedAt": "2026-06-12T20:00:00Z",
+  "finishedAt": "2026-06-12T20:01:00Z"
+}
