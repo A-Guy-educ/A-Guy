@@ -44,6 +44,7 @@ jobs:
 
       - name: Fix internal markdown links + write report
         run: pnpm run docs:links:fix
+        continue-on-error: true
 
       - name: Create or update PR
         if: always()
