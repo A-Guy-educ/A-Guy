@@ -1,0 +1,14 @@
+{
+  "taskId": "2606",
+  "taskType": "pr",
+  "target": "2605",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Applied review feedback: added 'duty wrappers' to the smoke test line in docs/kody-smoke-test.md",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": ["docs/kody-smoke-test.md"],
+  "sessionLog": null,
+  "startedAt": "2026-06-12T00:00:00Z",
+  "finishedAt": "2026-06-12T00:03:00Z"
+}

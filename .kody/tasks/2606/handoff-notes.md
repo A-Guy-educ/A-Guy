@@ -1,0 +1,1 @@
+Task #2606 (fix round): Updated docs/kody-smoke-test.md line per review feedback. Changed from "duty execution path and fix command verified on 2026-06-12." to "duty execution path, fix command, and duty wrappers verified on 2026-06-12." — added "duty wrappers" to the list as requested.
