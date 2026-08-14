@@ -11,6 +11,15 @@ export const Footer: GlobalConfig = {
   },
   fields: [
     {
+      name: 'termsText',
+      type: 'textarea',
+      label: 'Terms of Service Text',
+      admin: {
+        description: 'Hebrew legal/terms text shown below navigation in the footer (small font).',
+        placeholder: 'הכנס את תקנון האתר כאן...',
+      },
+    },
+    {
       name: 'variants',
       type: 'array',
       label: 'Locale Variants',
