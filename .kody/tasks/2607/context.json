@@ -1,0 +1,14 @@
+{
+  "taskId": "2607",
+  "taskType": "issue",
+  "target": "2607",
+  "outcome": "success",
+  "exitCode": 0,
+  "reason": "Created docs/kody-command-feature-smoke.md with single confirmation line",
+  "prUrl": null,
+  "runUrl": null,
+  "filesTouched": ["docs/kody-command-feature-smoke.md"],
+  "sessionLog": ".kody/sessions/gh-27429549063-1-1.jsonl",
+  "startedAt": "2026-06-12T00:00:00.000Z",
+  "finishedAt": "2026-06-12T00:01:00.000Z"
+}
