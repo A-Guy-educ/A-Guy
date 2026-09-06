@@ -1,14 +1,33 @@
 # Doc Link Fixer - Failure Report
 
-Generated: 2026-01-24T12:17:29.862Z
+Generated: 2026-09-06T06:54:12.392Z
 
 ## Summary
 
-- **Broken Doc Links**: 28 (these will cause failure in strict mode)
-- **Missing Code References**: 82 (warning only)
+- **Broken Doc Links**: 90 (these will cause failure in strict mode)
+- **Missing Code References**: 150 (warning only)
 - **Local Path Links**: 2 (warning only)
 
 ## By Source File
+
+### .tasks/_archive/exercise-conversion/plan.md (16 broken links)
+
+- `tests/unit/env-parsing.test.ts:1` → `.tasks/_archive/exercise-conversion/tests/unit/env-parsing.test.ts:1`
+- `tests/unit/pdf-validation.test.ts:1` → `.tasks/_archive/exercise-conversion/tests/unit/pdf-validation.test.ts:1`
+- `tests/unit/hash.test.ts:1` → `.tasks/_archive/exercise-conversion/tests/unit/hash.test.ts:1`
+- `tests/integration/exercise-conversion.test.ts:1` → `.tasks/_archive/exercise-conversion/tests/integration/exercise-conversion.test.ts:1`
+- `.github/workflows/exercise-conversion-runner.yml:1` → `.github/workflows/exercise-conversion-runner.yml:1`
+- `tests/unit/env-parsing.test.ts:1` → `.tasks/_archive/exercise-conversion/tests/unit/env-parsing.test.ts:1`
+- `tests/unit/pdf-validation.test.ts:1` → `.tasks/_archive/exercise-conversion/tests/unit/pdf-validation.test.ts:1`
+- `tests/unit/hash.test.ts:1` → `.tasks/_archive/exercise-conversion/tests/unit/hash.test.ts:1`
+- `tests/integration/convert-queue.test.ts:1` → `.tasks/_archive/exercise-conversion/tests/integration/convert-queue.test.ts:1`
+- `tests/integration/prompts-for-conversion.test.ts:1` → `.tasks/_archive/exercise-conversion/tests/integration/prompts-for-conversion.test.ts:1`
+- `tests/integration/convert-runner.test.ts:1` → `.tasks/_archive/exercise-conversion/tests/integration/convert-runner.test.ts:1`
+- `tests/contract/gemini-client.test.ts:1` → `.tasks/_archive/exercise-conversion/tests/contract/gemini-client.test.ts:1`
+- `tests/integration/pdf-to-exercises-task.test.ts:1` → `.tasks/_archive/exercise-conversion/tests/integration/pdf-to-exercises-task.test.ts:1`
+- `tests/unit/convert-modal.test.ts:1` → `.tasks/_archive/exercise-conversion/tests/unit/convert-modal.test.ts:1`
+- `tests/integration/exercise-conversion.test.ts:1` → `.tasks/_archive/exercise-conversion/tests/integration/exercise-conversion.test.ts:1`
+- `.github/workflows/exercise-conversion-runner.yml:1` → `.github/workflows/exercise-conversion-runner.yml:1`
 
 ### docs/plans/doc-link-fixer-improvement.md (8 broken links)
 
@@ -21,12 +40,43 @@ Generated: 2026-01-24T12:17:29.862Z
 - `${href1}` → `docs/plans/${href1}`
 - `scripts/doc-link-fixer.ts:156` → `docs/plans/scripts/doc-link-fixer.ts:156`
 
-### .tasks/lesson-type-tabs/plan.md (4 broken links)
+### docs/_sidebar.md (7 broken links)
 
-- `<../../src/app/(frontend` → `.tasks/lesson-type-tabs/src/app/(frontend`
-- `<../../src/app/(frontend` → `.tasks/lesson-type-tabs/src/app/(frontend`
-- `<../../src/app/(frontend` → `.tasks/lesson-type-tabs/src/app/(frontend`
-- `<../../src/app/(frontend` → `.tasks/lesson-type-tabs/src/app/(frontend`
+- `architecture/` → `docs/architecture`
+- `qa/` → `docs/qa`
+- `nightly-docs-agent/` → `docs/nightly-docs-agent`
+- `specs/` → `docs/specs`
+- `plans/` → `docs/plans`
+- `audits/` → `docs/audits`
+- `fixes/` → `docs/fixes`
+
+### .claude/agents/doc-updater.md (5 broken links)
+
+- `docs/CODEMAPS/INDEX.md` → `.claude/agents/docs/CODEMAPS/INDEX.md`
+- `docs/GUIDES/setup.md` → `.claude/agents/docs/GUIDES/setup.md`
+- `docs/GUIDES/api.md` → `.claude/agents/docs/GUIDES/api.md`
+- `docs/CODEMAPS/INDEX.md` → `.claude/agents/docs/CODEMAPS/INDEX.md`
+- `CONTRIBUTING.md` → `.claude/agents/CONTRIBUTING.md`
+
+### .tasks/260305-auto-947/plan.md (4 broken links)
+
+- `url` → `.tasks/260305-auto-947/url`
+- `url` → `.tasks/260305-auto-947/url`
+- `url` → `.tasks/260305-auto-947/url`
+- `url` → `.tasks/260305-auto-947/url`
+
+### docs/README.md (4 broken links)
+
+- `architecture/` → `docs/architecture`
+- `specs/` → `docs/specs`
+- `plans/` → `docs/plans`
+- `audits/` → `docs/audits`
+
+### .agents/skills/vercel-react-best-practices/AGENTS.md (3 broken links)
+
+- `./async-defer-await.md` → `.agents/skills/vercel-react-best-practices/async-defer-await.md`
+- `./async-cheap-condition-before-await.md` → `.agents/skills/vercel-react-best-practices/async-cheap-condition-before-await.md`
+- `./server-hoist-static-io.md` → `.agents/skills/vercel-react-best-practices/server-hoist-static-io.md`
 
 ### docs/ai/README-AUTOMATION.md (3 broken links)
 
@@ -34,10 +84,85 @@ Generated: 2026-01-24T12:17:29.862Z
 - `../../src/contracts/README.md` → `src/contracts/README.md`
 - `../../src/contracts/README.md` → `src/contracts/README.md`
 
+### .tasks/260226-test-error-handling/PRD.md (2 broken links)
+
+- `../scripts/cody/README.md` → `.tasks/scripts/cody/README.md`
+- `../.tasks/260219-cody-pipeline-bugfix/task.md` → `.tasks/.tasks/260219-cody-pipeline-bugfix/task.md`
+
+### .tasks/260226-test-gate-pause/PRD.md (2 broken links)
+
+- `../scripts/cody/README.md` → `.tasks/scripts/cody/README.md`
+- `../.tasks/260223-cody-state-machine-rewrite/plan.md` → `.tasks/.tasks/260223-cody-state-machine-rewrite/plan.md`
+
+### .tasks/260226-test-post-actions/PRD.md (2 broken links)
+
+- `../scripts/cody/README.md` → `.tasks/scripts/cody/README.md`
+- `../.tasks/260223-cody-state-machine-rewrite/plan.md` → `.tasks/.tasks/260223-cody-state-machine-rewrite/plan.md`
+
+### .tasks/260226-test-profile-resolution/PRD.md (2 broken links)
+
+- `../scripts/cody/README.md` → `.tasks/scripts/cody/README.md`
+- `../.tasks/260223-cody-lightweight-pipeline/plan.md` → `.tasks/.tasks/260223-cody-lightweight-pipeline/plan.md`
+
 ### docs/features/homepage-redesign/spec.md (2 broken links)
 
 - `../../AGENTS.md` → `docs/AGENTS.md`
 - `../../src/server/payload/collections/` → `docs/src/server/payload/collections`
+
+### docs/plans/2026-02-19-tts-read-aloud-design.md (2 broken links)
+
+- `url` → `docs/plans/url`
+- `url` → `docs/plans/url`
+
+### src/server/payload/endpoints/README.md (2 broken links)
+
+- `../services/` → `src/server/payload/services`
+- `../../../../src/app/api/` → `src/app/api`
+
+### tasks/20261116-web-ui-behavioral-spec-ai.md (2 broken links)
+
+- `tasks/20261116-web-ui-behavioral-spec.md` → `tasks/tasks/20261116-web-ui-behavioral-spec.md`
+- `tasks/20261116-phase2-admin-editors-spec.md` → `tasks/tasks/20261116-phase2-admin-editors-spec.md`
+
+### .ai-docs/quick-reference/CHEAT-SHEET.md (1 broken links)
+
+- `../../scripts/cody/README.md` → `scripts/cody/README.md`
+
+### .claude/rules/coding-style.md (1 broken links)
+
+- `../common/coding-style.md` → `.claude/common/coding-style.md`
+
+### .claude/rules/hooks.md (1 broken links)
+
+- `../common/hooks.md` → `.claude/common/hooks.md`
+
+### .claude/rules/patterns.md (1 broken links)
+
+- `../common/patterns.md` → `.claude/common/patterns.md`
+
+### .claude/rules/security.md (1 broken links)
+
+- `../common/security.md` → `.claude/common/security.md`
+
+### .claude/rules/testing.md (1 broken links)
+
+- `../common/testing.md` → `.claude/common/testing.md`
+
+### .tasks/260226-test-git-integration/PRD.md (1 broken links)
+
+- `../scripts/cody/README.md` → `.tasks/scripts/cody/README.md`
+
+### .tasks/260305-auto-947/build.md (1 broken links)
+
+- `url` → `.tasks/260305-auto-947/url`
+
+### .tasks/fix-broken-links/build.md (1 broken links)
+
+- `../common/xxx.md` → `.tasks/common/xxx.md`
+
+### CLAUDE.md (1 broken links)
+
+- `<./src/app/(frontend` → `<./src/app/(frontend`
 
 ### docs/access-control/README.md (1 broken links)
 
@@ -47,17 +172,13 @@ Generated: 2026-01-24T12:17:29.862Z
 
 - `../../tests/README.md` → `docs/tests/README.md`
 
-### docs/block-rendering/README.md (1 broken links)
-
-- `../../src/components/exercise/README.md` → `src/components/exercise/README.md`
-
 ### docs/contracts/IMPLEMENTATION.md (1 broken links)
 
 - `../../src/contracts/examples/` → `src/contracts/examples`
 
-### docs/course-hierarchy/README.md (1 broken links)
+### docs/contracts/README.md (1 broken links)
 
-- `../src/lib/queries/` → `docs/src/lib/queries`
+- `../../src/infra/contracts/examples/` → `src/infra/contracts/examples`
 
 ### docs/exercises/MANUAL_VERIFICATION.md (1 broken links)
 
@@ -65,7 +186,7 @@ Generated: 2026-01-24T12:17:29.862Z
 
 ### docs/exercises/README.md (1 broken links)
 
-- `../../src/contracts/examples/` → `src/contracts/examples`
+- `../../src/infra/contracts/` → `src/infra/contracts`
 
 ### docs/exercises/STAGE_0_SUMMARY.md (1 broken links)
 
@@ -83,10 +204,51 @@ Generated: 2026-01-24T12:17:29.862Z
 
 - `docs/architecture/ZONE-BOUNDARIES.md` → `docs/plans/code-quality-boundaries/docs/architecture/ZONE-BOUNDARIES.md`
 
+### docs/secrets.md (1 broken links)
+
+- `../payment/paypal-sandbox-setup.md` → `payment/paypal-sandbox-setup.md`
+
+### SETUP.md (1 broken links)
+
+- `./project-tooling.md` → `project-tooling.md`
+
+### src/FILE_STRUCTURE_GUIDE.md (1 broken links)
+
+- `./components/README.md` → `src/components/README.md`
+
+### src/infra/llm/README.md (1 broken links)
+
+- `prompts/` → `src/infra/llm/prompts`
+
 ## Warnings (non-blocking)
 
 ### Missing Code References
 
+- `.github/workflows/codeql.yml` in AUTOMATION_IMPROVEMENTS.md
+- `src/infra/llm/services/answer-validation-service.ts:29` in tasks/20260216-chat-exercise-context-analysis.md
+- `src/server/payload/collections/Conversations.ts:142` in tasks/20260216-chat-exercise-context-analysis.md
+- `src/infra/llm/services/answer-validation-service.ts:29` in tasks/20260216-chat-exercise-context-analysis.md
+- `src/shared/exercise-content/types.ts` in tasks/20260216-chat-exercise-context-analysis.md
+- `src/infra/contracts/graphics/geometry.v1:1` in tasks/20261116-phase2-admin-editors-spec.md
+- `src/infra/contracts/graphics/axis.v1:1` in tasks/20261116-phase2-admin-editors-spec.md
+- `src/shared/exercise-content/types.ts` in tasks/20261116-web-ui-behavioral-spec-ai.md
+- `src/shared/exercise-content/types.ts:142` in tasks/20261116-web-ui-behavioral-spec-ai.md
+- `src/shared/exercise-content/types.ts:150` in tasks/20261116-web-ui-behavioral-spec-ai.md
+- `src/shared/exercise-content/types.ts:158` in tasks/20261116-web-ui-behavioral-spec-ai.md
+- `src/ui/web/exerciserenderer/types.ts:9` in tasks/20261116-web-ui-behavioral-spec-ai.md
+- `src/shared/exercise-content/types.ts:174` in tasks/20261116-web-ui-behavioral-spec-ai.md
+- `src/shared/exercise-content/types.ts:185` in tasks/20261116-web-ui-behavioral-spec-ai.md
+- `src/infra/contracts/graphics/geometry.v1.ts:194` in tasks/20261116-web-ui-behavioral-spec-ai.md
+- `src/infra/contracts/graphics/geometry.v1.ts:11` in tasks/20261116-web-ui-behavioral-spec-ai.md
+- `src/shared/exercise-content/types.ts:198` in tasks/20261116-web-ui-behavioral-spec-ai.md
+- `src/infra/contracts/graphics/axis.v1.ts:172` in tasks/20261116-web-ui-behavioral-spec-ai.md
+- `src/ui/web/exerciserenderer/types.ts:9` in tasks/20261116-web-ui-behavioral-spec-ai.md
+- `tests/int/contracts/exercise-content-blocks.int.spec.ts` in tasks/20261116-web-ui-behavioral-spec-ai.md
+- `src/ui/web/exerciserenderer/ExerciseRenderer/index.tsx:221` in tasks/20261116-web-ui-behavioral-spec-ai.md
+- `src/ui/web/exerciserenderer/blocks/BlockRenderer/index.tsx:14` in tasks/20261116-web-ui-behavioral-spec-ai.md
+- `src/ui/web/exerciserenderer/utils/answerChecking.ts:23` in tasks/20261116-web-ui-behavioral-spec-ai.md
+- `../.releaserc.json` in docs/releases.md
+- `../.github/workflows/release.yml` in docs/releases.md
 - `src/lib/analytics/contracts/schemas.ts` in docs/plans/store-user-details-to-analytics.md
 - `src/lib/analytics/components/UserIdentificationTracker.tsx` in docs/plans/store-user-details-to-analytics.md
 - `src/lib/analytics/utils/user-properties-cache.ts` in docs/plans/store-user-details-to-analytics.md
@@ -112,31 +274,6 @@ Generated: 2026-01-24T12:17:29.862Z
 - `src/lib/ai/services/exercise-chat-service.ts#L78` in docs/features/chat-context/plan.md
 - `../../src/endpoints/agent/chat.ts` in docs/features/chat-context/plan.md
 - `../../src/endpoints/agent/chat.ts` in docs/features/chat-context/plan.md
-- `../../src/lib/ai/services/exercise-chat-service.ts` in docs/features/chat-context/plan.md
-- `../../src/endpoints/agent/chat.ts` in docs/features/chat-context/plan.md
-- `../../src/endpoints/agent/chat.ts` in docs/features/chat-context/plan.md
-- `../../src/lib/ai/observability.ts` in docs/features/chat-context/plan.md
-- `../../src/lib/ai/services/exercise-chat-service.ts` in docs/features/chat-context/plan.md
-- `../../tests/int/memory-system.int.spec.ts` in docs/features/chat-context/plan.md
-- `../../src/lib/ai/context-policy.ts` in docs/features/chat-context/plan.md
-- `../../src/lib/ai/vector-search.ts` in docs/features/chat-context/plan.md
-- `../../src/lib/ai/maintenance.ts` in docs/features/chat-context/plan.md
-- `../../src/lib/ai/memory-extraction.ts` in docs/features/chat-context/plan.md
-- `../../src/lib/ai/context-policy.ts` in docs/features/chat-context/plan.md
-- `../../tests/int/memory-system.int.spec.ts` in docs/features/chat-context/plan.md
-- `../../src/lib/ai/context-policy.ts` in docs/features/chat-context/spec.md
-- `../../src/lib/ai/maintenance.ts` in docs/features/chat-context/spec.md
-- `../../src/lib/ai/memory-extraction.ts` in docs/features/chat-context/spec.md
-- `../../src/lib/ai/vector-search.ts` in docs/features/chat-context/spec.md
-- `../../src/lib/ai/observability.ts` in docs/features/chat-context/spec.md
-- `../../tests/int/memory-system.int.spec.ts` in docs/features/chat-context/spec.md
-- `../../tests/int/memory-system.int.spec.ts` in docs/features/chat-context/spec.md
-- `../../src/contracts/exercise/content.ts` in docs/exercises/README.md
-- `../../src/contracts/exercise/answers.ts` in docs/exercises/README.md
-- `../../src/lib/ai/services/image-optimizer-service.ts` in docs/exercise-import/README.md
-- `../../src/lib/ai/services/data-extractor-service.ts` in docs/exercise-import/README.md
-- `../../src/endpoints/exercises/import-from-lesson.ts` in docs/exercise-import/README.md
-- `../../src/endpoints/exercises/import-from-image.ts` in docs/exercise-import/README.md
 
 ### Local Path Links
 
