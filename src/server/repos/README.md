@@ -149,5 +149,5 @@ export async function createMCPChat(messages: ChatMessage[]) {
 ## Related Documentation
 
 - [`AGENTS.md`](../../../AGENTS.md) - Complete Payload patterns
-- [`src/server/payload/collections/`](../payload/collections/) - Collection configurations
-- [`src/server/payload/endpoints/`](../payload/endpoints/) - Custom endpoints
+- [`src/server/payload/collections/`](../payload/collections/README.md) - Collection configurations
+- [`src/server/payload/endpoints/`](../payload/endpoints/README.md) - Custom endpoints
